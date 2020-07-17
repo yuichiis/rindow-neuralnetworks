@@ -461,6 +461,245 @@ class Backend
         //$dInputs = $this->la->scal(1/$dOutputs->shape()[0],$dInputs);
         return $dInputs;
     }
+   
+    
+    public function conv2d(
+        object $status,
+        NDArray $inputs,
+        NDArray $kernel,
+        NDArray $bias=null,
+        array $strides=null,
+        string $padding=null,
+        string $data_format=null
+        ) : NDArray
+    {
+        $filterSize = $kernel->shape();
+        $filters = array_pop($filterSize);
+        $channels = array_pop($filterSize);
+        if($data_format == null || 
+           $data_format=='channels_last') {
+            $data_format = false;
+        } elseif($data_format=='channels_first') {
+            $data_format = true;
+        } else {
+            throw new InvalidArgumentException('$data_format must be channels_last or channels_first');
+        }
+        $cols = $this->la->im2col(
+            $inputs,
+            $filterSize,
+            $strides,
+            $padding,
+            $channels_first
+        );
+        [$batches,$out_h,$out_w,
+         $filter_h,$filter_w,$channels] =
+            $cols->shape();
+        $cols = 
+            $cols->reshape([$batches*$out_h*$out_w,
+            $filter_h*$filter_w*$channels]);
+        $kernel = $kernel->reshape(
+            [$filter_h*$filter_w*$channels,
+             $filters]);
+             
+        $outputs = $this->batch_gemm(
+            $cols,
+            $kernel,
+            1.0,1.0,
+            $bias
+        );
+            
+        $status->inputsShape = $inputs->shape();
+        $status->kernel = $kernel;
+        $status->cols = $cols;
+        $status->flatten_out_shape =
+            $outputs->shape();
+        $status->filterSize = $filterSize;
+        $status->strides = $strides;
+        $status->padding = $padding;
+        $status->channels_first = $channels_first;
+        
+        return $outputs->reshape(
+            $batches,$out_h,$out_w,
+            $channels
+        );
+    }
+    
+    public function dConv2d(
+        object $status,
+        NDArray $dOutputs,
+        NDArray $dKernel,
+        NDArray $dBias=null
+        ): NDArray
+    {
+        $dCols = $this->zerosLike(
+            $status->cols);
+        $dOutputs = $dOutputs->reshape(
+            $status->flatten_out_shape);
+        $this->gemm(
+            $dOutputs,
+            $status->kernel,
+            1.0,0.0,
+            $dCols,
+            false,true);
+
+        // update params
+        $this->gemm(
+            $status->cols,
+            $dOutputs,
+            1.0,0.0,
+            $dKernel->reshape($status->kernel->shape()),
+            true,false);
+        $this->copy($this->sum($dOutputs, $axis=0),$dBias);
+        
+        $dInputs = $this->zeros($status->inputsShape);
+        $this->la->col2im(
+            $dCols,
+            $dInputs,
+            $status->filterSize,
+            $status->strides,
+            $status->padding,
+            $status->channels_first
+        )
+        return $dInputs;
+    }
+    
+    public function pool2d(
+        object $status,
+        NDArray $inputs,
+        array $poolSize,
+        array $strides=null,
+        string $padding=null,
+        string $data_format=null,
+        string $pool_mode=null
+        ) : NDArray
+    {
+        if($data_format == null || 
+           $data_format=='channels_last') {
+            $data_format = false;
+            $tmp = $inputs->shape();
+            $channels = array_pop($tmp)
+        } elseif($data_format=='channels_first') {
+            $data_format = true;
+            $tmp = $inputs->shape();
+            array_unshift($tmp)
+            $channels = array_unshift($tmp)
+        } else {
+            throw new InvalidArgumentException('$data_format must be channels_last or channels_first');
+        }
+        $cols = $this->la->im2col(
+            $inputs,
+            $poolSize,
+            $strides,
+            $padding,
+            $channels_first,
+            $cols_channels_first=true
+        );
+        [$batches,$out_h,$out_w,$channels,
+         $filter_h,$filter_w] =
+            $cols->shape();
+        $cols = 
+            $cols->reshape([$batches*$out_h*$out_w*$channels,
+            $filter_h*$filter_w]);
+        
+        if($pool_mode==null ||
+            $pool_mode=='max') {
+            $outputs = $this->la->reduceMax(
+                $cols,$axis=1
+            )
+        } elseif($pool_mode=='avg') {
+            $outputs = $this->la->reduceMean(
+                $cols,$axis=1
+            );
+        } else {
+            throw new InvalidArgumentException('pool_mode must be max or avg');
+        }
+        $status->inputsShape = $inputs->shape();
+        $status->cols = $cols;
+        $status->flatten_out_shape = $outputs->shape();
+        $status->filterSize = $filterSize;
+        $status->filter_h = $filter_h;
+        $status->filter_w = $filter_w;
+        $status->strides = $strides;
+        $status->padding = $padding;
+        $status->channels_first = $channels_first;
+        $outputs = $outputs->reshape (
+            $batches,
+            $out_h,
+            $out_w,
+            $channels
+            );
+        return $outputs;
+    }
+
+    public function dPool2d(
+        object $status,
+        NDArray $dOutputs,
+        ): NDArray
+    {
+        $argMax = $this->la->reduceArgMax(
+            $status->cols,$axis=1);
+        
+        $dCols = $this->la->onehot(
+            $argMax,
+            $status->filter_h*$status->filter_w);
+        
+        $dOutputs = $dOutputs->reshape(
+            $status->flatten_out_shape
+        );
+        $this->la->multiply(
+            $dOutputs,$dCols,$trans=true);
+        
+        $dInputs = $this->zeros(
+            $status->inputsShape)
+        $this->la->col2im(
+            $dCols,
+            $dInputs,
+            $status->filterSize,
+            $status->strides,
+            $status->padding,
+            $status->channels_first,
+            $cols_channels_first=true
+        );
+        return $dInputs;
+    }
+
+    public function calcConv2dOutputShape(
+        array $inputShape,
+        array $filterSize,
+        array $strides,
+        string $padding=null,
+        string $data_format=null
+        ) : array
+    {
+        if($padding=='same') {
+            return $inputShape;
+        }
+        if($data_format==null||
+            $data_format=='channels_last') {
+            $channels_first = false;
+        } elseif($data_format=='channels_first') {
+            $channels_first = true;
+        } else {
+            throw new InvalidArgumentException('data_format must be channels_last or channels_first');
+        }
+        if($channels_first) {
+            $channels = array_unshift($inputShape);
+        } else {
+            $channels = array_pop($inputShape);
+        }
+        $inputShape = array_values($inputShape);
+        foreach($inputShape as $idx=>$value) {
+            $outputShape[$idx] = floor(($inputShape[$idx]-$filterSize[$idx])/$strides[$idx])+1;
+        }
+        if($channels_first) {
+            array_shift($outputShape,$channels);
+        } else {
+            array_push($outputShape,$channels);
+        }
+        $outputShape = array_values($outputShape);
+        return $outputShape;
+    }
+
     //def backward(self, dout):
     //    dx = self.out * dout
     //    sumdx = np.sum(dx, axis=1, keepdims=True)
