@@ -549,7 +549,7 @@ class Test extends TestCase
             $outputs->shape()
         );
         
-        $dOutputs = $mo->onesLike($outputs)
+        $dOutputs = $mo->onesLike($outputs);
         $dKernel = $mo->zerosLike($kernel);
         $dBias = $mo->zerosLike($bias);
         $dInputs = $K->dConv2d(
