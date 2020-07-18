@@ -509,6 +509,7 @@ class Test extends TestCase
         $stride_h = 1;
         $stride_w = 1;
         $padding = null;
+        $data_format = null;
 
         $inputs = $mo->arange(
             $batches*
