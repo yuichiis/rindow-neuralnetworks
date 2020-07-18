@@ -51,13 +51,13 @@ class Conv2D extends AbstractLayer implements Layer
         ],$options));
         $this->backend = $K = $backend;
         if(is_int($kernel_size)) {
-            $kernel_size = [ $kernel_size, $kernel_size]
+            $kernel_size = [ $kernel_size, $kernel_size];
         } elseif(!is_array($kernel_size) ||
                 count($kernel_size)!=2) {
             throw new InvalidArgumentException("kernel_size must be array or integer.");
         }
         if(is_int($strides)) {
-            $strides = [ $strides, $strides]
+            $strides = [ $strides, $strides];
         } elseif(!is_array($strides) ||
                 count($strides)!=2) {
             throw new InvalidArgumentException("strides must be array or integer.");
