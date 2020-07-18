@@ -40,7 +40,7 @@ class Conv2D extends AbstractLayer implements Layer
             'bias_initializer'=>"zeros",
             'kernel_regularizer'=null,
             'bias_regularizer'=>null,
-            'activity_regularizer'=null,
+            'activity_regularizer'=>null,
             'kernel_constraint'=>null,
             'bias_constraint'=>null,
             
