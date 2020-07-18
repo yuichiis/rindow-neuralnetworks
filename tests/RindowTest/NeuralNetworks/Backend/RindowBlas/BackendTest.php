@@ -532,7 +532,7 @@ class Test extends TestCase
             $filters
         ]);
 
-        $status = new \class();
+        $status = new \stdClass();
         
         $outputs = $K->conv2d(
             $status,
