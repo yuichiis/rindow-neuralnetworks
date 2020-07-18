@@ -633,7 +633,7 @@ class Backend
 
     public function dPool2d(
         object $status,
-        NDArray $dOutputs,
+        NDArray $dOutputs
         ): NDArray
     {
         $argMax = $this->la->reduceArgMax(
