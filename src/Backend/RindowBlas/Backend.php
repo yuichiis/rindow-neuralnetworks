@@ -577,7 +577,7 @@ class Backend
            $data_format=='channels_last') {
             $data_format = false;
             $tmp = $inputs->shape();
-            $channels = array_pop($tmp)
+            $channels = array_pop($tmp);
         } elseif($data_format=='channels_first') {
             $data_format = true;
             $tmp = $inputs->shape();
