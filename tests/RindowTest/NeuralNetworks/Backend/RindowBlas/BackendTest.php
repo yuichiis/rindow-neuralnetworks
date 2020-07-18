@@ -576,4 +576,67 @@ class Test extends TestCase
             $mo->zerosLike($dBias)->toArray()
             );
     }
+    
+    public function testPool2d()
+    {
+        $mo = new MatrixOperator();
+        $K = new Backend($mo);
+        
+        $batches = 1;
+        $im_h = 4;
+        $im_w = 4;
+        $channels = 3;
+        $pool_h = 2;
+        $pool_w = 2;
+        #$stride_h = 1;
+        #$stride_w = 1;
+        $padding = null;
+        $data_format = null;
+        $pool_mode = null;
+
+        $inputs = $mo->arange(
+            $batches*
+            $im_h*$im_w*
+            $channels
+        )->reshape([
+            $batches,
+            $im_h,
+            $im_w,
+            $channels
+        ]);
+
+        $status = new \stdClass();
+        
+        $outputs = $K->pool2d(
+            $status,
+            $inputs,
+            $poolSize=[$pool_h,$pool_w],
+            $strides=null,
+            $padding,
+            $data_format,
+            $pool_mode
+        );
+        $this->assertEquals(
+            [$batches,
+             $out_h=2,
+             $out_w=2,
+             $channels],
+            $outputs->shape()
+        );
+        
+        $dOutputs = $mo->ones($outputs->shape());
+        $dInputs = $K->dPool2d(
+            $status,
+            $dOutputs
+        );
+        
+        $this->assertEquals(
+            $inputs->shape(),
+            $dInputs->shape()
+            );
+        $this->assertNotEquals(
+            $dInputs->toArray(),
+            $mo->zerosLike($dInputs)->toArray()
+            );
+    }
 }
