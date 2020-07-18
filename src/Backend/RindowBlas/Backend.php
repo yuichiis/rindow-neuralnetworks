@@ -576,11 +576,11 @@ class Backend
     {
         if($data_format == null || 
            $data_format=='channels_last') {
-            $data_format = false;
+            $channels_first = false;
             $tmp = $inputs->shape();
             $channels = array_pop($tmp);
         } elseif($data_format=='channels_first') {
-            $data_format = true;
+            $channels_first = true;
             $tmp = $inputs->shape();
             array_unshift($tmp);
             $channels = array_unshift($tmp);
