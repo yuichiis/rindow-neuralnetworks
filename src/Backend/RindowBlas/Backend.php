@@ -617,7 +617,7 @@ class Backend
         $status->inputsShape = $inputs->shape();
         $status->cols = $cols;
         $status->flatten_out_shape = $outputs->shape();
-        $status->filterSize = $filterSize;
+        $status->poolSize = $poolSize;
         $status->filter_h = $filter_h;
         $status->filter_w = $filter_w;
         $status->strides = $strides;
@@ -655,7 +655,7 @@ class Backend
         $this->la->col2im(
             $dCols,
             $dInputs,
-            $status->filterSize,
+            $status->poolSize,
             $status->strides,
             $status->padding,
             $status->channels_first,
