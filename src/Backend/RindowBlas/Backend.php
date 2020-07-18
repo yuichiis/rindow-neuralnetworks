@@ -650,7 +650,7 @@ class Backend
             $dOutputs,$dCols,$trans=true);
         
         $dInputs = $this->zeros(
-            $status->inputsShape)
+            $status->inputsShape);
         $this->la->col2im(
             $dCols,
             $dInputs,
