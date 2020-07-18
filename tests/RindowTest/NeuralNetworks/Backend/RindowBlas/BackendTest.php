@@ -563,5 +563,9 @@ class Test extends TestCase
             $inputs->shape(),
             $dInputs->shape()
             );
+        $this->assertNotEquals(
+            $dInputs->toArray(),
+            $mo->zerosLike($dInputs)->toArray()
+            );
     }
 }
