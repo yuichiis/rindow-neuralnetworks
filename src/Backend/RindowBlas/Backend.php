@@ -587,6 +587,9 @@ class Backend
         } else {
             throw new InvalidArgumentException('$data_format must be channels_last or channels_first');
         }
+        if($strides==null) {
+            $strides=$poolSize;
+        }
         $cols = $this->la->im2col(
             $inputs,
             $poolSize,
