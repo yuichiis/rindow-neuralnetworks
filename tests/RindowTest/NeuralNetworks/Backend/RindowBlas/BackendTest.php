@@ -525,6 +525,7 @@ class Test extends TestCase
         $kernel = $mo->ones([
             $kernel_h,
             $kernel_w,
+            $channels,
             $filters
         ]);
         $bias = $mo->zeros([
