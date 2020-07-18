@@ -5,7 +5,7 @@ use PHPUnit\Framework\TestCase;
 use Rindow\Math\Matrix\MatrixOperator;
 use Rindow\NeuralNetworks\Backend\RindowBlas\Backend;
 use Rindow\NeuralNetworks\Builder\NeuralNetworks;
-use Rindow\NeuralNetworks\Layer\Conv2d;
+use Rindow\NeuralNetworks\Layer\Conv2D;
 use InvalidArgumentException;
 
 class Test extends TestCase
@@ -14,7 +14,7 @@ class Test extends TestCase
     {
         $mo = new MatrixOperator();
         $backend = new Backend($mo);
-        $layer = new Conv2d(
+        $layer = new Conv2D(
             $backend,
             $filters=5,
             $kernel_size=3,
@@ -44,7 +44,7 @@ class Test extends TestCase
     {
         $mo = new MatrixOperator();
         $backend = new Backend($mo);
-        $layer = new Conv2d(
+        $layer = new Conv2D(
             $backend,
             $filters=5,
             $kernel_size=3,
@@ -60,7 +60,7 @@ class Test extends TestCase
     {
         $mo = new MatrixOperator();
         $backend = new Backend($mo);
-        $layer = new Conv2d(
+        $layer = new Conv2D(
             $backend,
             $filters=5,
             $kernel_size=3,
@@ -80,7 +80,7 @@ class Test extends TestCase
         $backend = new Backend($mo);
         $fn = $backend;
 
-        $layer = new Conv2d(
+        $layer = new Conv2D(
             $backend,
             $filters=2,
             $kernel_size=2,
