@@ -476,6 +476,7 @@ class Backend
         $filterSize = $kernel->shape();
         $filters = array_pop($filterSize);
         $channels = array_pop($filterSize);
+        $filterSize = array_values($filterSize);
         if($data_format == null || 
            $data_format=='channels_last') {
             $channels_first = false;
