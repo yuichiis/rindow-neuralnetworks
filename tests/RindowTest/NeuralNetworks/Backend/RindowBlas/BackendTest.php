@@ -561,7 +561,7 @@ class Test extends TestCase
         
         $this->assertEquals(
             $inputs->shape(),
-            $dInputs+>shape()
+            $dInputs->shape()
             );
     }
 }
