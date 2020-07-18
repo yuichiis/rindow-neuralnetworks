@@ -582,7 +582,7 @@ class Backend
             $data_format = true;
             $tmp = $inputs->shape();
             array_unshift($tmp)
-            $channels = array_unshift($tmp)
+            $channels = array_unshift($tmp);
         } else {
             throw new InvalidArgumentException('$data_format must be channels_last or channels_first');
         }
