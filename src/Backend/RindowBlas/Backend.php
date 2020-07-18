@@ -623,12 +623,12 @@ class Backend
         $status->strides = $strides;
         $status->padding = $padding;
         $status->channels_first = $channels_first;
-        $outputs = $outputs->reshape (
+        $outputs = $outputs->reshape([
             $batches,
             $out_h,
             $out_w,
             $channels
-            );
+            ]);
         return $outputs;
     }
 
