@@ -86,17 +86,25 @@ class Test extends TestCase
             $kernel_size=2,
             ['input_shape'=>[3,3,1]]);
 
-        $layer->build(null,['sampleWeights'=>[
-            $mo->array([
+        $kernel = $mo->array([
                [[[0.1, 0.2]],
                 [[0.1, 0.1]]],
                [[[0.2, 0.2]],
                 [[0.2, 0.1]]]
-            ]), // kernel
-            $mo->array(
+            ]); // kernel
+        $bias = $mo->array(
                 [0.5,0.1]
-            ),  // bias
-        ]]);
+            );  // bias
+        $layer->build(null,
+            ['sampleWeights'=>
+                [$kernel,$bias]
+        ]);
+        $this->assertEquals(
+            [2,2,2],
+            $kernel->shape());
+        $this->assertEquals(
+            [2],
+            $bias->shape());
 
         //
         // forward
@@ -110,6 +118,9 @@ class Test extends TestCase
             [[0.0],[0.0],[6.0]],
             [[0.0],[0.0],[6.0]]],
         ]);
+        $this->assertEquals(
+            [2,3,3,1],
+            $inputs->shape());
         $copyInputs = $mo->copy($inputs);
         $outputs = $layer->forward($inputs, $training=true);
         // 
