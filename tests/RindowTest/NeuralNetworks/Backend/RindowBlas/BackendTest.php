@@ -491,14 +491,12 @@ class Test extends TestCase
         $this->assertFalse($fn->equalTest(1, 1+9e-06));
         $this->assertFalse($fn->equalTest(1, 1-9e-06));
     }
-
     
     public function testConv2d()
     {
         $mo = new MatrixOperator();
         $K = new Backend($mo);
         
-
         $batches = 1;
         $im_h = 4;
         $im_w = 4;
@@ -549,6 +547,21 @@ class Test extends TestCase
              $out_w=2,
              $filters],
             $outputs->shape()
+        );
+        
+        $dOutputs = $mo->onesLike($outputs)
+        $dKernel = $mo->zerosLike($kernel);
+        $dBias = $mo->zerosLike($bias);
+        $dInputs = $K->dConv2d(
+            $status,
+            $dOutputs,
+            $dKernel,
+            $dBias
+        );
+        
+        $this->assertEquals(
+            $inputs->shape(),
+            $dInputs+>shape()
             );
     }
 }
