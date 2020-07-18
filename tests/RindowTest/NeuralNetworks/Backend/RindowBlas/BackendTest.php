@@ -567,5 +567,13 @@ class Test extends TestCase
             $dInputs->toArray(),
             $mo->zerosLike($dInputs)->toArray()
             );
+        $this->assertNotEquals(
+            $dKernel->toArray(),
+            $mo->zerosLike($dKernel)->toArray()
+            );
+        $this->assertNotEquals(
+            $dBias->toArray(),
+            $mo->zerosLike($dBias)->toArray()
+            );
     }
 }
