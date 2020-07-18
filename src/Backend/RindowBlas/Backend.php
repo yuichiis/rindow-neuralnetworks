@@ -521,7 +521,7 @@ class Backend
         
         return $outputs->reshape([
             $batches,$out_h,$out_w,
-            $channels
+            $filters
         ]);
     }
     
