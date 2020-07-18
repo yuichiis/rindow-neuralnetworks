@@ -559,7 +559,7 @@ class Backend
             $status->strides,
             $status->padding,
             $status->channels_first
-        )
+        );
         return $dInputs;
     }
     
