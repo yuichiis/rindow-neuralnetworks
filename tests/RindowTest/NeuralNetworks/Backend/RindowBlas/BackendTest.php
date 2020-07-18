@@ -529,8 +529,6 @@ class Test extends TestCase
             $filters
         ]);
         $bias = $mo->zeros([
-            $kernel_h,
-            $kernel_w,
             $filters
         ]);
 
