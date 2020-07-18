@@ -109,6 +109,7 @@ class Conv2D extends AbstractLayer implements Layer
                 $this->padding,
                 $this->data_format
             );
+        array_push($outputShape,$this->filters);
         if($this->data_format==null||
            $this->data_format=='channels_last') {
             array_push($kernel_size,
