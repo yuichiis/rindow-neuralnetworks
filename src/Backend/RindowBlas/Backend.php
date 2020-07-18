@@ -695,11 +695,6 @@ class Backend
         foreach($inputShape as $idx=>$value) {
             $outputShape[$idx] = intval(floor(($inputShape[$idx]-$filterSize[$idx])/$strides[$idx])+1);
         }
-        if($channels_first) {
-            array_shift($outputShape,$channels);
-        } else {
-            array_push($outputShape,$channels);
-        }
         $outputShape = array_values($outputShape);
         return $outputShape;
     }
