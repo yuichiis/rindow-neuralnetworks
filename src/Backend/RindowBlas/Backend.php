@@ -501,7 +501,7 @@ class Backend
         $kernel = $kernel->reshape(
             [$filter_h*$filter_w*$channels,
              $filters]);
-             
+            
         $outputs = $this->batch_gemm(
             $cols,
             $kernel,
