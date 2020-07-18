@@ -478,9 +478,9 @@ class Backend
         $channels = array_pop($filterSize);
         if($data_format == null || 
            $data_format=='channels_last') {
-            $data_format = false;
+            $channels_first = false;
         } elseif($data_format=='channels_first') {
-            $data_format = true;
+            $channels_first = true;
         } else {
             throw new InvalidArgumentException('$data_format must be channels_last or channels_first');
         }
