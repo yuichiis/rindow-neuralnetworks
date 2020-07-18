@@ -164,7 +164,7 @@ class Conv2D extends AbstractLayer implements Layer
     protected function call(NDArray $inputs, bool $training) : NDArray
     {
         $K = $this->backend;
-        $this->status = new stdClass();
+        $this->status = new \stdClass();
         $outputs = $K->conv2d(
                 $this->status,
                 $inputs,
