@@ -519,10 +519,10 @@ class Backend
         $status->padding = $padding;
         $status->channels_first = $channels_first;
         
-        return $outputs->reshape(
+        return $outputs->reshape([
             $batches,$out_h,$out_w,
             $channels
-        );
+        ]);
     }
     
     public function dConv2d(
