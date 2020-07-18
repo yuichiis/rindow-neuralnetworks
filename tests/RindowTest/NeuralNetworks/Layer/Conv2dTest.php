@@ -90,7 +90,7 @@ class Test extends TestCase
             $mo->array([
                [[[0.1, 0.2]],
                 [[0.1, 0.1]]],
-               [[[0.2, 0.2],
+               [[[0.2, 0.2]],
                 [[0.2, 0.1]]]
             ]), // kernel
             $mo->array(
