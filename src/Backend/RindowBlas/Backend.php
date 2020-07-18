@@ -605,7 +605,7 @@ class Backend
             $pool_mode=='max') {
             $outputs = $this->la->reduceMax(
                 $cols,$axis=1
-            )
+            );
         } elseif($pool_mode=='avg') {
             $outputs = $this->la->reduceMean(
                 $cols,$axis=1
