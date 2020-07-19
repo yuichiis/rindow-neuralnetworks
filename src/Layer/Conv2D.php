@@ -5,9 +5,10 @@ use InvalidArgumentException;
 use Interop\Polite\Math\Matrix\NDArray;
 use Rindow\NeuralNetworks\Support\GenericUtils;
 
-class Conv2D extends AbstractLayer implements Layer
+class Conv2D extends AbstractImage implements Layer
 {
     use GenericUtils;
+    protected $rank = 2;
     protected $backend;
     protected $filters;
     protected $kernel_size;
@@ -50,18 +51,9 @@ class Conv2D extends AbstractLayer implements Layer
 
         ],$options));
         $this->backend = $K = $backend;
-        if(is_int($kernel_size)) {
-            $kernel_size = [ $kernel_size, $kernel_size];
-        } elseif(!is_array($kernel_size) ||
-                count($kernel_size)!=2) {
-            throw new InvalidArgumentException("kernel_size must be array or integer.");
-        }
-        if(is_int($strides)) {
-            $strides = [ $strides, $strides];
-        } elseif(!is_array($strides) ||
-                count($strides)!=2) {
-            throw new InvalidArgumentException("strides must be array or integer.");
-        }
+        $kernel_size=$this->normalizeFilterSize($kernel_size,'kernel_size',
+            null,true);
+        $strides=$this->normalizeFilterSize($strides,'strides',[1,1]);
         $this->kernel_size = $kernel_size;
         $this->filters = $filters;
         $this->strides = $strides;
@@ -84,22 +76,7 @@ class Conv2D extends AbstractLayer implements Layer
         $kernelInitializer = $this->kernelInitializer;
         $biasInitializer = $this->biasInitializer;
 
-        if($inputShape===null)
-            $inputShape = $this->inputShape;
-        if($this->inputShape===null)
-            $this->inputShape = $inputShape;
-        if($this->inputShape!==$inputShape)
-        {
-            throw new InvalidArgumentException(
-                'Input shape is inconsistent: ['.implode(',',$this->inputShape).
-                '] and ['.implode(',',$inputShape).']');
-        } elseif($inputShape===null) {
-            throw new InvalidArgumentException('Input shape is not defined');
-        }
-        if(count($inputShape)!=3) {
-            throw new InvalidArgumentException(
-                'Unsuppored input shape: ['.implode(',',$inputShape).']');
-        }
+        $inputShape = $this->normalizeInputShape($inputShape);
         $kernel_size = $this->kernel_size;
         $outputShape = 
             $K->calcConv2dOutputShape(
@@ -110,17 +87,12 @@ class Conv2D extends AbstractLayer implements Layer
                 $this->data_format
             );
         array_push($outputShape,$this->filters);
-        if($this->data_format==null||
-           $this->data_format=='channels_last') {
-            array_push($kernel_size,
-                $inputShape[2]);
-        } elseif($this->data_format=='channels_first') {
-            array_push($kernel_size,
-                $inputShape[0]);
-        } else {
-            throw new InvalidArgumentException('data_format is invalid');
-        }
-        array_push($kernel_size,$this->filters);
+        
+        $channels = $this->getChannels();
+        array_push($kernel_size,
+            $channels);
+        array_push($kernel_size,
+            $this->filters);
         if($sampleWeights) {
             $this->kernel = $sampleWeights[0];
             $this->bias = $sampleWeights[1];
@@ -130,8 +102,6 @@ class Conv2D extends AbstractLayer implements Layer
         }
         $this->dKernel = $K->zerosLike($this->kernel);
         $this->dBias = $K->zerosLike($this->bias);
-        $this->inputShape = $inputShape;
-        
         $this->outputShape = $outputShape;
     }
 
