@@ -100,7 +100,7 @@ class Test extends TestCase
                 [$kernel,$bias]
         ]);
         $this->assertEquals(
-            [2,2,2],
+            [2,2,1,2],
             $kernel->shape());
         $this->assertEquals(
             [2],
