@@ -121,7 +121,7 @@ class MaxPool2D extends AbstractLayer implements Layer
     protected function call(NDArray $inputs, bool $training) : NDArray
     {
         $K = $this->backend;
-        $this->status = new Class();
+        $this->status = new \stdClass();
         $outputs = $K->pool2d(
                 $this->status,
                 $inputs,
