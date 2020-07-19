@@ -9,7 +9,7 @@ class MaxPool2D extends AbstractLayer implements Layer
 {
     use GenericUtils;
     protected $backend;
-    protected $pool_size;
+    protected $poolSize;
     protected $strides;
     protected $padding;
     protected $data_format;
@@ -42,7 +42,7 @@ class MaxPool2D extends AbstractLayer implements Layer
         } else {
             throw new InvalidArgumentException('strides must be integer or array of integer');
         }
-        $this->pool_size = $pool_size;
+        $this->poolSize = $pool_size;
         $this->strides = $strides;
         $this->padding = $padding;
         $this->data_format = $data_format;
@@ -84,7 +84,7 @@ class MaxPool2D extends AbstractLayer implements Layer
         $outputShape = 
             $K->calcConv2dOutputShape(
                 $this->inputShape,
-                $this->pool_size,
+                $this->poolSize,
                 $this->strides,
                 $this->padding,
                 $this->data_format
@@ -108,7 +108,7 @@ class MaxPool2D extends AbstractLayer implements Layer
     {
         return array_merge(parent::getConfig(),[
             'options' => [
-                'pool_size' => $this->pool_size,
+                'pool_size' => $this->poolSize,
                 'strides' => $this->strides,
                 'padding' => $this->padding,
                 'data_format' => $this->data_format,
