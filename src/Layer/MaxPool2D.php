@@ -14,7 +14,6 @@ class MaxPool2D extends AbstractLayer implements Layer
     protected $padding;
     protected $data_format;
     protected $status;
-    protected $status;
     protected $pool_mode;
     
 
