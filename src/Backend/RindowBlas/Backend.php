@@ -500,14 +500,6 @@ class Backend
             $padding,
             $channels_first
         );
-        echo 'inputs=';
-        print_r($inputs->shape());
-        echo 'filterSize=';
-        print_r($filterSize);
-        echo 'strides=';
-        print_r($strides);
-        echo 'cols=';
-        print_r($cols->shape());
         [$batches,$out_h,$out_w,
          $filter_h,$filter_w,$channels] =
             $cols->shape();
@@ -517,7 +509,7 @@ class Backend
         $kernel = $kernel->reshape(
             [$filter_h*$filter_w*$channels,
              $filters]);
-            
+             
         $outputs = $this->batch_gemm(
             $cols,
             $kernel,
