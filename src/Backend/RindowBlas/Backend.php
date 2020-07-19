@@ -582,6 +582,9 @@ class Backend
         string $pool_mode=null
         ) : NDArray
     {
+        if($strides==null) {
+            $strides=$poolSize;
+        }
         if($data_format == null || 
            $data_format=='channels_last') {
             $channels_first = false;
@@ -595,8 +598,13 @@ class Backend
         } else {
             throw new InvalidArgumentException('$data_format must be channels_last or channels_first');
         }
-        if($strides==null) {
-            $strides=$poolSize;
+        if($padding==null||
+           $padding=='valid') {
+            $padding=false;
+        } elseif($padding=='same') {$
+            $padding=true;
+        } else {
+            throw new InvalidArgumentException('padding must be valid or same');
         }
         $cols = $this->la->im2col(
             $inputs,
