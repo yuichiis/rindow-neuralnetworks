@@ -492,7 +492,11 @@ class Backend
             $padding,
             $channels_first
         );
+        echo 'inputs=';
+        print_r($inputs->shape());
         echo 'filterSize=';
+        print_r($filterSize);
+        echo 'strides=';
         print_r($filterSize);
         echo 'cols=';
         print_r($cols->shape());
