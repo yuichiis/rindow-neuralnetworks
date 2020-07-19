@@ -497,7 +497,7 @@ class Backend
         echo 'filterSize=';
         print_r($filterSize);
         echo 'strides=';
-        print_r($filterSize);
+        print_r($strides);
         echo 'cols=';
         print_r($cols->shape());
         [$batches,$out_h,$out_w,
