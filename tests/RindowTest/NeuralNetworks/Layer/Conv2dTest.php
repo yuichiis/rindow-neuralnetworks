@@ -126,6 +126,7 @@ class Test extends TestCase
         // 
         $this->assertEquals(
             [2,2,2,2],$outputs->shape());
+        print_r($outputs);
         $this->assertTrue($fn->equalTest($mo->array([
               [[[1.7, 1.3],
                 [1.7, 1.3]],
