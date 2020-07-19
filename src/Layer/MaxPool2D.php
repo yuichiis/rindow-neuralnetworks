@@ -21,7 +21,7 @@ class MaxPool2D extends AbstractLayer implements Layer
     public function __construct($backend,array $options=null)
     {
         extract($this->extractArgs([
-            'pool_size'=>[2,2]
+            'pool_size'=>[2,2],
             'strides'=>null,
             'padding'=>"valid",
             'data_format'=>null,
