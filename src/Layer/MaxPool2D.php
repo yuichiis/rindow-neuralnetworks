@@ -5,9 +5,10 @@ use InvalidArgumentException;
 use Interop\Polite\Math\Matrix\NDArray;
 use Rindow\NeuralNetworks\Support\GenericUtils;
 
-class MaxPool2D extends AbstractLayer implements Layer
+class MaxPool2D extends AbstractImage implements Layer
 {
     use GenericUtils;
+    protected $rank = 2;
     protected $backend;
     protected $poolSize;
     protected $strides;
@@ -28,20 +29,8 @@ class MaxPool2D extends AbstractLayer implements Layer
             'input_shape'=>null,
         ],$options));
         $this->backend = $backend;
-        if($pool_size===null) {
-            $pool_size = [2,2];
-        } elseif(is_int($pool_size)) {
-            $pool_size = [ $pool_size,$pool_size];
-        } elseif(!is_array($pool_size)) {
-            throw new InvalidArgumentException('pool_size must be integer or array of integer');
-        }
-        if($strides===null) {
-            $strides = $pool_size;
-        } elseif(is_int($strides)) {
-            $strides = [$strides,$strides];
-        } else {
-            throw new InvalidArgumentException('strides must be integer or array of integer');
-        }
+        $pool_size=$this->normalizeFilterSize($pool_size,'pool_size',[2,2]);
+        $strides=$this->normalizeFilterSize($strides,'strides',$pool_size);
         $this->poolSize = $pool_size;
         $this->strides = $strides;
         $this->padding = $padding;
@@ -52,35 +41,10 @@ class MaxPool2D extends AbstractLayer implements Layer
 
     public function build(array $inputShape=null, array $options=null) : void
     {
-        extract($this->extractArgs([
-            'sampleWeights'=>null,
-        ],$options));
         $K = $this->backend;
 
-        if($inputShape===null)
-            $inputShape = $this->inputShape;
-        if($this->inputShape===null)
-            $this->inputShape = $inputShape;
-        if($this->inputShape!==$inputShape)
-        {
-            throw new InvalidArgumentException(
-                'Input shape is inconsistent: ['.implode(',',$this->inputShape).
-                '] and ['.implode(',',$inputShape).']');
-        } elseif($inputShape===null) {
-            throw new InvalidArgumentException('Input shape is not defined');
-        }
-        if(count($inputShape)!=3) {
-            throw new InvalidArgumentException(
-                'Unsuppored input shape: ['.implode(',',$inputShape).']');
-        }
-        if($this->data_format==null||
-           $this->data_format=='channels_last') {
-            $channels = $inputShape[2];
-        } elseif($this->data_format=='channels_first') {
-            $channels = $inputShape[0];
-        } else {
-            throw new InvalidArgumentException('data_format is invalid');
-        }
+        $inputShape = $this->normalizeInputShape($inputShape);
+        $channels = $this->getChannels();
         $outputShape = 
             $K->calcConv2dOutputShape(
                 $this->inputShape,
@@ -90,7 +54,6 @@ class MaxPool2D extends AbstractLayer implements Layer
                 $this->data_format
             );
         array_push($outputShape,$channels);
-        $this->inputShape = $inputShape;
         $this->outputShape = $outputShape;
     }
 
