@@ -485,6 +485,14 @@ class Backend
         } else {
             throw new InvalidArgumentException('$data_format must be channels_last or channels_first');
         }
+        if($padding==null||
+           $padding=='valid') {
+            $padding=false;
+        } elseif($padding=='same') {$
+            $padding=true;
+        } else {
+            throw new InvalidArgumentException('padding must be valid or same');
+        }
         $cols = $this->la->im2col(
             $inputs,
             $filterSize,
