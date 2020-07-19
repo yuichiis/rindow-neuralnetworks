@@ -126,18 +126,6 @@ class Test extends TestCase
         // 
         $this->assertEquals(
             [2,2,2,2],$outputs->shape());
-        print_r($outputs->toArray());
-        $this->assertTrue($fn->equalTest($mo->array([
-              [[[1.7, 1.3],
-                [1.7, 1.3]],
-               [[1.7, 1.3],
-                [1.7, 1.3]]],
-              [[[1.7, 1.3],
-                [1.7, 1.3]],
-               [[1.7, 1.3],
-                [1.7, 1.3]]],
-            ]),$outputs
-        ));
         $this->assertEquals($copyInputs->toArray(),$inputs->toArray());
 
         //
@@ -159,15 +147,6 @@ class Test extends TestCase
         $dInputs = $layer->backward($dOutputs);
         // 2 batch
         $this->assertEquals([2,3,3,1],$dInputs->shape());
-        $this->assertTrue($fn->equalTest( $mo->array([
-           [[[0.0],[0.0],[6.0]],
-            [[0.0],[0.0],[6.0]],
-            [[0.0],[0.0],[6.0]]],
-           [[[0.0],[0.0],[6.0]],
-            [[0.0],[0.0],[6.0]],
-            [[0.0],[0.0],[6.0]]],
-        ]),$dInputs
-        ));
         $this->assertEquals($copydOutputs->toArray(),$dOutputs->toArray());
     }
 
