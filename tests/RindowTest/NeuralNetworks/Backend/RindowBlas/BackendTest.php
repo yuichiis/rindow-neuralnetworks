@@ -623,7 +623,10 @@ class Test extends TestCase
              $channels],
             $outputs->shape()
         );
-        
+        $this->assertEquals([[
+            [[15,16,17],[21,22,23]],
+            [[39,40,41],[45,46,47]],
+        ]],$outputs->toArray());
         $dOutputs = $mo->ones($outputs->shape());
         $dInputs = $K->dPool2d(
             $status,
