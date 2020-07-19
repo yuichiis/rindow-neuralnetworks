@@ -86,6 +86,7 @@ class Test extends TestCase
             $kernel_size=2,
             ['input_shape'=>[3,3,1]]);
 
+        /*
         $kernel = $mo->array([
                [[[0.1, 0.2]],
                 [[0.1, 0.1]]],
@@ -99,6 +100,9 @@ class Test extends TestCase
             ['sampleWeights'=>
                 [$kernel,$bias]
         ]);
+        */
+        $layer->build();
+        [$kernel,$bias]=$layer->getParams();
         $this->assertEquals(
             [2,2,1,2],
             $kernel->shape());
