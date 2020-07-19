@@ -492,6 +492,10 @@ class Backend
             $padding,
             $channels_first
         );
+        echo 'filterSize=';
+        print_r($filterSize);
+        echo 'cols=';
+        print_r($cols->shape());
         [$batches,$out_h,$out_w,
          $filter_h,$filter_w,$channels] =
             $cols->shape();
