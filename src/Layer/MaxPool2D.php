@@ -74,6 +74,14 @@ class MaxPool2D extends AbstractLayer implements Layer
             throw new InvalidArgumentException(
                 'Unsuppored input shape: ['.implode(',',$inputShape).']');
         }
+        if($this->data_format==null||
+           $this->data_format=='channels_last') {
+            $channels = $inputShape[2];
+        } elseif($this->data_format=='channels_first') {
+            $channels = $inputShape[0];
+        } else {
+            throw new InvalidArgumentException('data_format is invalid');
+        }
         $outputShape = 
             $K->calcConv2dOutputShape(
                 $this->inputShape,
@@ -82,6 +90,7 @@ class MaxPool2D extends AbstractLayer implements Layer
                 $this->padding,
                 $this->data_format
             );
+        array_push($outputShape,$channels);
         $this->inputShape = $inputShape;
         $this->outputShape = $outputShape;
     }
@@ -105,8 +114,6 @@ class MaxPool2D extends AbstractLayer implements Layer
                 'padding' => $this->padding,
                 'data_format' => $this->data_format,
                 'input_shape'=>$this->inputShape,
-                'kernel_initializer' => $this->kernelInitializerName,
-                'bias_initializer' => $this->biasInitializerName,
             ]
         ]);
     }
