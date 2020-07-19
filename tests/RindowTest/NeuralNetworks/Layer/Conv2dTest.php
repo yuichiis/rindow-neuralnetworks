@@ -76,6 +76,7 @@ class Test extends TestCase
 
     public function testNormalForwardAndBackword()
     {
+        echo "testNormalForwardAndBackword\n";
         $mo = new MatrixOperator();
         $backend = new Backend($mo);
         $fn = $backend;
