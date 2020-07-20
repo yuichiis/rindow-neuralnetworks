@@ -453,6 +453,7 @@ class Test extends TestCase
                 ['input_shape'=>[5,5,1]]),
             $nn->layers()->ReLU(),
             $nn->layers()->MaxPool2D(),
+            $nn->layers()->Flatten(),
             $nn->layers()->Dense($units=10),
             $nn->layers()->ReLU(),
             $nn->layers()->Dense($units=5),
