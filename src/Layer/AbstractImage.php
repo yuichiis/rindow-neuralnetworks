@@ -56,6 +56,5 @@ abstract class AbstractImage extends AbstractLayer
             return $size;
         }
         throw new InvalidArgumentException("$sizename must be array or integer.");
-        }
     }
 }
