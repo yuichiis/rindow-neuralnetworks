@@ -85,7 +85,7 @@ class Test extends TestCase
         // backword
         //
         // 2 batch
-        $dOutputs 
+        $dOutputs =
             $mo->arange(2*4*4*3)->reshape([2,4*4*3]);
 
         $copydOutputs = $mo->copy(
