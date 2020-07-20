@@ -463,7 +463,7 @@ class Test extends TestCase
         $model->compile([
             'loss'=>$nn->losses()->SparseCategoricalCrossEntropy(),
         ]);
-        $this->assertTrue( $model->layers()[3]->fromLogits());
+        $this->assertTrue( $model->layers()[7]->fromLogits());
         $this->assertTrue( $model->lossFunction()->fromLogits());
 
         // training greater or less
