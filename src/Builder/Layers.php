@@ -6,6 +6,7 @@ use Rindow\NeuralNetworks\Layer\ReLU;
 use Rindow\NeuralNetworks\Layer\Sigmoid;
 use Rindow\NeuralNetworks\Layer\Softmax;
 use Rindow\NeuralNetworks\Layer\Dense;
+use Rindow\NeuralNetworks\Layer\Flatten;
 use Rindow\NeuralNetworks\Layer\Conv2D;
 use Rindow\NeuralNetworks\Layer\MaxPool2D;
 use Rindow\NeuralNetworks\Layer\Dropout;
@@ -38,6 +39,12 @@ class Layers
     public function Dense(int $units, array $options=null)
     {
         return new Dense($this->backend, $units, $options);
+    }
+
+    public function Flatten(
+        array $options=null)
+    {
+        return new Flatten($this->backend, $options);
     }
 
     public function Conv2D(
