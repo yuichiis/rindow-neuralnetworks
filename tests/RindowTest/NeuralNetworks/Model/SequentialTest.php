@@ -23,7 +23,7 @@ class Test extends TestCase
 
     public function setUp() : void
     {
-        $this->plot = false;
+        $this->plot = true;
     }
 
     public function testCleanUp()
