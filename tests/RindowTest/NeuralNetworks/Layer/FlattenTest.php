@@ -63,7 +63,7 @@ class Test extends TestCase
         $backend = new Backend($mo);
         $fn = $backend;
 
-        $layer = new MaxPool2D(
+        $layer = new Flatten(
             $backend,
             ['input_shape'=>[4,4,3]]);
 
