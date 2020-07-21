@@ -514,7 +514,7 @@ class Test extends TestCase
             $im_h*$im_w*
             $channels,
             null,null,
-            NDArray::int32
+            NDArray::float32
         )->reshape([
             $batches,
             $im_h,
@@ -601,7 +601,7 @@ class Test extends TestCase
             $im_h*$im_w*
             $channels,
             null,null,
-            NDArray::int32
+            NDArray::float32
         )->reshape([
             $batches,
             $im_h,
