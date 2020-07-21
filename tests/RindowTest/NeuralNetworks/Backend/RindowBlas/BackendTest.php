@@ -496,7 +496,7 @@ class Test extends TestCase
     {
         $mo = new MatrixOperator();
         $K = new Backend($mo);
-        
+
         $batches = 1;
         $im_h = 4;
         $im_w = 4;
@@ -512,7 +512,9 @@ class Test extends TestCase
         $inputs = $mo->arange(
             $batches*
             $im_h*$im_w*
-            $channels
+            $channels,
+            null,null,
+            NDArray::int32
         )->reshape([
             $batches,
             $im_h,
@@ -576,7 +578,7 @@ class Test extends TestCase
             $mo->zerosLike($dBias)->toArray()
             );
     }
-    
+
     public function testPool2d()
     {
         $mo = new MatrixOperator();
@@ -597,7 +599,9 @@ class Test extends TestCase
         $inputs = $mo->arange(
             $batches*
             $im_h*$im_w*
-            $channels
+            $channels,
+            null,null,
+            NDArray::int32
         )->reshape([
             $batches,
             $im_h,
