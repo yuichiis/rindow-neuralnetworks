@@ -467,9 +467,17 @@ class Test extends TestCase
         $this->assertTrue( $model->lossFunction()->fromLogits());
 
         // training greater or less
-        $x = $mo->arange(5*5*5)->reshape([5,5,5,1]);
+        $x = $mo->arange(
+            5*5*5,
+            null,null,
+            NDArray::float32
+            )->reshape([5,5,5,1]);
         $t = $mo->arange(5);
-        $v_x = $mo->arange(5*5*5)->reshape([5,5,5,1]);
+        $v_x = $mo->arange(
+            5*5*5,
+            null,null,
+            NDArray::float32
+            )->reshape([5,5,5,1]);
         $v_t = $mo->arange(5);
         $history = $model->fit($x,$t,['epochs'=>100,'validation_data'=>[$v_x,$v_t],'verbose'=>0]);
 
