@@ -771,6 +771,7 @@ class Backend
         );
         $tmp = $cols->shape();
         print_r($tmp);
+        echo "rank=$rank\n";
         $batches = array_shift($tmp);
         $outShape = [];
         for($i=0;$i<$rank;$i++){
