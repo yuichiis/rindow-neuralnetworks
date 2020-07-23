@@ -859,7 +859,7 @@ class Backend
         return $dInputs;
     }
 
-    public function calcConv2dOutputShape(
+    public function calcConvOutputShape(
         array $inputShape,
         array $filterSize,
         array $strides,
