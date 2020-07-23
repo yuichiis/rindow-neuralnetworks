@@ -44,10 +44,10 @@ abstract class AbstractImage extends AbstractLayer
         $notNull=null)
     {
         if($size===null && !$notNull) {
-            return $default;
+            $size = $default;
         }
         if(is_int($size))
-            return [$size, $size];
+            return array_fill(0,$this->rank, $size);
         if(is_array($size)) {
             if(count($size)!=$this->rank) {
                throw new InvalidArgumentException("$sizename does not mach rank.");
