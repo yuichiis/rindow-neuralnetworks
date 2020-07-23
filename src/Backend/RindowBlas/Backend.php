@@ -654,9 +654,9 @@ class Backend
         );
         $outShape = [];
         $shape = $cols->shape();
-        array_unshift($shape);
+        $batches = array_shift($shape);
         for($i=0;$i<$rank;$i++){
-            $outShape[] = array_unshift($shape);
+            $outShape[] = array_shift($shape);
         }
         $cols = 
             $cols->reshape([$batches*array_product($outShape),
@@ -742,14 +742,14 @@ class Backend
             $strides=$poolSize;
         }
         $tmp = $inputs->shape();
-        $batches = array_unshift($tmp);
+        $batches = array_shift($tmp);
         if($data_format == null || 
            $data_format=='channels_last') {
             $channels_first = false;
             $channels = array_pop($tmp);
         } elseif($data_format=='channels_first') {
             $channels_first = true;
-            $channels = array_unshift($tmp);
+            $channels = array_shift($tmp);
         } else {
             throw new InvalidArgumentException('$data_format must be channels_last or channels_first');
         }
@@ -771,9 +771,9 @@ class Backend
         );
         $outShape = [];
         $tmp = $cols->shape();
-        array_unshift($tmp);
+        array_shift($tmp);
         for($i=0;$i<$rank;$i++){
-            $outShape[] = array_unshift($tmp);
+            $outShape[] = array_shift($tmp);
         }
         $cols = 
             $cols->reshape([$batches*array_product($outShape)*$channels,
