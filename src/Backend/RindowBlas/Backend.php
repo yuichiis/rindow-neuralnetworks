@@ -769,15 +769,20 @@ class Backend
             $channels_first,
             $cols_channels_first=true
         );
-        $outShape = [];
         $tmp = $cols->shape();
-        array_shift($tmp);
+        $batches = array_shift($tmp);
+        $outShape = [];
         for($i=0;$i<$rank;$i++){
             $outShape[] = array_shift($tmp);
         }
+        $channels = array_shift($tmp);
+        $filterSize = [];
+        for($i=0;$i<$rank;$i++){
+            $filterSize[] = array_shift($tmp);
+        }
         $cols = 
             $cols->reshape([$batches*array_product($outShape)*$channels,
-        array_product($poolSize)    ]);
+        array_product($filterSize)    ]);
         
         if($pool_mode==null ||
             $pool_mode=='max') {
