@@ -44,9 +44,9 @@ fwrite(STDERR,"formating test images ...\n");
 $test_img  = formatingImage($mo,$test_img);
 
 [$dataSize,$imageSize] = $train_img->shape();
-$train_img = $train_img->reshape([$dataSize,28,28,1])
+$train_img = $train_img->reshape([$dataSize,28,28,1]);
 [$dataSize,$imageSize] = $test_img->shape();
-$test_img = $test_img->reshape([$dataSize,28,28,1])
+$test_img = $test_img->reshape([$dataSize,28,28,1]);
 
 fwrite(STDERR,"creating model ...\n");
 $model = $nn->models()->Sequential([
