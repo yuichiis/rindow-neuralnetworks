@@ -588,6 +588,9 @@ class Backend
         string $pool_mode=null
         ) : NDArray
     {
+        if($inputs->ndim()!=4) {
+            throw new InvalidArgumentException('inputs must be 4D NDArray');
+        }
         $rank = 2;
         return $this->doPool(
             $rank,
@@ -625,6 +628,9 @@ class Backend
         string $data_format=null
         ) : NDArray
     {
+        if($inputs->ndim()!=$rank+2) {
+            throw new InvalidArgumentException('inputs must be '.($rank+2).'D NDArray');
+        }
         $filterSize = $kernel->shape();
         $filters = array_pop($filterSize);
         $channels = array_pop($filterSize);
@@ -695,6 +701,9 @@ class Backend
         NDArray $dBias=null
         ): NDArray
     {
+        if($dOutputs->ndim()!=$rank+2) {
+            throw new InvalidArgumentException('dOutputs must be '.($rank+2).'D NDArray');
+        }
         $dCols = $this->zerosLike(
             $status->cols);
         $dOutputs = $dOutputs->reshape(
@@ -738,6 +747,9 @@ class Backend
         string $pool_mode=null
         ) : NDArray
     {
+        if($inputs->ndim()!=$rank+2) {
+            throw new InvalidArgumentException('inputs must be '.($rank+2).'D NDArray');
+        }
         if($strides==null) {
             $strides=$poolSize;
         }
@@ -770,8 +782,6 @@ class Backend
             $cols_channels_first=true
         );
         $tmp = $cols->shape();
-        print_r($tmp);
-        echo "rank=$rank\n";
         $batches = array_shift($tmp);
         $outShape = [];
         for($i=0;$i<$rank;$i++){
@@ -819,6 +829,9 @@ class Backend
         NDArray $dOutputs
         ): NDArray
     {
+        if($dOutputs->ndim()!=$rank+2) {
+            throw new InvalidArgumentException('dOutputs must be '.($rank+2).'D NDArray');
+        }
         $argMax = $this->la->reduceArgMax(
             $status->cols,$axis=1);
         
