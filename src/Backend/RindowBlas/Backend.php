@@ -770,6 +770,7 @@ class Backend
             $cols_channels_first=true
         );
         $tmp = $cols->shape();
+        print_r($tmp);
         $batches = array_shift($tmp);
         $outShape = [];
         for($i=0;$i<$rank;$i++){
