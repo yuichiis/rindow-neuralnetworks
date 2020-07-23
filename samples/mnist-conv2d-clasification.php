@@ -71,7 +71,7 @@ $model->compile([
 
 fwrite(STDERR,"training model ...\n");
 $history = $model->fit($train_img,$train_label,
-    ['epochs'=>5,'batch_size'=>64,'validation_data'=>[$test_img,$test_label]]);
+    ['epochs'=>5,'batch_size'=>128,'validation_data'=>[$test_img,$test_label]]);
 
 $model->save(__DIR__.'/mnist_conv_model.model',$portable=true);
 
