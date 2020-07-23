@@ -646,4 +646,148 @@ class Test extends TestCase
             $mo->zerosLike($dInputs)->toArray()
             );
     }
+
+    public function testConv1d()
+    {
+        $mo = new MatrixOperator();
+        $K = new Backend($mo);
+
+        $batches = 1;
+        $im_w = 4;
+        $channels = 3;
+        $kernel_w = 3;
+        $filters = 5;
+        $stride_w = 1;
+        $padding = null;
+        $data_format = null;
+
+        $inputs = $mo->arange(
+            $batches*
+            $im_w*
+            $channels,
+            null,null,
+            NDArray::float32
+        )->reshape([
+            $batches,
+            $im_w,
+            $channels
+        ]);
+
+        $kernel = $mo->ones([
+            $kernel_w,
+            $channels,
+            $filters
+        ]);
+        $bias = $mo->zeros([
+            $filters
+        ]);
+
+        $status = new \stdClass();
+        
+        $outputs = $K->conv1d(
+            $status,
+            $inputs,
+            $kernel,
+            $bias,
+            $strides=[$stride_w],
+            $padding,
+            $data_format
+        );
+        $this->assertEquals(
+            [$batches,
+             $out_w=2,
+             $filters],
+            $outputs->shape()
+        );
+        
+        $dOutputs = $mo->ones($outputs->shape());
+        $dKernel = $mo->zerosLike($kernel);
+        $dBias = $mo->zerosLike($bias);
+        $dInputs = $K->dConv1d(
+            $status,
+            $dOutputs,
+            $dKernel,
+            $dBias
+        );
+        
+        $this->assertEquals(
+            $inputs->shape(),
+            $dInputs->shape()
+            );
+        $this->assertNotEquals(
+            $dInputs->toArray(),
+            $mo->zerosLike($dInputs)->toArray()
+            );
+        $this->assertNotEquals(
+            $dKernel->toArray(),
+            $mo->zerosLike($dKernel)->toArray()
+            );
+        $this->assertNotEquals(
+            $dBias->toArray(),
+            $mo->zerosLike($dBias)->toArray()
+            );
+    }
+
+    public function testPool1d()
+    {
+        $mo = new MatrixOperator();
+        $K = new Backend($mo);
+        
+        $batches = 1;
+        $im_w = 4;
+        $channels = 3;
+        $pool_w = 2;
+        #$stride_h = 1;
+        #$stride_w = 1;
+        $padding = null;
+        $data_format = null;
+        $pool_mode = null;
+
+        $inputs = $mo->arange(
+            $batches*
+            $im_w*
+            $channels,
+            null,null,
+            NDArray::float32
+        )->reshape([
+            $batches,
+            $im_w,
+            $channels
+        ]);
+
+        $status = new \stdClass();
+        
+        $outputs = $K->pool2d(
+            $status,
+            $inputs,
+            $poolSize=[$pool_w],
+            $strides=null,
+            $padding,
+            $data_format,
+            $pool_mode
+        );
+        $this->assertEquals(
+            [$batches,
+             $out_w=2,
+             $channels],
+            $outputs->shape()
+        );
+        $this->assertEquals([[
+            [3,4,5],[9,10,11],
+        ]],$outputs->toArray());
+        $dOutputs = $mo->ones($outputs->shape());
+        $dInputs = $K->dPool2d(
+            $status,
+            $dOutputs
+        );
+        
+        $this->assertEquals(
+            $inputs->shape(),
+            $dInputs->shape()
+            );
+        $this->assertNotEquals(
+            $dInputs->toArray(),
+            $mo->zerosLike($dInputs)->toArray()
+            );
+    }
 }
