@@ -757,7 +757,7 @@ class Test extends TestCase
 
         $status = new \stdClass();
         
-        $outputs = $K->pool2d(
+        $outputs = $K->pool1d(
             $status,
             $inputs,
             $poolSize=[$pool_w],
@@ -776,7 +776,7 @@ class Test extends TestCase
             [3,4,5],[9,10,11],
         ]],$outputs->toArray());
         $dOutputs = $mo->ones($outputs->shape());
-        $dInputs = $K->dPool2d(
+        $dInputs = $K->dPool1d(
             $status,
             $dOutputs
         );
