@@ -5,7 +5,7 @@ use InvalidArgumentException;
 use Interop\Polite\Math\Matrix\NDArray;
 use Rindow\NeuralNetworks\Support\GenericUtils;
 
-abstract class AbstractPool extends AbstractImage implements Layer
+abstract class AbstractPooling extends AbstractImage implements Layer
 {
     abstract protected function call(NDArray $inputs, bool $training) : NDArray;
     abstract protected function differentiate(NDArray $dOutputs) : NDArray;
