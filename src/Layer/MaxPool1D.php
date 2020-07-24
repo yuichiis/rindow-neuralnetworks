@@ -6,7 +6,7 @@ use Interop\Polite\Math\Matrix\NDArray;
 class MaxPool1D extends AbstractPool implements Layer
 {
     protected $rank = 1;
-    protected $pool_mode 'max';
+    protected $pool_mode = 'max';
 
     protected function call(NDArray $inputs, bool $training) : NDArray
     {
