@@ -12,13 +12,15 @@ $plt = new Plot(null,$mo);
 
 [[$train_img,$train_label],[$test_img,$test_label]] =
     $nn->datasets()->mnist()->loadData();
+$epochs = 5;
 
 fwrite(STDERR,"train=[".implode(',',$train_img->shape())."]\n");
 fwrite(STDERR,"test=[".implode(',',$test_img->shape())."]\n");
 
 if(true || !extension_loaded('rindow_openblas')) {
     // Shrink data
-    $trainSize = 6000;
+    $epochs = 1;
+    $trainSize = 10000;
     $testSize  = 100;
     fwrite(STDERR,"Shrink data ...\n");
     $train_img = $train_img[[0,$trainSize-1]];
@@ -71,7 +73,7 @@ $model->compile([
 
 fwrite(STDERR,"training model ...\n");
 $history = $model->fit($train_img,$train_label,
-    ['epochs'=>5,'batch_size'=>128,'validation_data'=>[$test_img,$test_label]]);
+    ['epochs'=>$epochs,'batch_size'=>256,'validation_data'=>[$test_img,$test_label]]);
 
 $model->save(__DIR__.'/mnist_conv_model.model',$portable=true);
 
