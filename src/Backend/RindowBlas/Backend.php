@@ -888,6 +888,7 @@ class Backend
         $status->strides = $strides;
         $status->padding = $padding;
         $status->channels_first = $channels_first;
+        $status->pool_mode = $pool_mode;
         $outputs = $outputs->reshape(
             array_merge([$batches],
             $outShape,
@@ -905,18 +906,27 @@ class Backend
         if($dOutputs->ndim()!=$rank+2) {
             throw new InvalidArgumentException('dOutputs must be '.($rank+2).'D NDArray');
         }
-        $argMax = $this->la->reduceArgMax(
-            $status->cols,$axis=1);
+        if($this->pool_mode=='avg'){
+            // d mean
+            // dx = repeat(dy/N)
+            $num = $status->cols->shape()[1];
+            $tmp = $this->scal(1/$num,$this->copy($dOutputs));
+            $dCols = $this->la->duplicate($tmp,$num,$trans=true);
+        } else {
+            // d max
+            //dx = dy * onehot(argMax(x))
+            $argMax = $this->la->reduceArgMax(
+                $status->cols,$axis=1);
         
-        $dCols = $this->la->onehot(
-            $argMax,
-            array_product($status->poolSize));
-        
-        $dOutputs = $dOutputs->reshape(
-            $status->flatten_out_shape
-        );
-        $this->la->multiply(
-            $dOutputs,$dCols,$trans=true);
+            $dCols = $this->la->onehot(
+                $argMax,
+                array_product($status->poolSize));
+            $dOutputs = $dOutputs->reshape(
+                $status->flatten_out_shape
+            );
+            $this->la->multiply(
+                $dOutputs,$dCols,$trans=true);
+        }
         
         $dInputs = $this->zeros(
             $status->inputsShape);
