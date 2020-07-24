@@ -5,7 +5,7 @@ use PHPUnit\Framework\TestCase;
 use Rindow\Math\Matrix\MatrixOperator;
 use Rindow\NeuralNetworks\Backend\RindowBlas\Backend;
 use Rindow\NeuralNetworks\Builder\NeuralNetworks;
-use Rindow\NeuralNetworks\Layer\AvetagePooling2D;
+use Rindow\NeuralNetworks\Layer\AveragePooling2D;
 use InvalidArgumentException;
 
 class Test extends TestCase
