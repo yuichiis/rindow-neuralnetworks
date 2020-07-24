@@ -16,7 +16,7 @@ $plt = new Plot(null,$mo);
 fwrite(STDERR,"train=[".implode(',',$train_img->shape())."]\n");
 fwrite(STDERR,"test=[".implode(',',$test_img->shape())."]\n");
 
-if(!extension_loaded('rindow_openblas')) {
+if(true ||!extension_loaded('rindow_openblas')) {
     // Shrink data
     $trainSize = 6000;
     $testSize  = 100;
