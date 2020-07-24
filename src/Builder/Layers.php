@@ -7,6 +7,8 @@ use Rindow\NeuralNetworks\Layer\Sigmoid;
 use Rindow\NeuralNetworks\Layer\Softmax;
 use Rindow\NeuralNetworks\Layer\Dense;
 use Rindow\NeuralNetworks\Layer\Flatten;
+use Rindow\NeuralNetworks\Layer\Conv1D;
+use Rindow\NeuralNetworks\Layer\MaxPool1D;
 use Rindow\NeuralNetworks\Layer\Conv2D;
 use Rindow\NeuralNetworks\Layer\MaxPool2D;
 use Rindow\NeuralNetworks\Layer\Dropout;
@@ -61,6 +63,24 @@ class Layers
         array $options=null)
     {
         return new MaxPool2D(
+            $this->backend,
+            $options);
+    }
+
+    public function Conv1D(
+        int $filters, $kernel_size, array $options=null)
+    {
+        return new Conv1D(
+            $this->backend,
+            $filters,
+            $kernel_size,
+            $options);
+    }
+    
+    public function MaxPool1D(
+        array $options=null)
+    {
+        return new MaxPool1D(
             $this->backend,
             $options);
     }
