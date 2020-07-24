@@ -906,7 +906,7 @@ class Backend
         if($dOutputs->ndim()!=$rank+2) {
             throw new InvalidArgumentException('dOutputs must be '.($rank+2).'D NDArray');
         }
-        if($this->pool_mode=='avg'){
+        if($status->pool_mode=='avg'){
             // d mean
             // dx = repeat(dy/N)
             $num = $status->cols->shape()[1];
