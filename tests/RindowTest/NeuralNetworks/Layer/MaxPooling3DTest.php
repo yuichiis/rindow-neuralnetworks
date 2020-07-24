@@ -1,11 +1,11 @@
 <?php
-namespace RindowTest\NeuralNetworks\Layer\MaxPool3DTest;
+namespace RindowTest\NeuralNetworks\Layer\MaxPooling3DTest;
 
 use PHPUnit\Framework\TestCase;
 use Rindow\Math\Matrix\MatrixOperator;
 use Rindow\NeuralNetworks\Backend\RindowBlas\Backend;
 use Rindow\NeuralNetworks\Builder\NeuralNetworks;
-use Rindow\NeuralNetworks\Layer\MaxPool3D;
+use Rindow\NeuralNetworks\Layer\MaxPooling3D;
 use InvalidArgumentException;
 
 class Test extends TestCase
@@ -14,7 +14,7 @@ class Test extends TestCase
     {
         $mo = new MatrixOperator();
         $backend = new Backend($mo);
-        $layer = new MaxPool3D(
+        $layer = new MaxPooling3D(
             $backend,
             [
                 'input_shape'=>[4,4,4,3]
@@ -34,7 +34,7 @@ class Test extends TestCase
     {
         $mo = new MatrixOperator();
         $backend = new Backend($mo);
-        $layer = new MaxPool3D(
+        $layer = new MaxPooling3D(
             $backend,
             [
             ]);
@@ -48,7 +48,7 @@ class Test extends TestCase
     {
         $mo = new MatrixOperator();
         $backend = new Backend($mo);
-        $layer = new MaxPool3D(
+        $layer = new MaxPooling3D(
             $backend,
             [
             ]);
@@ -63,7 +63,7 @@ class Test extends TestCase
         $backend = new Backend($mo);
         $fn = $backend;
 
-        $layer = new MaxPool3D(
+        $layer = new MaxPooling3D(
             $backend,
             ['input_shape'=>[4,4,4,3]]);
 
