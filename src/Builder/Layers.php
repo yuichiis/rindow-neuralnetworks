@@ -8,11 +8,14 @@ use Rindow\NeuralNetworks\Layer\Softmax;
 use Rindow\NeuralNetworks\Layer\Dense;
 use Rindow\NeuralNetworks\Layer\Flatten;
 use Rindow\NeuralNetworks\Layer\Conv1D;
-use Rindow\NeuralNetworks\Layer\MaxPool1D;
 use Rindow\NeuralNetworks\Layer\Conv2D;
-use Rindow\NeuralNetworks\Layer\MaxPool2D;
 use Rindow\NeuralNetworks\Layer\Conv3D;
-use Rindow\NeuralNetworks\Layer\MaxPool3D;
+use Rindow\NeuralNetworks\Layer\MaxPooling1D;
+use Rindow\NeuralNetworks\Layer\MaxPooling2D;
+use Rindow\NeuralNetworks\Layer\MaxPooling3D;
+use Rindow\NeuralNetworks\Layer\AveragePooling1D;
+use Rindow\NeuralNetworks\Layer\AveragePooling2D;
+use Rindow\NeuralNetworks\Layer\AveragePooling3D;
 use Rindow\NeuralNetworks\Layer\Dropout;
 use Rindow\NeuralNetworks\Layer\BatchNormalization;
 
@@ -61,14 +64,6 @@ class Layers
             $options);
     }
     
-    public function MaxPool1D(
-        array $options=null)
-    {
-        return new MaxPool1D(
-            $this->backend,
-            $options);
-    }
-
     public function Conv2D(
         int $filters, $kernel_size, array $options=null)
     {
@@ -79,14 +74,6 @@ class Layers
             $options);
     }
     
-    public function MaxPool2D(
-        array $options=null)
-    {
-        return new MaxPool2D(
-            $this->backend,
-            $options);
-    }
-
     public function Conv3D(
         int $filters, $kernel_size, array $options=null)
     {
@@ -97,10 +84,50 @@ class Layers
             $options);
     }
     
-    public function MaxPool3D(
+    public function MaxPooling1D(
         array $options=null)
     {
-        return new MaxPool3D(
+        return new MaxPooling1D(
+            $this->backend,
+            $options);
+    }
+
+    public function MaxPooling2D(
+        array $options=null)
+    {
+        return new MaxPooling2D(
+            $this->backend,
+            $options);
+    }
+
+    public function MaxPooling3D(
+        array $options=null)
+    {
+        return new MaxPooling3D(
+            $this->backend,
+            $options);
+    }
+
+    public function AveragePooling1D(
+        array $options=null)
+    {
+        return new AveragePooling1D(
+            $this->backend,
+            $options);
+    }
+
+    public function AveragePooling2D(
+        array $options=null)
+    {
+        return new AveragePooling2D(
+            $this->backend,
+            $options);
+    }
+
+    public function AveragePooling3D(
+        array $options=null)
+    {
+        return new AveragePooling3D(
             $this->backend,
             $options);
     }
