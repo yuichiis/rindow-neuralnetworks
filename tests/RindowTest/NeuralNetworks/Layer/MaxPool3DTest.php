@@ -47,7 +47,7 @@ class Test extends TestCase
     public function testSetInputShape()
     {
         $mo = new MatrixOperator();
-        $backend = new Backend($mo);3
+        $backend = new Backend($mo);
         $layer = new MaxPool3D(
             $backend,
             [
