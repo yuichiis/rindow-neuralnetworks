@@ -11,6 +11,8 @@ use Rindow\NeuralNetworks\Layer\Conv1D;
 use Rindow\NeuralNetworks\Layer\MaxPool1D;
 use Rindow\NeuralNetworks\Layer\Conv2D;
 use Rindow\NeuralNetworks\Layer\MaxPool2D;
+use Rindow\NeuralNetworks\Layer\Conv3D;
+use Rindow\NeuralNetworks\Layer\MaxPool3D;
 use Rindow\NeuralNetworks\Layer\Dropout;
 use Rindow\NeuralNetworks\Layer\BatchNormalization;
 
@@ -49,6 +51,24 @@ class Layers
         return new Flatten($this->backend, $options);
     }
 
+    public function Conv1D(
+        int $filters, $kernel_size, array $options=null)
+    {
+        return new Conv1D(
+            $this->backend,
+            $filters,
+            $kernel_size,
+            $options);
+    }
+    
+    public function MaxPool1D(
+        array $options=null)
+    {
+        return new MaxPool1D(
+            $this->backend,
+            $options);
+    }
+
     public function Conv2D(
         int $filters, $kernel_size, array $options=null)
     {
@@ -67,20 +87,20 @@ class Layers
             $options);
     }
 
-    public function Conv1D(
+    public function Conv3D(
         int $filters, $kernel_size, array $options=null)
     {
-        return new Conv1D(
+        return new Conv3D(
             $this->backend,
             $filters,
             $kernel_size,
             $options);
     }
     
-    public function MaxPool1D(
+    public function MaxPool3D(
         array $options=null)
     {
-        return new MaxPool1D(
+        return new MaxPool3D(
             $this->backend,
             $options);
     }
