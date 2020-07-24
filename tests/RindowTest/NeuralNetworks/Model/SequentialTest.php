@@ -535,7 +535,7 @@ class Test extends TestCase
             NDArray::float32
             )->reshape([5,5,1]);
         $v_t = $mo->arange(5);
-        $history = $model->fit($x,$t,['epochs'=>100,'validation_data'=>[$v100$v_t],'verbose'=>0]);
+        $history = $model->fit($x,$t,['epochs'=>100,'validation_data'=>[$v_x,$v_t],'verbose'=>0]);
 
         $this->assertEquals(['loss','accuracy','val_loss','val_accuracy'],array_keys($history));
 
