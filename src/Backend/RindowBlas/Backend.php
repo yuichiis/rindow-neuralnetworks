@@ -910,7 +910,7 @@ class Backend
             // d mean
             // dx = repeat(dy/N)
             $num = $status->cols->shape()[1];
-            $tmp = $this->scal(1/$num,$this->copy($dOutputs));
+            $tmp = $this->la->scal(1/$num,$this->copy($dOutputs));
             $dCols = $this->la->duplicate($tmp,$num,$trans=true);
         } else {
             // d max
