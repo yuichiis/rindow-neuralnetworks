@@ -44,7 +44,7 @@ class Test extends TestCase
     {
         $mo = new MatrixOperator();
         $backend = new Backend($mo);
-        $layer = new Conv2D(
+        $layer = new Conv1D(
             $backend,
             $filters=5,
             $kernel_size=3,
