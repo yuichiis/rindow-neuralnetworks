@@ -588,9 +588,6 @@ class Backend
         string $pool_mode=null
         ) : NDArray
     {
-        if($inputs->ndim()!=4) {
-            throw new InvalidArgumentException('inputs must be 4D NDArray');
-        }
         $rank = 2;
         return $this->doPool(
             $rank,
@@ -610,6 +607,82 @@ class Backend
         ): NDArray
     {
         $rank = 2;
+        return $this->doDPool(
+            $rank,
+            $status,
+            $dOutputs
+        );
+    }
+
+    public function conv3d(
+        object $status,
+        NDArray $inputs,
+        NDArray $kernel,
+        NDArray $bias=null,
+        array $strides=null,
+        string $padding=null,
+        string $data_format=null
+        ) : NDArray
+    {
+        $rank = 3;
+        return $this->doConv(
+            $rank,
+            $status,
+            $inputs,
+            $kernel,
+            $bias,
+            $strides,
+            $padding,
+            $data_format
+        );
+    }
+    
+    public function dConv3d(
+        object $status,
+        NDArray $dOutputs,
+        NDArray $dKernel,
+        NDArray $dBias=null
+        ): NDArray
+    {
+        $rank = 3;
+        return $this->doDConv(
+            $rank,
+            $status,
+            $dOutputs,
+            $dKernel,
+            $dBias
+        );
+    }
+
+    public function pool3d(
+        object $status,
+        NDArray $inputs,
+        array $poolSize,
+        array $strides=null,
+        string $padding=null,
+        string $data_format=null,
+        string $pool_mode=null
+        ) : NDArray
+    {
+        $rank = 3;
+        return $this->doPool(
+            $rank,
+            $status,
+            $inputs,
+            $poolSize,
+            $strides,
+            $padding,
+            $data_format,
+            $pool_mode
+        );
+    }
+
+    public function dPool3d(
+        object $status,
+        NDArray $dOutputs
+        ): NDArray
+    {
+        $rank = 3;
         return $this->doDPool(
             $rank,
             $status,
