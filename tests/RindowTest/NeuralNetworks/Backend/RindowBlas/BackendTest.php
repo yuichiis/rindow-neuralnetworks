@@ -573,7 +573,7 @@ class Test extends TestCase
             );
     }
 
-    public function testPool1d()
+    public function testPool1dMax()
     {
         $mo = new MatrixOperator();
         $K = new Backend($mo);
@@ -619,6 +619,69 @@ class Test extends TestCase
         );
         $this->assertEquals([[
             [3,4,5],[9,10,11],
+        ]],$outputs->toArray());
+        $dOutputs = $mo->ones($outputs->shape());
+        $dInputs = $K->dPool1d(
+            $status,
+            $dOutputs
+        );
+        
+        $this->assertEquals(
+            $inputs->shape(),
+            $dInputs->shape()
+            );
+        $this->assertNotEquals(
+            $dInputs->toArray(),
+            $mo->zerosLike($dInputs)->toArray()
+            );
+    }
+
+    public function testPool1dAvg()
+    {
+        $mo = new MatrixOperator();
+        $K = new Backend($mo);
+        
+        $batches = 1;
+        $im_w = 4;
+        $channels = 3;
+        $pool_w = 2;
+        #$stride_h = 1;
+        #$stride_w = 1;
+        $padding = null;
+        $data_format = null;
+        $pool_mode = 'avg';
+
+        $inputs = $mo->arange(
+            $batches*
+            $im_w*
+            $channels,
+            null,null,
+            NDArray::float32
+        )->reshape([
+            $batches,
+            $im_w,
+            $channels
+        ]);
+
+        $status = new \stdClass();
+        
+        $outputs = $K->pool1d(
+            $status,
+            $inputs,
+            $poolSize=[$pool_w],
+            $strides=null,
+            $padding,
+            $data_format,
+            $pool_mode
+        );
+        $this->assertEquals(
+            [$batches,
+             $out_w=2,
+             $channels],
+            $outputs->shape()
+        );
+        $this->assertEquals([[
+            [1.5,2.5,3.5],[7.5,8.5,9.5],
         ]],$outputs->toArray());
         $dOutputs = $mo->ones($outputs->shape());
         $dInputs = $K->dPool1d(
