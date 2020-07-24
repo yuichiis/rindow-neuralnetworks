@@ -561,7 +561,7 @@ class Test extends TestCase
             $nn->layers()->Conv3D(
                 $filters=5,
                 $kernel_size=3,
-                ['input_shape'=>[5,5,1]]),
+                ['input_shape'=>[5,5,5,1]]),
             $nn->layers()->ReLU(),
             $nn->layers()->MaxPool3D(),
             $nn->layers()->Flatten(),
