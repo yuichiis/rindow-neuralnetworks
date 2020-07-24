@@ -3,7 +3,7 @@ namespace Rindow\NeuralNetworks\Layer;
 
 use Interop\Polite\Math\Matrix\NDArray;
 
-class MaxPool1D extends AbstractPool implements Layer
+class MaxPooling1D extends AbstractPooling implements Layer
 {
     protected $rank = 1;
     protected $pool_mode = 'max';
