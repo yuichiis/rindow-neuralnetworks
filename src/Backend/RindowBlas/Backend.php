@@ -929,7 +929,7 @@ class Backend
             */
             $dCols = $this->la->scatter(
                 $argMax,
-                $dOutputs->reshape($dOutputs->size()),
+                $dOutputs->reshape([$dOutputs->size()]),
                 array_product($status->poolSize),
                 $axis=1
             );
