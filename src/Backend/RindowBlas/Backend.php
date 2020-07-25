@@ -917,7 +917,7 @@ class Backend
             //dx = dy * onehot(argMax(x))
             $argMax = $this->la->reduceArgMax(
                 $status->cols,$axis=1);
-        
+            /*
             $dCols = $this->la->onehot(
                 $argMax,
                 array_product($status->poolSize));
@@ -926,6 +926,13 @@ class Backend
             );
             $this->la->multiply(
                 $dOutputs,$dCols,$trans=true);
+            */
+            $dCols = $this->la->scatter(
+                $argMax,
+                $dOutputs->reshape($dOutputs->size()),
+                array_product($status->poolSize),
+                $axis=1
+            );
         }
         
         $dInputs = $this->zeros(
