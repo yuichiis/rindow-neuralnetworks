@@ -17,10 +17,10 @@ $epochs = 5;
 fwrite(STDERR,"train=[".implode(',',$train_img->shape())."]\n");
 fwrite(STDERR,"test=[".implode(',',$test_img->shape())."]\n");
 
-if(true || !extension_loaded('rindow_openblas')) {
+if(!extension_loaded('rindow_openblas')) {
     // Shrink data
     $epochs = 5;
-    $trainSize = 6000;
+    $trainSize = 3000;
     $testSize  = 100;
     fwrite(STDERR,"Shrink data ...\n");
     $train_img = $train_img[[0,$trainSize-1]];
