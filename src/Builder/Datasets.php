@@ -32,6 +32,6 @@ class Datasets
                 $this->matrixOperator);
 
         }
-        return $this->mnist;
+        return $this->fashionMnist;
     }
 }
