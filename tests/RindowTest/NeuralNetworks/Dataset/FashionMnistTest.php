@@ -77,7 +77,7 @@ class Test extends TestCase
         $plot = new Plot(null,$mo);
 
         [[$train_img,$train_label],[$test_img,$test_label]] =
-            $nn->datasets()-fashionMnist()->loadData();
+            $nn->datasets()->fashionMnist()->loadData();
 
         if($this->plot) {
             [$figure, $axes] = $plot->subplots(5,7);
