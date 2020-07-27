@@ -30,7 +30,7 @@ fwrite(STDERR,"test=[".implode(',',$test_img->shape())."]\n");
 if($shrink||!extension_loaded('rindow_openblas')) {
     // Shrink data
     $epochs = 5;
-    $trainSize = 5000;
+    $trainSize = 6000;
     $testSize  = 100;
     fwrite(STDERR,"Shrink data ...\n");
     $train_img = $train_img[[0,$trainSize-1]];
