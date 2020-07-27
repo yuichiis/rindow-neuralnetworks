@@ -10,16 +10,24 @@ $mo = new MatrixOperator();
 $nn = new NeuralNetworks($mo);
 $plt = new Plot(null,$mo);
 
-#[[$train_img,$train_label],[$test_img,$test_label]] =
-#    $nn->datasets()->mnist()->loadData();
-[[$train_img,$train_label],[$test_img,$test_label]] =
-    $nn->datasets()->fashionMnist()->loadData();
+if(!isset($argv[1])||!$argv[1]) {
+    $shrink = false;
+} else {
+    $shrink = true;
+}
+if(!isset($argv[2])||!$argv[2]) {
+    [[$train_img,$train_label],[$test_img,$test_label]] =
+        $nn->datasets()->mnist()->loadData();
+} else {
+    [[$train_img,$train_label],[$test_img,$test_label]] =
+        $nn->datasets()->fashionMnist()->loadData();
+}
 $epochs = 5;
 
 fwrite(STDERR,"train=[".implode(',',$train_img->shape())."]\n");
 fwrite(STDERR,"test=[".implode(',',$test_img->shape())."]\n");
 
-if(!extension_loaded('rindow_openblas')) {
+if($shrink||!extension_loaded('rindow_openblas')) {
     // Shrink data
     $epochs = 5;
     $trainSize = 3000;
