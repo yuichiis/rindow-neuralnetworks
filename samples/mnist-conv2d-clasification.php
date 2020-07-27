@@ -10,8 +10,10 @@ $mo = new MatrixOperator();
 $nn = new NeuralNetworks($mo);
 $plt = new Plot(null,$mo);
 
-[[$train_img,$train_label],[$test_img,$test_label]] =
+#[[$train_img,$train_label],[$test_img,$test_label]] =
     $nn->datasets()->mnist()->loadData();
+[[$train_img,$train_label],[$test_img,$test_label]] =
+    $nn->datasets()->fashionMnist()->loadData();
 $epochs = 5;
 
 fwrite(STDERR,"train=[".implode(',',$train_img->shape())."]\n");
