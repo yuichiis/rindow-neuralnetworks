@@ -18,6 +18,7 @@ class Test extends TestCase
     public function setUp() : void
     {
         $this->plot = true;
+        $this->pickleFile = sys_get_temp_dir().'/rindow/nn/datasets/mnist.pkl';
     }
 
     public function testDownloadFiles()
@@ -31,7 +32,7 @@ class Test extends TestCase
 
     public function testLoadDataFromFiles()
     {
-        $pickleFile = sys_get_temp_dir().'/rindow/nn/datasets/mnist.pkl';
+        $pickleFile = $this->pickleFile;
         if(file_exists($pickleFile)) {
             unlink($pickleFile);
             sleep(1);
@@ -60,7 +61,7 @@ class Test extends TestCase
 
     public function testLoadDataFromPickle()
     {
-        $pickleFile = sys_get_temp_dir().'/rindow/nn/datasets/mnist.pkl';
+        $pickleFile = $this->pickleFile;
         $this->assertTrue(file_exists($pickleFile));
 
         $mo = new MatrixOperator();
@@ -91,7 +92,7 @@ class Test extends TestCase
 
     public function testCleanPickle()
     {
-        $pickleFile = sys_get_temp_dir().'/rindow/nn/datasets/mnist.pkl';
+        $pickleFile = $this->pickleFile;
         $this->assertTrue(file_exists($pickleFile));
 
         $mo = new MatrixOperator();
