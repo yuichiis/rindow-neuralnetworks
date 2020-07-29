@@ -4,6 +4,7 @@ namespace Rindow\NeuralNetworks\Dataset;
 use LogicException;
 use Rindow\Math\Matrix\MatrixOperator;
 use Interop\Polite\Math\Matrix\NDArray;
+use PharData;
 
 class Cifar10
 {
