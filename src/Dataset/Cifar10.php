@@ -155,6 +155,9 @@ class Cifar10
         $this->console("Converting ".$filename." to NDArray ...");
         $p = 0;
         $f = fopen($filePath,'rb');
+        if($f===false) {
+            new RuntimeException('file not found:'.$filePath);
+        }
         $j=0;
         while(true){
             $label = fread($f,1);
