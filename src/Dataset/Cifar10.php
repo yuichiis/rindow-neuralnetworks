@@ -154,7 +154,7 @@ class Cifar10
         }
     }
 
-    protected function convertImage($filename,$images,$labels)
+    protected function convertImage($filename,$images,$labels) : void
     {
         $mo = $this->matrixOperator;
         $filePath = $this->datasetDir."/".$filename;
@@ -172,9 +172,7 @@ class Cifar10
             if($label===false||$label=='')
                 break;
             if($labels->size()<=$p){
-                var_dump($label);
-                var_dump($p);
-                throw new RuntimeException('overflow');
+                throw new RuntimeException('label buffer overflow');
             }
             $this->unpackLabel(
                 $label,
@@ -199,7 +197,6 @@ class Cifar10
         fclose($f);
 
         $this->console("Done\n");
-        return $data;
     }
 
     protected function unpackLabel(
