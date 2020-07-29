@@ -215,8 +215,7 @@ class Cifar10
         $blue = unpack("C*",$bluedata);
         $size = count($red);
         foreach(array_keys($red) as $i) {
-            $c = $red[$i];
-            $buffer[$j++] = $c;
+            $buffer[$j++] = $red[$i];
             $buffer[$j++] = $green[$i];
             $buffer[$j++] = $blue[$i];
         }
