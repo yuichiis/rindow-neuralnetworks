@@ -211,9 +211,10 @@ class Cifar10
         $reddata,$greendata,$bluedata,$buffer)
     {
         $red = unpack("C*",$reddata);
-        $green = unpack("C*",$reddata);
-        $blue = unpack("C*",$reddata);
+        $green = unpack("C*",$greendata);
+        $blue = unpack("C*",$bluedata);
         $size = count($red);
+echo "size=$size."
         for($i=0,$j=0;$i<$size;$i++) {
             $buffer[$j++] = $red[$i];
             $buffer[$j++] = $green[$i];
