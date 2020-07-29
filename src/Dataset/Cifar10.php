@@ -112,8 +112,12 @@ class Cifar10
             return;
         }
         $this->console("Extract to:".$this->datasetDir.'/..'."\n");
+        $files = [];
+        foreach($this->keyFiles as $file){
+            $files[]='cifar-10-batches-bin/'.$file;
+        }
         $phar = new PharData($filePath);
-        $rc=$phar->extractTo($this->datasetDir.'/..','cifar-10-batches-bin',true);
+        $rc=$phar->extractTo($this->datasetDir.'/..',$files,true);
         $this->console("Done\n");
     }
 
