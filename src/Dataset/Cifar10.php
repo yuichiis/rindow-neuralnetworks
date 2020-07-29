@@ -19,9 +19,9 @@ class Cifar10
         'data_file_5'=>'data_batch_5.bin',
         'test_file'=>'test_batch.bin',
     ];
-    protected $trainNum = 60000;
+    protected $trainNum = 50000;
     protected $testNum = 10000;
-    protected $imageShape = [3, 32, 32]; // = 784
+    protected $imageShape = [32, 32, 3]; // = 784
     protected $datasetDir;
     protected $saveFile;
 
