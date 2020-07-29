@@ -171,6 +171,11 @@ class Cifar10
             $label = fread($f,1);
             if($label===false)
                 break;
+            if($labels->size()<=$p){
+                var_dump($label);
+                var_dump($p);
+                throw new RuntimeException('overflow')
+            }
             $this->unpackLabel(
                 $label,
                 $labels[$p]->buffer());
