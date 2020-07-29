@@ -154,7 +154,7 @@ class Cifar10
 
         $this->console("Converting ".$filename." to NDArray ...");
         $p = 0;
-        $f = fopen($filename,'rb');
+        $f = fopen($filePath,'rb');
         $j=0;
         while(true){
             $label = fread($f,1);
