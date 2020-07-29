@@ -104,7 +104,7 @@ class Cifar10
             return;
 
         $this->console("Downloading " . $filename . " ... ");
-        copy($this->urlBase.$filename, $filePath);
+        copy($this->baseUrl.$filename, $filePath);
         $this->console("Done\n");
         $this->console("Extract\n");
         $phar = new PharData($filePath);
