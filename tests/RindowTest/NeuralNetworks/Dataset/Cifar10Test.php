@@ -18,7 +18,7 @@ class Test extends TestCase
     public function setUp() : void
     {
         $this->plot = true;
-        $this->pickleFile = sys_get_temp_dir().'/rindow/nn/datasets/mnist/mnist.pkl';
+        $this->pickleFile = sys_get_temp_dir().'/rindow/nn/datasets/cifar-10-batches-bin/cifar10.pkl';
     }
 
     public function testDownloadFiles()
