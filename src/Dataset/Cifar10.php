@@ -108,7 +108,7 @@ class Cifar10
         $this->console("Done\n");
         $this->console("Extract\n");
         $phar = new PharData($filePath);
-        $phar->extractTo($this->datasetDir.'/..')
+        $phar->extractTo($this->datasetDir.'/..');
         $this->console("Done\n");
     }
 
