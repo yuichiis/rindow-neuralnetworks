@@ -2,6 +2,7 @@
 namespace Rindow\NeuralNetworks\Dataset;
 
 use LogicException;
+use RuntimeException;
 use Rindow\Math\Matrix\MatrixOperator;
 use Interop\Polite\Math\Matrix\NDArray;
 use PharData;
@@ -101,15 +102,18 @@ class Cifar10
     {
         $filePath = $this->datasetDir . "/" . $filename;
 
-        if(file_exists($filePath))
-            return;
+        if(!file_exists($filePath)){
+            $this->console("Downloading " . $filename . " ... ");
+            copy($this->baseUrl.$filename, $filePath);
+            $this->console("Done\n");
+        }
 
-        $this->console("Downloading " . $filename . " ... ");
-        copy($this->baseUrl.$filename, $filePath);
-        $this->console("Done\n");
-        $this->console("Extract\n");
+        if(file_exists($this->datasetDir.'/data_batch_1.bin')){
+            return;
+        }
+        $this->console("Extract to:".$this->datasetDir.'/..'."\n");
         $phar = new PharData($filePath);
-        $phar->extractTo($this->datasetDir.'/..');
+        $rc=$phar->extractTo($this->datasetDir.'/..');
         $this->console("Done\n");
     }
 
