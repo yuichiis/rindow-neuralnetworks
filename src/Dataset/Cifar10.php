@@ -169,7 +169,7 @@ class Cifar10
         $j=0;
         while(true){
             $label = fread($f,1);
-            if($label===false)
+            if($label===false||$label=='')
                 break;
             if($labels->size()<=$p){
                 var_dump($label);
