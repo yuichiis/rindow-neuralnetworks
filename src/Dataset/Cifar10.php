@@ -174,7 +174,7 @@ class Cifar10
             if($labels->size()<=$p){
                 var_dump($label);
                 var_dump($p);
-                throw new RuntimeException('overflow')
+                throw new RuntimeException('overflow');
             }
             $this->unpackLabel(
                 $label,
