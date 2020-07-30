@@ -115,5 +115,5 @@ $plt->plot($mo->array($history['val_accuracy']),null,null,'val_accuracy');
 $plt->plot($mo->array($history['loss']),null,null,'loss');
 $plt->plot($mo->array($history['val_loss']),null,null,'val_loss');
 $plt->legend();
-$plt->title('mnist');
+$plt->title($dataset);
 $plt->show();
