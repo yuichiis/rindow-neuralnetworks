@@ -88,8 +88,8 @@ $model = $nn->models()->Sequential([
         ['input_shape'=>$inputShape,
         'kernel_initializer'=>'relu_normal']),
     $nn->layers()->ReLU(),
-    #$nn->layers()->MaxPooling2D(),
-    $nn->layers()->AveragePooling2D(),
+    $nn->layers()->MaxPooling2D(),#
+    #$nn->layers()->AveragePooling2D(),
     $nn->layers()->Flatten(),
     $nn->layers()->Dense($units=100,
         ['kernel_initializer'=>'relu_normal']),
