@@ -9,7 +9,7 @@
         "rindow/rindow-math-matrix": ">=1.0.4"
     },
     "require-dev": {
-        "rindow/rindow-math-plot": ">=1.0.2"
+        "rindow/rindow-math-plot": ">=1.0.3"
     },
     "suggest": {
         "rindow/rindow-math-plot": "when visualize machine learning results",
