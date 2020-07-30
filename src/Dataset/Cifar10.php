@@ -133,7 +133,7 @@ class Cifar10
             $dataset['train_images'],
             $dataset['train_labels']);
         $dataset['test_images'] = $mo->zeros([10000,32,32,3],NDArray::uint8);
-        $dataset['test_labels'] = $mo->zeros([10000,1],NDArray::uint8);
+        $dataset['test_labels'] = $mo->zeros([10000],NDArray::uint8);
         $this->convertDataset(
             $testFiles,
             $dataset['test_images'],
@@ -147,6 +147,7 @@ class Cifar10
         $rows = array_shift($shape);
         $size = array_product($shape);
         $image_dataset = $image_dataset->reshape([$rows,$size]);
+        $labels_dataset = $labels_dataset->reshape([$labels_dataset->size(),1]);
         $offset = 0;
         foreach($filenames as $filename) {
             $images = $image_dataset[[$offset,$offset+9999]];
