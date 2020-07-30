@@ -32,7 +32,7 @@ if($dataset=='fashion') {
         $nn->datasets()->cifar10()->loadData();
     $inputShape = [32,32,3];
     $shrinkEpochs = 3;
-    $shrinkTrainSize = 5000;
+    $shrinkTrainSize = 4000;
     $shrinkTestSize  = 100;
 } else {
     [[$train_img,$train_label],[$test_img,$test_label]] =
@@ -88,16 +88,10 @@ $model = $nn->models()->Sequential([
         ['input_shape'=>$inputShape,
         'kernel_initializer'=>'relu_normal']),
     $nn->layers()->ReLU(),
-    $nn->layers()->MaxPooling2D(),#
-    $nn->layers()->Conv2D(
-       $filters=64,
-        $kernel_size=3,
-        ['kernel_initializer'=>'relu_normal']),
-    $nn->layers()->ReLU(),
-    $nn->layers()->MaxPooling2D(),#
-    #$nn->layers()->AveragePooling2D(),
+    #$nn->layers()->MaxPooling2D(),
+    $nn->layers()->AveragePooling2D(),
     $nn->layers()->Flatten(),
-    $nn->layers()->Dense($units=256,
+    $nn->layers()->Dense($units=128,
         ['kernel_initializer'=>'relu_normal']),
     $nn->layers()->ReLU(),
     $nn->layers()->Dense($units=10),
