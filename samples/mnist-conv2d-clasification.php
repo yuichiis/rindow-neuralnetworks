@@ -83,15 +83,21 @@ $test_img = $test_img->reshape(array_merge([$dataSize],$inputShape));
 fwrite(STDERR,"creating model ...\n");
 $model = $nn->models()->Sequential([
     $nn->layers()->Conv2D(
-       $filters=30,
+       $filters=96,
         $kernel_size=3,
         ['input_shape'=>$inputShape,
         'kernel_initializer'=>'relu_normal']),
     $nn->layers()->ReLU(),
     $nn->layers()->MaxPooling2D(),#
+    $nn->layers()->Conv2D(
+       $filters=256,
+        $kernel_size=3,
+        ['kernel_initializer'=>'relu_normal']),
+    $nn->layers()->ReLU(),
+    $nn->layers()->MaxPooling2D(),#
     #$nn->layers()->AveragePooling2D(),
     $nn->layers()->Flatten(),
-    $nn->layers()->Dense($units=100,
+    $nn->layers()->Dense($units=1024,
         ['kernel_initializer'=>'relu_normal']),
     $nn->layers()->ReLU(),
     $nn->layers()->Dense($units=10),
