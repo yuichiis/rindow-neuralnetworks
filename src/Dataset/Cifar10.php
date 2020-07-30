@@ -127,7 +127,7 @@ class Cifar10
         $filenames = $this->keyFiles;
         $testFiles = [array_pop($filenames)];
         $dataset['train_images'] = $mo->zeros([50000,32,32,3],NDArray::uint8);
-        $dataset['train_labels'] = $mo->zeros([50000,1],NDArray::uint8);
+        $dataset['train_labels'] = $mo->zeros([50000],NDArray::uint8);
         $this->convertDataset(
             $filenames,
             $dataset['train_images'],
