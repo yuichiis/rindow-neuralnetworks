@@ -32,7 +32,7 @@ if($dataset=='fashion') {
         $nn->datasets()->cifar10()->loadData();
     $inputShape = [32,32,3];
     $shrinkEpochs = 3;
-    $shrinkTrainSize = 4000;
+    $shrinkTrainSize = 6000;
     $shrinkTestSize  = 100;
 } else {
     [[$train_img,$train_label],[$test_img,$test_label]] =
