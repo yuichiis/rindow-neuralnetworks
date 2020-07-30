@@ -143,7 +143,7 @@ class Cifar10
 
     protected function convertDataset($filenames, $image_dataset, $labels_dataset)
     {
-        $image_dataset = $image_dataset->reshape([50000,32*32*3])
+        $image_dataset = $image_dataset->reshape([50000,32*32*3]);
         $offset = 0;
         foreach($filenames as $filename) {
             $images = $image_dataset[[$offset,$offset+9999]];
