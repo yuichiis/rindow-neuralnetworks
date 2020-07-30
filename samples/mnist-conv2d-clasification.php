@@ -38,8 +38,8 @@ if($dataset=='fashion') {
     [[$train_img,$train_label],[$test_img,$test_label]] =
         $nn->datasets()->mnist()->loadData();
     $inputShape = [28,28,1];
-    $shrinkEpochs = 5;
-    $shrinkTrainSize = 6000;
+    $shrinkEpochs = 3;
+    $shrinkTrainSize = 5000;
     $shrinkTestSize  = 100;
 }
 $epochs = 5;
