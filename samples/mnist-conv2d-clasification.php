@@ -28,7 +28,7 @@ if($dataset=='fashion') {
     $shrinkTestSize  = 100;
 } elseif($dataset=='cifar10') {
     [[$train_img,$train_label],[$test_img,$test_label]] =
-        $nn->datasets()->fashionMnist()->loadData();
+        $nn->datasets()->cifar10()->loadData();
     $shrinkEpochs = 3;
     $shrinkTrainSize = 2000;
     $shrinkTestSize  = 100;
