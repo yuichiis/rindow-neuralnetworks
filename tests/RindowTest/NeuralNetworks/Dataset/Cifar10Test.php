@@ -85,7 +85,7 @@ class Test extends TestCase
             for($i=0;$i<count($axes);$i++) {
                 $axes[$i]->setAspect('equal');
                 $axes[$i]->setFrame(false);
-                $axes[$i]->imshow($train_img[$i]);
+                $axes[$i]->imshow($train_img[$i],null,null,null,$origin='upper');
             }
             $plot->show();
         }
