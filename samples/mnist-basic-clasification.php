@@ -16,12 +16,29 @@ if(!isset($argv[1])||!$argv[1]) {
 } else {
     $shrink = true;
 }
-if(!isset($argv[2])||!$argv[2]) {
-    [[$train_img,$train_label],[$test_img,$test_label]] =
-        $nn->datasets()->mnist()->loadData();
-} else {
+$dataset='mnist';
+if(isset($argv[2])) {
+    $dataset=$argv[2];
+}
+
+if($dataset=='fashion') {
     [[$train_img,$train_label],[$test_img,$test_label]] =
         $nn->datasets()->fashionMnist()->loadData();
+    $shrinkEpochs = 3;
+    $shrinkTrainSize = 5000;
+    $shrinkTestSize  = 100;
+} elseif($dataset=='cifar10') {
+    [[$train_img,$train_label],[$test_img,$test_label]] =
+        $nn->datasets()->fashionMnist()->loadData();
+    $shrinkEpochs = 3;
+    $shrinkTrainSize = 2000;
+    $shrinkTestSize  = 100;
+} else {
+    [[$train_img,$train_label],[$test_img,$test_label]] =
+        $nn->datasets()->mnist()->loadData();
+    $shrinkEpochs = 3;
+    $shrinkTrainSize = 5000;
+    $shrinkTestSize  = 100;
 }
 
 fwrite(STDERR,"train=[".implode(',',$train_img->shape())."]\n");
@@ -29,8 +46,9 @@ fwrite(STDERR,"test=[".implode(',',$test_img->shape())."]\n");
 
 if($shrink||!extension_loaded('rindow_openblas')) {
     // Shrink data
-    $trainSize = 6000;
-    $testSize  = 100;
+    $epochs = $shrinkEpochs;
+    $trainSize = $shrinkTrainSize;
+    $testSize  = $shrinkTestSize;
     fwrite(STDERR,"Shrink data ...\n");
     $train_img = $train_img[[0,$trainSize-1]];
     $train_label = $train_label[[0,$trainSize-1]];
