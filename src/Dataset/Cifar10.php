@@ -176,7 +176,7 @@ class Cifar10
             }
             $this->unpackLabel(
                 $label,
-                $labels[$p]->buffer());
+                $labels[$p]);
             $red = fread($f,1024);
             $green = fread($f,1024);
             $blue = fread($f,1024);
@@ -186,7 +186,7 @@ class Cifar10
                 break;
             $this->unpackImage(
                 $red,$green,$blue,
-                $images[$p]->buffer());
+                $images[$p]->reshape([3072]));
             $p++;
             $j++;
             if($j>=200) {
