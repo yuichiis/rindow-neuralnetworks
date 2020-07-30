@@ -23,18 +23,21 @@ if(isset($argv[2])) {
 if($dataset=='fashion') {
     [[$train_img,$train_label],[$test_img,$test_label]] =
         $nn->datasets()->fashionMnist()->loadData();
+    $inputShape = [28,28,1];
     $shrinkEpochs = 3;
     $shrinkTrainSize = 5000;
     $shrinkTestSize  = 100;
 } elseif($dataset=='cifar10') {
     [[$train_img,$train_label],[$test_img,$test_label]] =
-        $nn->datasets()->cifar10()->loadData();
+        $nn->datasets()->fashionMnist()->loadData();
+    $inputShape = [32,32,3];
     $shrinkEpochs = 3;
     $shrinkTrainSize = 2000;
     $shrinkTestSize  = 100;
 } else {
     [[$train_img,$train_label],[$test_img,$test_label]] =
         $nn->datasets()->mnist()->loadData();
+    $inputShape = [28,28,1];
     $shrinkEpochs = 5;
     $shrinkTrainSize = 6000;
     $shrinkTestSize  = 100;
@@ -73,16 +76,16 @@ fwrite(STDERR,"formating test images ...\n");
 $test_img  = formatingImage($mo,$test_img);
 
 [$dataSize,$imageSize] = $train_img->shape();
-$train_img = $train_img->reshape([$dataSize,28,28,1]);
+$train_img = $train_img->reshape(array_merge([$dataSize],$inputShape));
 [$dataSize,$imageSize] = $test_img->shape();
-$test_img = $test_img->reshape([$dataSize,28,28,1]);
+$test_img = $test_img->reshape(array_merge([$dataSize],$inputShape));
 
 fwrite(STDERR,"creating model ...\n");
 $model = $nn->models()->Sequential([
     $nn->layers()->Conv2D(
        $filters=30,
         $kernel_size=3,
-        ['input_shape'=>[28,28,1],
+        ['input_shape'=>$inputShape,
         'kernel_initializer'=>'relu_normal']),
     $nn->layers()->ReLU(),
     #$nn->layers()->MaxPooling2D(),
