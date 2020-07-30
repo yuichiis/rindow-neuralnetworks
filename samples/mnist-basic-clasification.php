@@ -24,18 +24,21 @@ if(isset($argv[2])) {
 if($dataset=='fashion') {
     [[$train_img,$train_label],[$test_img,$test_label]] =
         $nn->datasets()->fashionMnist()->loadData();
+    $inputShape = [28*28];
     $shrinkEpochs = 3;
     $shrinkTrainSize = 5000;
     $shrinkTestSize  = 100;
 } elseif($dataset=='cifar10') {
     [[$train_img,$train_label],[$test_img,$test_label]] =
-        $nn->datasets()->cifar10()->loadData();
+        $nn->datasets()->fashionMnist()->loadData();
+    $inputShape = [32*32*3];
     $shrinkEpochs = 3;
     $shrinkTrainSize = 2000;
     $shrinkTestSize  = 100;
 } else {
     [[$train_img,$train_label],[$test_img,$test_label]] =
         $nn->datasets()->mnist()->loadData();
+    $inputShape = [28*28];
     $shrinkEpochs = 3;
     $shrinkTrainSize = 5000;
     $shrinkTestSize  = 100;
@@ -75,7 +78,7 @@ $test_img  = formatingImage($mo,$test_img);
 fwrite(STDERR,"creating model ...\n");
 $model = $nn->models()->Sequential([
     $nn->layers()->Dense($units=128,
-        ['input_shape'=>[784],'kernel_initializer'=>'relu_normal']),
+        ['input_shape'=>$inputShape,'kernel_initializer'=>'relu_normal']),
     $nn->layers()->ReLU(),
     $nn->layers()->Dense($units=10),
     $nn->layers()->Softmax(),
