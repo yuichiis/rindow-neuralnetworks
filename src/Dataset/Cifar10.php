@@ -143,6 +143,7 @@ class Cifar10
 
     protected function convertDataset($filenames, $image_dataset, $labels_dataset)
     {
+        $image_dataset = $image_dataset->reshape([50000,32*32*3])
         $offset = 0;
         foreach($filenames as $filename) {
             $images = $image_dataset[[$offset,$offset+9999]];
@@ -186,7 +187,7 @@ class Cifar10
                 break;
             $this->unpackImage(
                 $red,$green,$blue,
-                $images[$p]->reshape([3072]));
+                $images[$p]);
             $p++;
             $j++;
             if($j>=200) {
