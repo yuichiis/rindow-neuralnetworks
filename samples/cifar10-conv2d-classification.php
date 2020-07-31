@@ -122,8 +122,7 @@ if(file_exists(__DIR__.'/cifar10-conv-model.model')) {
     $nn->layers()->Conv2D(
        $filters=32,
         $kernel_size=3,
-        ['input_shape'=>$inputShape,
-        'kernel_initializer'=>'relu_normal']),
+        ['kernel_initializer'=>'relu_normal']),
     $nn->layers()->ReLU(),
     $nn->layers()->Conv2D(
        $filters=32,
