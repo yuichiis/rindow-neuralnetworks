@@ -74,8 +74,8 @@ if($shrink||!extension_loaded('rindow_openblas')) {
 } elseif(isset($offset)) {
     fwrite(STDERR,"select data ...\n");
     fwrite(STDERR,"Parts offset,size=[".$offset.','.$trainSize."]\n");
-    $train_img = $train_img[[$offset,$trainSize-1]];
-    $train_label = $train_label[[$offset,$trainSize-1]];
+    $train_img = $train_img[[$offset,$offset+$trainSize-1]];
+    $train_label = $train_label[[$offset,$offset+$trainSize-1]];
     $test_img = $test_img[[0,$testSize-1]];
     $test_label = $test_label[[0,$testSize-1]];
     fwrite(STDERR,"Parts train=[".implode(',',$train_img->shape())."]\n");
