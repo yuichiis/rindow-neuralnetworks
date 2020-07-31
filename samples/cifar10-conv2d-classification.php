@@ -108,30 +108,30 @@ if(file_exists(__DIR__.'/cifar10-conv2d-model.model')) {
     fwrite(STDERR,"creating model ...\n");
     $model = $nn->models()->Sequential([
     $nn->layers()->Conv2D(
-       $filters=16,
+       $filters=32,
         $kernel_size=3,
         ['input_shape'=>$inputShape,
         'kernel_initializer'=>'relu_normal']),
     $nn->layers()->ReLU(),
     $nn->layers()->Conv2D(
-       $filters=16,
+       $filters=32,
         $kernel_size=3,
         ['kernel_initializer'=>'relu_normal']),
     $nn->layers()->ReLU(),
     $nn->layers()->MaxPooling2D(),
     $nn->layers()->Conv2D(
-       $filters=32,
+       $filters=64,
         $kernel_size=3,
         ['kernel_initializer'=>'relu_normal']),
     $nn->layers()->ReLU(),
     $nn->layers()->Conv2D(
-       $filters=32,
+       $filters=64,
         $kernel_size=3,
         ['kernel_initializer'=>'relu_normal']),
     $nn->layers()->ReLU(),
     $nn->layers()->MaxPooling2D(),
     $nn->layers()->Flatten(),
-    $nn->layers()->Dense($units=1024,
+    $nn->layers()->Dense($units=512,
         ['kernel_initializer'=>'relu_normal']),
     $nn->layers()->ReLU(),
     $nn->layers()->Dense($units=10),
