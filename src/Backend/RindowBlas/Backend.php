@@ -1055,7 +1055,7 @@ class Backend
             // dx = - trues / predicts
             $trues = $la->onehot($trues,$numClass);
             $dInputs = $la->scal(-1.0,$la->multiply($trues,
-                $la->reciprocal($la->copy($predicts,$this->epsilon))));
+                $la->reciprocal($la->copy($predicts),$this->epsilon)));
             return $dInputs;
         }
     }
