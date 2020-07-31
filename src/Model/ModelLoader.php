@@ -20,6 +20,7 @@ class ModelLoader
         $model = new $modelClass($this->backend,$this->builder,$this->hda);
         foreach($config['layer']['layers'] as $layerName => $layerConfig) {
             $class = $layerConfig['class'];
+echo "$layerName\n";
             $args  = array_values($layerConfig['config']);
             $layer = new $class($this->backend,...$args);
             $layer->setName($layerName);
