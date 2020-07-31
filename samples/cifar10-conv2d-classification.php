@@ -113,6 +113,12 @@ if(file_exists(__DIR__.'/cifar10-conv-model.model')) {
         ['input_shape'=>$inputShape,
         'kernel_initializer'=>'relu_normal']),
     $nn->layers()->ReLU(),
+    $nn->layers()->Conv2D(
+       $filters=16,
+        $kernel_size=3,
+        ['input_shape'=>$inputShape,
+        'kernel_initializer'=>'relu_normal']),
+    $nn->layers()->ReLU(),
     $nn->layers()->MaxPooling2D(),
     $nn->layers()->Flatten(),
     $nn->layers()->Dense($units=256,
