@@ -127,9 +127,8 @@ class Sequential
             $name = basename(str_replace('\\',DIRECTORY_SEPARATOR,get_class($layer)));
             if(isset($layerNames[$name])) {
                 $i = 1;
-                $base = $name;
                 while(true) {
-                    if(!isset($layers[$base.'_'.$i])) {
+                    if(!isset($layerNames[$name.'_'.$i])) {
                         $name = $base.'_'.$i;
                         echo "layer=$name.\n";
                         break;
