@@ -131,7 +131,7 @@ if(file_exists(__DIR__.'/cifar10-conv2d-model.model')) {
     $nn->layers()->ReLU(),
     $nn->layers()->MaxPooling2D(),
     $nn->layers()->Flatten(),
-    $nn->layers()->Dense($units=256,
+    $nn->layers()->Dense($units=1024,
         ['kernel_initializer'=>'relu_normal']),
     $nn->layers()->ReLU(),
     $nn->layers()->Dense($units=10),
