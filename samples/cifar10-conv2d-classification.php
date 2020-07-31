@@ -101,9 +101,9 @@ $train_img = $train_img->reshape(array_merge([$dataSize],$inputShape));
 [$dataSize,$imageSize] = $test_img->shape();
 $test_img = $test_img->reshape(array_merge([$dataSize],$inputShape));
 
-if(file_exists(__DIR__.'/cifar10-conv-model.model')) {
+if(file_exists(__DIR__.'/cifar10-conv2d-model.model')) {
     fwrite(STDERR,"loading model ...\n");
-    $model = $nn->models()->loadModel(__DIR__.'/cifar10-conv-model.model');
+    $model = $nn->models()->loadModel(__DIR__.'/cifar10-conv2d-model.model');
 } else {
     fwrite(STDERR,"creating model ...\n");
     $model = $nn->models()->Sequential([
@@ -146,7 +146,7 @@ fwrite(STDERR,"training model ...\n");
 $history = $model->fit($train_img,$train_label,
     ['epochs'=>$epochs,'batch_size'=>256,'validation_data'=>[$test_img,$test_label]]);
 
-$model->save(__DIR__.'/cifar10-conv-model.model',$portable=true);
+$model->save(__DIR__.'/cifar10-conv2d-model.model',$portable=true);
 
 $plt->plot($mo->array($history['accuracy']),null,null,'accuracy');
 $plt->plot($mo->array($history['val_accuracy']),null,null,'val_accuracy');
