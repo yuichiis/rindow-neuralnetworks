@@ -129,7 +129,7 @@ class Sequential
                 $i = 1;
                 while(true) {
                     if(!isset($layerNames[$name.'_'.$i])) {
-                        $name = $base.'_'.$i;
+                        $name = $name.'_'.$i;
                         echo "layer=$name.\n";
                         break;
                     }
