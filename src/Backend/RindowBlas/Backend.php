@@ -59,17 +59,18 @@ class Backend
     public function initializer_relu(array $shape)
     {
         $mo = $this->matrixOperator;
-        $inputSize = $shape[0];
+        $inputSize = array_product($shape);
         $scale = sqrt(2.0 / $inputSize);
         $kernel = $this->la->scal($scale,$mo->random()->randn($shape));
         return $kernel;
     }
 
-    public function initializer_sigmoid(array $shape)
+    public function initializer_sigmoid(array $shape,$nodeNum=null)
     {
         $mo = $this->matrixOperator;
-        $inputSize = $shape[0];
-        $scale = sqrt(1.0 / $inputSize);
+        if($nodeNum===null)
+            $nodeNum = $shape[0];
+        $scale = sqrt(1.0 / $nodeNum);
         $kernel = $this->la->scal($scale,$mo->random()->randn($shape));
         return $kernel;
     }
