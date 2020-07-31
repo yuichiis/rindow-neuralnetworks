@@ -26,7 +26,7 @@ $testSize = null;
 if(isset($argv[3])) {
     $offset=$argv[3];
     $epochs = 1;
-    $trainSize = 2000;
+    $trainSize = 5000;
     $testSize = 100;
     if(isset($argv[4])) {
         $trainSize = $argv[4];
