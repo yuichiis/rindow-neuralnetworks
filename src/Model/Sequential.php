@@ -130,7 +130,6 @@ class Sequential
                 while(true) {
                     if(!isset($layerNames[$name.'_'.$i])) {
                         $name = $name.'_'.$i;
-                        echo "layer=$name.\n";
                         break;
                     }
                     $i++;
