@@ -26,7 +26,7 @@ $testSize = null;
 if(isset($argv[3])) {
     $offset=$argv[3];
     $epochs = 1;
-    $trainSize = 5000;
+    $trainSize = 2000;
     $testSize = 100;
     if(isset($argv[4])) {
         $trainSize = $argv[4];
@@ -74,8 +74,8 @@ if($shrink||!extension_loaded('rindow_openblas')) {
 } elseif(isset($offset)) {
     fwrite(STDERR,"select data ...\n");
     fwrite(STDERR,"Parts offset,size=[".$offset.','.$trainSize."]\n");
-    $train_img = $train_img[[$offset,$offset+$trainSize-1]];
-    $train_label = $train_label[[$offset,$offset+$trainSize-1]];
+    $train_img = $train_img[[$offset,$trainSize-1]];
+    $train_label = $train_label[[$offset,$trainSize-1]];
     $test_img = $test_img[[0,$testSize-1]];
     $test_label = $test_label[[0,$testSize-1]];
     fwrite(STDERR,"Parts train=[".implode(',',$train_img->shape())."]\n");
@@ -101,37 +101,38 @@ $train_img = $train_img->reshape(array_merge([$dataSize],$inputShape));
 [$dataSize,$imageSize] = $test_img->shape();
 $test_img = $test_img->reshape(array_merge([$dataSize],$inputShape));
 
-if(file_exists(__DIR__.'/cifar10-conv2d-model.model')) {
+if(file_exists(__DIR__.'/cifar10-conv-model.model')) {
     fwrite(STDERR,"loading model ...\n");
-    $model = $nn->models()->loadModel(__DIR__.'/cifar10-conv2d-model.model');
+    $model = $nn->models()->loadModel(__DIR__.'/cifar10-conv-model.model');
 } else {
     fwrite(STDERR,"creating model ...\n");
     $model = $nn->models()->Sequential([
     $nn->layers()->Conv2D(
-       $filters=32,
+        $filters=32,
         $kernel_size=3,
-        ['input_shape'=>$inputShape,
-        'kernel_initializer'=>'relu_normal']),
+        ['kernel_initializer'=>'relu_normal']),
     $nn->layers()->ReLU(),
     $nn->layers()->Conv2D(
-       $filters=32,
+        $filters=32,
         $kernel_size=3,
         ['kernel_initializer'=>'relu_normal']),
     $nn->layers()->ReLU(),
     $nn->layers()->MaxPooling2D(),
+    $nn->layers()->Dropout(0.25),
     $nn->layers()->Conv2D(
-       $filters=64,
+        $filters=64,
         $kernel_size=3,
         ['kernel_initializer'=>'relu_normal']),
     $nn->layers()->ReLU(),
     $nn->layers()->Conv2D(
-       $filters=64,
+        $filters=64,
         $kernel_size=3,
         ['kernel_initializer'=>'relu_normal']),
     $nn->layers()->ReLU(),
     $nn->layers()->MaxPooling2D(),
+    $nn->layers()->Dropout(0.25),
     $nn->layers()->Flatten(),
-    $nn->layers()->Dense($units=512,
+    $nn->layers()->Dense($units=256,
         ['kernel_initializer'=>'relu_normal']),
     $nn->layers()->ReLU(),
     $nn->layers()->Dense($units=10),
@@ -146,7 +147,7 @@ fwrite(STDERR,"training model ...\n");
 $history = $model->fit($train_img,$train_label,
     ['epochs'=>$epochs,'batch_size'=>256,'validation_data'=>[$test_img,$test_label]]);
 
-$model->save(__DIR__.'/cifar10-conv2d-model.model',$portable=true);
+$model->save(__DIR__.'/cifar10-conv-model.model',$portable=true);
 
 $plt->plot($mo->array($history['accuracy']),null,null,'accuracy');
 $plt->plot($mo->array($history['val_accuracy']),null,null,'val_accuracy');
