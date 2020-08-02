@@ -119,6 +119,7 @@ if(file_exists(__DIR__.'/cifar10-conv2d-model.model')) {
         ['kernel_initializer'=>'relu_normal']),
     $nn->layers()->ReLU(),
     $nn->layers()->MaxPooling2D(),
+    $nn->layers()->Dropout(0.25),
     $nn->layers()->Conv2D(
        $filters=64,
         $kernel_size=3,
@@ -130,10 +131,12 @@ if(file_exists(__DIR__.'/cifar10-conv2d-model.model')) {
         ['kernel_initializer'=>'relu_normal']),
     $nn->layers()->ReLU(),
     $nn->layers()->MaxPooling2D(),
+    $nn->layers()->Dropout(0.25),
     $nn->layers()->Flatten(),
     $nn->layers()->Dense($units=512,
         ['kernel_initializer'=>'relu_normal']),
     $nn->layers()->ReLU(),
+    $nn->layers()->Dropout(0.25),
     $nn->layers()->Dense($units=10),
     $nn->layers()->Softmax(),
     ]);
