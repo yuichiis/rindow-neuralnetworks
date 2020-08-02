@@ -355,6 +355,12 @@ class Backend
         return $mo->random()->choice($a, $size, $replace);
     }
 
+    public function randomSequence(int $base, int $size=null, int  $seed=null)
+    {
+        $mo = $this->matrixOperator;
+        return $this->la->randomSequence($base, $size, $seed);
+    }
+
     public function dot($x,$y)
     {
         return $this->la->gemm($x,$y);
