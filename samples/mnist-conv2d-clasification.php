@@ -106,9 +106,9 @@ fwrite(STDERR,"training model ...\n");
 $history = $model->fit($train_img,$train_label,
     ['epochs'=>$epochs,'batch_size'=>256,'validation_data'=>[$test_img,$test_label]]);
 
-$model->save(__DIR__.'/mnist_conv_model.model',$portable=true);
+$model->save(__DIR__.'/mnist-conv2d-model.model',$portable=true);
 
-$model = $nn->models()->loadModel(__DIR__.'/mnist_conv_model.model');
+$model = $nn->models()->loadModel(__DIR__.'/mnist-conv2d-model.model');
 
 $plt->plot($mo->array($history['accuracy']),null,null,'accuracy');
 $plt->plot($mo->array($history['val_accuracy']),null,null,'val_accuracy');
