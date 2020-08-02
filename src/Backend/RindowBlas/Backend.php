@@ -344,7 +344,7 @@ class Backend
     public function rand($shape)
     {
         $mo = $this->matrixOperator;
-        return $mo->random()->rand($shape);
+        return $this->randomUniformVariables($shape,0.0,1.0);
     }
 
     public function randomChoice($a,int $size=null, bool $replace=null)
@@ -386,6 +386,11 @@ class Backend
             throw new InvalidArgumentException('indices must be 1-D NDarray');
         }
         return $this->la->onehot($indices,$numClass);
+    }
+
+    public function randomUniformVariables(array $shape, $low, $high, $dtype=null, int $seed=null, NDArray $x=null) : NDArray
+    {
+        return $this->la->randomUniform($shape,$low,$high,$dtype,$seed,$x);
     }
 
     public function relu($x) : NDArray
