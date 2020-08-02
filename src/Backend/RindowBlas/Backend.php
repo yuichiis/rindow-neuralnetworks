@@ -56,12 +56,14 @@ class Backend
         return [$this,$this->initializers[$name]];
     }
 
-    public function initializer_relu(array $shape)
+    public function initializer_relu(array $shape,$nodeNum=null)
     {
         $mo = $this->matrixOperator;
-        $inputSize = array_product($shape);
-        $scale = sqrt(2.0 / $inputSize);
-        $kernel = $this->la->scal($scale,$mo->random()->randn($shape));
+        if($nodeNum===null){
+            $nodeNum = array_product($shape);
+        }
+        $scale = sqrt(2.0 / $nodeNum);
+        $kernel = $this->la->randomNormal($shape,0.0,$scale);
         return $kernel;
     }
 
@@ -71,7 +73,7 @@ class Backend
         if($nodeNum===null)
             $nodeNum = $shape[0];
         $scale = sqrt(1.0 / $nodeNum);
-        $kernel = $this->la->scal($scale,$mo->random()->randn($shape));
+        $kernel = $this->la->randomNormal($shape,0.0,$scale);
         return $kernel;
     }
 
@@ -391,6 +393,11 @@ class Backend
     public function randomUniformVariables(array $shape, $low, $high, $dtype=null, int $seed=null, NDArray $x=null) : NDArray
     {
         return $this->la->randomUniform($shape,$low,$high,$dtype,$seed,$x);
+    }
+
+    public function randomNormalVariables(array $shape, $mean, $scale, $dtype=null, int $seed=null, NDArray $x=null) : NDArray
+    {
+        return $this->la->randomNormal($shape,$mean,$scale,$dtype,$seed,$x);
     }
 
     public function relu($x) : NDArray
