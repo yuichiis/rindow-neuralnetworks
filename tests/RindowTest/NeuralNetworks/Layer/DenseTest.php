@@ -132,16 +132,16 @@ class Test extends TestCase
         $this->assertEquals([3,4],$params[0]->shape());
         $this->assertEquals([4],$params[1]->shape());
         $this->assertNotEquals($mo->zeros([2,4])->toArray(),$params[0]->toArray());
-        $this->assertEquals($mo->zeros([3])->toArray(),$params[1]->toArray());
+        $this->assertEquals($mo->zeros([4])->toArray(),$params[1]->toArray());
 
         $grads = $layer->getGrads();
         $this->assertCount(2,$grads);
-        $this->assertEquals([2,4],$grads[0]->shape());
-        $this->assertEquals([3],$grads[1]->shape());
-        $this->assertEquals($mo->zeros([2,4])->toArray(),$grads[0]->toArray());
-        $this->assertEquals($mo->zeros([3])->toArray(),$grads[1]->toArray());
+        $this->assertEquals([3,4],$grads[0]->shape());
+        $this->assertEquals([4],$grads[1]->shape());
+        $this->assertEquals($mo->zeros([3,4])->toArray(),$grads[0]->toArray());
+        $this->assertEquals($mo->zeros([4])->toArray(),$grads[1]->toArray());
 
-        $this->assertEquals([2,4],$layer->outputShape());
+        $this->assertEquals([3,4],$layer->outputShape());
         
         $inputs = $mo->zeros([10,2,3]);
         $outputs = $layer->forward($inputs);
