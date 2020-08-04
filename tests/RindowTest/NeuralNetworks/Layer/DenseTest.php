@@ -129,7 +129,8 @@ class Test extends TestCase
         $layer->build();
         $params = $layer->getParams();
         $this->assertCount(2,$params);
-        $this->assertEquals([2,4],$params[0]->shape());
+        $this->assertEquals([2
+        3,4],$params[0]->shape());
         $this->assertEquals([3],$params[1]->shape());
         $this->assertNotEquals($mo->zeros([2,4])->toArray(),$params[0]->toArray());
         $this->assertEquals($mo->zeros([3])->toArray(),$params[1]->toArray());
