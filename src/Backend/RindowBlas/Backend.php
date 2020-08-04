@@ -107,6 +107,12 @@ class Backend
         return $y;
     }
 
+    public function clear(NDArray $x)
+    {
+        $this->la->zeros($x);
+        return $x;
+    }
+
     public function copy(NDArray $from,NDArray $to=null)
     {
         return $this->la->copy($from, $to);
@@ -386,6 +392,16 @@ class Backend
     public function select(NDArray $source,NDArray $selector,$axis=null)
     {
         return $this->la->select($source,$selector,$axis);
+    }
+
+    public function scatter(NDArray $indices,NDArray $values,int  $numClass,$axis=null,NDArray $target=null)
+    { 
+        return $this->la->scatter($indices,$values,$numClass,$axis,$target);
+    }
+
+    public function scatterAdd(NDArray $target,NDArray $indices,NDArray $values,$axis=null)
+    { 
+        return $this->la->scatterAdd($indices,$values,$target,$axis);
     }
 
     public function oneHot(NDArray $indices, int $numClass) : NDArray
