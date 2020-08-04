@@ -104,7 +104,7 @@ class Dense extends AbstractLayer implements Layer
         $this->inputs = $inputs->reshape([$inputSize,$inputDim]);
         $outputs = $K->batch_gemm($this->inputs, $this->kernel,1.0,1.0,$this->bias);
         array_push($shape,$this->units);
-        return $outputs->reshape($shape)
+        return $outputs->reshape($shape);
     }
 
     protected function differentiate(NDArray $dOutputs) : NDArray
