@@ -144,7 +144,7 @@ class Test extends TestCase
         $this->assertEquals([2,4],$layer->outputShape());
         
         $inputs = $mo->zeros([10,2,3]);
-        $outputs = $layer->forward($inputs);
+        $outputs = $layer->forward($inputs,true);
         $this->assertEquals([10,2,4],$outputs->shape());
     }
 }
