@@ -114,7 +114,7 @@ class Dense extends AbstractLayer implements Layer
         $shape = $dOutputs->shape();
         $outputDim=array_pop($shape);
         $outputSize=array_product($shape);
-        $dOutputs=$dOutputs->reshape([$outputSize,$outputSize]);
+        $dOutputs=$dOutputs->reshape([$outputSize,$outputDim]);
         $K->gemm($dOutputs, $this->kernel,1.0,0.0,$dInputs,false,true);
 
         // update params
