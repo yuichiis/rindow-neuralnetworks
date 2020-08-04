@@ -53,20 +53,23 @@ class Dense extends AbstractLayer implements Layer
         $biasInitializer = $this->biasInitializer;
 
         $inputShape = $this->normalizeInputShape($inputShape);
-        if(count($inputShape)!=1) {
-            throw new InvalidArgumentException(
-                'Unsuppored input shape: ['.implode(',',$inputShape).']');
-        }
+        //if(count($inputShape)!=1) {
+        //    throw new InvalidArgumentException(
+        ///        'Unsuppored input shape: ['.implode(',',$inputShape).']');
+        //}
+        $shape = $inputShape;
+        $this->inputDim=array_pop($shape);
         if($sampleWeights) {
             $this->kernel = $sampleWeights[0];
             $this->bias = $sampleWeights[1];
         } else {
-            $this->kernel = $kernelInitializer(array_merge($inputShape,[$this->units]),array_product($inputShape));
+            $this->kernel = $kernelInitializer([$this->inputDim,$this->units],$this->inputDim);
             $this->bias = $biasInitializer([$this->units]);
         }
         $this->dKernel = $K->zerosLike($this->kernel);
         $this->dBias = $K->zerosLike($this->bias);
-        $this->outputShape = [$this->units];
+        array_push($shape,$this->units);
+        $this->outputShape = shape;
     }
 
     public function getParams() : array
@@ -94,20 +97,30 @@ class Dense extends AbstractLayer implements Layer
     protected function call(NDArray $inputs, bool $training) : NDArray
     {
         $K = $this->backend;
-        $this->inputs = $inputs;
-        return $K->batch_gemm($inputs, $this->kernel,1.0,1.0,$this->bias);
+        $shape = $inputs->shape();
+        $this->origInputsShape = $shape;
+        $inputDim=array_pop($shape);
+        $inputSize=array_product($shape);
+        $this->inputs = $inputs->reshape([$inputSize,$inputDim]);
+        $outputs = $K->batch_gemm($this->inputs, $this->kernel,1.0,1.0,$this->bias);
+        array_push($shape,$this->units);
+        return $outputs->reshape($shape)
     }
 
     protected function differentiate(NDArray $dOutputs) : NDArray
     {
         $K = $this->backend;
         $dInputs = $K->zerosLike($this->inputs);
+        $shape = $dOutputs->shape();
+        $outputDim=array_pop($shape);
+        $outputSize=array_product($shape);
+        $dOutputs=$dOutputs->reshape($outputSize,$outputSize);
         $K->gemm($dOutputs, $this->kernel,1.0,0.0,$dInputs,false,true);
 
         // update params
         $K->gemm($this->inputs, $dOutputs,1.0,0.0,$this->dKernel,true,false);
         $K->copy($K->sum($dOutputs, $axis=0),$this->dBias);
 
-        return $dInputs;
+        return $dInputs->reshape($this->origInputsShape);
     }
 }
