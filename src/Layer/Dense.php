@@ -69,7 +69,7 @@ class Dense extends AbstractLayer implements Layer
         $this->dKernel = $K->zerosLike($this->kernel);
         $this->dBias = $K->zerosLike($this->bias);
         array_push($shape,$this->units);
-        $this->outputShape = shape;
+        $this->outputShape = $shape;
     }
 
     public function getParams() : array
