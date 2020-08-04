@@ -141,7 +141,7 @@ class Test extends TestCase
         $this->assertEquals($mo->zeros([3,4])->toArray(),$grads[0]->toArray());
         $this->assertEquals($mo->zeros([4])->toArray(),$grads[1]->toArray());
 
-        $this->assertEquals([3,4],$layer->outputShape());
+        $this->assertEquals([2,4],$layer->outputShape());
         
         $inputs = $mo->zeros([10,2,3]);
         $outputs = $layer->forward($inputs);
