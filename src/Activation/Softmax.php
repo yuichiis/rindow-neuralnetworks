@@ -1,19 +1,11 @@
 <?php
-namespace Rindow\NeuralNetworks\Layer;
+namespace Rindow\NeuralNetworks\Activation;
 
 use Interop\Polite\Math\Matrix\NDArray;
 
-class Softmax extends AbstractLayer implements Layer
+class Softmax extends AbstractActivation
 {
-    protected $backend;
     protected $outputs;
-
-    public function __construct($backend,array $options=null)
-    {
-        //extract($this->extractArgs([
-        //],$options));
-        $this->backend = $K = $backend;
-    }
 
     protected function call(NDArray $inputs, bool $training) : NDArray
     {
