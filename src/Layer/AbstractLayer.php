@@ -36,7 +36,10 @@ abstract class AbstractLayer
         }
         if($activation instanceof Activation) {
             $this->activation = $activation;
-            $this->activationName = get_class($activation);
+            // for compiling lossfunction
+            if($this->activationName==null){
+                $this->activationName = get_class($activation);
+            }
             return;
         }
         throw new InvalidArgumentException('activation function must have the Activation interface');
