@@ -2,12 +2,11 @@
 namespace Rindow\NeuralNetworks\Loss;
 
 use Interop\Polite\Math\Matrix\NDArray;
-use Rindow\NeuralNetworks\Layer\Layer;
-use Rindow\NeuralNetworks\Layer\AbstractLayer;
+use Rindow\NeuralNetworks\Activation\Activation;
 use InvalidArgumentException;
 use DomainException;
 
-abstract class AbstractCrossEntropy extends AbstractLayer implements Loss,Layer
+abstract class AbstractCrossEntropy extends implements Loss,Activation
 {
     protected $backend;
     protected $outputs;
