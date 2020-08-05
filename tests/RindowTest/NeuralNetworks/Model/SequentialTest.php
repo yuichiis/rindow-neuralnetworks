@@ -41,10 +41,13 @@ class Test extends TestCase
         $nn = new NeuralNetworks($mo,$backend);
 
         $model = $nn->models()->Sequential([
-            $nn->layers()->Dense($units=4,['input_shape'=>[2]]),
-            $nn->layers()->Sigmoid(),
-            $nn->layers()->Dense($units=3),
-            $nn->layers()->Softmax(),
+            $nn->layers()->Dense(
+                $units=4,
+                ['input_shape'=>[2],
+                'activation'=>'sigmoid']),
+            $nn->layers()->Dense(
+                $units=3
+                ['activation'=>'softmax']),
         ]);
 
         $model->compile();
@@ -57,14 +60,14 @@ class Test extends TestCase
         $this->assertInstanceof(
             'Rindow\NeuralNetworks\Layer\Dense',$layers[0]);
         $this->assertInstanceof(
-            'Rindow\NeuralNetworks\Layer\Sigmoid',$layers[1]);
+            'Rindow\NeuralNetworks\Activation\Sigmoid',$layers[0]->getActivation());
         $this->assertInstanceof(
-            'Rindow\NeuralNetworks\Layer\Dense',$layers[2]);
+            'Rindow\NeuralNetworks\Layer\Dense',$layers[1]);
         $this->assertInstanceof(
-            'Rindow\NeuralNetworks\Loss\SparseCategoricalCrossEntropy',$layers[3]);
+            'Rindow\NeuralNetworks\Loss\SparseCategoricalCrossEntropy',$layers[1]->getActivation());
         $this->assertInstanceof(
             'Rindow\NeuralNetworks\Loss\SparseCategoricalCrossEntropy',$lossFunction);
-        $this->assertTrue($layers[3]->fromLogits());
+        $this->assertTrue($layers[1]->getActivation()->fromLogits());
         $this->assertTrue($lossFunction->fromLogits());
 
         $this->assertCount(4,$weights);
@@ -113,14 +116,13 @@ class Test extends TestCase
         $plt = new Plot($this->getPlotConfig(),$mo);
 
         $model = $nn->models()->Sequential([
-            $nn->layers()->Dense($units=128,['input_shape'=>[2]]),
-            $nn->layers()->Sigmoid(),
-            $nn->layers()->Dense($units=2),
-            $nn->layers()->Softmax(),
+            $nn->layers()->Dense($units=128,['input_shape'=>[2],
+                    'activation'=>'sigmoid']),
+            $nn->layers()->Dense($units=2,['activation'=>'softmax']),
         ]);
 
         $model->compile();
-        $this->assertTrue($model->layers()[3]->fromLogits());
+        $this->assertTrue($model->layers()[1]->getActivation()->fromLogits());
         $this->assertTrue($model->lossFunction()->fromLogits());
 
         // training greater or less
@@ -145,10 +147,9 @@ class Test extends TestCase
         $plt = new Plot($this->getPlotConfig(),$mo);
 
         $model = $nn->models()->Sequential([
-            $nn->layers()->Dense($units=128,['input_shape'=>[2]]),
-            $nn->layers()->Sigmoid(),
-            $nn->layers()->Dense($units=2),
-            $nn->layers()->Softmax(),
+            $nn->layers()->Dense($units=128,['input_shape'=>[2],
+                'activation'=>'sigmoid']),
+            $nn->layers()->Dense($units=2,['activation'=>'softmax']]),
         ]);
 
         $model->compile();
@@ -171,10 +172,10 @@ class Test extends TestCase
         $plt = new Plot($this->getPlotConfig(),$mo);
 
         $model = $nn->models()->Sequential([
-            $nn->layers()->Dense($units=128,['input_shape'=>[2]]),
-            $nn->layers()->ReLU(),
-            $nn->layers()->Dense($units=2),
-            $nn->layers()->Softmax(),
+            $nn->layers()->Dense($units=128,['input_shape'=>[2],
+                'activation'=>'sigmoid']),
+            $nn->layers()->Dense($units=2,
+            ['activation'=>'softmax']),
         ]);
 
         $model->compile();
@@ -208,16 +209,17 @@ class Test extends TestCase
 
         $model = $nn->models()->Sequential([
             $nn->layers()->Dense($units=128,[
-                'input_shape'=>[2],'kernel_initializer'=>'relu_normal']),
-            $nn->layers()->ReLU(),
-            $nn->layers()->Dense($units=2),
-            $nn->layers()->Softmax(),
+                'input_shape'=>[2],
+                'kernel_initializer'=>'relu_normal',
+                'activation'=>'relu']),
+            $nn->layers()->Dense($units=2,
+                 ['activation'=>'softmax']),
         ]);
 
         $model->compile([
             'optimizer'=>$nn->optimizers()->Adam()
         ]);
-        $this->assertTrue($model->layers()[3]->fromLogits());
+        $this->assertTrue($model->layers()[1]->getActivation()->fromLogits());
         $this->assertTrue($model->lossFunction()->fromLogits());
 
         // training greater or less
@@ -249,11 +251,10 @@ class Test extends TestCase
         $plt = new Plot($this->getPlotConfig(),$mo);
 
         $model = $nn->models()->Sequential([
-            $nn->layers()->Dense($units=128,[
-                'input_shape'=>[2]]),
-            $nn->layers()->Sigmoid(),
-            $nn->layers()->Dense($units=2),
-            $nn->layers()->Softmax(),
+            $nn->layers()->Dense($units=128,['input_shape'=>[2],
+                'activation'=>'sigmoid']),
+            $nn->layers()->Dense($units=2,
+            ['activation'=>'softmax']),
         ]);
 
         $model->compile([
@@ -294,11 +295,10 @@ class Test extends TestCase
         $plt = new Plot($this->getPlotConfig(),$mo);
 
         $model = $nn->models()->Sequential([
-            $nn->layers()->Dense($units=128,['input_shape'=>[2]]),
-            $nn->layers()->ReLU(),
+            $nn->layers()->Dense($units=128,['input_shape'=>[2],
+                'activation'=>'relu']),
             $nn->layers()->Dropout($rate=0.15),
-            $nn->layers()->Dense($units=2),
-            $nn->layers()->Softmax(),
+            $nn->layers()->Dense($units=2,['activation'=>'softmax']),
         ]);
 
         $model->compile();
@@ -333,9 +333,9 @@ class Test extends TestCase
         $model = $nn->models()->Sequential([
             $nn->layers()->Dense($units=128,['input_shape'=>[2]]),
             $nn->layers()->BatchNormalization(),
-            $nn->layers()->Sigmoid(),
-            $nn->layers()->Dense($units=2),
-            $nn->layers()->Softmax(),
+            $nn->layers()->Activation('sigmoid'),
+            $nn->layers()->Dense($units=2,
+            ['activation'=>'softmax']),
         ]);
 
         $model->compile();
@@ -368,16 +368,16 @@ class Test extends TestCase
         $plt = new Plot($this->getPlotConfig(),$mo);
 
         $model = $nn->models()->Sequential([
-            $nn->layers()->Dense($units=128,['input_shape'=>[2]]),
-            $nn->layers()->Sigmoid(),
-            $nn->layers()->Dense($units=1),
-            $nn->layers()->Sigmoid(),
+            $nn->layers()->Dense($units=128,['input_shape'=>[2],
+                'activation'=>'sigmoid']),
+            $nn->layers()->Dense($units=1,
+            ['activation'=>'sigmoid']),
         ]);
 
         $model->compile([
             'loss'=>$nn->losses()->BinaryCrossEntropy(),
         ]);
-        $this->assertTrue( $model->layers()[3]->fromLogits());
+        $this->assertTrue( $model->layers()[1]->getActivation()->fromLogits());
         $this->assertTrue( $model->lossFunction()->fromLogits());
 
         // training greater or less
@@ -408,16 +408,16 @@ class Test extends TestCase
         $plt = new Plot($this->getPlotConfig(),$mo);
 
         $model = $nn->models()->Sequential([
-            $nn->layers()->Dense($units=128,['input_shape'=>[2]]),
-            $nn->layers()->Sigmoid(),
-            $nn->layers()->Dense($units=2),
-            $nn->layers()->Softmax(),
+            $nn->layers()->Dense($units=128,['input_shape'=>[2],
+                'activation'=>'sigmoid']),
+            $nn->layers()->Dense($units=2,
+            ['activation'=>'softmax']),
         ]);
 
         $model->compile([
             'loss'=>$nn->losses()->CategoricalCrossEntropy(),
         ]);
-        $this->assertTrue( $model->layers()[3]->fromLogits());
+        $this->assertTrue( $model->layers()[1]->getActivation()->fromqLogits());
         $this->assertTrue( $model->lossFunction()->fromLogits());
 
         // training greater or less
@@ -451,20 +451,18 @@ class Test extends TestCase
             $nn->layers()->Conv1D(
                 $filters=5,
                 $kernel_size=3,
-                ['input_shape'=>[5,1]]),
-            $nn->layers()->ReLU(),
+                ['input_shape'=>[5,1],
+                'activation'=>'relu']),
             $nn->layers()->MaxPooling1D(),
             $nn->layers()->Flatten(),
-            $nn->layers()->Dense($units=10),
-            $nn->layers()->ReLU(),
-            $nn->layers()->Dense($units=5),
-            $nn->layers()->Softmax(),
+            $nn->layers()->Dense($units=10,['activation'=>'relu']),
+            $nn->layers()->Dense($units=5,['activation'=>'softmax']),
         ]);
 
         $model->compile([
             'loss'=>$nn->losses()->SparseCategoricalCrossEntropy(),
         ]);
-        $this->assertTrue( $model->layers()[7]->fromLogits());
+        $this->assertTrue( $model->layers()[4]->getActivation()->fromLogits());
         $this->assertTrue( $model->lossFunction()->fromLogits());
 
         // training greater or less
@@ -490,7 +488,7 @@ class Test extends TestCase
             $plt->plot($mo->array($history['accuracy']),null,null,'accuracy');
             $plt->plot($mo->array($history['val_accuracy']),null,null,'val_accuracy');
             $plt->legend();
-            $plt->title('Convolution');
+            $plt->title('Convolution1D');
             $plt->show();
         }
     }
@@ -506,20 +504,18 @@ class Test extends TestCase
             $nn->layers()->Conv2D(
                 $filters=5,
                 $kernel_size=3,
-                ['input_shape'=>[5,5,1]]),
-            $nn->layers()->ReLU(),
+                ['input_shape'=>[5,5,1],
+                'activation'=>'relu']),
             $nn->layers()->MaxPooling2D(),
             $nn->layers()->Flatten(),
-            $nn->layers()->Dense($units=10),
-            $nn->layers()->ReLU(),
-            $nn->layers()->Dense($units=5),
-            $nn->layers()->Softmax(),
+            $nn->layers()->Dense($units=10,['activation'=>'relu']),
+            $nn->layers()->Dense($units=5,['activation'=>'softmax']),
         ]);
 
         $model->compile([
             'loss'=>$nn->losses()->SparseCategoricalCrossEntropy(),
         ]);
-        $this->assertTrue( $model->layers()[7]->fromLogits());
+        $this->assertTrue( $model->layers()[4]->getActivation()->fromLogits());
         $this->assertTrue( $model->lossFunction()->fromLogits());
 
         // training greater or less
@@ -545,7 +541,7 @@ class Test extends TestCase
             $plt->plot($mo->array($history['accuracy']),null,null,'accuracy');
             $plt->plot($mo->array($history['val_accuracy']),null,null,'val_accuracy');
             $plt->legend();
-            $plt->title('Convolution');
+            $plt->title('Convolution2D');
             $plt->show();
         }
     }
@@ -561,20 +557,18 @@ class Test extends TestCase
             $nn->layers()->Conv3D(
                 $filters=5,
                 $kernel_size=3,
-                ['input_shape'=>[5,5,5,1]]),
-            $nn->layers()->ReLU(),
+                ['input_shape'=>[5,5,5,1],
+                'activation'=>'relu']),
             $nn->layers()->MaxPooling3D(),
             $nn->layers()->Flatten(),
-            $nn->layers()->Dense($units=10),
-            $nn->layers()->ReLU(),
-            $nn->layers()->Dense($units=5),
-            $nn->layers()->Softmax(),
+            $nn->layers()->Dense($units=10,['activation'=>'relu']),
+            $nn->layers()->Dense($units=5,['activation'=>'softmax']),
         ]);
 
         $model->compile([
             'loss'=>$nn->losses()->SparseCategoricalCrossEntropy(),
         ]);
-        $this->assertTrue( $model->layers()[7]->fromLogits());
+        $this->assertTrue( $model->layers()[4]->getActivation()->fromLogits());
         $this->assertTrue( $model->lossFunction()->fromLogits());
 
         // training greater or less
@@ -600,7 +594,7 @@ class Test extends TestCase
             $plt->plot($mo->array($history['accuracy']),null,null,'accuracy');
             $plt->plot($mo->array($history['val_accuracy']),null,null,'val_accuracy');
             $plt->legend();
-            $plt->title('Convolution');
+            $plt->title('Convolution3D');
             $plt->show();
         }
     }
@@ -616,20 +610,18 @@ class Test extends TestCase
             $nn->layers()->Conv1D(
                 $filters=5,
                 $kernel_size=3,
-                ['input_shape'=>[5,1]]),
-            $nn->layers()->ReLU(),
+                ['input_shape'=>[5,1],
+                'activation'=>'relu']),
             $nn->layers()->AveragePooling1D(),
             $nn->layers()->Flatten(),
-            $nn->layers()->Dense($units=10),
-            $nn->layers()->ReLU(),
-            $nn->layers()->Dense($units=5),
-            $nn->layers()->Softmax(),
+            $nn->layers()->Dense($units=10,['activation'=>'relu']),
+            $nn->layers()->Dense($units=5,['activation'=>'softmax']),
         ]);
 
         $model->compile([
             'loss'=>$nn->losses()->SparseCategoricalCrossEntropy(),
         ]);
-        $this->assertTrue( $model->layers()[7]->fromLogits());
+        $this->assertTrue( $model->layers()[4]->getActivation()->fromLogits());
         $this->assertTrue( $model->lossFunction()->fromLogits());
 
         // training greater or less
@@ -671,20 +663,18 @@ class Test extends TestCase
             $nn->layers()->Conv2D(
                 $filters=5,
                 $kernel_size=3,
-                ['input_shape'=>[5,5,1]]),
-            $nn->layers()->ReLU(),
+                ['input_shape'=>[5,5,1],
+                'activation'=>'relu']),
             $nn->layers()->AveragePooling2D(),
             $nn->layers()->Flatten(),
-            $nn->layers()->Dense($units=10),
-            $nn->layers()->ReLU(),
-            $nn->layers()->Dense($units=5),
-            $nn->layers()->Softmax(),
+            $nn->layers()->Dense($units=10,['activation'=>'relu']),
+            $nn->layers()->Dense($units=5,['activation'=>'softmax']),
         ]);
 
         $model->compile([
             'loss'=>$nn->losses()->SparseCategoricalCrossEntropy(),
         ]);
-        $this->assertTrue( $model->layers()[7]->fromLogits());
+        $this->assertTrue( $model->layers()[4]->getActivation()->fromLogits());
         $this->assertTrue( $model->lossFunction()->fromLogits());
 
         // training greater or less
@@ -726,20 +716,18 @@ class Test extends TestCase
             $nn->layers()->Conv3D(
                 $filters=5,
                 $kernel_size=3,
-                ['input_shape'=>[5,5,5,1]]),
-            $nn->layers()->ReLU(),
+                ['input_shape'=>[5,5,5,1],
+                'activation'=>'relu']),
             $nn->layers()->AveragePooling3D(),
             $nn->layers()->Flatten(),
-            $nn->layers()->Dense($units=10),
-            $nn->layers()->ReLU(),
-            $nn->layers()->Dense($units=5),
-            $nn->layers()->Softmax(),
+            $nn->layers()->Dense($units=10,['activation'=>'relu']),
+            $nn->layers()->Dense($units=5,['activation'=>'softmax']),
         ]);
 
         $model->compile([
             'loss'=>$nn->losses()->SparseCategoricalCrossEntropy(),
         ]);
-        $this->assertTrue( $model->layers()[7]->fromLogits());
+        $this->assertTrue( $model->layers()[4]->getActivation()->fromLogits());
         $this->assertTrue( $model->lossFunction()->fromLogits());
 
         // training greater or less
@@ -778,9 +766,8 @@ class Test extends TestCase
         $model = $nn->models()->Sequential([
             $nn->layers()->Dense($units=128,['input_shape'=>[2]]),
             $nn->layers()->BatchNormalization(),
-            $nn->layers()->Sigmoid(),
-            $nn->layers()->Dense($units=2),
-            $nn->layers()->Softmax(),
+            $nn->layers()->Activation('sigmoid'),
+            $nn->layers()->Dense($units=2,['activation'=>'softmax']),
         ]);
         $model->compile();
         $json = $model->toJson();
@@ -797,9 +784,8 @@ class Test extends TestCase
         $model = $nn->models()->Sequential([
             $nn->layers()->Dense($units=128,['input_shape'=>[2]]),
             $nn->layers()->BatchNormalization(),
-            $nn->layers()->Sigmoid(),
-            $nn->layers()->Dense($units=2),
-            $nn->layers()->Softmax(),
+            $nn->layers()->Activation('sigmoid'),
+            $nn->layers()->Dense($units=2,['activation'=>'softmax']),
         ]);
         $model->compile();
         $x = $mo->array([[1, 3], [1, 4], [2, 4], [3, 1], [4, 1], [4, 2]]);
