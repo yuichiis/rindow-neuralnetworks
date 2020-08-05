@@ -3,6 +3,7 @@ namespace Rindow\NeuralNetworks\Layer;
 
 use Interop\Polite\Math\Matrix\NDArray;
 use InvalidArgumentException;
+use Rindow\NeuralNetworks\Activation\FunctionFactory;
 
 /**
  *
@@ -14,6 +15,32 @@ abstract class AbstractLayer
 
     protected $inputShape;
     protected $outputShape;
+    protected $activation;
+    protected $activationName;
+
+    public function getActivation()
+    {
+        return $this->activation;
+    }
+    
+    public function setActivation(
+        $activation) : void
+    {
+        if($activation==null){
+            return;
+        }
+        if(is_string($activation)) {
+            $this->activation = FunctionFactory::factory($this->backend,$activation);
+            $this->activationName = $activation;
+            return;
+        }
+        if($activation instanceof Activation) {
+            $this->activation = $activation;
+            $this->activationName = get_class($activation);
+            return;
+        }
+        throw new InvalidArgumentException('activation function must have the Activation interface');
+    }
 
     public function build(array $inputShape=null, array $options=null)
     {
@@ -57,6 +84,7 @@ abstract class AbstractLayer
     public function getConfig() : array
     {
         return [
+            'activation'=>$this->activationName;
             //'input_shape' => $this->inputShape,
             //'output_shape' => $this->outputShape,
         ];
@@ -102,17 +130,20 @@ abstract class AbstractLayer
         $outputs = $this->call($inputs, $training);
 
         $this->assertOutputShape($outputs);
+        if($this->activation)
+            $outputs = $this->activation->call($outputs,$training);
         return $outputs;
     }
 
     final public function backward(NDArray $dOutputs) : NDArray
     {
         $this->assertOutputShape($dOutputs);
+        if($this->activation)
+            $dOutputs = $this->activation->differentiate($dOutputs);
 
         $dInputs = $this->differentiate($dOutputs);
 
         $this->assertInputShape($dInputs);
         return $dInputs;
     }
-
 }
