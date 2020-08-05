@@ -2,9 +2,7 @@
 namespace Rindow\NeuralNetworks\Builder;
 
 use Interop\Polite\Math\Matrix\NDArray;
-use Rindow\NeuralNetworks\Layer\ReLU;
-use Rindow\NeuralNetworks\Layer\Sigmoid;
-use Rindow\NeuralNetworks\Layer\Softmax;
+use Rindow\NeuralNetworks\Layer\Activation;
 use Rindow\NeuralNetworks\Layer\Dense;
 use Rindow\NeuralNetworks\Layer\Flatten;
 use Rindow\NeuralNetworks\Layer\Conv1D;
@@ -28,19 +26,10 @@ class Layers
         $this->backend = $backend;
     }
 
-    public function ReLU(array $options=null)
+    public function Activation(
+        $activation,array $options=null)
     {
-        return new ReLU($this->backend,$options);
-    }
-
-    public function Sigmoid(array $options=null)
-    {
-        return new Sigmoid($this->backend,$options);
-    }
-
-    public function Softmax(array $options=null)
-    {
-        return new Softmax($this->backend,$options);
+        return new Actibation($this->backend,$activation,$options);
     }
 
     public function Dense(int $units, array $options=null)
