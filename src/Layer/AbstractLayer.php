@@ -87,7 +87,7 @@ abstract class AbstractLayer
     public function getConfig() : array
     {
         return [
-            'activation'=>$this->activationName;
+            'activation'=>$this->activationName
             //'input_shape' => $this->inputShape,
             //'output_shape' => $this->outputShape,
         ];
