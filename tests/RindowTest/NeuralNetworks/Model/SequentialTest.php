@@ -46,7 +46,7 @@ class Test extends TestCase
                 ['input_shape'=>[2],
                 'activation'=>'sigmoid']),
             $nn->layers()->Dense(
-                $units=3
+                $units=3,
                 ['activation'=>'softmax']),
         ]);
 
