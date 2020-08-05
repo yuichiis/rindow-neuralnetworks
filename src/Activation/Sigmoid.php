@@ -1,20 +1,12 @@
 <?php
-namespace Rindow\NeuralNetworks\Layer;
+namespace Rindow\NeuralNetworks\Activation;
 
 use Interop\Polite\Math\Matrix\NDArray;
 
-class Sigmoid extends AbstractLayer implements Layer
+class Sigmoid extends AbstractActivation
 {
-    protected $backend;
     protected $outputs;
     protected $incorporatedLoss = false;
-
-    public function __construct($backend,array $options=null)
-    {
-        //extract($this->extractArgs([
-        //],$options));
-        $this->backend = $K = $backend;
-    }
 
     protected function call(NDArray $inputs, bool $training) : NDArray
     {
