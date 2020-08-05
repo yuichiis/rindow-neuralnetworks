@@ -1,10 +1,10 @@
 <?php
-namespace RindowTest\NeuralNetworks\Layer\ReLUTest;
+namespace RindowTest\NeuralNetworks\Activation\ReLUTest;
 
 use PHPUnit\Framework\TestCase;
 use Rindow\Math\Matrix\MatrixOperator;
 use Rindow\NeuralNetworks\Backend\RindowBlas\Backend;
-use Rindow\NeuralNetworks\Layer\ReLU;
+use Rindow\NeuralNetworks\Activation\ReLU;
 
 class Test extends TestCase
 {
@@ -12,9 +12,7 @@ class Test extends TestCase
     {
         $mo = new MatrixOperator();
         $backend = new Backend($mo);
-        $layer = new ReLU($backend);
-
-        $layer->build($inputShape=[5]);
+        $activation = new ReLU($backend);
 
         $inputs = $mo->array([
             [-1.0,-0.5,0.0,0.5,1.0],
@@ -23,7 +21,7 @@ class Test extends TestCase
             [-1.0,-0.5,0.0,0.5,1.0],
         ]);
         $copyInputs = $mo->copy($inputs);
-        $outputs = $layer->forward($inputs, $training=true);
+        $outputs = $activation->call($inputs, $training=true);
         $this->assertEquals([4,5],$outputs->shape());
         $this->assertEquals(
             [0.0,0.0,0.0,0.5,1.0],
@@ -39,7 +37,7 @@ class Test extends TestCase
             [-1.0,-0.5,0.0,0.5,1.0],
         ]);
         $copydOutputs = $mo->copy($dOutputs);
-        $dInputs = $layer->backward($dOutputs);
+        $dInputs = $activation->differentiate($dOutputs);
         $this->assertEquals([4,5],$dInputs->shape());
         $this->assertEquals(
             [0.0,0.0,0.0,0.5,1.0],
