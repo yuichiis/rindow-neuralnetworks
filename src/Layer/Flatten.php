@@ -42,11 +42,11 @@ class Flatten extends AbstractLayer implements Layer
 
     public function getConfig() : array
     {
-        return array_merge(parent::getConfig(),[
+        return [
             'options' => [
                 'input_shape'=>$this->inputShape,
             ]
-        ]);
+        ];
     }
     
     protected function call(NDArray $inputs, bool $training) : NDArray
