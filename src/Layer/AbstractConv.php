@@ -122,7 +122,7 @@ abstract class AbstractConv extends AbstractImage implements Layer
     {
         return [
             'filters' => $this->filters,
-            'kernel_size' => $this->kernel_size
+            'kernel_size' => $this->kernel_size,
             'options' => [
                 'strides' => $this->strides,
                 'padding' => $this->padding,
