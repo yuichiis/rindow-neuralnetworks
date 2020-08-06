@@ -7,8 +7,8 @@ use LogicException;
 use Rindow\NeuralNetworks\Support\GenericUtils;
 use Rindow\NeuralNetworks\Optimizer\Optimizer;
 use Rindow\NeuralNetworks\Layer\Layer;
-use Rindow\NeuralNetworks\Layer\Softmax;
-use Rindow\NeuralNetworks\Layer\Sigmoid;
+use Rindow\NeuralNetworks\Activation\Softmax;
+use Rindow\NeuralNetworks\Activation\Sigmoid;
 use Rindow\NeuralNetworks\Loss\Loss;
 use Rindow\NeuralNetworks\Loss\SparseCategoricalCrossEntropy;
 use Rindow\NeuralNetworks\Loss\CategoricalCrossEntropy;
@@ -78,27 +78,29 @@ class Sequential
         $this->optimizer = $optimizer;
 
         // resolve lastLoss Layer
-        $lastLayer = array_pop($this->layers);
+        $layers = $this->layers;
+        $lastLayer = array_pop($layers);
         if(!$lastLayer) {
             throw new InvalidArgumentException('no layer');
         }
+        $activation = $lastLayer->getActivation();
         if($loss=='SparseCategoricalCrossEntropy') {
             $loss = $this->builder->losses()->SparseCategoricalCrossEntropy();
         }
         if($loss instanceof SparseCategoricalCrossEntropy) {
-            if($lastLayer instanceof Softmax) {
+            if($activation instanceof Softmax) {
                 $loss->setFromLogits(true);
-                $lastLayer = $loss;
+                $lastLayer->setActivation($loss);
             }
         } elseif($loss instanceof CategoricalCrossEntropy) {
-            if($lastLayer instanceof Softmax) {
+            if($activation instanceof Softmax) {
                 $loss->setFromLogits(true);
-                $lastLayer = $loss;
+                $lastLayer->setActivation($loss);
             }
         } elseif($loss instanceof BinaryCrossEntropy) {
-            if($lastLayer instanceof Sigmoid) {
+            if($activation instanceof Sigmoid) {
                 $loss->setFromLogits(true);
-                $lastLayer = $loss;
+                $lastLayer->setActivation($loss);
             }
         }
         if(!($loss instanceof Loss)) {
