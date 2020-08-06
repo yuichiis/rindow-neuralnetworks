@@ -69,10 +69,10 @@ class Test extends TestCase
             0.0, 0.0 , 1.0,
         ]);
         $y = $func->call($x,true);
-        $loss = $layer->loss($t,$y);
+        $loss = $func->loss($t,$y);
         $this->assertLessThan(0.01,abs(0.0-$loss));
 
-        $dx = $layer->differentiateLoss();
+        $dx = $func->differentiateLoss();
         $this->assertLessThan(0.0001,$mo->asum($mo->op($mo->op($y->reshape([3]),'-',$dx->reshape([3])),'-',$t)));
 
         $x = $mo->array([
