@@ -56,7 +56,7 @@ class Test extends TestCase
             [-1.0,-0.5,0.0,0.5,1.0],
         ]);
         $copyInputs = $mo->copy($inputs);
-        $outputs = $activation->call($inputs, $training=true);
+        $outputs = $activation->forward($inputs, $training=true);
         $this->assertEquals([4,5],$outputs->shape());
         $this->assertEquals(
             [0.0,0.0,0.0,0.5,1.0],
@@ -72,7 +72,7 @@ class Test extends TestCase
             [-1.0,-0.5,0.0,0.5,1.0],
         ]);
         $copydOutputs = $mo->copy($dOutputs);
-        $dInputs = $activation->differentiate($dOutputs);
+        $dInputs = $activation->backward($dOutputs);
         $this->assertEquals([4,5],$dInputs->shape());
         $this->assertEquals(
             [0.0,0.0,0.0,0.5,1.0],
