@@ -19,6 +19,16 @@ class Activation extends AbstractLayer implements Layer
         $this->inputShape = $input_shape;
         $this->setActivation($activation);
     }
+    
+    public function getConfig() : array
+    {
+        return [
+            'activation'=>$this->activationName,
+            'options' => [
+                'input_shape'=>$this->inputShape,
+            ],
+        ];
+    }
 
     protected function call(NDArray $inputs, bool $training) : NDArray
     {
