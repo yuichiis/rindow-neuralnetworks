@@ -4,6 +4,7 @@ namespace Rindow\NeuralNetworks\Layer;
 use Interop\Polite\Math\Matrix\NDArray;
 use InvalidArgumentException;
 use Rindow\NeuralNetworks\Activation\FunctionFactory;
+use Rindow\NeuralNetworks\Activation\Activation as ActivationInterface;
 
 /**
  *
@@ -34,7 +35,7 @@ abstract class AbstractLayer
             $this->activationName = $activation;
             return;
         }
-        if($activation instanceof Activation) {
+        if($activation instanceof ActivationInterface) {
             $this->activation = $activation;
             // for compiling lossfunction
             if($this->activationName==null){
