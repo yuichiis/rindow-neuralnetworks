@@ -67,6 +67,7 @@ abstract class AbstractConv extends AbstractImage implements Layer
         $this->biasInitializer   = $K->getInitializer($bias_initializer);
         $this->kernelInitializerName = $kernel_initializer;
         $this->biasInitializerName = $bias_initializer;
+        $this->setActivation($activation);
     }
 
     public function build(array $inputShape=null, array $options=null) : void
