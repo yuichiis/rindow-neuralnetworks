@@ -120,9 +120,9 @@ abstract class AbstractConv extends AbstractImage implements Layer
 
     public function getConfig() : array
     {
-        return array_merge(parent::getConfig(),[
+        return [
             'filters' => $this->filters,
-            'kernel_size' => $this->kernel_size,
+            'kernel_size' => $this->kernel_size
             'options' => [
                 'strides' => $this->strides,
                 'padding' => $this->padding,
@@ -130,7 +130,8 @@ abstract class AbstractConv extends AbstractImage implements Layer
                 'input_shape'=>$this->inputShape,
                 'kernel_initializer' => $this->kernelInitializerName,
                 'bias_initializer' => $this->biasInitializerName,
-            ]
-        ]);
+                'activation'=>$this->activationName,
+            ],
+        ];
     }
 }
