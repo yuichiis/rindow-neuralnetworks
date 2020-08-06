@@ -149,7 +149,7 @@ class Test extends TestCase
         $model = $nn->models()->Sequential([
             $nn->layers()->Dense($units=128,['input_shape'=>[2],
                 'activation'=>'sigmoid']),
-            $nn->layers()->Dense($units=2,['activation'=>'softmax']]),
+            $nn->layers()->Dense($units=2,['activation'=>'softmax']),
         ]);
 
         $model->compile();
