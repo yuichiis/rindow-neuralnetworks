@@ -6,7 +6,7 @@ use Rindow\NeuralNetworks\Activation\Activation;
 use InvalidArgumentException;
 use DomainException;
 
-abstract class AbstractCrossEntropy extends implements Loss,Activation
+abstract class AbstractCrossEntropy  implements Loss,Activation
 {
     protected $backend;
     protected $outputs;
