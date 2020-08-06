@@ -121,6 +121,7 @@ class Test extends TestCase
             $nn->layers()->Dense($units=2,['activation'=>'softmax']),
         ]);
 
+        var_dump($model->layers()[1]->getActivation());
         $model->compile();
         var_dump($model->layers()[1]->getActivation());
         $this->assertTrue($model->layers()[1]->getActivation()->fromLogits());
