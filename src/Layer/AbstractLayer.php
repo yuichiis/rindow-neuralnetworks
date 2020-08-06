@@ -32,6 +32,7 @@ abstract class AbstractLayer
         }
         if(is_string($activation)) {
             $this->activation = FunctionFactory::factory($this->backend,$activation);
+echo 'in layer ';
 var_dump($this->activation);
             $this->activationName = $activation;
             return;
