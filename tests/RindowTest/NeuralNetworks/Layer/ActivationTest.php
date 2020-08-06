@@ -47,7 +47,8 @@ class Test extends TestCase
     {
         $mo = new MatrixOperator();
         $backend = new Backend($mo);
-        $activation = new Activation($backend,'relu');
+        $layer = new Activation($backend,'relu');
+        $layer->build();
 
         $inputs = $mo->array([
             [-1.0,-0.5,0.0,0.5,1.0],
@@ -56,7 +57,7 @@ class Test extends TestCase
             [-1.0,-0.5,0.0,0.5,1.0],
         ]);
         $copyInputs = $mo->copy($inputs);
-        $outputs = $activation->forward($inputs, $training=true);
+        $outputs = $layer->forward($inputs, $training=true);
         $this->assertEquals([4,5],$outputs->shape());
         $this->assertEquals(
             [0.0,0.0,0.0,0.5,1.0],
@@ -72,7 +73,7 @@ class Test extends TestCase
             [-1.0,-0.5,0.0,0.5,1.0],
         ]);
         $copydOutputs = $mo->copy($dOutputs);
-        $dInputs = $activation->backward($dOutputs);
+        $dInputs = $layer->backward($dOutputs);
         $this->assertEquals([4,5],$dInputs->shape());
         $this->assertEquals(
             [0.0,0.0,0.0,0.5,1.0],
