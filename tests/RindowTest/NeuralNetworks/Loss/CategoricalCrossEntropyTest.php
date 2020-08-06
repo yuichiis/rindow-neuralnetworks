@@ -75,7 +75,7 @@ class Test extends TestCase
             [0.0, 0.0 , 1.0],
             [0.0, 0.0 , 1.0],
         ]);
-        $y = $func->forward($x,true);
+        $y = $func->call($x,true);
         $loss = $func->loss($t,$y);
         $this->assertLessThan(0.01,abs(0.0-$loss));
 
