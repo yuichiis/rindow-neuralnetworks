@@ -83,14 +83,15 @@ class Dense extends AbstractLayer implements Layer
 
     public function getConfig() : array
     {
-        return array_merge(parent::getConfig(),[
+        return [
             'units' => $this->units,
             'options' => [
                 'input_shape'=>$this->inputShape,
                 'kernel_initializer' => $this->kernelInitializerName,
                 'bias_initializer' => $this->biasInitializerName,
+                'activation'=>$this->activationName,
             ]
-        ]);
+        ];
     }
 
     protected function call(NDArray $inputs, bool $training) : NDArray
