@@ -68,7 +68,7 @@ abstract class AbstractPooling extends AbstractImage implements Layer
 
     public function getConfig() : array
     {
-        return array_merge(parent::getConfig(),[
+        return [
             'options' => [
                 'pool_size' => $this->poolSize,
                 'strides' => $this->strides,
@@ -76,6 +76,6 @@ abstract class AbstractPooling extends AbstractImage implements Layer
                 'data_format' => $this->data_format,
                 'input_shape'=>$this->inputShape,
             ]
-        ]);
+        ];
     }
 }
