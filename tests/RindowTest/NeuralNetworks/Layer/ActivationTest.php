@@ -48,7 +48,7 @@ class Test extends TestCase
         $mo = new MatrixOperator();
         $backend = new Backend($mo);
         $layer = new Activation($backend,'relu');
-        $layer->build();
+        $layer->build([5]);
 
         $inputs = $mo->array([
             [-1.0,-0.5,0.0,0.5,1.0],
