@@ -10,7 +10,6 @@ class Dense extends AbstractLayer implements Layer
     use GenericUtils;
     protected $backend;
     protected $units;
-    protected $activation;
     protected $useBias;
     protected $kernelInitializer;
     protected $biasInitializer;
@@ -36,11 +35,11 @@ class Dense extends AbstractLayer implements Layer
         $this->backend = $K = $backend;
         $this->units = $units;
         $this->inputShape = $input_shape;
-        $this->activation = $activation;
         $this->kernelInitializer = $K->getInitializer($kernel_initializer);
         $this->biasInitializer   = $K->getInitializer($bias_initializer);
         $this->kernelInitializerName = $kernel_initializer;
         $this->biasInitializerName = $bias_initializer;
+        $this->setActivation($activation);
     }
 
     public function build(array $inputShape=null, array $options=null) : void
@@ -103,18 +102,17 @@ class Dense extends AbstractLayer implements Layer
         $inputSize=array_product($shape);
         $this->inputs = $inputs->reshape([$inputSize,$inputDim]);
         $outputs = $K->batch_gemm($this->inputs, $this->kernel,1.0,1.0,$this->bias);
+        $this->flattenOutputsShape = $outputs->shape();
         array_push($shape,$this->units);
-        return $outputs->reshape($shape);
+        $outputs = $outputs->reshape($shape);
+        return $outputs;
     }
 
     protected function differentiate(NDArray $dOutputs) : NDArray
     {
         $K = $this->backend;
         $dInputs = $K->zerosLike($this->inputs);
-        $shape = $dOutputs->shape();
-        $outputDim=array_pop($shape);
-        $outputSize=array_product($shape);
-        $dOutputs=$dOutputs->reshape([$outputSize,$outputDim]);
+        $dOutputs=$dOutputs->reshape($this->flattenOutputsShape);
         $K->gemm($dOutputs, $this->kernel,1.0,0.0,$dInputs,false,true);
 
         // update params
