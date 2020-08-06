@@ -8,14 +8,14 @@ class Sigmoid extends AbstractActivation
     protected $outputs;
     protected $incorporatedLoss = false;
 
-    protected function call(NDArray $inputs, bool $training) : NDArray
+    public function call(NDArray $inputs, bool $training) : NDArray
     {
         $K = $this->backend;
         $this->outputs = $K->sigmoid($inputs);
         return $this->outputs;
     }
 
-    protected function differentiate(NDArray $dOutputs) : NDArray
+    public function differentiate(NDArray $dOutputs) : NDArray
     {
         $K = $this->backend;
         $dx = $K->onesLike($this->outputs);
