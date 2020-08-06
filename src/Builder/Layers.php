@@ -29,7 +29,7 @@ class Layers
     public function Activation(
         $activation,array $options=null)
     {
-        return new Actibation($this->backend,$activation,$options);
+        return new Activation($this->backend,$activation,$options);
     }
 
     public function Dense(int $units, array $options=null)
