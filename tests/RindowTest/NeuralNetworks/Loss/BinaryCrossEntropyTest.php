@@ -24,8 +24,7 @@ class Test extends TestCase
     {
         $mo = new MatrixOperator();
         $backend = new Backend($mo);
-        $layer = new BinaryCrossEntropy($backend);
-        $layer->build([1]);
+        $func = new BinaryCrossEntropy($backend);
 
         $x = $mo->array([
             [0.0], [0.0] , [10.0],
@@ -34,11 +33,11 @@ class Test extends TestCase
             0.0, 0.0 , 1.0,
         ]);
         $y = $backend->sigmoid($x);
-        $loss = $layer->loss($t,$y);
-        $accuracy = $layer->accuracy($t,$x);
+        $loss = $func->loss($t,$y);
+        $accuracy = $func->accuracy($t,$x);
         $this->assertLessThan(0.001,abs(0.0-$loss));
 
-        $dx = $backend->dSigmoid($layer->differentiateLoss(),$y);
+        $dx = $backend->dSigmoid($func->differentiateLoss(),$y);
         $this->assertLessThan(0.0001,1-$mo->asum($mo->op($mo->op($y->reshape([3]),'-',$dx->reshape([3])),'-',$t)));
 
 
@@ -49,10 +48,10 @@ class Test extends TestCase
             0.0, 1.0 , 0.0,
         ]);
         $y = $backend->sigmoid($x);
-        $loss = $layer->loss($t,$y);
+        $loss = $func->loss($t,$y);
         $this->assertLessThan(0.01,abs(0.23-$loss));
 
-        $dx = $backend->dSigmoid($layer->differentiateLoss(),$y);
+        $dx = $backend->dSigmoid($func->differentiateLoss(),$y);
         $this->assertLessThan(0.0001,1-$mo->asum($mo->op($mo->op($y->reshape([3]),'-',$dx->reshape([3])),'-',$t)));
     }
 
@@ -60,9 +59,8 @@ class Test extends TestCase
     {
         $mo = new MatrixOperator();
         $backend = new Backend($mo);
-        $layer = new BinaryCrossEntropy($backend);
-        $layer->setFromLogits(true);
-        $layer->build([1]);
+        $func = new BinaryCrossEntropy($backend);
+        $func->setFromLogits(true);
 
         $x = $mo->array([
             [0.0], [0.0] , [10.0],
@@ -70,7 +68,7 @@ class Test extends TestCase
         $t = $mo->array([
             0.0, 0.0 , 1.0,
         ]);
-        $y = $layer->forward($x,true);
+        $y = $func->call($x,true);
         $loss = $layer->loss($t,$y);
         $this->assertLessThan(0.01,abs(0.0-$loss));
 
@@ -83,11 +81,11 @@ class Test extends TestCase
         $t = $mo->array([
             0.0, 1.0 , 0.0,
         ]);
-        $y = $layer->forward($x,true);
-        $loss = $layer->loss($t,$y);
+        $y = $func->call($x,true);
+        $loss = $func->loss($t,$y);
         $this->assertLessThan(0.01,abs(0.23-$loss));
 
-        $dx = $layer->differentiateLoss();
+        $dx = $func->differentiateLoss();
         $this->assertLessThan(0.0001,$mo->asum($mo->op($mo->op($y->reshape([3]),'-',$dx->reshape([3])),'-',$t)));
     }
 }
