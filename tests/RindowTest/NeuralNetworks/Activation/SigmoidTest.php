@@ -16,7 +16,7 @@ class Test extends TestCase
         $activation = new Sigmoid($backend);
 
         $x = $mo->array([-1.0,-0.5,0.0,0.5,1.0]);
-        $y = $activation->forward($x, $training=true);
+        $y = $activation->call($x, $training=true);
 
         $this->assertEquals([-1.0,-0.5,0.0,0.5,1.0],$x->toArray());
         $this->assertTrue($y[0]<0.5);
@@ -26,7 +26,7 @@ class Test extends TestCase
         $this->assertTrue($y[4]>0.5);
 
         $dout = $x;
-        $dx = $activation->backward($dout);
+        $dx = $activation->differentiate($dout);
         $this->assertTrue(abs(-0.196-$dx[0])<0.01);
         $this->assertTrue(abs(-0.117-$dx[1])<0.01);
         $this->assertTrue($dx[2]==0.0);
