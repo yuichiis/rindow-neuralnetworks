@@ -106,7 +106,6 @@ class Sequential
         if(!($loss instanceof Loss)) {
             throw new InvalidArgumentException('invalid loss function');
         }
-        array_push($this->layers,$lastLayer);
         $this->lossFunction = $loss;
 
         // resolve metrics
