@@ -39,7 +39,7 @@ class Test extends TestCase
         $activation = new Activation($backend,'sigmoid');
         $this->assertInstanceOf(Sigmoid::class,$activation->getActivation());
         $loss = new SparseCategoricalCrossEntropy($backend);
-        $activation->setActivarion($loss);
+        $activation->setActivation($loss);
         $this->assertInstanceOf(SparseCategoricalCrossEntropy::class,$activation->getActivation());
     }
     
