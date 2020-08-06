@@ -9,7 +9,7 @@ use Rindow\NeuralNetworks\Activation\ReLU;
 use Rindow\NeuralNetworks\Activation\Sigmoid;
 use Rindow\NeuralNetworks\Activation\Softmax;
 use Rindow\NeuralNetworks\Activation\Tanh;
-use Rindow\NeuralNetworks\Loss\SparseCategoricalCrossEntropy
+use Rindow\NeuralNetworks\Loss\SparseCategoricalCrossEntropy;
 
 
 class Test extends TestCase
