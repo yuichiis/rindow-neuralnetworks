@@ -99,7 +99,7 @@ class BatchNormalization extends AbstractLayer implements Layer
 
     public function getConfig() : array
     {
-        return array_merge(parent::getConfig(),[
+        return [
             'options' => [
                 'momentum'=>0.99,
                 'epsilon'=>0.001,
@@ -108,7 +108,7 @@ class BatchNormalization extends AbstractLayer implements Layer
                 'moving_mean_initializer'=>'zeros',
                 'moving_variance_initializer'=>'ones',
             ]
-        ]);
+        ];
     }
 
     protected function call(NDArray $inputs, bool $training) : NDArray
