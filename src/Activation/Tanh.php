@@ -7,7 +7,7 @@ class Tanh extends AbstractActivation
 {
     protected $mask;
 
-    protected function call(NDArray $inputs, bool $training) : NDArray
+    public function call(NDArray $inputs, bool $training) : NDArray
     {
         $K = $this->backend;
         $outputs = $K->tanh($inputs);
@@ -15,7 +15,7 @@ class Tanh extends AbstractActivation
         return $outputs;
     }
 
-    protected function differentiate(NDArray $dOutputs) : NDArray
+    public function differentiate(NDArray $dOutputs) : NDArray
     {
         $K = $this->backend;
         // dx = dy * (1 - y^2)
