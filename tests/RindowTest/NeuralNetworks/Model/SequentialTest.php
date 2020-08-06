@@ -122,6 +122,7 @@ class Test extends TestCase
         ]);
 
         $model->compile();
+        var_dump($model->layers()[1]->getActivation());
         $this->assertTrue($model->layers()[1]->getActivation()->fromLogits());
         $this->assertTrue($model->lossFunction()->fromLogits());
 
