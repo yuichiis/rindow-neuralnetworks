@@ -20,7 +20,7 @@ class Test extends TestCase
             [-1.0,-0.5,0.0,0.5,1.0],
             [-1.0,-0.5,0.0,0.5,1.0],
         ]);
-        $y = $activation->forward($x, $training=true);
+        $y = $activation->call($x, $training=true);
         $this->assertEquals([
             [-1.0,-0.5,0.0,0.5,1.0],
             [-1.0,-0.5,0.0,0.5,1.0],
@@ -33,7 +33,7 @@ class Test extends TestCase
             [-0.5,-0.25,0.0,0.25,0.5],
             [-0.5,-0.25,0.0,0.25,0.5],
             ]);
-        $dx = $activation->backward($dout);
+        $dx = $activation->differentiate($dout);
         $this->assertEquals([
             [-0.5,-0.25,0.0,0.25,0.5],
             [-0.5,-0.25,0.0,0.25,0.5],
