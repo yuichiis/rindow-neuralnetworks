@@ -56,7 +56,7 @@ class Test extends TestCase
         $weights = $model->weights();
         $grads = $model->grads();
 
-        $this->assertCount(4,$layers);
+        $this->assertCount(2,$layers);
         $this->assertInstanceof(
             'Rindow\NeuralNetworks\Layer\Dense',$layers[0]);
         $this->assertInstanceof(
