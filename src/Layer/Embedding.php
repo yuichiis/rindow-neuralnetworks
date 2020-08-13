@@ -9,17 +9,16 @@ class Embedding extends AbstractLayer implements Layer
 {
     use GenericUtils;
     protected $backend;
-    protected $units;
-    protected $activation;
-    protected $useBias;
+    protected $inputDim;
+    protected $outputDim;
     protected $kernelInitializer;
-    protected $biasInitializer;
+    protected $input_length;
 
     protected $kernel;
-    protected $bias;
     protected $dKernel;
-    protected $dBias;
     protected $inputs;
+    protected $originalShape;
+    protected $flattenOutputsShape;
 
     public function __construct($backend,int $inputDim,int $outputDim, array $options=null)
     {
@@ -38,14 +37,13 @@ class Embedding extends AbstractLayer implements Layer
         $this->kernelInitializerName = $kernel_initializer;
     }
 
-    public function build(array $inputShape=null, array $options=null) : void
+    public function build(array $inputShape=null, array $options=null) : array
     {
         extract($this->extractArgs([
             'sampleWeights'=>null,
         ],$options));
         $K = $this->backend;
         $kernelInitializer = $this->kernelInitializer;
-        $biasInitializer = $this->biasInitializer;
 
         $inputShape = $this->normalizeInputShape($inputShape);
         if(count($inputShape)!=1) {
@@ -59,6 +57,7 @@ class Embedding extends AbstractLayer implements Layer
         }
         $this->dKernel = $K->zerosLike($this->kernel);
         $this->outputShape = array_merge($inputShape,[$this->outputDim]);
+        return $this->outputShape;
     }
 
     public function getParams() : array
