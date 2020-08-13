@@ -37,11 +37,12 @@ class BinaryCrossEntropy extends AbstractCrossEntropy
         NDArray $trues, NDArray $predicts) : float
     {
         $K = $this->backend;
-        if($predicts->ndim()!=2||$predicts->shape()[1]!=1) {
+        $shape = $predicts->shape();
+        $inputDim = array_pop($shape);
+        if($inputDim!=1) {
             throw new InvalidArgumentException('Invalid shape of predicts: ['.implode(',',$predicts->shape()).']');
         }
-        $predicts = $predicts->reshape([$predicts->shape()[0]]);
-        if($trues->shape()!=$predicts->shape())
+        if($trues->shape()!=$shape)
             throw new InvalidArgumentException('unmatch shape of trues and predicts results');
         // calc accuracy
         $predicts = $K->greater($K->copy($predicts),0.5);
@@ -49,7 +50,7 @@ class BinaryCrossEntropy extends AbstractCrossEntropy
             $predicts = $K->cast($predicts,$trues->dtype());
         }
         $accuracy = $K->sum($K->equal($trues, $predicts))
-                            / (float)$trues->shape()[0];
+                            / (float)$trues->size();
         return $accuracy;
     }
 }
