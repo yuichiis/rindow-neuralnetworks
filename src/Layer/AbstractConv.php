@@ -105,7 +105,7 @@ abstract class AbstractConv extends AbstractImage implements Layer
         } else {
             $this->kernel = $kernelInitializer($kernel_size,array_product(array_merge($this->kernel_size,[$channels])));
             if($this->useBias) {
-                $this->bias = $biasInitializer([$this->units]);
+                $this->bias = $biasInitializer([$this->filters]);
             }
         }
         $this->dKernel = $K->zerosLike($this->kernel);
