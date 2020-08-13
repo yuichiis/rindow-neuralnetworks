@@ -32,11 +32,16 @@ class Activation extends AbstractLayer implements Layer
 
     protected function call(NDArray $inputs, bool $training) : NDArray
     {
-        return $inputs;
+        $outputs = $inputs;
+        if($this->activation)
+            $outputs = $this->activation->call($outputs,$training);
+        return $outputs;
     }
 
     protected function differentiate(NDArray $dOutputs) : NDArray
     {
+        if($this->activation)
+            $dOutputs = $this->activation->differentiate($dOutputs);
         return $dOutputs;
     }
 }
