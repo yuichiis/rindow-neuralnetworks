@@ -98,7 +98,7 @@ class Embedding extends AbstractLayer implements Layer
     protected function differentiate(NDArray $dOutputs) : NDArray
     {
         $K = $this->backend;
-        $dOutputs = $dOutputs->reshape($this->flattenOutputsShape)
+        $dOutputs = $dOutputs->reshape($this->flattenOutputsShape);
         $K->clear($this->dKernel);
         $K->scatterAdd($this->dKernel,$this->inputs, $dOutputs);
         return $this->inputs->reshape($this->originalShape);//dummy
