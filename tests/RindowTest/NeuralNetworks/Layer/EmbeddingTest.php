@@ -125,7 +125,7 @@ class Test extends TestCase
             [2,2,2,2,2],
             [2,2,2,2,2],
             [1,1,1,1,1],
-        ],$grads[0]);
+        ],$grads[0]->toArray());
         $this->assertEquals($copydOutputs->toArray(),$dOutputs->toArray());
     }
 }
