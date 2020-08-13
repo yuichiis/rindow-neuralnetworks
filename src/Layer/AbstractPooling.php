@@ -38,7 +38,7 @@ abstract class AbstractPooling extends AbstractImage implements Layer
         $this->inputShape = $input_shape;
     }
 
-    public function build(array $inputShape=null, array $options=null) : void
+    public function build(array $inputShape=null, array $options=null) : array
     {
         $K = $this->backend;
 
@@ -54,6 +54,7 @@ abstract class AbstractPooling extends AbstractImage implements Layer
             );
         array_push($outputShape,$channels);
         $this->outputShape = $outputShape;
+        return $this->outputShape;
     }
 
     public function getParams() : array
