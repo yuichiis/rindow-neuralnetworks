@@ -44,7 +44,7 @@ class BatchNormalization extends AbstractLayer implements Layer
         $this->movingVarianceInitializer = $K->getInitializer($moving_variance_initializer);
     }
 
-    public function build(array $inputShape=null, array $options=null) : void
+    public function build(array $inputShape=null, array $options=null) : array
     {
         extract($this->extractArgs([
             'sampleWeights'=>null,
@@ -85,6 +85,7 @@ class BatchNormalization extends AbstractLayer implements Layer
 
         $this->inputShape = $inputShape;
         $this->outputShape = $inputShape;
+        return $this->outputShape;
     }
 
     public function getParams() : array
