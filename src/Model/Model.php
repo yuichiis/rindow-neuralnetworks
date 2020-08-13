@@ -1,5 +1,8 @@
 <?php
 namespace Rindow\NeuralNetworks\Model;
+
+use Interop\Polite\Math\Matrix\NDArray;
+
 interface Model
 {
     public function compile(array $options=null) : void;
