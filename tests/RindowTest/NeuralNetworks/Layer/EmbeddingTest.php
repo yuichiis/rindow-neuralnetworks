@@ -64,7 +64,7 @@ class Test extends TestCase
             ]);
         $layer->build($inputShape=[3]);
 
-        $this->assertEquals([3],$layer->inputShape());
+        //$this->assertEquals([3],$layer->inputShape());
         $this->assertEquals([3,5],$layer->outputShape());
     }
 
