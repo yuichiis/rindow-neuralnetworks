@@ -20,12 +20,16 @@ class Conv2D extends AbstractConv implements Layer
                 $this->padding,
                 $this->data_format
         );
+        if($this->activation)
+            $outputs = $this->activation->call($outputs,$training);
         return $outputs;
     }
 
     protected function differentiate(NDArray $dOutputs) : NDArray
     {
         $K = $this->backend;
+        if($this->activation)
+            $dOutputs = $this->activation->differentiate($dOutputs);
         $dInputs = $K->dConv2d(
             $this->status,
             $dOutputs,
