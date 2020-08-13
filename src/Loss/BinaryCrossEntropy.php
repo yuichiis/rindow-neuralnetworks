@@ -43,7 +43,7 @@ class BinaryCrossEntropy extends AbstractCrossEntropy
             throw new InvalidArgumentException('Invalid shape of predicts: ['.implode(',',$predicts->shape()).']');
         }
         if($trues->shape()!=$shape)
-            throw new InvalidArgumentException('unmatch shape of trues and predicts results');-
+            throw new InvalidArgumentException('unmatch shape of trues and predicts results');
         $predicts = $predicts->reshape([$predicts->size()]);
         // calc accuracy
         $predicts = $K->greater($K->copy($predicts),0.5);
