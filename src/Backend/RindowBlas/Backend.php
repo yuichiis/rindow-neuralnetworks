@@ -301,7 +301,12 @@ class Backend
         return $this->la->equal($x,$y);
     }
 
-    public function sum(NDArray $x,$axis=null)
+    public function tanh($x)
+    {
+        return $this->la->tanh($x);
+    }
+
+    public function sum(NDArray $x, int $axis=null)
     {
         if($axis===null) {
             return $this->la->sum($x);
@@ -458,7 +463,15 @@ class Backend
             // Native softmax function !!!
             return $la->softmax($la->copy($X)->reshape([1,$X->size()]))
                 ->reshape([$X->size()]);
-        } elseif($ndim == 2) {
+        } else {
+            $orig = $shape = $X->shape();
+            $inputDim = array_pop($shape);
+            $X = $X->reshape((int)array_product($shape));
+            $y = $la->softmax($la->copy($X));
+            return $y->reshape($orig);
+        }
+        /*
+        if($ndim == 2) {
 
             //$X = $this->la->add($this->la->reduceMax($X, $axis=1),
             //                    $this->la->copy($X),-1,$trans=true);  # fix overflow
@@ -474,6 +487,7 @@ class Backend
         } else {
             throw new InvalidArgumentException('Array must be 1-D or 2-D.');
         }
+        */
     }
 
     public function dSoftmax(NDArray $dOutputs, NDArray $outputs) : NDArray
@@ -779,12 +793,19 @@ class Backend
             [array_product($filterSize)*$channels,
              $filters]);
              
-        $outputs = $this->batch_gemm(
-            $cols,
-            $kernel,
-            1.0,1.0,
-            $bias
-        );
+        if($bias){
+            $outputs = $this->batch_gemm(
+                $cols,
+                $kernel,
+                1.0,1.0,
+                $bias
+            );
+        } else {
+            $outputs = $this->gemm(
+                $cols,
+                $kernel,
+            );
+        }
             
         $status->inputsShape = $inputs->shape();
         $status->kernel = $kernel;
@@ -830,7 +851,9 @@ class Backend
             1.0,0.0,
             $dKernel->reshape($status->kernel->shape()),
             true,false);
-        $this->copy($this->sum($dOutputs, $axis=0),$dBias);
+        if($dBias){
+            $this->copy($this->sum($dOutputs, $axis=0),$dBias);
+        }
         
         $dInputs = $this->zeros($status->inputsShape);
         $this->la->col2im(
@@ -1052,7 +1075,12 @@ class Backend
         NDArray $trues, NDArray $predicts) : float
     {
         $la = $this->la;
-        if($trues->ndim()!=1) {
+        $ndim = $trues->ndim();
+        if($ndim==1){
+            ;
+        } elseif($ndim<=2) {
+            $trues = $trues->reshape($trues->size());
+        } elseif($ndim>2) {
             throw new InvalidArgumentException('categorical\'s "trues" must be shape of [batchsize,1].');
         }
         $shape = $predicts->shape();
@@ -1073,7 +1101,17 @@ class Backend
         NDArray $trues, NDArray $predicts, bool $fromLogits=null) : NDArray
     {
         $la = $this->la;
-        if($trues->ndim()!=1) {
+        $ndim = $trues->ndim();
+        if($ndim==1){
+            ;
+        } elseif($ndim==2) {
+            $trues = $trues->reshape($trues->size());
+            $origPredictsShape = $predictsShape = $predicts->shape();
+            $inputDim = array_pop($predictsShape);
+            $predicts = $predicts->reshape(
+                [array_product($predictsShape),$inputDim]
+                );
+        } elseif($ndim>2) {
             throw new InvalidArgumentException('categorical\'s "trues" must be shape of [batchsize,1].');
         }
         if($trues->size()!=$predicts->shape()[0]){
@@ -1085,14 +1123,13 @@ class Backend
             // dx = (y - t)      #  t=onehot(trues), y=softmax(x)
             $dInputs = $la->copy($predicts);
             $la->onehot($trues,$numClass,-1,$dInputs);
-            return $dInputs;
         } else {
             // dx = - trues / predicts
             $trues = $la->onehot($trues,$numClass);
             $dInputs = $la->scal(-1.0,$la->multiply($trues,
                 $la->reciprocal($la->copy($predicts),$this->epsilon)));
-            return $dInputs;
         }
+        return $dInputs->reshape($origPredictsShape);
     }
 
     public function categoricalCrossEntropy(
@@ -1132,6 +1169,91 @@ class Backend
             return $la->scal(-1.0,$la->multiply($trues,
                 $la->reciprocal($la->copy($predicts),$this->epsilon)));
         }
+    }
+    
+    public function rnnGetTimestep(
+        NDArray $source,int $step) : NDArray
+    {
+        if($source->ndim()!=3){
+            throw new InvalidArgumentException('array must be 3D');
+        }
+        [$batch,$steps,$feature] = $source->shape();
+        $values = $this->la->alloc([$batch,$feature],$source->dtype());
+        for($i=0;$i<$batch;$i++){
+            $this->la->copy($source[$i][$step],$values[$i]);
+        }
+        return $values;
+    }
+
+    public function rnnSetTimestep(
+        NDArray $dest,int $step,NDArray $values) : NDArray
+    {
+        if($dest->ndim()!=3){
+            throw new InvalidArgumentException('array must be 3D');
+        }
+        [$batch,$steps,$feature] = $dest->shape();
+        for($i=0;$i<$batch;$i++){
+            $this->la->copy($values[$i],$dest[$i][$step]);
+        }
+        return $dest;
+    }
+    
+    public function rnn(
+        $stepFunction,
+        NDArray $inputs,
+        NDArray $initialStates,
+        bool $training,
+        NDArray $outputs=null,
+        bool $goBackwards=null
+    ) : array
+    {
+        $inputLength = $inputs->shape()[1];
+        $prev_states = $initial_states;
+        $calcStates = [];
+        $tm = range(0,$inputLength-1);
+        if($goBackwards){
+            $tm = array_reverse($tm);
+        }
+        foreach($tm as $t){
+            $calcState = new \stdClass();
+            $calcStates[$t] = $calcState;
+            $outputs_t, $states_t = $step_function($this->rnnGetTimestep($inputs, $t), $prev_states,$training,$calcState);
+            if($outputs){
+                $this->rnnSetTimestep($outputs,$t,$outputs_t);
+            }
+            $prev_states = $states_t;
+        }
+        if($outputs===null){
+            $outputs=$outputs_t;
+        }
+        if($states===null){
+            $states=$states_t;
+        }
+        return [$outputs, $states_t, $calcStatus];
+    }
+    
+    public function rnnBackward(
+        $stepFunction,
+        NDArray $dOutputs,
+        array $dStates,
+        array $calcStatus,
+        NDArray $dInputs,
+        bool $goBackwards=null
+    ) : array
+    {
+        $inputLength = $inputs->shape()[1];
+        $tm = range(0,$inputLength-1);
+        if(!$goBackwards){
+            $tm = array_reverse($tm);
+        }
+        foreach($tm as $t){
+            $calcState = new \stdClass();
+            $calcStates[$t] = $calcState;
+            $outputs_t, $states_t = $step_function($this->rnnGetTimestep($inputs, $t), $dStates,$training,$calcState);
+            $this->rnnSetTimestep($dInputs,$t,$outputs_t);
+                $prev_states = $states_t;
+        }
+        return [$outputs, $states_t];
     }
 /*
     public function binaryCrossEntropy(
