@@ -23,7 +23,7 @@ class Embedding extends AbstractLayer implements Layer
     public function __construct($backend,int $inputDim,int $outputDim, array $options=null)
     {
         extract($this->extractArgs([
-            'input_length'=>null
+            'input_length'=>null,
             'kernel_initializer'=>'sigmoid_normal',
         ],$options));
         $this->backend = $K = $backend;
