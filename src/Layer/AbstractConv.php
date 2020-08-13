@@ -67,10 +67,13 @@ abstract class AbstractConv extends AbstractImage implements Layer
         $this->biasInitializer   = $K->getInitializer($bias_initializer);
         $this->kernelInitializerName = $kernel_initializer;
         $this->biasInitializerName = $bias_initializer;
+        if($use_bias===null || $use_bias) {
+            $this->useBias = true;
+        }
         $this->setActivation($activation);
     }
 
-    public function build(array $inputShape=null, array $options=null) : void
+    public function build(array $inputShape=null, array $options=null) : array
     {
         extract($this->extractArgs([
             'sampleWeights'=>null,
@@ -101,21 +104,34 @@ abstract class AbstractConv extends AbstractImage implements Layer
             $this->bias = $sampleWeights[1];
         } else {
             $this->kernel = $kernelInitializer($kernel_size,array_product(array_merge($this->kernel_size,[$channels])));
-            $this->bias = $biasInitializer([$this->filters]);
+            if($this->useBias) {
+                $this->bias = $biasInitializer([$this->units]);
+            }
         }
         $this->dKernel = $K->zerosLike($this->kernel);
-        $this->dBias = $K->zerosLike($this->bias);
+        if($this->useBias) {
+            $this->dBias = $K->zerosLike($this->bias);
+        }
         $this->outputShape = $outputShape;
+        return $this->outputShape;
     }
 
     public function getParams() : array
     {
-        return [$this->kernel,$this->bias];
+        if($this->bias) {
+            return [$this->kernel,$this->bias];
+        } else {
+            return [$this->kernel];
+        }
     }
 
     public function getGrads() : array
     {
-        return [$this->dKernel,$this->dBias];
+        if($this->bias) {
+            return [$this->dKernel,$this->dBias];
+        } else {
+            return [$this->dKernel];
+        }
     }
 
     public function getConfig() : array
