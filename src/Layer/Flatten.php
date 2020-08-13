@@ -18,7 +18,7 @@ class Flatten extends AbstractLayer implements Layer
         $this->inputShape = $input_shape;
     }
 
-    public function build(array $inputShape=null, array $options=null) : void
+    public function build(array $inputShape=null, array $options=null) : array
     {
         $K = $this->backend;
 
@@ -28,6 +28,7 @@ class Flatten extends AbstractLayer implements Layer
             $outputShape *= $n;
         }
         $this->outputShape = [$outputShape];
+        return $this->outputShape;
     }
 
     public function getParams() : array
