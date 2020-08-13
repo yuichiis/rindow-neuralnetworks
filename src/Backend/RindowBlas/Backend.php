@@ -466,7 +466,7 @@ class Backend
         } else {
             $orig = $shape = $X->shape();
             $inputDim = array_pop($shape);
-            $X = $X->reshape((int)array_product($shape));
+            $X = $X->reshape([(int)array_product($shape),$inputDim]);
             $y = $la->softmax($la->copy($X));
             return $y->reshape($orig);
         }
