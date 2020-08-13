@@ -53,7 +53,7 @@ class Embedding extends AbstractLayer implements Layer
         if($sampleWeights) {
             $this->kernel = $sampleWeights[0];
         } else {
-            $this->kernel = $kernelInitializer([$this->inputDim,$this->outputDim]));
+            $this->kernel = $kernelInitializer([$this->inputDim,$this->outputDim]);
         }
         $this->dKernel = $K->zerosLike($this->kernel);
         $this->outputShape = array_merge($inputShape,[$this->outputDim]);
