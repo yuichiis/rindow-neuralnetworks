@@ -803,7 +803,7 @@ class Backend
         } else {
             $outputs = $this->gemm(
                 $cols,
-                $kernel,
+                $kernel
             );
         }
             
