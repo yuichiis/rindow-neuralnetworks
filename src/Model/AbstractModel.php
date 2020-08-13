@@ -20,7 +20,7 @@ abstract class AbstractModel implements Model
     use GenericUtils;
     abstract protected function forwardStep(NDArray $inputs, NDArray $trues=null, bool $training=null) : NDArray;
     abstract protected function backwardStep(NDArray $dout) : NDArray;
-    protected function buildLayers(array $options=null) : void
+    protected function buildLayers(array $options=null) : void;
 
     protected $backend;
     protected $builder;
