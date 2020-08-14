@@ -186,7 +186,7 @@ class Test extends TestCase
         $this->assertCount(1,$nextStates);
         $this->assertEquals([6,4],$nextStates[0]->shape());
         $this->assertEquals($copyInputs->toArray(),$inputs->toArray());
-        $this->assertEquals($copyStates[0]->toArray(),$states[0]->toArray());
+        $this->assertEquals($copyStates[0]->toArray(),$initialStates[0]->toArray());
 
         //
         // backword
