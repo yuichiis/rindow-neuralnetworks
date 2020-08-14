@@ -70,7 +70,7 @@ class Test extends TestCase
         $layer->build($inputShape=[5,3]);
 
         //$this->assertEquals([3],$layer->inputShape());
-        $this->assertEquals([5,4],$layer->outputShape());
+        $this->assertEquals([4],$layer->outputShape());
     }
 
     public function testInitializeWithReturnSequence()
