@@ -48,7 +48,7 @@ class SimpleRNN extends AbstractRNNLayer implements Layer
         $this->units = $units;
         $this->inputShape = $input_shape;
         if($use_bias) {
-            $this->useBias = $use_bias);
+            $this->useBias = $use_bias;
         }
         $this->setActivation($activation);
         $activation = $this->activation;
