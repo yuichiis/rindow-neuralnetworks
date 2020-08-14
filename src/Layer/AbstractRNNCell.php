@@ -9,8 +9,8 @@ use InvalidArgumentException;
  */
 abstract class AbstractRNNCell extends AbstractLayerBase implements RNNCell
 {
-    abstract protected function call(NDArray $inputs, array $states, bool $training, object $calcState, array $options=null) : array
-    abstract protected function differentiate(NDArray $dOutputs, array $dStates, object $calcState) : array
+    abstract protected function call(NDArray $inputs, array $states, bool $training, object $calcState, array $options=null) : array;
+    abstract protected function differentiate(NDArray $dOutputs, array $dStates, object $calcState) : array;
 
     final public function forward(NDArray $inputs, array $states, bool $training, object $calcState, array $options=null) : array
     {
