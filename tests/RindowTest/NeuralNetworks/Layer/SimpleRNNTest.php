@@ -286,7 +286,6 @@ class Test extends TestCase
             [96,96,96,96],
             [96,96,96,96],
             [96,96,96,96],
-            [96,96,96,96],
             ],$grads[0]->toArray());
         $this->assertEquals([
             [4,4,4,4],
