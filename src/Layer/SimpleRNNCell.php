@@ -44,6 +44,7 @@ class SimpleRNNCell extends AbstractRNNCell
         }
         $this->setActivation($activation);
         $this->kernelInitializer = $K->getInitializer($kernel_initializer);
+        $this->recurrentInitializer = $K->getInitializer($recurrent_initializer);
         $this->biasInitializer   = $K->getInitializer($bias_initializer);
         $this->kernelInitializerName = $kernel_initializer;
         $this->recurrentInitializerName = $recurrent_initializer;
