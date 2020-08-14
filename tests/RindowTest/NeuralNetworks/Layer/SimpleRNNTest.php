@@ -35,8 +35,8 @@ class Test extends TestCase
         $this->assertEquals([3,4],$grads[0]->shape());
         $this->assertEquals([4,4],$grads[1]->shape());
         $this->assertEquals([4],$grads[2]->shape());
-        $this->assertInstanceOf(
-            Tanh::class, $layer->getActivation()
+        $this->assertNull(
+            $layer->getActivation()
             );
 
         //$this->assertEquals([3],$layer->inputShape());
