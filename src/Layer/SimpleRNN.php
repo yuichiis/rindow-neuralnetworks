@@ -12,20 +12,21 @@ class SimpleRNN extends AbstractRNNLayer implements Layer
     protected $units;
     protected $activation;
     protected $useBias;
-    protected $kernelInitializer;
-    protected $biasInitializer;
+    protected $kernelInitializerName;
+    protected $recurrentInitializerName;
+    protected $biasInitializerName;
     protected $returnSequence;
     protected $returnState;
+    protected $goBackward;
     protected $statefull;
+    protected $cell;
+    protected $timesteps;
+    protected $feature;
 
-    protected $initalStates;
-    protected $kernel;
-    protected $recurrentKernel;
-    protected $bias;
-    protected $dKernel;
-    protected $dBias;
-    protected $inputs;
-
+    protected $calcStates;
+    protected $initialStates;
+    protected $origInputsShape;
+    
     public function __construct($backend,int $units, array $options=null)
     {
         extract($this->extractArgs([
@@ -37,6 +38,7 @@ class SimpleRNN extends AbstractRNNLayer implements Layer
             'bias_initializer'=>'zeros',
             'return_sequence'=>false,
             'return_state'=>false,
+            'go_backward'=>false,
             'stateful'=>false,
             //'kernel_regularizer'=>null, 'bias_regularizer'=>null,
             //'activity_regularizer'=null,
@@ -49,16 +51,20 @@ class SimpleRNN extends AbstractRNNLayer implements Layer
             $this->useBias = $use_bias);
         }
         $this->setActivation($activation);
+        $activation = $this->activation;
+        $this->activation = null;
         $this->kernelInitializerName = $kernel_initializer;
         $this->recurrentInitializerName = $recurrent_initializer;
         $this->biasInitializerName = $bias_initializer;
         $this->returnSequence=$return_sequence;
         $this->returnState = $return_state;
+        $this->goBackward = $go_backward;
         $this->stateful = $statefull;
         $this->cell = new SimpleRNNCell(
             $this->backend,
             $this->units,
-            ['activation'=>$this->activation,
+            [
+            'activation'=>$activation,
             'use_bias'=>$this->useBias,
             'kernel_initializer'=>$this->kernelInitializerName,
             'recurrent_initializer'=>$this->recurrentInitializerName,
@@ -66,15 +72,12 @@ class SimpleRNN extends AbstractRNNLayer implements Layer
             ]);
     }
 
-    public function build(array $inputShape=null, array $options=null) : void
+    public function build(array $inputShape=null, array $options=null) : array
     {
         extract($this->extractArgs([
             'sampleWeights'=>null,
         ],$options));
         $K = $this->backend;
-        $kernelInitializer = $this->kernelInitializer;
-        $recurrentInitializer = $this->recurrentInitializer;
-        $biasInitializer = $this->biasInitializer;
 
         $inputShape = $this->normalizeInputShape($inputShape);
         //if(count($inputShape)!=1) {
@@ -86,12 +89,13 @@ class SimpleRNN extends AbstractRNNLayer implements Layer
         }
         $this->timesteps = $inputShape[0];
         $this->feature = $inputShape[1];
-        $this->cell->build([$this->feature]);
-        if($this->recurrentSequence){
+        $this->cell->build([$this->feature],$options);
+        if($this->returnSequence){
             $this->outputShape = [$this->timesteps,$this->units];
         }else{
             $this->outputShape = [$this->units];
         }
+        return $this->outputShape;
     }
 
     public function getParams() : array
@@ -116,7 +120,8 @@ class SimpleRNN extends AbstractRNNLayer implements Layer
                 'recurrent_initializer' => $this->recurrentInitializerName,
                 'bias_initializer' => $this->biasInitializerName,
                 'return_sequence'=>$this->returnSequence,
-                'return_state'=>returnState,
+                'return_state'=>$this->returnState,
+                'go_backward'=>$this->goBackward,
                 'stateful'=>$this->stateful,
             ]
         ];
@@ -125,27 +130,28 @@ class SimpleRNN extends AbstractRNNLayer implements Layer
     protected function call(NDArray $inputs,bool $training, array $initalStates=null, array $options=null)
     {
         $K = $this->backend;
-        [$batch,$timesteps,$feature]=$inputs->shape();
+        [$batches,$timesteps,$feature]=$inputs->shape();
         if($initialStates===null&&
             $this->stateful) {
             $initialStates = $this->initialStates;
         }
         if($initialStates===null){
-            $initialStates = [$K->zeros([$batch,$this->units])];
+            $initialStates = [$K->zeros([$batches,$this->units])];
         }
         $outputs = null;
         if($this->returnSequence){
-            $outputs=$K->zeros([$batch,$timesteps,$this->units]);
+            $outputs=$K->zeros([$batches,$timesteps,$this->units]);
         }
         [$outputs,$states,$calcStates] = $K->rnn(
             [$this->cell,'forward'],
             $inputs,
             $initialStates,
-            $outputs,
-            null,
             $training,
+            $outputs,
+            $this->goBackward
         );
         $this->calcStates = $calcStates;
+        $this->origInputsShape = $inputs->shape();
         if($this->stateful) {
             $this->initialStates = $states;
         }
@@ -156,13 +162,12 @@ class SimpleRNN extends AbstractRNNLayer implements Layer
         }
     }
 
-    protected function differentiate(NDArray $dOutputs, array $dNextStates=null) : array
+    protected function differentiate(NDArray $dOutputs, array $dNextStates=null)
     {
         $K = $this->backend;
-        [$batch,$timesteps,$units]=$dOutputs->shape();
-        $dInputs=$K->zeros([$batch,$timesteps,$this->feature]);
+        $dInputs=$K->zeros($this->origInputsShape);
         if($dNextStates===null){
-            $dNextStates = [$K->zeros([$batch,$this->units])];
+            $dNextStates = [$K->zeros([$this->origInputsShape[0],$this->units])];
         }
 
         $grads = $this->cell->getGrads();
@@ -174,7 +179,8 @@ class SimpleRNN extends AbstractRNNLayer implements Layer
             $dOutputs,
             $dNextStates,
             $this->calcStates,
-            $dInputs
+            $dInputs,
+            $this->goBackward
         );
         $this->calcStates = null;
         if($this->returnState) {
