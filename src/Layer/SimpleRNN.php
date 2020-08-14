@@ -156,7 +156,7 @@ class SimpleRNN extends AbstractRNNLayer implements Layer
             $this->initialStates = $states;
         }
         if($this->returnState){
-            return [$outputs,$states]
+            return [$outputs,$states];
         } else {
             return $outputs;
         }
