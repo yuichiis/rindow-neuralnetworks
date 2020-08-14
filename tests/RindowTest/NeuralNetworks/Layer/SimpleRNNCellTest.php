@@ -200,18 +200,18 @@ class Test extends TestCase
             [8,8,8,8],
             ],$dPrevStates[0]->toArray());
         $this->assertEquals([
-            [8,8,8,8],
-            [8,8,8,8],
-            [8,8,8,8],
+            [4,4,4,4],
+            [4,4,4,4],
+            [4,4,4,4],
             ],$grads[0]->toArray());
         $this->assertEquals([
-            [8,8,8,8],
-            [8,8,8,8],
-            [8,8,8,8],
-            [8,8,8,8],
+            [4,4,4,4],
+            [4,4,4,4],
+            [4,4,4,4],
+            [4,4,4,4],
             ],$grads[1]->toArray());
         $this->assertEquals([
-            1,1,1,1,
+            [4,4,4,4],
             ],$grads[2]->toArray());
     }
 }
