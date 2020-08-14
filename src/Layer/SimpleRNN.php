@@ -127,7 +127,7 @@ class SimpleRNN extends AbstractRNNLayer
         ];
     }
 
-    protected function call(NDArray $inputs,bool $training, array $initalStates=null, array $options=null)
+    protected function call(NDArray $inputs,bool $training, array $initialStates=null, array $options=null)
     {
         $K = $this->backend;
         [$batches,$timesteps,$feature]=$inputs->shape();
