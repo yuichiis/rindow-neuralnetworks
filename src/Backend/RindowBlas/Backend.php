@@ -1259,10 +1259,14 @@ class Backend
         $doutputs_t = null;
         $states_t = $dStates;
         foreach($tm as $t){
-            if($seq||$doutputs_t==null){
+            if($seq){
                 $doutputs_t = $this->rnnGetTimestep($dOutputs, $t);
             }else{
-                $doutputs_t = $zero;
+                if($doutputs_t==null){
+                    $doutputs_t = $dOutputs
+                }else{
+                    $doutputs_t = $zero;
+                }
             }
             $calcState = $calcStates[$t];
             [$inputs_t, $states_t] = $stepFunction($doutputs_t, $states_t,$calcState);
