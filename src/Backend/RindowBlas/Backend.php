@@ -1202,14 +1202,14 @@ class Backend
     public function rnn(
         $stepFunction,
         NDArray $inputs,
-        NDArray $initialStates,
+        array $initialStates,
         bool $training,
         NDArray $outputs=null,
         bool $goBackwards=null
     ) : array
     {
         $inputLength = $inputs->shape()[1];
-        $prev_states = $initial_states;
+        $states_t = $initialStates;
         $calcStates = [];
         $tm = range(0,$inputLength-1);
         if($goBackwards){
@@ -1218,17 +1218,13 @@ class Backend
         foreach($tm as $t){
             $calcState = new \stdClass();
             $calcStates[$t] = $calcState;
-            [$outputs_t, $states_t] = $step_function($this->rnnGetTimestep($inputs, $t), $prev_states,$training,$calcState);
+            [$outputs_t, $states_t] = $step_function($this->rnnGetTimestep($inputs, $t), $states_t,$training,$calcState);
             if($outputs){
                 $this->rnnSetTimestep($outputs,$t,$outputs_t);
             }
-            $prev_states = $states_t;
         }
         if($outputs===null){
             $outputs=$outputs_t;
-        }
-        if($states===null){
-            $states=$states_t;
         }
         return [$outputs, $states_t, $calcStatus];
     }
