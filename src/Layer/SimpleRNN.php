@@ -59,8 +59,8 @@ class SimpleRNN extends AbstractRNNLayer
         $this->returnSequence=$return_sequence;
         $this->returnState = $return_state;
         $this->goBackward = $go_backward;
-        $this->stateful = $statefull;
-        $this->cell = new SimpleRNNCell(
+        $this->stateful = $stateful;
+        $this->cell = new SimpleRNNqCell(
             $this->backend,
             $this->units,
             [
