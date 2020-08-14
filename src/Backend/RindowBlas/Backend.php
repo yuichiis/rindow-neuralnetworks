@@ -1226,14 +1226,14 @@ class Backend
         if($outputs===null){
             $outputs=$outputs_t;
         }
-        return [$outputs, $states_t, $calcStatus];
+        return [$outputs, $states_t, $calcStates];
     }
     
     public function rnnBackward(
         $stepFunction,
         NDArray $dOutputs,
         array $dStates,
-        array $calcStatus,
+        array $calcStates,
         NDArray $dInputs,
         bool $goBackwards=null
     ) : array
