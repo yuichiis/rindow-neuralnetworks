@@ -74,7 +74,7 @@ class SimpleRNNCell extends AbstractRNNCell
             $this->bias = $sampleWeights[2];
         } else {
             $this->kernel = $kernelInitializer([$inputDim,$this->units],$inputDim);
-            $this->recurrentKernel = $recurtentInitializer([$this->units,$this->units],$this->units);
+            $this->recurrentKernel = $recurrentInitializer([$this->units,$this->units],$this->units);
             if($this->useBias) {
                 $this->bias = $biasInitializer([$this->units]);
             }
