@@ -230,7 +230,7 @@ class Test extends TestCase
             $backend,
             $units=4,
             [
-                'input_shape'=>[5],
+                'input_shape'=>[3,5],
                 'return_sequence'=>true,
                 'return_state'=>true,
                 'activation'=>null,
