@@ -30,7 +30,7 @@ abstract class AbstractRNNLayer extends AbstractLayerBase implements RNNLayer
     {
         $this->assertOutputShape($dOutputs);
 
-         = $this->differentiate($dOutputs,$dStates);
+        $results = $this->differentiate($dOutputs,$dStates);
 
         if(is_array($results)) {
             [$dInputs,$dStates] = $results;
