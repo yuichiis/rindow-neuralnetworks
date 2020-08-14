@@ -67,10 +67,10 @@ class Test extends TestCase
             $units=4,
             [
             ]);
-        $layer->build($inputShape=[3]);
+        $layer->build($inputShape=[5,3]);
 
         //$this->assertEquals([3],$layer->inputShape());
-        $this->assertEquals([4],$layer->outputShape());
+        $this->assertEquals([5,4],$layer->outputShape());
     }
 
     public function testInitializeWithReturnSequence()
@@ -255,8 +255,8 @@ class Test extends TestCase
         [$outputs,$nextStates] = $layer->forward($inputs,$training=true, $states);
         // 
         $this->assertEquals([
-            [[8,8,8,8],[8,8,8,8],[8,8,8,8]],
-            [[8,8,8,8],[8,8,8,8],[8,8,8,8]],
+            [[10,10,10,10],[46,46,46,46],[190,190,190,190]],
+            [[10,10,10,10],[46,46,46,46],[190,190,190,190]],
             ],$outputs->toArray());
         $this->assertEquals([
             [8,8,8,8],
