@@ -1218,7 +1218,7 @@ class Backend
         foreach($tm as $t){
             $calcState = new \stdClass();
             $calcStates[$t] = $calcState;
-            [$outputs_t, $states_t] = $step_function($this->rnnGetTimestep($inputs, $t), $states_t,$training,$calcState);
+            [$outputs_t, $states_t] = $stepFunction($this->rnnGetTimestep($inputs, $t), $states_t,$training,$calcState);
             if($outputs){
                 $this->rnnSetTimestep($outputs,$t,$outputs_t);
             }
@@ -1265,7 +1265,7 @@ class Backend
                 $doutputs_t = $zero;
             }
             $calcState = $calcStates[$t];
-            [$inputs_t, $states_t] = $step_function($doutputs_t, $states_t,$calcState);
+            [$inputs_t, $states_t] = $stepFunction($doutputs_t, $states_t,$calcState);
             $this->rnnSetTimestep($dInputs,$t,$inputs_t);
         }
         return [$dInputs, $states_t];
