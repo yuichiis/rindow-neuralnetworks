@@ -153,6 +153,29 @@ abstract class AbstractLayerBase
                 implode(',',$shape).'], must be ['.implode(',',$this->outputShape).']');
         }
     }
+
+    protected function assertStatesShape(array $states=null)
+    {
+        if(!$this->shapeInspection)
+            return;
+        if($states===null)
+            return;
+        if($this->statesShapes===null) {
+            throw new InvalidArgumentException('Uninitialized');
+        }
+        if(count($states)!=count($this->statesShapes)){
+            throw new InvalidArgumentException('Unmatch num of status. status need '.count($this->statesShapes.' NDArray. '.count($states).'given.');
+        }
+        foreach($states as $idx=>$state){;
+            $stateShape = $this->statesShapes[$idx];
+            $shape = $inputs->shape();
+            $batchNum = array_shift($shape);
+            if($shape!=$stateShape) {
+                $shape = $shape ? implode(',',$shape) : '';
+                throw new InvalidArgumentException('unmatch shape of state '.$idx.': ['.$shape.'], must be ['.implode(',',$stateShape).']');
+            }
+        }
+    }
     
     protected function registerLayer(LayerBase $layer,array $inputShape=null) : array
     {
