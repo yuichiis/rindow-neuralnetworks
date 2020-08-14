@@ -165,7 +165,7 @@ abstract class AbstractLayerBase
             throw new InvalidArgumentException('Uninitialized');
         }
         if(count($states)!=count($this->statesShapes)){
-            throw new InvalidArgumentException('Unmatch num of status. status need '.count($this->statesShapes.' NDArray. '.count($states).'given.');
+            throw new InvalidArgumentException('Unmatch num of status. status need '.count($this->statesShapes).' NDArray. '.count($states).'given.');
         }
         foreach($states as $idx=>$state){;
             $stateShape = $this->statesShapes[$idx];
