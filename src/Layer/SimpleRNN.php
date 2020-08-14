@@ -5,7 +5,7 @@ use InvalidArgumentException;
 use Interop\Polite\Math\Matrix\NDArray;
 use Rindow\NeuralNetworks\Support\GenericUtils;
 
-class SimpleRNN extends AbstractRNNLayer implements Layer
+class SimpleRNN extends AbstractRNNLayer
 {
     use GenericUtils;
     protected $backend;
