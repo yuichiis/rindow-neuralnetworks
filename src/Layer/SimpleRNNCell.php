@@ -148,12 +148,12 @@ class SimpleRNNCell extends AbstractRNNCell
         $dOutputs = $K->add($dOutputs,$dState);
         if($this->activation)
             $dOutputs = $this->activation->differentiate($dOutputs);
-        $dInputs = $K->zerosLike($this->inputs);
+        $dInputs = $K->zerosLike($calcStates->inputs);
         if($this->bias) {
             $K->update_add($this->dBias,$K->sum($dOutputs,$axis=0));
         }
         // Add RecurrentKernel grad
-        $this->gemm($calcStatus->prevOutput, $dOutputs,1.0,1.0,$this->dRecurrentKernel,true);
+        $this->gemm($calcStates->prevOutput, $dOutputs,1.0,1.0,$this->dRecurrentKernel,true);
         // backward PrevOutput grad
         $dPrevOutput = $this->gemm($dOutputs, $this->recurrentKernel,1.0,0,null,false,true);
         // Add Kernel grad
