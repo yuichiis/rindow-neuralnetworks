@@ -1242,19 +1242,37 @@ class Backend
         bool $goBackwards=null
     ) : array
     {
-        $inputLength = $inputs->shape()[1];
+        $ndim = $dOutputs->ndim();
+        if($ndim == 2) {
+            $seq = false;
+            $zero = $this->zerosLike($dOutputs);
+        } elseif($ndim == 3) {
+            $seq = true;
+            $zero = null;
+        } else {
+            throw new InvalidArgumentException('invalid dOutputs shape');
+        }
+        if($dInputs->ndim()!=3){
+            throw new InvalidArgumentException('invalid dInputs shape');
+        }
+        $inputLength=$dInputs->shape()[1]
         $tm = range(0,$inputLength-1);
         if(!$goBackwards){
             $tm = array_reverse($tm);
         }
+        $doutputs_t = null;
+        $states_t = $dStates;
         foreach($tm as $t){
-            $calcState = new \stdClass();
-            $calcStates[$t] = $calcState;
-            [$outputs_t, $states_t] = $step_function($this->rnnGetTimestep($inputs, $t), $dStates,$training,$calcState);
-            $this->rnnSetTimestep($dInputs,$t,$outputs_t);
-                $prev_states = $states_t;
+            if($seq||$doutputs_t==null){
+                $doutputs_t = $this->rnnGetTimestep($dOutputs, $t);
+            }else{
+                $doutputs_t = $zero;
+            }
+            $calcState = $calcStates[$t];
+            [$inputs_t, $states_t] = $step_function($doutputs_t, $states_t,$calcState);
+            $this->rnnSetTimestep($dInputs,$t,$inputs_t);
         }
-        return [$outputs, $states_t];
+        return [$dInputs, $states_t];
     }
 /*
     public function binaryCrossEntropy(
