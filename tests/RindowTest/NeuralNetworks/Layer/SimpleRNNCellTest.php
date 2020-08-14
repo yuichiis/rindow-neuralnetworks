@@ -173,12 +173,12 @@ class Test extends TestCase
         [$outputs,$nextStates] = $layer->forward($inputs, $states,$training=true,$object);
         // 
         $this->assertEquals([
-            [1,1,1,1],
-            [1,1,1,1],
+            [8,8,8,8],
+            [8,8,8,8],
             ],$outputs->toArray());
         $this->assertEquals([
-            [1,1,1,1],
-            [1,1,1,1],
+            [8,8,8,8],
+            [8,8,8,8],
             ],$nextStates[0]->toArray());
         //
         // backword
