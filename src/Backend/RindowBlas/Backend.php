@@ -1255,7 +1255,7 @@ class Backend
         if($dInputs->ndim()!=3){
             throw new InvalidArgumentException('invalid dInputs shape');
         }
-        $inputLength=$dInputs->shape()[1]
+        $inputLength=$dInputs->shape()[1];
         $tm = range(0,$inputLength-1);
         if(!$goBackwards){
             $tm = array_reverse($tm);
