@@ -114,7 +114,7 @@ class Test extends TestCase
         $dOutputs =
             $mo->ones([2,4]);
         $dStates =
-            $mo->ones([2,4]);
+            [$mo->ones([2,4])];
 
         $copydOutputs = $mo->copy(
             $dOutputs);
