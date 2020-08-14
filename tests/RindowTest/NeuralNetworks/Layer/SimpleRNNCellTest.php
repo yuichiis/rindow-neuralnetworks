@@ -187,7 +187,7 @@ class Test extends TestCase
         $dOutputs =
             $mo->ones([2,4]);
         $dStates =
-            $mo->ones([2,4]);
+            [$mo->ones([2,4])];
 
         [$dInputs,$dPrevStates] = $layer->backward($dOutputs,$dStates,$object);
         // 2 batch
