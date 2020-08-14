@@ -210,8 +210,8 @@ class Test extends TestCase
             [4,4,4,4],
             [4,4,4,4],
             ],$grads[1]->toArray());
-        $this->assertEquals([
+        $this->assertEquals(
             [4,4,4,4],
-            ],$grads[2]->toArray());
+            ,$grads[2]->toArray());
     }
 }
