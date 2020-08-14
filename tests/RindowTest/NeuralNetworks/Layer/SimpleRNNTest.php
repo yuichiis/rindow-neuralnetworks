@@ -251,7 +251,7 @@ class Test extends TestCase
         //
         //  2 batch
         $inputs = $mo->ones([2,3,5]);
-        $states = [$mo->ones([4])];
+        $states = [$mo->ones([2,4])];
         [$outputs,$nextStates] = $layer->forward($inputs,$training=true, $states);
         // 
         $this->assertEquals([
