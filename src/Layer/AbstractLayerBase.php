@@ -169,7 +169,7 @@ abstract class AbstractLayerBase
         }
         foreach($states as $idx=>$state){;
             $stateShape = $this->statesShapes[$idx];
-            $shape = $inputs->shape();
+            $shape = $state->shape();
             $batchNum = array_shift($shape);
             if($shape!=$stateShape) {
                 $shape = $shape ? implode(',',$shape) : '';
