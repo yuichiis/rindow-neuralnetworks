@@ -112,7 +112,7 @@ class SimpleRNNCell extends AbstractRNNLayer implements Layer
             'units' => $this->units,
             'options' => [
                 'input_shape'=>$this->inputShape,
-                'use_bias'=>$this->useBias;
+                'use_bias'=>$this->useBias,
                 'activation'=>$this->activationName,
                 'kernel_initializer' => $this->kernelInitializerName,
                 'recurrent_initializer' => $this->recurrentInitializerName,
