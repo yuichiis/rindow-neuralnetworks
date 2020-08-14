@@ -149,8 +149,8 @@ class Test extends TestCase
             $backend,
             $units=4,
             [
-                'input_shape'=>[3]
-                'activation'=>null
+                'input_shape'=>[3],
+                'activation'=>null,
             ]);
 
         $kernel = $mo->ones([3,4]);
