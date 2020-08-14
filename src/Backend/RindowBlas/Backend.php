@@ -1263,7 +1263,7 @@ class Backend
                 $doutputs_t = $this->rnnGetTimestep($dOutputs, $t);
             }else{
                 if($doutputs_t==null){
-                    $doutputs_t = $dOutputs
+                    $doutputs_t = $dOutputs;
                 }else{
                     $doutputs_t = $zero;
                 }
