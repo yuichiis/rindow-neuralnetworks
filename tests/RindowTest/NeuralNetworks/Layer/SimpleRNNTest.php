@@ -259,8 +259,8 @@ class Test extends TestCase
             [[10,10,10,10],[46,46,46,46],[190,190,190,190]],
             ],$outputs->toArray());
         $this->assertEquals([
-            [8,8,8,8],
-            [8,8,8,8],
+            [190,190,190,190],
+            [190,190,190,190],
             ],$nextStates[0]->toArray());
         //
         // backword
