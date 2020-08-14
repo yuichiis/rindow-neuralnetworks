@@ -14,6 +14,7 @@ abstract class AbstractLayerBase
     protected $layers = [];
     protected $inputShape;
     protected $outputShape;
+    protected $statesShapes;
     protected $activation;
     protected $activationName;
     protected $params=[];
