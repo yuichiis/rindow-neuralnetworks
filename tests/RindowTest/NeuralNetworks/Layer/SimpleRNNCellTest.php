@@ -154,8 +154,10 @@ class Test extends TestCase
             ]);
 
         $kernel = $mo->ones([3,4]);
+        $recurrent = $mo->ones([4,4]);
+        $bias = $mo->ones([4]);
         $layer->build(null,
-            ['sampleWeights'=>[$kernel]]
+            ['sampleWeights'=>[$kernel,$recurrent,$bias]]
         );
         $this->assertNull($layer->getActivation());
         $grads = $layer->getGrads();
