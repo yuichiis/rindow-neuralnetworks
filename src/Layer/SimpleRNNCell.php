@@ -66,7 +66,7 @@ class SimpleRNNCell extends AbstractRNNCell
         ///        'Unsuppored input shape: ['.implode(',',$inputShape).']');
         //}
         $shape = $inputShape;
-        $inputDim=array_pop($shape);
+        $inputDim = array_pop($shape);
         if($sampleWeights) {
             $this->kernel = $sampleWeights[0];
             $this->recurrentKernel = $sampleWeights[1];
