@@ -34,7 +34,7 @@ class Test extends TestCase
         $this->assertCount(3,$grads);
         $this->assertEquals([3,4],$grads[0]->shape());
         $this->assertEquals([4,4],$grads[1]->shape());
-        $this->assertEquals([4],$grads[0]->shape());
+        $this->assertEquals([4],$grads[2]->shape());
         $this->assertInstanceOf(
             Tanh::class, $layer->getActivation()
             );
@@ -192,23 +192,23 @@ class Test extends TestCase
         [$dInputs,$dPrevStates] = $layer->backward($dOutputs,$dStates,$object);
         // 2 batch
         $this->assertEquals([
-            [1,1,1],
-            [1,1,1],
+            [8,8,8],
+            [8,8,8],
             ],$dInputs->toArray());
         $this->assertEquals([
-            [1,1,1,1],
-            [1,1,1,1],
+            [8,8,8,8],
+            [8,8,8,8],
             ],$dPrevStates[0]->toArray());
         $this->assertEquals([
-            [1,1,1,1],
-            [1,1,1,1],
-            [1,1,1,1],
+            [8,8,8,8],
+            [8,8,8,8],
+            [8,8,8,8],
             ],$grads[0]->toArray());
         $this->assertEquals([
-            [1,1,1,1],
-            [1,1,1,1],
-            [1,1,1,1],
-            [1,1,1,1],
+            [8,8,8,8],
+            [8,8,8,8],
+            [8,8,8,8],
+            [8,8,8,8],
             ],$grads[1]->toArray());
         $this->assertEquals([
             1,1,1,1,
