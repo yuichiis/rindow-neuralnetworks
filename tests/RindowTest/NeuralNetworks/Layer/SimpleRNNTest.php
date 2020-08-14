@@ -176,7 +176,7 @@ class Test extends TestCase
         //
         //  2 batch
         $inputs = $mo->ones([6,5,3]);
-        $initialStates = [$mo->ones([4])];
+        $initialStates = [$mo->ones([5,4])];
         $copyInputs = $mo->copy($inputs);
         $copyStates = [$mo->copy($initialStates[0])];
         [$outputs,$nextStates] = $layer->forward($inputs,$training=true, $initialStates
