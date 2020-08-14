@@ -90,7 +90,7 @@ class SimpleRNN extends AbstractRNNLayer
         $this->timesteps = $inputShape[0];
         $this->feature = $inputShape[1];
         $this->cell->build([$this->feature],$options);
-        $this->statesShapes = [$this->units];
+        $this->statesShapes = [[$this->units]];
         if($this->returnSequence){
             $this->outputShape = [$this->timesteps,$this->units];
         }else{
