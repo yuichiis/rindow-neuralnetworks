@@ -119,7 +119,7 @@ class Test extends TestCase
         $copydOutputs = $mo->copy(
             $dOutputs);
         $copydStates = [$mo->copy(
-            $dStates)];
+            $dStates[0])];
         [$dInputs,$dPrevStates] = $layer->backward($dOutputs,$dStates,$object);
         // 2 batch
         $this->assertEquals([2,3],$dInputs->shape());
@@ -136,7 +136,7 @@ class Test extends TestCase
             $grads[2]->toArray());
         
         $this->assertEquals($copydOutputs->toArray(),$dOutputs->toArray());
-        $this->assertEquals($copydStates->toArray(),$dStates->toArray());
+        $this->assertEquals($copydStates[0]->toArray(),$dStates[0]->toArray());
     }
 
     public function testOutputsAndGrads()
