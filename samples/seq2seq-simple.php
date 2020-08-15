@@ -290,9 +290,8 @@ class DecHexDataset
         }else{
             $dataset = $this->generate($corp_size,$length);
             $pkl = serialize($dataset);
-            file_put_contents($path,$dataset);
+            file_put_contents($path,$pkl);
         }
-var_dump($dataset);
         return $dataset;
     }
 
