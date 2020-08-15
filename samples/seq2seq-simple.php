@@ -243,7 +243,7 @@ class DecHexDataset
     {
         $sequence = $this->mo->zeros([$corp_size,$length]);
         $target = $this->mo->zeros([$corp_size,$length]);
-        $numbers = $this->mo->random()->choice($corp_size);
+        $numbers = $this->mo->random()->choice($corp_size,$corp_size);
         var_dump($numbers->shape());
         for($i=0;$i<$corp_size;$i++){
             $num = $numbers[$i];
