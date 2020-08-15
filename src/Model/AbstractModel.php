@@ -159,7 +159,7 @@ abstract class AbstractModel implements Model
     
     protected function addWeights($weights)
     {
-        if($weights instanceof Layer){
+        if($weights instanceof LayerBase){
             $this->params = array_merge($this->params,$weights->getParams());
             $this->grads  = array_merge($this->grads, $weights->getGrads());
             return;
