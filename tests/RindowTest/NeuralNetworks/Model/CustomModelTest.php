@@ -34,6 +34,7 @@ class TestModel extends AbstractModel
         $shape = $this->registerLayer($this->flatten);
         $shape = $this->registerLayer($this->custom,$shape);
         $shape = $this->registerLayer($this->fc,$shape);
+        $this->setLastLayer($this->fc);
     }
 
     protected function forwardStep(NDArray $inputs, NDArray $trues=null, bool $training=null) : NDArray
