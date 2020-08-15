@@ -25,8 +25,6 @@ abstract class AbstractRNNLayer extends AbstractLayerBase implements RNNLayer
         $results = $this->call($inputs,$training,$initialStates,$options);
         if(is_array($results)) {
             [$outputs,$states] = $results;
-            if(!is_array($states))
-                throw new \Exception('abstractrnn');
             $this->assertStatesShape($states);
         } elseif($results instanceof NDArray) {
             $outputs = $results;
