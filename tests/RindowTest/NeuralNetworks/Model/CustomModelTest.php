@@ -65,7 +65,7 @@ class TestLayer extends AbstractLayerBase
     
     public function build(array $inputShape=null, array $options=null) : array
     {
-        $inputShape=$this->normalizeInputShapetShape($inputShape);
+        $inputShape=$this->normalizeInputShape($inputShape);
         $shape = $this->registerLayer($this->fc,$inputShape);
         $this->outputShape = $shape;
         return $this->outputShape;
