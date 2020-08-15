@@ -1226,8 +1226,6 @@ class Backend
         if($outputs===null){
             $outputs=$outputs_t;
         }
-        if(!is_array($states_t))
-             throw new \Exception('backend');
         return [$outputs, $states_t, $calcStates];
     }
     
