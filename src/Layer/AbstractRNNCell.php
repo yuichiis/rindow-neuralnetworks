@@ -17,6 +17,8 @@ abstract class AbstractRNNCell extends AbstractLayerBase implements RNNCell
         $this->assertInputShape($inputs);
 
         [$outputs,$states] = $this->call($inputs,$states,$training,$calcState,$options);
+        if(!is_array($states))
+             throw new \Exception('abstractrnncell');
 
         $this->assertOutputShape($outputs);
         return [$outputs,$states];
