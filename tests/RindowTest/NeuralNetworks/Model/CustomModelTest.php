@@ -54,7 +54,7 @@ class TestModel extends AbstractModel
     }
 }
 
-class TestLayer
+class TestLayer extends AbstractLayerBase
 {
     public function __construct($backend,$builder)
     {
