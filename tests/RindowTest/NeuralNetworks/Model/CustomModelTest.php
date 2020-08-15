@@ -24,7 +24,7 @@ class TestModel extends AbstractModel
         $this->custom = new TestLayer($backend,$builder);
         $this->fc = $builder->Dense(
             10,
-            'activation'=>'softmax',
+            ['activation'=>'softmax']
         );
     }
     
