@@ -244,10 +244,8 @@ class DecHexDataset
         $sequence = $this->mo->zeros([$corp_size,$length]);
         $target = $this->mo->zeros([$corp_size,$length]);
         $numbers = $this->mo->random()->choice($corp_size,$corp_size);
-        var_dump($numbers->shape());
         for($i=0;$i<$corp_size;$i++){
             $num = $numbers[$i];
-            var_dump($num);
             $dec = strval($num);
             $hex = dechex($num);
             $this->str2seq(
@@ -267,13 +265,11 @@ class DecHexDataset
         array $dic,
         NDArray $buf)
     {
-        var_dump($str);
-        $sseq = str_split($str);
+        $sseq = str_split(strtoupper($str));
         $len = count($sseq);
         $sp = $dic[' '];
         $bufsz=$buf->size();
         for($i=0;$i<$bufsz;$i++){
-            
             if($i<$len)
                 $buf[$i]=$dic[$sseq[$i]];
             else
