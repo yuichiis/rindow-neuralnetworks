@@ -6,6 +6,7 @@ use Rindow\Math\Matrix\MatrixOperator;
 use Rindow\NeuralNetworks\Backend\RindowBlas\Backend;
 use Rindow\NeuralNetworks\Builder\NeuralNetworks;
 use Rindow\NeuralNetworks\Model\ModelLoader;
+use Rindow\NeuralNetworks\Model\AbstractModel;
 use Interop\Polite\Math\Matrix\NDArray;
 
 class TestModel extends AbstractModel
