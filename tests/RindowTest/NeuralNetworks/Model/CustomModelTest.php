@@ -79,7 +79,7 @@ class TestLayer extends AbstractLayer
     
     protected function differentiate(NDArray $dOutputs) : NDArray
     {
-        $din = $this->fc->backward($dOutputs,$training);
+        $din = $this->fc->backward($dOutputs);
         return $din;
     }
 }
