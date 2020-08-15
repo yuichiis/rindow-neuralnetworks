@@ -71,13 +71,13 @@ class TestLayer extends AbstractLayer
         return $this->outputShape;
     }
 
-    protected function call(NDArray $inputs,bool $training)
+    protected function call(NDArray $inputs,bool $training) : NDArray
     {
         $out = $this->fc->forward($inputs,$training);
         return $out;
     }
     
-    protected function differentiate(NDArray $dOutputs)
+    protected function differentiate(NDArray $dOutputs) : NDArray
     {
         $din = $this->fc->backend($dOutputs,$training);
         return $din;
