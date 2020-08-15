@@ -1,188 +1,108 @@
 <?php
-namespace Rindow\NeuralNetworks\Layer;
+namespace RindowTest\NeuralNetworks\Model\CustomModelTest;
 
+use PHPUnit\Framework\TestCase;
+use Rindow\Math\Matrix\MatrixOperator;
+use Rindow\NeuralNetworks\Backend\RindowBlas\Backend;
+use Rindow\NeuralNetworks\Builder\NeuralNetworks;
+use Rindow\NeuralNetworks\Model\ModelLoader;
+use Rindow\NeuralNetworks\Model\AbstractModel;
+use Rindow\NeuralNetworks\Layer\AbstractLayer;
 use Interop\Polite\Math\Matrix\NDArray;
-use InvalidArgumentException;
-use Rindow\NeuralNetworks\Activation\FunctionFactory;
-use Rindow\NeuralNetworks\Activation\Activation as ActivationInterface;
 
-/**
- *
- */
-abstract class AbstractLayerBase implements LayerBase
+class TestModel extends AbstractModel
 {
-    protected $layers = [];
-    protected $inputShape;
-    protected $outputShape;
-    protected $statesShapes;
-    protected $activation;
-    protected $activationName;
-    protected $params=[];
-    protected $grads=[];
-    protected $shapeInspection = true;
-
-    public function getActivation()
+    protected $flat;
+    protected $custom;
+    protected $fc;
+    
+    public function __construct($backend,$builder)
     {
-        return $this->activation;
+        parent::__construct(
+            $backend,
+            $builder,
+            $builder->utils()->HDA());
+        $this->flatten = $builder->layers()->Flatten(['input_shape'=>[5]]);
+        $this->custom = new TestLayer($backend,$builder);
+        $this->fc = $builder->layers()->Dense(
+            10,
+            ['activation'=>'softmax']
+        );
+        $this->setLastLayer($this->fc);
     }
     
-    public function setActivation(
-        $activation) : void
+    protected function buildLayers(array $options=null) : void
     {
-        if($activation==null){
-            return;
-        }
-        if(is_string($activation)) {
-            $this->activation = FunctionFactory::factory($this->backend,$activation);
-            $this->activationName = $activation;
-            return;
-        }
-        if($activation instanceof ActivationInterface) {
-            $this->activation = $activation;
-            // for compiling lossfunction
-            if($this->activationName==null){
-                $this->activationName = get_class($activation);
-            }
-            return;
-        }
-        throw new InvalidArgumentException('activation function must have the Activation interface');
+        $shape = $this->registerLayer($this->flatten);
+        $shape = $this->registerLayer($this->custom,$shape);
+        $shape = $this->registerLayer($this->fc,$shape); 
     }
 
+    protected function forwardStep(NDArray $inputs, NDArray $trues=null, bool $training=null) : NDArray
+    {
+        $flat = $this->flatten->forward($inputs,$training);
+        $customout = $this->custom->forward($flat,$training);
+        $outputs = $this->fc->forward($customout,$training);
+        return $outputs;
+    }
+    
+    protected function backwardStep(NDArray $dout) : NDArray
+    {
+        $dout = $this->fc->backward($dout);
+        $dout = $this->custom->backward($dout);
+        $dInputs = $this->flatten->backward($dout);
+        return $dInputs;
+    }
+}
+
+class TestLayer extends AbstractLayer
+{
+    public function __construct($backend,$builder)
+    {
+        $this->backend = $backend;
+        $this->fc = $builder->layers()->Dense(5);
+    }
+    
     public function build(array $inputShape=null, array $options=null) : array
     {
-        if($inputShape!==null)
-            $this->inputShape = $inputShape;
-        $this->outputShape = $inputShape;
+        $inputShape=$this->normalizeInputShape($inputShape);
+        $shape = $this->registerLayer($this->fc,$inputShape);
+        $this->outputShape = $shape;
         return $this->outputShape;
     }
 
-    protected function normalizeInputShape(array $inputShape=null) : array
+    protected function call(NDArray $inputs,bool $training) : NDArray
     {
-        if($inputShape===null)
-            $inputShape = $this->inputShape;
-        if($this->inputShape===null)
-            $this->inputShape = $inputShape;
-        if($this->inputShape!==$inputShape) {
-            throw new InvalidArgumentException(
-                'Input shape is inconsistent: ['.implode(',',$this->inputShape).
-                '] and ['.implode(',',$inputShape).']');
-        } elseif($inputShape===null) {
-            throw new InvalidArgumentException('Input shape is not defined');
-        }
-        $this->inputShape = $inputShape;
-        return $inputShape;
-    }
-
-    public function outputShape() : array
-    {
-        return $this->outputShape;
-    }
-
-    protected function addWeights($weights,$grads=null)
-    {
-        if($weights instanceof Layer){
-            $this->params = array_merge($this->params,$weights->getParams());
-            $this->grads  = array_merge($this->grads, $weights->getGrads());
-            return;
-        }elseif($weights instanceof NDArray){
-            if($grads==null){
-                throw new InvalidArgumentException('need grads to add weights');
-            }
-            $this->params[]=$weights;
-            $this->grads[]=$grads;
-        }else{
-            throw new InvalidArgumentException('invalid type to add weights');
-        }
+        $out = $this->fc->forward($inputs,$training);
+        return $out;
     }
     
-    public function getParams() : array
+    protected function differentiate(NDArray $dOutputs) : NDArray
     {
-        return $this->params;
+        $din = $this->fc->backend($dOutputs,$training);
+        return $din;
     }
+}
 
-    public function getGrads() : array
+class Test extends TestCase
+{
+    public function testComplieAndFit()
     {
-        return $this->grads;
-    }
-
-    public function getConfig() : array
-    {
-        return [];
-    }
-
-    public function setName(string $name) : void
-    {
-        $this->name = $name;
-    }
-
-    public function getName() : string
-    {
-        return $this->name;
-    }
-    
-    public function setShapeInspection(bool $enable)
-    {
-        $this->shapeInspection = $enable;
-        foreach ($this->layers as $layer) {
-            $layer->setShapeInspection($enable);
-        }
-    }
-
-    protected function assertInputShape(NDArray $inputs)
-    {
-        if(!$this->shapeInspection)
-            return;
-        if($this->inputShape===null) {
-            throw new InvalidArgumentException('Uninitialized');
-        }
-        $shape = $inputs->shape();
-        $batchNum = array_shift($shape);
-        if($shape!=$this->inputShape) {
-            $shape = $shape ? implode(',',$shape) : '';
-            throw new InvalidArgumentException('unmatch input shape: ['.$shape.'], must be ['.implode(',',$this->inputShape).']');
-        }
-    }
-
-    protected function assertOutputShape(NDArray $outputs)
-    {
-        if(!$this->shapeInspection)
-            return;
-        $shape = $outputs->shape();
-        $batchNum = array_shift($shape);
-        if($shape!=$this->outputShape) {
-            throw new InvalidArgumentException('unmatch output shape: ['.
-                implode(',',$shape).'], must be ['.implode(',',$this->outputShape).']');
-        }
-    }
-
-    protected function assertStatesShape(array $states=null)
-    {
-        if(!$this->shapeInspection)
-            return;
-        if($states===null)
-            return;
-        if($this->statesShapes===null) {
-            throw new InvalidArgumentException('Uninitialized');
-        }
-        if(count($states)!=count($this->statesShapes)){
-            throw new InvalidArgumentException('Unmatch num of status. status need '.count($this->statesShapes).' NDArray. '.count($states).'given.');
-        }
-        foreach($states as $idx=>$state){;
-            $stateShape = $this->statesShapes[$idx];
-            $shape = $state->shape();
-            $batchNum = array_shift($shape);
-            if($shape!=$stateShape) {
-                $shape = $shape ? implode(',',$shape) : '';
-                throw new InvalidArgumentException('unmatch shape of state '.$idx.': ['.$shape.'], must be ['.implode(',',$stateShape).']');
-            }
-        }
-    }
-    
-    protected function registerLayer(LayerBase $layer,array $inputShape=null) : array
-    {
-        $this->layers[] = $layer;
-        $outputShape = $layer->build($inputShape);
-        $this->addWeights($layer);
-        return $outputShape;
+        $mo = new MatrixOperator();
+        $backend = new Backend($mo);
+        $nn = new NeuralNetworks($mo,$backend);
+        $model = new TestModel($backend,$nn);
+        
+        $train = $mo->random()->randn([10,5]);
+        $label = $mo->arange(10);
+        $val_train = $mo->random()->randn([10,5]);
+        $val_label = $mo->arange(10);
+        
+        $model->compile();
+        $history = $model->fit(
+            $train,$label,
+            ['epochs'=>5,'batch_size'=>2,'validation_data'=>[$val_train,$val_label]]
+        );
+        $this->assertTrue(true);
     }
 }
