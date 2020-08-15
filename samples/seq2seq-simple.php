@@ -26,7 +26,7 @@ class Encoder extends AbstractRNNLayer
         $input_length,
         $vocab_size,
         $word_vect_size,
-        $recurrent_units,
+        $recurrent_units
     )
     {
         $this->backend = $backend;
