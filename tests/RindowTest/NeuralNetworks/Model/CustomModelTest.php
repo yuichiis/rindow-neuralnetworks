@@ -27,6 +27,7 @@ class TestModel extends AbstractModel
             10,
             ['activation'=>'softmax']
         );
+        $this->setLastLayer($this->fc);
     }
     
     protected function buildLayers(array $options=null) : void
@@ -34,7 +35,6 @@ class TestModel extends AbstractModel
         $shape = $this->registerLayer($this->flatten);
         $shape = $this->registerLayer($this->custom,$shape);
         $shape = $this->registerLayer($this->fc,$shape);
-        $this->setLastLayer($this->fc);
     }
 
     protected function forwardStep(NDArray $inputs, NDArray $trues=null, bool $training=null) : NDArray
