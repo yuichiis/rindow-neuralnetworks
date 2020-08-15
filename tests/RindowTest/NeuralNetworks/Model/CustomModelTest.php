@@ -97,7 +97,7 @@ class Test extends TestCase
         
         $model->compile();
         $history = $model->fit(
-            $train,$label
+            $train,$label,
             ['epochs'=>5,'batch_size'=>2,'validation_data'=>[$val_train,$val_label]]
         );
         $this->assertTrue(true);
