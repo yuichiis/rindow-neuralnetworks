@@ -23,7 +23,7 @@ class TestModel extends AbstractModel
             $builder->utils()->HDA());
         $this->flatten = $builder->layers()->Flatten(['input_shape'=>[5]]);
         $this->custom = new TestLayer($backend,$builder);
-        $this->fc = $builder->Dense(
+        $this->fc = $builder->layers()->Dense(
             10,
             ['activation'=>'softmax']
         );
@@ -58,7 +58,7 @@ class TestLayer
     public function __construct($backend,$builder)
     {
         $this->backend = $backend;
-        $this->fc = $builder->Dense(5);
+        $this->fc = $builder->layers()->Dense(5);
     }
     
     public function build(array $inputShape=null, array $options=null) : array
