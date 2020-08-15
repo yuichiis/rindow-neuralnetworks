@@ -246,6 +246,7 @@ class DecHexDataset
         $numbers = $this->mo->random()->choice($corp_size);
         for($i=0;$i<$corp_size;$i++){
             $num = $numbers[$i];
+            var_dump($num);
             $dec = strval($num);
             $hex = dechex($num);
             $this->str2seq(
