@@ -220,6 +220,74 @@ class Test extends TestCase
         $this->assertEquals($copydStates[0]->toArray(),$dStates[0]->toArray());
     }
 
+    public function testForwardAndBackwordWithReturnSeqquenceWithoutInitialStates()
+    {
+        $mo = new MatrixOperator();
+        $backend = new Backend($mo);
+        $fn = $backend;
+
+        $layer = new SimpleRNN(
+            $backend,
+            $units=4,
+            [
+                'input_shape'=>[5,3],
+                'return_sequence'=>true,
+                'return_state'=>true,
+            ]);
+
+        $layer->build();
+        $grads = $layer->getGrads();
+        
+        
+        //
+        // forward
+        //
+        //  2 batch
+        $inputs = $mo->ones([6,5,3]);
+        $initialStates = null;
+        $copyInputs = $mo->copy($inputs);
+        //$copyStates = [$mo->copy($initialStates[0])];
+        [$outputs,$nextStates] = $layer->forward($inputs,$training=true, $initialStates
+        );
+        // 
+        $this->assertEquals([6,5,4],$outputs->shape());
+        $this->assertCount(1,$nextStates);
+        $this->assertEquals([6,4],$nextStates[0]->shape());
+        $this->assertEquals($copyInputs->toArray(),$inputs->toArray());
+        //$this->assertEquals($copyStates[0]->toArray(),$initialStates[0]->toArray());
+
+        //
+        // backword
+        //
+        // 2 batch
+        $dOutputs =
+            $mo->ones([6,5,4]);
+        $dStates =
+            [$mo->ones([6,4])];
+
+        $copydOutputs = $mo->copy(
+            $dOutputs);
+        $copydStates = [$mo->copy(
+            $dStates[0])];
+        [$dInputs,$dPrevStates] = $layer->backward($dOutputs,$dStates);
+        // 2 batch
+        $this->assertEquals([6,5,3],$dInputs->shape());
+        $this->assertCount(1,$dPrevStates);
+        $this->assertEquals([6,4],$dPrevStates[0]->shape());
+        $this->assertNotEquals(
+            $mo->zerosLike($grads[0])->toArray(),
+            $grads[0]->toArray());
+        $this->assertNotEquals(
+            $mo->zerosLike($grads[1])->toArray(),
+            $grads[1]->toArray());
+        $this->assertNotEquals(
+            $mo->zerosLike($grads[2])->toArray(),
+            $grads[2]->toArray());
+        
+        $this->assertEquals($copydOutputs->toArray(),$dOutputs->toArray());
+        $this->assertEquals($copydStates[0]->toArray(),$dStates[0]->toArray());
+    }
+
     public function testOutputsAndGrads()
     {
         $mo = new MatrixOperator();
