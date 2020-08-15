@@ -265,11 +265,13 @@ class DecHexDataset
         array $dic,
         NDArray $buf)
     {
+        var_dump($dic);
         $sseq = str_split($str);
         $len = count($sseq);
         $sp = $dic[' '];
         $bufsz=$buf->size();
         for($i=0;$i<$bufsz;$i++){
+            
             if($i<$len)
                 $buf[$i]=$dic[$sseq[$i]];
             else
