@@ -89,7 +89,7 @@ class Test extends TestCase
         $mo = new MatrixOperator();
         $backend = new Backend($mo);
         $nn = new NeuralNetworks($mo,$backend);
-        $model = new TestModel($mo,$backend,$nn);
+        $model = new TestModel($backend,$nn);
         
         $train = $mo->random()->randn([10,5]);
         $label = $mo->arange(10);
