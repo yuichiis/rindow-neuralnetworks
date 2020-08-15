@@ -6,7 +6,7 @@ use UnexpectedValueException;
 use LogicException;
 use Rindow\NeuralNetworks\Support\GenericUtils;
 use Rindow\NeuralNetworks\Optimizer\Optimizer;
-use Rindow\NeuralNetworks\Layer\Layer;
+use Rindow\NeuralNetworks\Layer\LayerBase;
 use Rindow\NeuralNetworks\Activation\Softmax;
 use Rindow\NeuralNetworks\Activation\Sigmoid;
 use Rindow\NeuralNetworks\Loss\Loss;
