@@ -292,6 +292,7 @@ class DecHexDataset
             $pkl = serialize($dataset);
             file_put_contents($path,$dataset);
         }
+var_dump($dataset);
         return $dataset;
     }
 
