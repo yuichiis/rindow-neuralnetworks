@@ -81,8 +81,8 @@ abstract class AbstractLayerBase implements LayerBase
     protected function addWeights($weights,$grads=null)
     {
         if($weights instanceof Layer){
-            $this->params = array_merge($this->params,$layer->getParams());
-            $this->grads  = array_merge($this->grads, $layer->getGrads());
+            $this->params = array_merge($this->params,$weights->getParams());
+            $this->grads  = array_merge($this->grads, $weights->getGrads());
             return;
         }elseif($weights instanceof NDArray){
             if($grads==null){
