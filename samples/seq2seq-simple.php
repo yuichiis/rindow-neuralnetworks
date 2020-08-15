@@ -63,7 +63,6 @@ class Encoder extends AbstractRNNLayer
         $wordvect = $this->embedding->forward($inputs,$training);
         $results=$this->lstm->forward($wordvect,$training,$initalStates);
         if(!is_array($results)) {
-            var_dump($states);
             throw new \Exception('encoderresults');
         }
         [$outputs,$states]=$results;
