@@ -61,7 +61,12 @@ class Encoder extends AbstractRNNLayer
     protected function call(NDArray $inputs,bool $training, array $initalStates=null, array $options=null)
     {
         $wordvect = $this->embedding->forward($inputs,$training);
-        [$outputs,$states]=$this->lstm->forward($wordvect,$training,$initalStates);
+        $results=$this->lstm->forward($wordvect,$training,$initalStates);
+        if(!is_array($results)) {
+            var_dump($states);
+            throw new \Exception('encoderresults');
+        }
+        [$outputs,$states]=$results;
         if(!is_array($states)) {
             var_dump($states);
             throw new \Exception('encoder');
