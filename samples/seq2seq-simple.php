@@ -35,8 +35,8 @@ class Encoder extends AbstractRNNLayer
         $this->wordVectSize = $word_vect_size;
         $this->recurrentSize = $recurrent_units;
 
-        $this->embedding = $builder->Embedding($vocab_size, $word_vect_size);
-        $this->lstm = $builder->SimpleRNN($recurrent_units);
+        $this->embedding = $builder->layers()->Embedding($vocab_size, $word_vect_size);
+        $this->lstm = $builder->layers()->SimpleRNN($recurrent_units);
     }
 
     public function build(array $inputShape=null, array $options=null) : array
@@ -102,9 +102,9 @@ class Decoder extends AbstractRNNLayer
         $this->recurrentSize = $recurrent_units;
         $this->denseUnits = $dense_units;
 
-        $this->embedding = $builder->Embedding($vocab_size, $word_vect_size);
-        $this->lstm = $builder->SimpleRNN($recurrent_units);
-        $this->dense = $builder->Dense($dense_units);
+        $this->embedding = $builder->layers()->Embedding($vocab_size, $word_vect_size);
+        $this->lstm = $builder->layers()->SimpleRNN($recurrent_units);
+        $this->dense = $builder->layers()->Dense($dense_units);
     }
 
     public function build(array $inputShape=null, array $options=null) : array
@@ -302,7 +302,6 @@ $backend = new Backend($mo);
 $nn = new NeuralNetworks($mo,$backend);
 $dataset = new DecHexDataset($mo);
 [$dec,$hex]=$dataset->loadData();
-var_dump($dec->shape());
 $train_inputs = $dec[[0,9899]];
 $train_target = $hex[[0,9899]];
 $test_input = $dec[[9900,9999]];
