@@ -242,7 +242,7 @@ class DecHexDataset
     public function generate($corp_size,$length)
     {
         $sequence = $this->mo->zeros([$corp_size,$length]);
-        $target = $this>-mo->zeros([$corp_size,$length]);
+        $target = $this->mo->zeros([$corp_size,$length]);
         $numbers = $this->mo->random()->choice($corp_size);
         for($i=0;$i<$corp_size;$i++){
             $num = $numbers[$i];
