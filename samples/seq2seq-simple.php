@@ -36,7 +36,9 @@ class Encoder extends AbstractRNNLayer
         $this->recurrentSize = $recurrent_units;
 
         $this->embedding = $builder->layers()->Embedding($vocab_size, $word_vect_size);
-        $this->lstm = $builder->layers()->SimpleRNN($recurrent_units);
+        $this->lstm = $builder->layers()->SimpleRNN($recurrent_units,[
+                'return_state'=>true
+                ]);
     }
 
     public function build(array $inputShape=null, array $options=null) : array
@@ -61,16 +63,7 @@ class Encoder extends AbstractRNNLayer
     protected function call(NDArray $inputs,bool $training, array $initalStates=null, array $options=null)
     {
         $wordvect = $this->embedding->forward($inputs,$training);
-        $results=$this->lstm->forward($wordvect,$training,$initalStates);
-        //if(!is_array($results)) {
-        //    throw new \Exception('encoderresults');
-        //}
-        [$outputs,$states]=$results;
-        var_dump($outputs);
-        if(!is_array($states)) {
-            var_dump($states);
-            throw new \Exception('encoder');
-        }
+        [$outputs,$states]=$this->lstm->forward($wordvect,$training,$initalStates);
         return [$outputs,$states];
     }
     
@@ -112,7 +105,10 @@ class Decoder extends AbstractRNNLayer
         $this->denseUnits = $dense_units;
 
         $this->embedding = $builder->layers()->Embedding($vocab_size, $word_vect_size);
-        $this->lstm = $builder->layers()->SimpleRNN($recurrent_units);
+        $this->lstm = $builder->layers()->SimpleRNN(
+            $recurrent_units,[
+                'return_state'=>true
+                ]);
         $this->dense = $builder->layers()->Dense($dense_units);
     }
 
@@ -141,8 +137,6 @@ class Decoder extends AbstractRNNLayer
     {
         $wordvect = $this->embedding->forward($inputs,$training);
         [$outputs,$states]=$this->lstm->forward($wordvect,$training,$initalStates);
-        if(!is_array($states))
-             throw new \Exception('encoder');
         $outputs=$this->dense->forward($outputs,$training);
         return [$outputs,$states];
     }
