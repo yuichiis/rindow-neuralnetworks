@@ -156,8 +156,6 @@ class SimpleRNN extends AbstractRNNLayer
         if($this->stateful) {
             $this->initialStates = $states;
         }
-        if(!is_array($states))
-             throw new \Exception('simplernn');
         if($this->returnState){
             return [$outputs,$states];
         } else {
