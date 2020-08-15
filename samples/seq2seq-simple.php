@@ -177,24 +177,29 @@ class Seq2seq extends AbstractModel
             $recurrent_units,
             $dense_units
         );
+        $this->out = $builder->layers()->Activation('softmax');
+        $this->setLastLayer($this->out);
     }
     
     protected function buildLayers(array $options=null) : void
     {
         $this->registerLayer($this->encoder);
-        $this->registerLayer($this->decoder);
+        $shape = $this->registerLayer($this->decoder);
+        $this->registerLayer($this->out,$shape);
     }
 
     protected function forwardStep(NDArray $inputs, NDArray $trues=null, bool $training=null) : NDArray
     {
         [$dummy,$states] = $this->encoder->forward($inputs,null,$training);
         [$outputs,$dummy] = $this->decoder->forward($trues,$states,$training);
+        $outputs = $this->out->forward($outputs);
         $this->outputShape = $outputs->shape();
         return $outputs;
     }
     
     protected function backwardStep(NDArray $dout) : NDArray
     {
+        $dout = $this->out->backward($dout);
         [$dummy,$dStates] = $this->decoder->backward($dout,null);
         [$dInputs,$dStates] = $this->encoder->backward($K->zeros($this->outputShape),$dStates);
         return $dInputs;
