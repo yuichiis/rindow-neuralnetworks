@@ -21,7 +21,7 @@ class TestModel extends AbstractModel
             $backend,
             $builder,
             $builder->utils()->HDA());
-        $this->flatten = $builder->Flatten(['input_shape'=>[5]]);
+        $this->flatten = $builder->layers()->Flatten(['input_shape'=>[5]]);
         $this->custom = new TestLayer($backend,$builder);
         $this->fc = $builder->Dense(
             10,
