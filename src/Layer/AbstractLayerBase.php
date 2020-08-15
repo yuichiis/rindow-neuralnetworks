@@ -9,7 +9,7 @@ use Rindow\NeuralNetworks\Activation\Activation as ActivationInterface;
 /**
  *
  */
-abstract class AbstractLayerBase
+abstract class AbstractLayerBase implements LayerBase
 {
     protected $layers = [];
     protected $inputShape;
