@@ -15,7 +15,7 @@ class TestModel extends AbstractModel
     protected $custom;
     protected $fc;
     
-    public function __construct($backend,$builder,$hda)
+    public function __construct($backend,$builder)
     {
         parent::__construct(
             $backend,
