@@ -40,7 +40,7 @@ class TestModel extends AbstractModel
 
     protected function forwardStep(NDArray $inputs, NDArray $trues=null, bool $training=null) : NDArray
     {
-        $flat = $this->->forward($inputs,$training);
+        $flat = $this->flatten->forward($inputs,$training);
         $customout = $this->custom->forward($flat,$training);
         $outputs = $this->fc->forward($customout,$training);
         return $outputs;
