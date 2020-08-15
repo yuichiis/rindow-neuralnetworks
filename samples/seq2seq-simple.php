@@ -190,8 +190,8 @@ class Seq2seq extends AbstractModel
 
     protected function forwardStep(NDArray $inputs, NDArray $trues=null, bool $training=null) : NDArray
     {
-        [$dummy,$states] = $this->encoder->forward($inputs,null,$training);
-        [$outputs,$dummy] = $this->decoder->forward($trues,$states,$training);
+        [$dummy,$states] = $this->encoder->forward($inputs,$training,null);
+        [$outputs,$dummy] = $this->decoder->forward($trues,$training,$states);
         $outputs = $this->out->forward($outputs);
         $this->outputShape = $outputs->shape();
         return $outputs;
