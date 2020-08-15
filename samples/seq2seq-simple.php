@@ -109,7 +109,7 @@ class Decoder extends AbstractRNNLayer
 
     public function build(array $inputShape=null, array $options=null) : array
     {
-        $inputShape=$this->normalizeInputShapetShape($inputShape);
+        $inputShape=$this->normalizeInputShape($inputShape);
         $inputShape = $this->registerLayer($this->embedding,$inputShape);
         $inputShape = $this->registerLayer($this->lstm,$inputShape);
         $inputShape = $this->registerLayer($this->dense,$inputShape);
