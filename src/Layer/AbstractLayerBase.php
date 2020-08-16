@@ -78,6 +78,11 @@ abstract class AbstractLayerBase implements LayerBase
         return $this->outputShape;
     }
 
+    public function statesShapes() : array
+    {
+        return $this->statesShapes;
+    }
+
     protected function addWeights($weights,$grads=null)
     {
         if($weights instanceof LayerBase){
