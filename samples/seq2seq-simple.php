@@ -210,6 +210,7 @@ class Seq2seq extends AbstractModel
     
     protected function backwardStep(NDArray $dout) : NDArray
     {
+        $K = $this->backend;
         $dout = $this->out->backward($dout);
         [$dummy,$dStates] = $this->decoder->backward($dout,null);
         [$dInputs,$dStates] = $this->encoder->backward($K->zeros($this->outputShape),$dStates);
