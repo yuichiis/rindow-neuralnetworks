@@ -34,7 +34,7 @@ class SparseCategoricalCrossEntropy extends AbstractCrossEntropy
         // transrate one hot to categorical labels
         $ndim = $c_true->ndim();
         if($ndim>1){
-            $c_true = $c_true->reshape($c_true);
+            $c_true = $c_true->reshape([$c_true->size()]);
             $predShape = $y_pred->shape();
             $inputDim = array_pop($predShape);
             $y_pred = $y_pred->reshape([array_product($predShape),$inputDim]);
