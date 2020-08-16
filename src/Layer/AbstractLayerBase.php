@@ -133,7 +133,7 @@ abstract class AbstractLayerBase implements LayerBase
         if(!$this->shapeInspection)
             return;
         if($this->inputShape===null) {
-            throw new InvalidArgumentException('Uninitialized');
+            throw new InvalidArgumentException('Uninitialized input shape');
         }
         $shape = $inputs->shape();
         $batchNum = array_shift($shape);
@@ -147,6 +147,9 @@ abstract class AbstractLayerBase implements LayerBase
     {
         if(!$this->shapeInspection)
             return;
+        if($this->outputShape===null) {
+            throw new InvalidArgumentException('Uninitialized output shape');
+        }
         $shape = $outputs->shape();
         $batchNum = array_shift($shape);
         if($shape!=$this->outputShape) {
@@ -162,7 +165,7 @@ abstract class AbstractLayerBase implements LayerBase
         if($states===null)
             return;
         if($this->statesShapes===null) {
-            throw new InvalidArgumentException('Uninitialized');
+            throw new InvalidArgumentException('Uninitialized status shape');
         }
         if(count($states)!=count($this->statesShapes)){
             throw new InvalidArgumentException('Unmatch num of status. status need '.count($this->statesShapes).' NDArray. '.count($states).'given.');
