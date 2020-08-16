@@ -327,7 +327,7 @@ $target_vocab_size = count($target_dic);
 $seq2seq = new Seq2seq($backend,$nn,[
     'input_length'=>$input_length,
     'input_vocab_size'=>$input_vocab_size,
-    'target_vocab_size'=>$input_vocab_size,
+    'target_vocab_size'=>$target_vocab_size,
 ]);
 
 $seq2seq->compile([
