@@ -355,6 +355,9 @@ $input_length = $train_inputs->shape()[1];
 $input_vocab_size = count($input_dic);
 $target_vocab_size = count($target_dic);
 
+echo "[".$train_inputs[0]."]=>[".$train_target[0]."]\n";
+
+
 $seq2seq = new Seq2seq($backend,$nn,[
     'input_length'=>$input_length,
     'input_vocab_size'=>$input_vocab_size,
