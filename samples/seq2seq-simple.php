@@ -294,9 +294,33 @@ class DecHexDataset
         }
     }
     
+    public function seq2str(
+        NDArray $buf,
+        array $dic,
+        )
+    {
+        $str = '';
+        $bufsz=$buf->size();
+        for($i=0;$i<$bufsz;$i++){
+            $str .= $dic[$buf[$i]];
+        }
+        return $str;
+    }
+    
+    public function translate($model,$str)
+    {
+        $inputs = $this->mo->zeros([1,$this->length]);
+        $this->str2seq(
+            $str,$this->dict_input,$buf[0]);
+        $target = $model->translate($inputs);
+        return $this->seq2str(
+            $target[0],$this->vocab_target);
+            );
+    }
+
     public function loadData($corp_size,$path=null)
     {
-        $length = strlen(strval($corp_size));
+        $this->length = strlen(strval($corp_size));
         if($path==null){
             $path='dec2hex-dataset.pkl';
         }
@@ -304,7 +328,7 @@ class DecHexDataset
             $pkl = file_get_contents($path);
             $dataset = unserialize($pkl);
         }else{
-            $dataset = $this->generate($corp_size,$length);
+            $dataset = $this->generate($corp_size,$this->length);
             $pkl = serialize($dataset);
             file_put_contents($path,$pkl);
         }
@@ -313,7 +337,7 @@ class DecHexDataset
 
 }
 
-$corp_size = 60000;
+$corp_size = 40000;
 $test_size = 100;
 $mo = new MatrixOperator();
 $backend = new Backend($mo);
@@ -340,3 +364,10 @@ $seq2seq->compile([
     ]);
 $history = $seq2seq->fit($train_inputs,$train_target,
     ['epochs'=>1,'batch_size'=>64,'validation_data'=>[$test_input,$test_target]]);
+
+$samples = ['10','255','1024'];
+foreach ($samples as $value) {
+    $target = $dataset->translate(
+        $seq2seq,$value);
+    echo "[$value]=>[$target]\n";
+}
