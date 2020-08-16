@@ -170,6 +170,7 @@ class Seq2seq extends AbstractModel
             'word_vect_size'=>8,
             'recurrent_units'=>256,
             'dense_units'=>256,
+            'start_voc_id'=>0,
         ],$options));
         parent::__construct($backend,$builder,$builder->utils()->HDA());
         $this->encoder = new Encoder(
@@ -189,6 +190,8 @@ class Seq2seq extends AbstractModel
         );
         $this->out = $builder->layers()->Activation('softmax');
         $this->setLastLayer($this->out);
+        $this->decStartValue = $backend->variable([$start_voc_id]);
+        $this->startVocId = $start_voc_id;
     }
     
     protected function buildLayers(array $options=null) : void
@@ -202,8 +205,8 @@ class Seq2seq extends AbstractModel
     {
         [$dummy,$states] = $this->encoder->forward($inputs,$training,null);
         $this->encoutShape = $dummy->shape();
-        
-        [$outputs,$dummy] = $this->decoder->forward($trues,$training,$states);
+        $dec_inputs = $K->rnnShiftTimestep($trues,$this->startVocId);
+        [$outputs,$dummy] = $this->decoder->forward($dec_inputs,$training,$states);
         $outputs = $this->out->forward($outputs,$training);
         return $outputs;
     }
@@ -224,10 +227,10 @@ class Seq2seq extends AbstractModel
         $sentence = $sentence->reshape([1,$inputLength]);
         $this->setShapeInspection(false);
         [$dmy,$states]=$this->encoder->forward($sentence,$training=false);
-        $vocId = 0;
+        $vocId = $this->startVocId;
         $targetSentence =[];
         for($i=0;$i<$inputLength;$i++){
-            $in = $K->variable([[$vocId]]);
+            $in = $K->variable([[$vocId]])
             [$predictions,$dmy] = $this->decoder->forward($in,$training=false,$states);
             $vocId = $K->argMax($predictions);
             $targetSentence[]=$vocId;
@@ -272,7 +275,7 @@ class DecHexDataset
                 $this->dict_input,
                 $sequence[$i]);
             $this->str2seq(
-                '@'.$hex,
+                $hex,
                 $this->dict_target,
                 $target[$i]);
         }
@@ -361,6 +364,7 @@ $seq2seq = new Seq2seq($backend,$nn,[
     'input_length'=>$input_length,
     'input_vocab_size'=>$input_vocab_size,
     'target_vocab_size'=>$target_vocab_size,
+    'start_voc_id'=>$dataset->dict_target['@'],
 ]);
 
 $seq2seq->compile([
@@ -373,6 +377,5 @@ $samples = ['10','255','1024'];
 foreach ($samples as $value) {
     $target = $dataset->translate(
         $seq2seq,$value);
-        var_dump($target->toArray());
     echo "[$value]=>[$target]\n";
 }
