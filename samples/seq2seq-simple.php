@@ -70,7 +70,7 @@ class Encoder extends AbstractRNNLayer
     
     protected function differentiate(NDArray $dOutputs, array $dNextStates=null)
     {
-        [$dWordvect,$dStates]=$this->lstm->backward($dOutputs,$dStates);
+        [$dWordvect,$dStates]=$this->lstm->backward($dOutputs,$dNextStates);
         $dInputs = $this->embedding->backward($dWordvect);
         return [$dInputs,$dStates];
     }
