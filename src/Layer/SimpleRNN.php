@@ -99,6 +99,12 @@ class SimpleRNN extends AbstractRNNLayer
         return $this->outputShape;
     }
 
+    public function setShapeInspection(bool $enable)
+    {
+        parent::setShapeInspection($enable);
+        $this->cell->setShapeInspection($enable);
+    }
+
     public function getParams() : array
     {
         return $this->cell->getParams();
