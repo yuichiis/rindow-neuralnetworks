@@ -159,6 +159,7 @@ class Seq2seq extends AbstractModel
     use GenericUtils;
     protected $encode;
     protected $decode;
+    protected $encoutShape;
     
     public function __construct($backend,$builder,array $options=null)
     {
@@ -200,9 +201,10 @@ class Seq2seq extends AbstractModel
     protected function forwardStep(NDArray $inputs, NDArray $trues=null, bool $training=null) : NDArray
     {
         [$dummy,$states] = $this->encoder->forward($inputs,$training,null);
+        $this-encoutShape = $dummy->shape();
+        
         [$outputs,$dummy] = $this->decoder->forward($trues,$training,$states);
         $outputs = $this->out->forward($outputs,$training);
-        $this->outputShape = $outputs->shape();
         return $outputs;
     }
     
@@ -211,7 +213,7 @@ class Seq2seq extends AbstractModel
         $K = $this->backend;
         $dout = $this->out->backward($dout);
         [$dummy,$dStates] = $this->decoder->backward($dout,null);
-        [$dInputs,$dStates] = $this->encoder->backward($K->zeros($this->outputShape),$dStates);
+        [$dInputs,$dStates] = $this->encoder->backward($K->zeros($this->encoutShape),$dStates);
         return $dInputs;
     }
     
