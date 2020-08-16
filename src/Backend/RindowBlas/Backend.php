@@ -48,6 +48,12 @@ class Backend
     {
         return $this->la->alloc($x->shape(),$x->dtype());
     }
+    
+    public function variable($value, $dtype=null)
+    {
+        $this->matrixOperator->array(
+            $value,$dtype);
+    }
 
     public function getInitializer($name)
     {
