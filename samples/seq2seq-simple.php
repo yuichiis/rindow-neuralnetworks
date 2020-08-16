@@ -190,7 +190,6 @@ class Seq2seq extends AbstractModel
         );
         $this->out = $builder->layers()->Activation('softmax');
         $this->setLastLayer($this->out);
-        $this->decStartValue = $backend->variable([$start_voc_id]);
         $this->startVocId = $start_voc_id;
     }
     
@@ -200,13 +199,28 @@ class Seq2seq extends AbstractModel
         $shape = $this->registerLayer($this->decoder);
         $this->registerLayer($this->out,$shape);
     }
+    
+    protected function shiftSentence(
+        NDArray $sentence)
+    {
+        $K = $this->backend;
+        $result = $K->zerosLike($sentence);
+        [$batches,$length] = $sentence->shape();
+        for($batch=0;$batch<$batches;$batch++){
+            $source = $sentence[$batch][[0,$length-2]];
+            $dest = $result[$batch][[1,$length-1]];
+            $result[$batch][0]=$this->startVocId;
+            $K->copy($source,$dest);
+        }
+        return $result;
+    }
 
     protected function forwardStep(NDArray $inputs, NDArray $trues=null, bool $training=null) : NDArray
     {
         $K = $this->backend;
         [$dummy,$states] = $this->encoder->forward($inputs,$training,null);
         $this->encoutShape = $dummy->shape();
-        $dec_inputs = $K->rnnShiftTimestep($trues,$this->decStartValue);
+        $dec_inputs = $K->shiftSentence($trues);
         [$outputs,$dummy] = $this->decoder->forward($dec_inputs,$training,$states);
         $outputs = $this->out->forward($outputs,$training);
         return $outputs;
