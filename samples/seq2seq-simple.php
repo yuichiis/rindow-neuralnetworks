@@ -206,7 +206,7 @@ class Seq2seq extends AbstractModel
         $K = $this->backend;
         [$dummy,$states] = $this->encoder->forward($inputs,$training,null);
         $this->encoutShape = $dummy->shape();
-        $dec_inputs = $K->rnnShiftTimestep($trues,$this->startVocId);
+        $dec_inputs = $K->rnnShiftTimestep($trues,$this->decStartValue);
         [$outputs,$dummy] = $this->decoder->forward($dec_inputs,$training,$states);
         $outputs = $this->out->forward($outputs,$training);
         return $outputs;
