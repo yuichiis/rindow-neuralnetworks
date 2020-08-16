@@ -1076,6 +1076,7 @@ class Backend
     {
         $la = $this->la;
         $ndim = $trues->ndim();
+        $orgTrues = $trues;
         if($ndim==1){
             ;
         } elseif($ndim<=2) {
@@ -1086,7 +1087,7 @@ class Backend
         $shape = $predicts->shape();
         $batchSize = array_shift($shape);
         if($trues->shape()!=[$batchSize]){
-            $msg = '['.implode(',',$trues->shape()).'] ['.implode(',',$predicts->shape()).']';
+            $msg = '['.implode(',',$orgTrues->shape()).'] ['.implode(',',$predicts->shape()).']';
             throw new InvalidArgumentException('unmatch shape of dimensions:'.$msg);
         }
 
