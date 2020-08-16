@@ -18,7 +18,7 @@ class Encoder extends AbstractRNNLayer
     protected $wordVectSize;
     protected $recurrentUnits;
     protected $embedding;
-    protected $lstm;
+    protected $rnn;
 
     public function __construct(
         $backend,
@@ -36,7 +36,7 @@ class Encoder extends AbstractRNNLayer
         $this->recurrentSize = $recurrent_units;
 
         $this->embedding = $builder->layers()->Embedding($vocab_size, $word_vect_size);
-        $this->lstm = $builder->layers()->SimpleRNN($recurrent_units,[
+        $this->rnn = $builder->layers()->SimpleRNN($recurrent_units,[
                 'return_state'=>true
                 ]);
     }
@@ -45,9 +45,9 @@ class Encoder extends AbstractRNNLayer
     {
         $inputShape=$this->normalizeInputShape($inputShape);
         $inputShape = $this->registerLayer($this->embedding,$inputShape);
-        $inputShape = $this->registerLayer($this->lstm,$inputShape);
+        $inputShape = $this->registerLayer($this->rnn,$inputShape);
         $this->outputShape = $inputShape;
-        $this->statesShapes = $this->lstm->statesShapes();
+        $this->statesShapes = $this->rnn->statesShapes();
         return $this->outputShape;
     }
 
@@ -64,13 +64,13 @@ class Encoder extends AbstractRNNLayer
     protected function call(NDArray $inputs,bool $training, array $initalStates=null, array $options=null)
     {
         $wordvect = $this->embedding->forward($inputs,$training);
-        [$outputs,$states]=$this->lstm->forward($wordvect,$training,$initalStates);
+        [$outputs,$states]=$this->rnn->forward($wordvect,$training,$initalStates);
         return [$outputs,$states];
     }
     
     protected function differentiate(NDArray $dOutputs, array $dNextStates=null)
     {
-        [$dWordvect,$dStates]=$this->lstm->backward($dOutputs,$dNextStates);
+        [$dWordvect,$dStates]=$this->rnn->backward($dOutputs,$dNextStates);
         $dInputs = $this->embedding->backward($dWordvect);
         return [$dInputs,$dStates];
     }
@@ -85,7 +85,7 @@ class Decoder extends AbstractRNNLayer
     protected $recurrentUnits;
     protected $denseUnits;
     protected $embedding;
-    protected $lstm;
+    protected $rnn;
     protected $dense;
     
     public function __construct(
@@ -106,7 +106,7 @@ class Decoder extends AbstractRNNLayer
         $this->denseUnits = $dense_units;
 
         $this->embedding = $builder->layers()->Embedding($vocab_size, $word_vect_size);
-        $this->lstm = $builder->layers()->SimpleRNN(
+        $this->rnn = $builder->layers()->SimpleRNN(
             $recurrent_units,[
                 'return_state'=>true,
                 'return_sequence'=>true,
@@ -118,10 +118,10 @@ class Decoder extends AbstractRNNLayer
     {
         $inputShape=$this->normalizeInputShape($inputShape);
         $inputShape = $this->registerLayer($this->embedding,$inputShape);
-        $inputShape = $this->registerLayer($this->lstm,$inputShape);
+        $inputShape = $this->registerLayer($this->rnn,$inputShape);
         $inputShape = $this->registerLayer($this->dense,$inputShape);
         $this->outputShape = $inputShape;
-        $this->statesShapes = $this->lstm->statesShapes();
+        $this->statesShapes = $this->rnn->statesShapes();
         
         return $this->outputShape;
     }
@@ -140,7 +140,7 @@ class Decoder extends AbstractRNNLayer
     protected function call(NDArray $inputs,bool $training, array $initalStates=null, array $options=null)
     {
         $wordvect = $this->embedding->forward($inputs,$training);
-        [$outputs,$states]=$this->lstm->forward($wordvect,$training,$initalStates);
+        [$outputs,$states]=$this->rnn->forward($wordvect,$training,$initalStates);
         $outputs=$this->dense->forward($outputs,$training);
         return [$outputs,$states];
     }
@@ -148,7 +148,7 @@ class Decoder extends AbstractRNNLayer
     protected function differentiate(NDArray $dOutputs, array $dNextStates=null)
     {
         $dOutputs = $this->dense->backward($dOutputs);
-        [$dWordvect,$dStates]=$this->lstm->backward($dOutputs);
+        [$dWordvect,$dStates]=$this->rnn->backward($dOutputs);
         $dInputs = $this->embedding->backward($dWordvect);
         return [$dInputs,$dStates];
     }
@@ -386,7 +386,7 @@ $seq2seq->compile([
     'optimizer'=>$nn->optimizers()->Adam(),
     ]);
 $history = $seq2seq->fit($train_inputs,$train_target,
-    ['epochs'=>5,'batch_size'=>64,'validation_data'=>[$test_input,$test_target]]);
+    ['epochs'=>1,'batch_size'=>64,'validation_data'=>[$test_input,$test_target]]);
 
 $samples = ['10','255','1024'];
 foreach ($samples as $value) {
