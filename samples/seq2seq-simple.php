@@ -246,7 +246,7 @@ class Seq2seq extends AbstractModel
         $targetSentence =[];
         for($i=0;$i<$inputLength;$i++){
             $in = $K->variable([[$vocId]]);
-            [$predictions,$dmy] = $this->decoder->forward($in,$training=false,$states);
+            [$predictions,$states] = $this->decoder->forward($in,$training=false,$states);
             $vocId = $K->argMax($predictions);
             $targetSentence[]=$vocId;
         }
@@ -357,7 +357,7 @@ class DecHexDataset
 
 }
 
-$corp_size = 30000;
+$corp_size = 10000;
 $test_size = 100;
 $mo = new MatrixOperator();
 $backend = new Backend($mo);
