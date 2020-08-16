@@ -373,5 +373,6 @@ $samples = ['10','255','1024'];
 foreach ($samples as $value) {
     $target = $dataset->translate(
         $seq2seq,$value);
+        var_dump($target->toArray());
     echo "[$value]=>[$target]\n";
 }
