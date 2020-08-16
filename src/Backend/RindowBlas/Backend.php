@@ -1216,36 +1216,6 @@ class Backend
         return $dest;
     }
     
-    public function rnnShiftTimestep(
-        NDArray $source, NDArray $padding, bool $backward=null) : NDArray
-    {
-        if($source->ndim()!=3){
-            throw new InvalidArgumentException('array must be 3D');
-        }
-        [$batch,$steps,$feature] = $source->shape();
-        $outputs = $this->la->alloc($source->shape(),$source->dtype());
-        if(!$backward){
-            for($i=0;$i<$batch;$i++){
-                $this->la->copy($padding,$outputs[$i][0]);
-            }
-            for($step=0;$step<$steps-1;$step++){
-                for($i=0;$i<$batch;$i++){
-                    $this->la->copy($source[$i][$step],$outputs[$i][$step+1]);
-                }
-            }
-        }else{
-            for($i=0;$i<$batch;$i++){
-                $this->la->copy($padding,$outputs[$i][$steps-1]);
-            }
-            for($step=0;$step<$steps-1;$step++){
-                for($i=0;$i<$batch;$i++){
-                    $this->la->copy($source[$i][$step+1],$outputs[$i][$step]);
-                }
-            }
-        }
-        return $outputs;
-    }
-
     public function rnn(
         $stepFunction,
         NDArray $inputs,
