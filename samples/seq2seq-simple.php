@@ -108,7 +108,8 @@ class Decoder extends AbstractRNNLayer
         $this->embedding = $builder->layers()->Embedding($vocab_size, $word_vect_size);
         $this->lstm = $builder->layers()->SimpleRNN(
             $recurrent_units,[
-                'return_state'=>true
+                'return_state'=>true,
+                'return_sequence'=>true,
                 ]);
         $this->dense = $builder->layers()->Dense($dense_units);
     }
