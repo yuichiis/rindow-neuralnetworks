@@ -233,7 +233,7 @@ class Seq2seq extends AbstractModel
             $targetSentence[]=$vocId;
         }
         $this->setShapeInspection(true);
-        return $K->array($targetSentence);
+        return $this->mo->array($targetSentence);
     }
 }
 
