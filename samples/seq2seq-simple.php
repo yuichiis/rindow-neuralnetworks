@@ -386,7 +386,7 @@ $seq2seq->compile([
     'optimizer'=>$nn->optimizers()->Adam(),
     ]);
 $history = $seq2seq->fit($train_inputs,$train_target,
-    ['epochs'=>1,'batch_size'=>64,'validation_data'=>[$test_input,$test_target]]);
+    ['epochs'=>5,'batch_size'=>64,'validation_data'=>[$test_input,$test_target]]);
 
 $samples = ['10','255','1024'];
 foreach ($samples as $value) {
