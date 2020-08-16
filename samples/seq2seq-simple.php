@@ -296,7 +296,7 @@ class DecHexDataset
     
     public function seq2str(
         NDArray $buf,
-        array $dic,
+        array $dic
         )
     {
         $str = '';
