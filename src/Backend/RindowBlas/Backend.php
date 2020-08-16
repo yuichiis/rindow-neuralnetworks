@@ -348,7 +348,7 @@ class Backend
     public function argMax(NDArray $x,int $axis=null,$dtype=null)
     {
         if($axis===null) {
-            return $this->matrixOperator->argMax($x);
+            return $this->la->imax($x);
         } else {
             return $this->la->reduceArgMax($x,$axis,null,$dtype);
         }
