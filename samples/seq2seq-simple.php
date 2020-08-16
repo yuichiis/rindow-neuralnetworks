@@ -242,8 +242,8 @@ class DecHexDataset
     public function __construct($mo)
     {
         $this->mo = $mo;
-        $this->vocab_input = ['0','1','2','3','4','5','6','7','8','9',' ','@'];
-        $this->vocab_target = ['0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F',' ','@'];
+        $this->vocab_input = ['@','0','1','2','3','4','5','6','7','8','9',' '];
+        $this->vocab_target = ['@','0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F',' '];
         $this->dict_input = array_flip($this->vocab_input);
         $this->dict_target = array_flip($this->vocab_target);
     }
