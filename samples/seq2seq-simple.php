@@ -357,7 +357,7 @@ class DecHexDataset
 
 }
 
-$corp_size = 40000;
+$corp_size = 30000;
 $test_size = 100;
 $mo = new MatrixOperator();
 $backend = new Backend($mo);
