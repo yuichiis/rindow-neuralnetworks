@@ -220,6 +220,8 @@ class Seq2seq extends AbstractModel
     public function translate(NDArray $sentence)
     {
         $K = $this->backend;
+        $inputLength = $sentence->size();
+        $sentence = $sentence->reshape([1,$inputLength]);
         $this->setShapeInspection(false);
         [$dmy,$states]=$this->encoder->forward($sentence,$training=false);
         $vocId = 0;
