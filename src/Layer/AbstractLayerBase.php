@@ -20,6 +20,7 @@ abstract class AbstractLayerBase implements LayerBase
     protected $params=[];
     protected $grads=[];
     protected $shapeInspection = true;
+    protected $name;
 
     public function getActivation()
     {
@@ -133,7 +134,7 @@ abstract class AbstractLayerBase implements LayerBase
         }
     }
 
-    protected function assertInputShape(NDArray $inputs)
+    protected function assertInputShape(NDArray $inputs,$direction)
     {
         if(!$this->shapeInspection)
             return;
@@ -144,11 +145,11 @@ abstract class AbstractLayerBase implements LayerBase
         $batchNum = array_shift($shape);
         if($shape!=$this->inputShape) {
             $shape = $shape ? implode(',',$shape) : '';
-            throw new InvalidArgumentException('unmatch input shape: ['.$shape.'], must be ['.implode(',',$this->inputShape).']');
+            throw new InvalidArgumentException('unmatch input shape: ['.$shape.'], must be ['.implode(',',$this->inputShape).'] in '.$this->name.':'.$direction);
         }
     }
 
-    protected function assertOutputShape(NDArray $outputs)
+    protected function assertOutputShape(NDArray $outputs,$direction)
     {
         if(!$this->shapeInspection)
             return;
@@ -159,11 +160,11 @@ abstract class AbstractLayerBase implements LayerBase
         $batchNum = array_shift($shape);
         if($shape!=$this->outputShape) {
             throw new InvalidArgumentException('unmatch output shape: ['.
-                implode(',',$shape).'], must be ['.implode(',',$this->outputShape).']');
+                implode(',',$shape).'], must be ['.implode(',',$this->outputShape).'] in '.$this->name.':'.$direction);
         }
     }
 
-    protected function assertStatesShape(array $states=null)
+    protected function assertStatesShape(array $states=null,$direction)
     {
         if(!$this->shapeInspection)
             return;
@@ -181,7 +182,7 @@ abstract class AbstractLayerBase implements LayerBase
             $batchNum = array_shift($shape);
             if($shape!=$stateShape) {
                 $shape = $shape ? implode(',',$shape) : '';
-                throw new InvalidArgumentException('unmatch shape of state '.$idx.': ['.$shape.'], must be ['.implode(',',$stateShape).']');
+                throw new InvalidArgumentException('unmatch shape of state '.$idx.': ['.$shape.'], must be ['.implode(',',$stateShape).'] in '.$this->name.':'.$direction);
             }
         }
     }
