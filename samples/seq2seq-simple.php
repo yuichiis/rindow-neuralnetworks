@@ -380,13 +380,16 @@ $seq2seq = new Seq2seq($backend,$nn,[
     'input_vocab_size'=>$input_vocab_size,
     'target_vocab_size'=>$target_vocab_size,
     'start_voc_id'=>$dataset->dict_target['@'],
+    'word_vect_size'=>16,
+    'recurrent_units'=>512,
+    'dense_units'=>512,
 ]);
 
 $seq2seq->compile([
     'optimizer'=>$nn->optimizers()->Adam(),
     ]);
 $history = $seq2seq->fit($train_inputs,$train_target,
-    ['epochs'=>1,'batch_size'=>64,'validation_data'=>[$test_input,$test_target]]);
+    ['epochs'=>5,'batch_size'=>128,'validation_data'=>[$test_input,$test_target]]);
 
 $samples = ['10','255','1024'];
 foreach ($samples as $value) {
