@@ -311,7 +311,7 @@ class DecHexDataset
     {
         $inputs = $this->mo->zeros([1,$this->length]);
         $this->str2seq(
-            $str,$this->dict_input,$buf[0]);
+            $str,$this->dict_input,$inputs[0]);
         $target = $model->translate($inputs);
         return $this->seq2str(
             $target[0],$this->vocab_target
