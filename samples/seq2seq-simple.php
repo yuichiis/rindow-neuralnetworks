@@ -201,9 +201,7 @@ class Seq2seq extends AbstractModel
     {
         [$dummy,$states] = $this->encoder->forward($inputs,$training,null);
         [$outputs,$dummy] = $this->decoder->forward($trues,$training,$states);
-        var_dump($outputs->shape());
         $outputs = $this->out->forward($outputs,$training);
-        var_dump($outputs->shape());
         $this->outputShape = $outputs->shape();
         return $outputs;
     }
