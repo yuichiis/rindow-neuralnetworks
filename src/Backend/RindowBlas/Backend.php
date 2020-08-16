@@ -1077,17 +1077,27 @@ class Backend
         $la = $this->la;
         $ndim = $trues->ndim();
         $orgTrues = $trues;
+        $orgPredicts = $predicts;
         if($ndim==1){
             ;
-        } elseif($ndim<=2) {
+        } elseif($ndim==2) {
+            if($predicts->ndim()<3){
+                $msg = '['.implode(',',$orgTrues->shape()).'] ['.implode(',',$orgPredicts->shape()).']';
+                throw new InvalidArgumentException('unmatch shape of dimensions:'.$msg);
+            }
             $trues = $trues->reshape([$trues->size()]);
+            $shape = $predicts->shape();
+            $batchSize = array_shift($shape);
+            $batchSize *= array_shift($shape);
+            array_unshift($shape,$batchSize);
+            $predicts = $predicts->reshape($shape);
         } elseif($ndim>2) {
             throw new InvalidArgumentException('categorical\'s "trues" must be shape of [batchsize,1].');
         }
         $shape = $predicts->shape();
         $batchSize = array_shift($shape);
         if($trues->shape()!=[$batchSize]){
-            $msg = '['.implode(',',$orgTrues->shape()).'] ['.implode(',',$predicts->shape()).']';
+            $msg = '['.implode(',',$orgTrues->shape()).'] ['.implode(',',$orgPredicts->shape()).']';
             throw new InvalidArgumentException('unmatch shape of dimensions:'.$msg);
         }
 
