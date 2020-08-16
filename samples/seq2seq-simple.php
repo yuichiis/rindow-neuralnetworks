@@ -47,6 +47,7 @@ class Encoder extends AbstractRNNLayer
         $inputShape = $this->registerLayer($this->embedding,$inputShape);
         $inputShape = $this->registerLayer($this->lstm,$inputShape);
         $this->outputShape = $inputShape;
+        $this->statesShapes = $this->lstm->statesShapes();
         return $this->outputShape;
     }
 
@@ -119,6 +120,8 @@ class Decoder extends AbstractRNNLayer
         $inputShape = $this->registerLayer($this->lstm,$inputShape);
         $inputShape = $this->registerLayer($this->dense,$inputShape);
         $this->outputShape = $inputShape;
+        $this->statesShapes = $this->lstm->statesShapes();
+        
         return $this->outputShape;
     }
 
