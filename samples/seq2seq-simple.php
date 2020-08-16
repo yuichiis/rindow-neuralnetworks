@@ -221,12 +221,12 @@ class Seq2seq extends AbstractModel
     {
         $K = $this->backend;
         $this->setShapeInspection(false);
-        [$dmy,$states]=$this->encoder->forward($sentence,null,$training=false);
+        [$dmy,$states]=$this->encoder->forward($sentence,$training=false);
         $vocId = 0;
         $targetSentence =[];
         for($i=0;$i<$inputLength;$i++){
             $in = $K->array([[$vocId]]);
-            [$predictions,$dmy] = $this->decoder->forward($in,$states,$training=false);
+            [$predictions,$dmy] = $this->decoder->forward($in,$training=false,$states);
             $vocId = $K->argMax($predictions);
             $targetSentence[]=$vocId;
         }
