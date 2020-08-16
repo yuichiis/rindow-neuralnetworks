@@ -12,12 +12,6 @@ abstract class AbstractRNNLayer extends AbstractLayerBase implements RNNLayer
     abstract protected function call(NDArray $inputs, bool $training, array $initialStates=null, array $options=null);
     abstract protected function differentiate(NDArray $dOutputs, array $dStates=null);
 
-    public function setShapeInspection(bool $enable)
-    {
-        parent::setShapeInspection($enable);
-        $this->cell->setShapeInspection($enable);
-    }
-
     final public function forward(NDArray $inputs, bool $training, array $initialStates=null,array $options=null)
     {
         $this->assertInputShape($inputs,'forward');
