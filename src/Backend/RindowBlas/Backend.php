@@ -51,7 +51,7 @@ class Backend
     
     public function variable($value, $dtype=null)
     {
-        $this->matrixOperator->array(
+        return $this->matrixOperator->array(
             $value,$dtype);
     }
 
