@@ -14,21 +14,21 @@ abstract class AbstractLayer extends AbstractLayerBase
 
     final public function forward(NDArray $inputs, bool $training) : NDArray
     {
-        $this->assertInputShape($inputs);
+        $this->assertInputShape($inputs,'forward');
 
         $outputs = $this->call($inputs, $training);
 
-        $this->assertOutputShape($outputs);
+        $this->assertOutputShape($outputs,'forward');
         return $outputs;
     }
 
     final public function backward(NDArray $dOutputs) : NDArray
     {
-        $this->assertOutputShape($dOutputs);
+        $this->assertOutputShape($dOutputs,'backward');
 
         $dInputs = $this->differentiate($dOutputs);
 
-        $this->assertInputShape($dInputs);
+        $this->assertInputShape($dInputs,'backward');
         return $dInputs;
     }
 }
