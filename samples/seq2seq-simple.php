@@ -294,10 +294,9 @@ class DecHexDataset
         }
     }
     
-    public function loadData($path=null)
+    public function loadData($corp_size,$path=null)
     {
-        $corp_size = 10000;
-        $length = 5;
+        $length = strlen(strval($corp_size));
         if($path==null){
             $path='dec2hex-dataset.pkl';
         }
@@ -314,15 +313,17 @@ class DecHexDataset
 
 }
 
+$corp_size = 60000;
+$test_size = 100;
 $mo = new MatrixOperator();
 $backend = new Backend($mo);
 $nn = new NeuralNetworks($mo,$backend);
 $dataset = new DecHexDataset($mo);
-[$dec,$hex]=$dataset->loadData();
-$train_inputs = $dec[[0,9899]];
-$train_target = $hex[[0,9899]];
-$test_input = $dec[[9900,9999]];
-$test_target = $hex[[9900,9999]];
+[$dec,$hex]=$dataset->loadData($corp_size);
+$train_inputs = $dec[[0,$corp_size-$test_size-1]];
+$train_target = $hex[[0,$corp_size-$test_size-1]];
+$test_input = $dec[[$corp_size-$test_size,$corp_size-1]];
+$test_target = $hex[[$corp_size-$test_size,$corp_size-1]];
 $input_length = $train_inputs->shape()[1];
 [$iv,$tv,$input_dic,$target_dic]=$dataset->dicts();
 $input_vocab_size = count($input_dic);
