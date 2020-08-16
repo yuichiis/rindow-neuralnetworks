@@ -1079,7 +1079,7 @@ class Backend
         if($ndim==1){
             ;
         } elseif($ndim<=2) {
-            $trues = $trues->reshape($trues->size());
+            $trues = $trues->reshape([$trues->size()]);
         } elseif($ndim>2) {
             throw new InvalidArgumentException('categorical\'s "trues" must be shape of [batchsize,1].');
         }
@@ -1106,7 +1106,7 @@ class Backend
         if($ndim==1){
             ;
         } elseif($ndim==2) {
-            $trues = $trues->reshape($trues->size());
+            $trues = $trues->reshape([$trues->size()]);
             $predictsShape = $origPredictsShape;
             $inputDim = array_pop($predictsShape);
             $predicts = $predicts->reshape(
