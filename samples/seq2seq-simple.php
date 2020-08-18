@@ -245,13 +245,13 @@ class Seq2seq extends AbstractModel
         $vocId = $this->startVocId;
         $targetSentence =[];
         for($i=0;$i<$inputLength;$i++){
-            $in = $K->variable([[$vocId]]);
+            $in = $K->array([[$vocId]]);
             [$predictions,$states] = $this->decoder->forward($in,$training=false,$states);
             $vocId = $K->argMax($predictions);
             $targetSentence[]=$vocId;
         }
         $this->setShapeInspection(true);
-        return $K->variable($targetSentence);
+        return $K->array($targetSentence);
     }
 }
 
