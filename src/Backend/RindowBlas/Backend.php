@@ -49,7 +49,7 @@ class Backend
         return $this->la->alloc($x->shape(),$x->dtype());
     }
     
-    public function variable($value, $dtype=null)
+    public function array($value, $dtype=null)
     {
         return $this->matrixOperator->array(
             $value,$dtype);
