@@ -13,6 +13,8 @@ class Dense extends AbstractLayer implements Layer
     protected $useBias;
     protected $kernelInitializer;
     protected $biasInitializer;
+    protected $kernelInitializerName;
+    protected $biasInitializerName;
 
     protected $kernel;
     protected $bias;
