@@ -10,10 +10,14 @@ class LSTMCell extends AbstractRNNCell
     use GenericUtils;
     protected $backend;
     protected $units;
-    protected $activation;
     protected $useBias;
     protected $kernelInitializer;
     protected $biasInitializer;
+    protected $ac;
+    protected $ac_i;
+    protected $ac_f;
+    protected $ac_c;
+    protected $ac_o;
 
     protected $kernel;
     protected $recurrentKernel;
@@ -45,9 +49,9 @@ class LSTMCell extends AbstractRNNCell
             $this->useBias = $use_bias;
         }
         $this->ac = $this-createFunc($activation);
-        $this->ac_c = $this->createFunc($activation);
-        $this->ac_f = $this->createFunc($recurrent_activation);
         $this->ac_i = $this->createFunc($recurrent_activation);
+        $this->ac_f = $this->createFunc($recurrent_activation);
+        $this->ac_c = $this->createFunc($activation);
         $this->ac_o = $this->createFunc($recurrent_activation);
         $this->kernelInitializer = $K->getInitializer($kernel_initializer);
         $this->recurrentInitializer = $K->getInitializer($recurrent_initializer);
@@ -142,7 +146,7 @@ class LSTMCell extends AbstractRNNCell
         } else {
             $outputs = $K->gemm($inputs, $this->kernel);
         }
-        $outputs = $K->gemm($prevHidden, $this->recurrentKernel,1.0,1.0,$outputs);
+        $outputs = $K->gemm($prev_h, $this->recurrentKernel,1.0,1.0,$outputs);
         
         $x_i = $K->slice($outputs,
             [0,0],[-1,$this->units]);
