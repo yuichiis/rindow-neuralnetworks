@@ -9,8 +9,8 @@ use InvalidArgumentException;
  */
 abstract class AbstractRNNLayer extends AbstractLayerBase implements RNNLayer
 {
-    abstract protected function call(NDArray $inputs, bool $training, array $initialStates=null, array $options=null);
-    abstract protected function differentiate(NDArray $dOutputs, array $dStates=null);
+    //abstract protected function call(NDArray $inputs, bool $training, array $initialStates=null, array $options=null);
+    //abstract protected function differentiate(NDArray $dOutputs, array $dStates=null);
 
     final public function forward(NDArray $inputs, bool $training, array $initialStates=null,array $options=null)
     {
@@ -42,5 +42,75 @@ abstract class AbstractRNNLayer extends AbstractLayerBase implements RNNLayer
         }
         $this->assertInputShape($dInputs,'backward');
         return $results;
+    }
+
+    
+    protected function call(NDArray $inputs,bool $training, array $initialStates=null, array $options=null)
+    {
+        $K = $this->backend;
+        [$batches,$timesteps,$feature]=$inputs->shape();
+        if($initialStates===null&&
+            $this->stateful) {
+            $initialStates = $this->initialStates;
+        }
+        if($initialStates===null){
+            $initialStates = [];
+            foreach($this->statesShapes as $shape){
+                $initialStates[] = $K->zeros(array_merge([$batches],$shape);
+            }
+        }
+        $outputs = null;
+        if($this->returnSequence){
+            $outputs=$K->zeros([$batches,$timesteps,$this->units]);
+        }
+        [$outputs,$states,$calcStates] = $K->rnn(
+            [$this->cell,'forward'],
+            $inputs,
+            $initialStates,
+            $training,
+            $outputs,
+            $this->goBackward
+        );
+        $this->calcStates = $calcStates;
+        $this->origInputsShape = $inputs->shape();
+        if($this->stateful) {
+            $this->initialStates = $states;
+        }
+        if($this->returnState){
+            return [$outputs,$states];
+        } else {
+            return $outputs;
+        }
+    }
+
+    protected function differentiate(NDArray $dOutputs, array $dNextStates=null)
+    {
+        $K = $this->backend;
+        $dInputs=$K->zeros($this->origInputsShape);
+        if($dNextStates===null){
+            $dNextStates = [];
+            foreach($this->statesShapes as $shape){
+                $dNextStates[] = $K->zeros(array_merge([$batches],$shape);
+            }
+        }
+
+        $grads = $this->cell->getGrads();
+        foreach($grads as $grad){
+            $K->clear($grad);
+        }
+        [$dInputs,$dPrevStates] = $K->rnnBackward(
+            [$this->cell,'backward'],
+            $dOutputs,
+            $dNextStates,
+            $this->calcStates,
+            $dInputs,
+            $this->goBackward
+        );
+        $this->calcStates = null;
+        if($this->returnState) {
+            return [$dInputs, $dPrevStates];
+        } else {
+            return $dInputs;
+        }
     }
 }
