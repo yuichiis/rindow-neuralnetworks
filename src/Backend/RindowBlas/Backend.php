@@ -1211,7 +1211,7 @@ class Backend
             [0,$step],[-1,1]
         );
         
-        return $values->reshape($batch,$feature);
+        return $values->reshape([$batch,$feature]);
     }
 
     public function rnnSetTimestep(
@@ -1221,7 +1221,7 @@ class Backend
             throw new InvalidArgumentException('array must be 3D');
         }
         [$batch,$steps,$feature] = $dest->shape();
-        $values = $values->reshape($batch,1,$feature);
+        $values = $values->reshape([$batch,1,$feature]);
         $this->la->stick(
             $values,
             $dest,
