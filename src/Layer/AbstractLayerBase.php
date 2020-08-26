@@ -49,6 +49,15 @@ abstract class AbstractLayerBase implements LayerBase
         throw new InvalidArgumentException('activation function must have the Activation interface');
     }
 
+    protected function createFunction(
+        string $activation=null)
+    {
+        if($activation==null){
+            return null;
+        }
+        return FunctionFactory::factory($this->backend,$activation);
+    }
+
     public function build(array $inputShape=null, array $options=null) : array
     {
         if($inputShape!==null)
