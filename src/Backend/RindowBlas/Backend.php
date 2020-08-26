@@ -415,6 +415,16 @@ class Backend
         return $this->la->scatterAdd($indices,$values,$target,$axis);
     }
 
+    public function slice(
+        NDArray $input,
+        array $begin, array $size,
+        NDArray $output=null) {
+        return $this->la->slice(
+            $input,
+            $begin,$size,
+            $output);    
+    }
+    
     public function oneHot(NDArray $indices, int $numClass) : NDArray
     {
         if($indices->ndim()!=1) {
@@ -1196,11 +1206,12 @@ class Backend
             throw new InvalidArgumentException('array must be 3D');
         }
         [$batch,$steps,$feature] = $source->shape();
-        $values = $this->la->alloc([$batch,$feature],$source->dtype());
-        for($i=0;$i<$batch;$i++){
-            $this->la->copy($source[$i][$step],$values[$i]);
-        }
-        return $values;
+        $values = $this->la->slice(
+            $source,
+            [0,$step],[-1,1]
+        );
+        
+        return $values->reshape($batch,$feature);
     }
 
     public function rnnSetTimestep(
@@ -1210,9 +1221,12 @@ class Backend
             throw new InvalidArgumentException('array must be 3D');
         }
         [$batch,$steps,$feature] = $dest->shape();
-        for($i=0;$i<$batch;$i++){
-            $this->la->copy($values[$i],$dest[$i][$step]);
-        }
+        $values = $values->reshape($batch,1,$feature);
+        $this->la->stick(
+            $values,
+            $dest,
+            [0,$step],[-1,1]
+        );
         return $dest;
     }
     
