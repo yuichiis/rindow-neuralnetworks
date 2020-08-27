@@ -428,12 +428,12 @@ class Backend
     public function stick(
         NDArray $input,
         NDArray $output,
-        array $begin, array $size,
+        array $begin, array $size
         ) {
         return $this->la->stick(
             $input,
             $output,
-            $begin,$size,
+            $begin,$size
             );    
     }
 
