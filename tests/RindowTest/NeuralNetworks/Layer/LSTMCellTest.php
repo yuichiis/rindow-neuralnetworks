@@ -176,7 +176,7 @@ class Test extends TestCase
         //
         //  2 batch
         $inputs = $mo->ones([2,3]);
-        $states = [$mo->ones([2,4]),$mo->ones([2,4]];
+        $states = [$mo->ones([2,4]),$mo->ones([2,4])];
         $object = new \stdClass();
         [$outputs,$nextStates] = $layer->forward($inputs, $states,$training=true,$object);
         // 
