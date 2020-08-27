@@ -344,18 +344,15 @@ class Test extends TestCase
             $mo->ones([2,4])];
         [$outputs,$nextStates] = $layer->forward($inputs,$training=true, $states);
         // 
-        $this->assertEquals([
-            [[10,10,10,10],[46,46,46,46],[190,190,190,190]],
-            [[10,10,10,10],[46,46,46,46],[190,190,190,190]],
-            ],$outputs->toArray());
-        $this->assertEquals([
-            [190,190,190,190],
-            [190,190,190,190],
-            ],$nextStates[0]->toArray());
-        $this->assertEquals([
-            [190,190,190,190],
-            [190,190,190,190],
-            ],$nextStates[1]->toArray());
+        $this->assertEquals(
+            [2,2,4],
+            $outputs->shape());
+        $this->assertEquals(
+            [2,4],
+            $nextStates[0]->shape());
+        $this->assertEquals(
+            [2,4],
+            $nextStates[1]->shape());
         //
         // backword
         //
@@ -368,33 +365,23 @@ class Test extends TestCase
 
         [$dInputs,$dPrevStates] = $layer->backward($dOutputs,$dStates);
         // 2 batch
-        $this->assertEquals([
-            [[148,148,148,148,148],[36,36,36,36,36],[8,8,8,8,8],],
-            [[148,148,148,148,148],[36,36,36,36,36],[8,8,8,8,8],],
-            ],$dInputs->toArray());
-        $this->assertEquals([
-            [148,148,148,148],
-            [148,148,148,148],
-            ],$dPrevStates[0]->toArray());
-        $this->assertEquals([
-            [148,148,148,148],
-            [148,148,148,148],
-            ],$dPrevStates[1]->toArray());
-        $this->assertEquals([
-            [96,96,96,96],
-            [96,96,96,96],
-            [96,96,96,96],
-            [96,96,96,96],
-            [96,96,96,96],
-            ],$grads[0]->toArray());
-        $this->assertEquals([
-            [438,438,438,438],
-            [438,438,438,438],
-            [438,438,438,438],
-            [438,438,438,438],
-            ],$grads[1]->toArray());
         $this->assertEquals(
-            [96,96,96,96]
-            ,$grads[2]->toArray());
+            [2,2,4],
+            $dInputs->shape());
+        $this->assertEquals(
+            [2,4],
+            $dPrevStates[0]->shape());
+        $this->assertEquals(
+            [2,4],
+            $dPrevStates[1]->shape());
+        $this->assertEquals(
+            [5,16],
+            $grads[0]->shape());
+        $this->assertEquals(
+            [5,16],
+            $grads[1]->shape());
+        $this->assertEquals(
+            [16],
+            $grads[2]->shape());
     }
 }
