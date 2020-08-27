@@ -42,6 +42,8 @@ class LSTMCell extends AbstractRNNCell
             //'activity_regularizer'=null,
             //'kernel_constraint'=null, 'bias_constraint'=null,
         ],$options));
+var_dump($activation);
+var_dump($recurrent_activation);
         $this->backend = $K = $backend;
         $this->units = $units;
         $this->inputShape = $input_shape;
