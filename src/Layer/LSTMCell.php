@@ -213,6 +213,7 @@ class LSTMCell extends AbstractRNNCell
 
         $dOutputs = $K->stack(
             [$dx_i,$dx_f,$dx_c,$dx_o],$axis=1);
+var_dump($dOutputs->shape());
 
         $K->gemm($calcState->prev_h, $dOutputs,
             1.0,0.0,$this->dRecurrentKernel,true,false);
