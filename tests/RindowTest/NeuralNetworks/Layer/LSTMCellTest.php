@@ -252,6 +252,6 @@ class Test extends TestCase
              34,34,34,34,
              272,272,272,272,
              288,288,288,288],
-            ,$grads[2]->toArray());
+            $grads[2]->toArray());
     }
 }
