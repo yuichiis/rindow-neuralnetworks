@@ -89,7 +89,6 @@ class LSTMCell extends AbstractRNNCell
                 $this->bias = $biasInitializer([$this->units*4]);
             }
         }
-        $
         $this->dKernel = $K->zerosLike($this->kernel);
         $this->dRecurrentKernel = $K->zerosLike($this->recurrentKernel);
         if($this->bias) {
