@@ -97,7 +97,7 @@ class Test extends TestCase
         $backend = new Backend($mo);
         $fn = $backend;
 
-        $layer = new SimpleRNN(
+        $layer = new LSTM(
             $backend,
             $units=4,
             [
@@ -240,7 +240,7 @@ class Test extends TestCase
         $backend = new Backend($mo);
         $fn = $backend;
 
-        $layer = new SimpleRNN(
+        $layer = new LSTM(
             $backend,
             $units=4,
             [
