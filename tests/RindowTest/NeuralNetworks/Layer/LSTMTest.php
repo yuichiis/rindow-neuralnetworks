@@ -366,7 +366,7 @@ class Test extends TestCase
         [$dInputs,$dPrevStates] = $layer->backward($dOutputs,$dStates);
         // 2 batch
         $this->assertEquals(
-            [2,2,4],
+            [2,3,5],
             $dInputs->shape());
         $this->assertEquals(
             [2,4],
