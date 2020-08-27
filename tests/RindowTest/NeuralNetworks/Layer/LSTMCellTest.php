@@ -185,12 +185,12 @@ class Test extends TestCase
             [576,576,576,576],
             ],$outputs->toArray());
         $this->assertEquals([
-            [8,8,8,8],
-            [8,8,8,8],
+            [576,576,576,576],
+            [576,576,576,576],
             ],$nextStates[0]->toArray());
         $this->assertEquals([
-            [8,8,8,8],
-            [8,8,8,8],
+            [576,576,576,576],
+            [576,576,576,576],
             ],$nextStates[1]->toArray());
         //
         // backword
