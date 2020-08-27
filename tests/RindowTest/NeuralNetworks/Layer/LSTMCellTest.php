@@ -189,8 +189,8 @@ class Test extends TestCase
             [576,576,576,576],
             ],$nextStates[0]->toArray());
         $this->assertEquals([
-            [576,576,576,576],
-            [576,576,576,576],
+            [72,72,72,72],
+            [72,72,72,72],
             ],$nextStates[1]->toArray());
         //
         // backword
