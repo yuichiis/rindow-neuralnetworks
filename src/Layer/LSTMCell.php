@@ -83,10 +83,10 @@ class LSTMCell extends AbstractRNNCell
             $this->recurrentKernel = $sampleWeights[1];
             $this->bias = $sampleWeights[2];
         } else {
-            $this->kernel = $kernelInitializer([$inputDim,$this->units],$inputDim);
-            $this->recurrentKernel = $recurrentInitializer([$this->units,$this->units],$this->units);
+            $this->kernel = $kernelInitializer([$inputDim,$this->units*4],$inputDim);
+            $this->recurrentKernel = $recurrentInitializer([$this->units,$this->units*4],$this->units*4);
             if($this->useBias) {
-                $this->bias = $biasInitializer([$this->units]);
+                $this->bias = $biasInitializer([$this->units*4]);
             }
         }
         $
