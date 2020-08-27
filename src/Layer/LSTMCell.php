@@ -167,7 +167,6 @@ class LSTMCell extends AbstractRNNCell
         }
         $next_c = $K->add($K->mul($x_f,$prev_c),$K->mul($x_i,$x_c));
         $ac_next_c = $next_c;
-        // ac_next_c = tanh(next_c)
         if($this->ac){
             $ac_next_c = $this->ac->call($ac_next_c,$training);
         }
