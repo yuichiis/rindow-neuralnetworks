@@ -3,6 +3,7 @@ namespace Rindow\NeuralNetworks\Builder;
 
 use Interop\Polite\Math\Matrix\NDArray;
 use Rindow\NeuralNetworks\Layer\Activation;
+use Rindow\NeuralNetworks\Layer\Embedding;
 use Rindow\NeuralNetworks\Layer\Dense;
 use Rindow\NeuralNetworks\Layer\Flatten;
 use Rindow\NeuralNetworks\Layer\Conv1D;
@@ -17,7 +18,7 @@ use Rindow\NeuralNetworks\Layer\AveragePooling3D;
 use Rindow\NeuralNetworks\Layer\Dropout;
 use Rindow\NeuralNetworks\Layer\BatchNormalization;
 use Rindow\NeuralNetworks\Layer\SimpleRNN;
-use Rindow\NeuralNetworks\Layer\Embedding;
+use Rindow\NeuralNetworks\Layer\LSTM;
 
 class Layers
 {
@@ -141,5 +142,10 @@ class Layers
     public function SimpleRNN(int $units, array $options=null)
     {
         return new SimpleRNN($this->backend, $units, $options);
+    }
+    
+    public function LSTM(int $units, array $options=null)
+    {
+        return new LSTM($this->backend, $units, $options);
     }
 }
