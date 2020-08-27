@@ -144,7 +144,8 @@ class LSTMCell extends AbstractRNNCell
             $outputs = $K->gemm($inputs, $this->kernel);
         }
         $outputs = $K->gemm($prev_h, $this->recurrentKernel,1.0,1.0,$outputs);
-        
+    echo 'output=';
+    var_dump($outputs->shape());    
         $x_i = $K->slice($outputs,
             [0,0],[-1,$this->units]);
         $x_f = $K->slice($outputs,
@@ -213,6 +214,7 @@ class LSTMCell extends AbstractRNNCell
 
         $dOutputs = $K->stack(
             [$dx_i,$dx_f,$dx_c,$dx_o],$axis=1);
+echo 'doutput=';
 var_dump($dOutputs->shape());
 
         $K->gemm($calcState->prev_h, $dOutputs,
