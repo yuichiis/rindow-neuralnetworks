@@ -217,7 +217,7 @@ class LSTMCell extends AbstractRNNCell
         $dOutputs = $K->stack(
             [$dx_i,$dx_f,$dx_c,$dx_o],$axis=1);
 
-        $K->gemm($calcState->prev_h, $dOutputs
+        $K->gemm($calcState->prev_h, $dOutputs,
             1.0,0.0,$this->dRecurrentKernel,true,false);
         $K->gemm($calcState->inputs, $dOutputs,1.0,0.0,$this->dKernel,true,false);
         $K->copy($K->sum($dOutputs, $axis=0),$this->dBias);
