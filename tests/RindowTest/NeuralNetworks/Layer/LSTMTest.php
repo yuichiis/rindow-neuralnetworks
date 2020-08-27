@@ -321,6 +321,7 @@ class Test extends TestCase
                 'return_sequence'=>true,
                 'return_state'=>true,
                 'activation'=>null,
+                'recurrent_activation'=>null,
             ]);
 
         $kernel = $mo->ones([5,4*4]);
