@@ -1,233 +1,230 @@
 <?php
-namespace RindowTest\NeuralNetworks\Layer\LSTMCellTest;
+namespace Rindow\NeuralNetworks\Layer;
 
-use PHPUnit\Framework\TestCase;
-use Rindow\Math\Matrix\MatrixOperator;
-use Rindow\NeuralNetworks\Backend\RindowBlas\Backend;
-use Rindow\NeuralNetworks\Builder\NeuralNetworks;
-use Rindow\NeuralNetworks\Layer\LSTMCell;
 use InvalidArgumentException;
 use Interop\Polite\Math\Matrix\NDArray;
-use Rindow\NeuralNetworks\Activation\Tanh;
+use Rindow\NeuralNetworks\Support\GenericUtils;
 
-class Test extends TestCase
+class LSTMCell extends AbstractRNNCell 
 {
-    public function testDefaultInitialize()
+    use GenericUtils;
+    protected $backend;
+    protected $units;
+    protected $useBias;
+    protected $kernelInitializer;
+    protected $biasInitializer;
+    protected $ac;
+    protected $ac_i;
+    protected $ac_f;
+    protected $ac_c;
+    protected $ac_o;
+
+    protected $kernel;
+    protected $recurrentKernel;
+    protected $bias;
+    protected $dKernel;
+    protected $dRecurrentKernel;
+    protected $dBias;
+    protected $inputs;
+
+    public function __construct($backend,int $units, array $options=null)
     {
-        $mo = new MatrixOperator();
-        $backend = new Backend($mo);
-        $layer = new LSTMCell(
-            $backend,
-            $units=4,
-            [
-                'input_shape'=>[3]
-            ]);
-
-        $layer->build();
-        $params = $layer->getParams();
-        $this->assertCount(4,$params);
-        $this->assertEquals([3,4],$params[0]->shape());
-        $this->assertEquals([4,4],$params[1]->shape());
-        $this->assertEquals([4],$params[2]->shape());
-
-        $grads = $layer->getGrads();
-        $this->assertCount(4,$grads);
-        $this->assertEquals([3,4],$grads[0]->shape());
-        $this->assertEquals([4,4],$grads[1]->shape());
-        $this->assertEquals([4],$grads[2]->shape());
-        $this->assertNull(
-            $layer->getActivation()
-            );
-
-        //$this->assertEquals([3],$layer->inputShape());
-        $this->assertEquals([4],$layer->outputShape());
+        extract($this->extractArgs([
+            'input_shape'=>null,
+            'activation'=>'tanh',
+            'recurrent_activation'=>'sigmoid',
+            'use_bias'=>true,
+            'kernel_initializer'=>'sigmoid_normal',
+            'recurrent_initializer'=>'sigmoid_normal',
+            'bias_initializer'=>'zeros',
+            'unit_forget_bias'=>true,
+            //'kernel_regularizer'=>null, 'bias_regularizer'=>null,
+            //'activity_regularizer'=null,
+            //'kernel_constraint'=null, 'bias_constraint'=null,
+        ],$options));
+        $this->backend = $K = $backend;
+        $this->units = $units;
+        $this->inputShape = $input_shape;
+        if($use_bias) {
+            $this->useBias = $use_bias;
+        }
+        $this->ac = $this-createFunc($activation);
+        $this->ac_i = $this->createFunc($recurrent_activation);
+        $this->ac_f = $this->createFunc($recurrent_activation);
+        $this->ac_c = $this->createFunc($activation);
+        $this->ac_o = $this->createFunc($recurrent_activation);
+        $this->kernelInitializer = $K->getInitializer($kernel_initializer);
+        $this->recurrentInitializer = $K->getInitializer($recurrent_initializer);
+        $this->biasInitializer   = $K->getInitializer($bias_initializer);
+        $this->kernelInitializerName = $kernel_initializer;
+        $this->recurrentInitializerName = $recurrent_initializer;
+        $this->biasInitializerName = $bias_initializer;
     }
 
-    public function testNotspecifiedInputShape()
+    public function build(array $inputShape=null, array $options=null) : array
     {
-        $mo = new MatrixOperator();
-        $backend = new Backend($mo);
-        $layer = new LSTMCell(
-            $backend,
-            $units=4,
-            [
-            ]);
+        extract($this->extractArgs([
+            'sampleWeights'=>null,
+        ],$options));
+        $K = $this->backend;
+        $kernelInitializer = $this->kernelInitializer;
+        $recurrentInitializer = $this->recurrentInitializer;
+        $biasInitializer = $this->biasInitializer;
 
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Input shape is not defined');
-        $layer->build();
+        $inputShape = $this->normalizeInputShape($inputShape);
+        //if(count($inputShape)!=1) {
+        //    throw new InvalidArgumentException(
+        ///        'Unsuppored input shape: ['.implode(',',$inputShape).']');
+        //}
+        $shape = $inputShape;
+        $inputDim = array_pop($shape);
+        if($sampleWeights) {
+            $this->kernel = $sampleWeights[0];
+            $this->recurrentKernel = $sampleWeights[1];
+            $this->bias = $sampleWeights[2];
+        } else {
+            $this->kernel = $kernelInitializer([$inputDim,$this->units*4],$inputDim);
+            $this->recurrentKernel = $recurrentInitializer([$this->units,$this->units*4],$this->units*4);
+            if($this->useBias) {
+                $this->bias = $biasInitializer([$this->units*4]);
+            }
+        }
+        $
+        $this->dKernel = $K->zerosLike($this->kernel);
+        $this->dRecurrentKernel = $K->zerosLike($this->recurrentKernel);
+        if($this->bias) {
+            $this->dBias = $K->zerosLike($this->bias);
+        }
+        array_push($shape,$this->units);
+        $this->outputShape = $shape;
+        return $this->outputShape;
     }
 
-    public function testSetInputShape()
+    public function getParams() : array
     {
-        $mo = new MatrixOperator();
-        $backend = new Backend($mo);
-        $layer = new LSTMCell(
-            $backend,
-            $units=4,
-            [
-            ]);
-        $layer->build($inputShape=[3]);
-
-        //$this->assertEquals([3],$layer->inputShape());
-        $this->assertEquals([4],$layer->outputShape());
+        if($this->bias) {
+            return [$this->kernel,$this->recurrentKernel,$this->bias];
+        } else {
+            return [$this->kernel,$this->recurrentKernel];
+        }
     }
 
-    public function testNormalForwardAndBackword()
+    public function getGrads() : array
     {
-        $mo = new MatrixOperator();
-        $backend = new Backend($mo);
-        $fn = $backend;
-
-        $layer = new LSTMCell(
-            $backend,
-            $units=4,
-            [
-                'input_shape'=>[3]
-            ]);
-
-        $layer->build();
-        $grads = $layer->getGrads();
-        
-        
-        //
-        // forward
-        //
-        //  2 batch
-        $inputs = $mo->ones([2,3]);
-        $states = [$mo->ones([2,4]),$mo->ones([2,4])];
-        $object = new \stdClass();
-        $copyInputs = $mo->copy($inputs);
-        $copyStates = [
-            $mo->copy($states[0]),
-            $mo->copy($states[1])];
-        [$outputs,$nextStates] = $layer->forward($inputs, $states,$training=true,$object);
-        // 
-        $this->assertEquals([2,4],$outputs->shape());
-        $this->assertCount(2,$nextStates);
-        $this->assertEquals([2,4],$nextStates[0]->shape());
-        $this->assertEquals([2,4],$nextStates[1]->shape());
-        $this->assertEquals($copyInputs->toArray(),$inputs->toArray());
-        $this->assertEquals($copyStates[0]->toArray(),$states[0]->toArray());
-        $this->assertEquals($copyStates[1]->toArray(),$states[1]->toArray());
-
-        //
-        // backword
-        //
-        // 2 batch
-        $dOutputs =
-            $mo->ones([2,4]);
-        $dStates =
-            [$mo->ones([2,4]),$mo->ones([2,4])];
-
-        $copydOutputs = $mo->copy(
-            $dOutputs);
-        $copydStates = [
-            $mo->copy($dStates[0]),
-            $mo->copy($dStates[1])];
-        [$dInputs,$dPrevStates] = $layer->backward($dOutputs,$dStates,$object);
-        // 2 batch
-        $this->assertEquals([2,3],$dInputs->shape());
-        $this->assertCount(1,$dPrevStates);
-        $this->assertEquals([2,4],$dPrevStates[0]->shape());
-        $this->assertEquals([2,4],$dPrevStates[1]->shape());
-        $this->assertNotEquals(
-            $mo->zerosLike($grads[0])->toArray(),
-            $grads[0]->toArray());
-        $this->assertNotEquals(
-            $mo->zerosLike($grads[1])->toArray(),
-            $grads[1]->toArray());
-        $this->assertNotEquals(
-            $mo->zerosLike($grads[2])->toArray(),
-            $grads[2]->toArray());
-        
-        $this->assertEquals($copydOutputs->toArray(),$dOutputs->toArray());
-        $this->assertEquals($copydStates[0]->toArray(),$dStates[0]->toArray());
-        $this->assertEquals($copydStates[1]->toArray(),$dStates[1]->toArray());
+        if($this->bias) {
+            return [$this->dKernel,$this->dRecurrentKernel,$this->dBias];
+        } else {
+            return [$this->dKernel,$this->dRecurrentKernel];
+        }
     }
 
-    public function testOutputsAndGrads()
+    public function getConfig() : array
     {
-        $mo = new MatrixOperator();
-        $backend = new Backend($mo);
-        $fn = $backend;
+        return [
+            'units' => $this->units,
+            'options' => [
+                'input_shape'=>$this->inputShape,
+                'use_bias'=>$this->useBias,
+                'activation'=>$this->activationName,
+                'kernel_initializer' => $this->kernelInitializerName,
+                'recurrent_initializer' => $this->recurrentInitializerName,
+                'bias_initializer' => $this->biasInitializerName,
+            ]
+        ];
+    }
 
-        $layer = new LSTMCell(
-            $backend,
-            $units=4,
-            [
-                'input_shape'=>[3],
-                'activation'=>null,
-                'recurrent_activation'=>null,
-            ]);
-
-        $kernel = $mo->ones([3,4*4]);
-        $recurrent = $mo->ones([4,4*4]);
-        $bias = $mo->ones([4*4]);
-        $layer->build(null,
-            ['sampleWeights'=>[$kernel,$recurrent,$bias]]
-        );
-        $this->assertNull($layer->getActivation());
-        $grads = $layer->getGrads();
+    protected function call(NDArray $inputs, array $states, bool $training, object $calcState, array $options=null) : array
+    {
+        $K = $this->backend;
+        [$batches,$timesteps,$feature]=
+            $inputs->shape();
+        $prev_h = $states[0];
+        $prev_c = $states[1];
         
+        if($this->bias){
+            $outputs = $K->batch_gemm($inputs, $this->kernel,1.0,1.0,$this->bias);
+        } else {
+            $outputs = $K->gemm($inputs, $this->kernel);
+        }
+        $outputs = $K->gemm($prev_h, $this->recurrentKernel,1.0,1.0,$outputs);
         
-        //
-        // forward
-        //
-        //  2 batch
-        $inputs = $mo->ones([2,3]);
-        $states = [$mo->ones([2,4])];
-        $object = new \stdClass();
-        [$outputs,$nextStates] = $layer->forward($inputs, $states,$training=true,$object);
-        // 
-        $this->assertEquals([
-            [8,8,8,8],
-            [8,8,8,8],
-            ],$outputs->toArray());
-        $this->assertEquals([
-            [8,8,8,8],
-            [8,8,8,8],
-            ],$nextStates[0]->toArray());
-        $this->assertEquals([
-            [8,8,8,8],
-            [8,8,8,8],
-            ],$nextStates[1]->toArray());
-        //
-        // backword
-        //
-        // 2 batch
-        $dOutputs =
-            $mo->ones([2,4]);
-        $dStates =
-            [$mo->ones([2,4])];
+        $x_i = $K->slice($outputs,
+            [0,0],[-1,$this->units]);
+        $x_f = $K->slice($outputs,
+            [0,$this->units],[-1,$this->units]);
+        $x_c = $K->slice($outputs,
+            [0,$this->units*2],[-1,$this->units]);
+        $x_o = $K->slice($outputs,
+            [0,$this->units*3],[-1,$this->units]);
+        
+        if($this->ac_c){
+            $x_c = $this->activation->call($x_c,$training);
+        }
+        if($this->ac_x){
+            $x_i = $this->ac_x->call($x_i,$training);
+            $x_f = $this->ac_f->call($x_f,$training);
+            $x_o = $this->ac_o->call($x_o,$training);
+        }
+        $next_c = $K->add($K->mul($x_f,$prev_c),$K->mul($x_i,$x_c));
+        $ac_next_c = $next_c;
+        if($this->ac){
+            $ac_next_c = $this->ac->call($ac_next_c,$training);
+        }
+        // next_h = o * ac_next_c
+        $next_h = $K->mul($x_o,$ac_next_c);
 
-        [$dInputs,$dPrevStates] = $layer->backward($dOutputs,$dStates,$object);
-        // 2 batch
-        $this->assertEquals([
-            [8,8,8],
-            [8,8,8],
-            ],$dInputs->toArray());
-        $this->assertEquals([
-            [8,8,8,8],
-            [8,8,8,8],
-            ],$dPrevStates[0]->toArray());
-        $this->assertEquals([
-            [8,8,8,8],
-            [8,8,8,8],
-            ],$dPrevStates[1]->toArray());
-        $this->assertEquals([
-            [4,4,4,4],
-            [4,4,4,4],
-            [4,4,4,4],
-            ],$grads[0]->toArray());
-        $this->assertEquals([
-            [4,4,4,4],
-            [4,4,4,4],
-            [4,4,4,4],
-            [4,4,4,4],
-            ],$grads[1]->toArray());
-        $this->assertEquals(
-            [4,4,4,4]
-            ,$grads[2]->toArray());
+        $calcState->inputs = $inputs;
+        $calcState->prev_h = $prev_h;
+        $calcState->prev_c = $prev_c;
+        $calcState->x_i = $x_i;
+        $calcState->x_f = $x_f;
+        $calcState->x_c = $x_c;
+        $calcState->x_o = $x_o;
+        $calcState->ac_next_c = $ac_next_c;
+        
+        return [$next_h,[$next_h,$next_c]];
+    }
+
+    protected function differentiate(NDArray $dOutputs, array $dStates, object $calcState) : array
+    {
+        $K = $this->backend;
+        $dNext_h = $dStates[0];
+        $dNext_c = $dStates[1];
+        $dNext_h = $K->add($dOutputs,$dNext_h);
+        
+        $dAc_next_c = $K->mul($calcState->x_o,$dNext_h);
+        if($this->ac){
+            $dAc_next_c = $this->ac->differentiate($dAc_next_c);
+        }
+        $dNext_c = $K->add($dNext_c, $dAc_next_c);
+
+        $dPrev_c = $K->mul($dNext_c, $calcState->x_f);
+
+        $dx_i = $K->mul($dNext_c,$calcState->x_c);
+        $dx_f = $K->mul($dNext_c,$calcState->prev_c);
+        $dx_o = $K->mul($dNext_h,$calcState->ac_next_c);
+        $dx_c = $K->mul($dNext_c,$calcState->x_i);
+
+        if($this->ac_i){
+            $dx_i = $this->ac_i->differentiate($dx_i);
+            $dx_f = $this->ac_f->differentiate($dx_f);
+            $dx_o = $this->ac_o->differentiate($dx_o);
+        }
+        if($this->ac_c){
+            $dx_c = $this->ac_c->differentiate($dx_c);
+        }
+
+        $dOutputs = $K->stack(
+            [$dx_i,$dx_f,$dx_c,$dx_o],$axis=1);
+
+        $K->gemm($calcState->prev_h, $dOutputs,
+            1.0,0.0,$this->dRecurrentKernel,true,false);
+        $K->gemm($calcState->inputs, $dOutputs,1.0,0.0,$this->dKernel,true,false);
+        $K->copy($K->sum($dOutputs, $axis=0),$this->dBias);
+
+        $dInputs = $K->gemm($dOutputs, $this->kernel,1.0,0.0,null,false,true);
+        $dPrev_h = $K->gemm($dOutputs, $this->recurrentKernel,1.0,0.0,null,false,true);
+
+        return [$dInput,[$dPrev_h, $dPrev_c]];
     }
 }
