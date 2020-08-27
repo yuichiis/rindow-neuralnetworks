@@ -1,6 +1,7 @@
 <?php
 require __DIR__.'/../vendor/autoload.php';
 
+use InvalidArgumentException;
 use Rindow\NeuralNetworks\Support\GenericUtils;
 use Interop\Polite\Math\Matrix\NDArray;
 use Rindow\NeuralNetworks\Layer\AbstractRNNLayer;
@@ -23,10 +24,11 @@ class Encoder extends AbstractRNNLayer
     public function __construct(
         $backend,
         $builder,
-        $input_length,
-        $vocab_size,
-        $word_vect_size,
-        $recurrent_units
+        string $rnn,
+        int $input_length,
+        int $vocab_size,
+        int $word_vect_size,
+        int $recurrent_units
     )
     {
         $this->backend = $backend;
@@ -36,9 +38,20 @@ class Encoder extends AbstractRNNLayer
         $this->recurrentSize = $recurrent_units;
 
         $this->embedding = $builder->layers()->Embedding($vocab_size, $word_vect_size);
-        $this->rnn = $builder->layers()->SimpleRNN($recurrent_units,[
-                'return_state'=>true
+        $this->rnnName = $rnn;
+        if($rnn=='simple') {
+            $this->rnn = $builder->layers()->SimpleRNN(
+                $recurrent_units,[
+                    'return_state'=>true,
                 ]);
+        } elseif($rnn=='lstm') {
+            $this->rnn = $builder->layers()->LSTM(
+                $recurrent_units,[
+                    'return_state'=>true,
+                ]);
+        } else {
+            throw new InvalidArgumentException('unknown rnn type: '.$rnn);
+        }
     }
 
     public function build(array $inputShape=null, array $options=null) : array
@@ -55,6 +68,7 @@ class Encoder extends AbstractRNNLayer
     {
         return [
             'builder'=>true,
+            'rnn'=>$this->rnnName,
             'vocab_size'=>$this->vocabSize,
             'word_vec_size'=>$this->wordVecSize,
             'recurrent_units'=>$this->recurrentUnits,
@@ -91,11 +105,12 @@ class Decoder extends AbstractRNNLayer
     public function __construct(
         $backend,
         $builder,
-        $input_length,
-        $vocab_size,
-        $word_vect_size,
-        $recurrent_units,
-        $dense_units
+        string $rnn,
+        int $input_length,
+        int $vocab_size,
+        int $word_vect_size,
+        int $recurrent_units,
+        int $dense_units
     )
     {
         $this->backend = $backend;
@@ -106,11 +121,22 @@ class Decoder extends AbstractRNNLayer
         $this->denseUnits = $dense_units;
 
         $this->embedding = $builder->layers()->Embedding($vocab_size, $word_vect_size);
-        $this->rnn = $builder->layers()->SimpleRNN(
-            $recurrent_units,[
-                'return_state'=>true,
-                'return_sequence'=>true,
+        $this->rnnName = $rnn;
+        if($rnn=='simple') {
+            $this->rnn = $builder->layers()->SimpleRNN(
+                $recurrent_units,[
+                    'return_state'=>true,
+                    'return_sequence'=>true,
                 ]);
+        } elseif($rnn=='lstm') {
+            $this->rnn = $builder->layers()->LSTM(
+                $recurrent_units,[
+                    'return_state'=>true,
+                    'return_sequence'=>true,
+                ]);
+        } else {
+            throw new InvalidArgumentException('unknown rnn type: '.$rnn);
+        }
         $this->dense = $builder->layers()->Dense($dense_units);
     }
 
@@ -130,6 +156,7 @@ class Decoder extends AbstractRNNLayer
     {
         return [
             'builder'=>true,
+            'rnn'=>$this->rnnName,
             'vocab_size'=>$this->vocabSize,
             'word_vec_size'=>$this->wordVecSize,
             'recurrent_units'=>$this->recurrentUnits,
@@ -164,6 +191,7 @@ class Seq2seq extends AbstractModel
     public function __construct($backend,$builder,array $options=null)
     {
         extract($this->extractArgs([
+            'rnn'=>null,
             'input_length'=>null,
             'input_vocab_size'=>null,
             'target_vocab_size'=>null,
@@ -175,6 +203,7 @@ class Seq2seq extends AbstractModel
         parent::__construct($backend,$builder,$builder->utils()->HDA());
         $this->encoder = new Encoder(
             $backend,$builder,
+            $rnn,
             $input_length,
             $input_vocab_size,
             $word_vect_size,
@@ -182,6 +211,7 @@ class Seq2seq extends AbstractModel
         );
         $this->decoder = new Decoder(
             $backend,$builder,
+            $rnn,
             $input_length,
             $target_vocab_size,
             $word_vect_size,
@@ -356,7 +386,7 @@ class DecHexDataset
     }
 
 }
-
+$rnn = 'lstm';
 $corp_size = 10000;
 $test_size = 100;
 $mo = new MatrixOperator();
@@ -376,6 +406,7 @@ $target_vocab_size = count($target_dic);
 echo "[".$dataset->seq2str($train_inputs[0],$dataset->vocab_input)."]=>[".$dataset->seq2str($train_target[0],$dataset->vocab_target)."]\n";
 
 $seq2seq = new Seq2seq($backend,$nn,[
+    'rnn'=>$rnn,
     'input_length'=>$input_length,
     'input_vocab_size'=>$input_vocab_size,
     'target_vocab_size'=>$target_vocab_size,
