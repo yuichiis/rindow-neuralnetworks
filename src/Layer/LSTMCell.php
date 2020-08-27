@@ -48,7 +48,7 @@ class LSTMCell extends AbstractRNNCell
         if($use_bias) {
             $this->useBias = $use_bias;
         }
-        $this->ac = $this-createFunc($activation);
+        $this->ac = $this->createFunc($activation);
         $this->ac_i = $this->createFunc($recurrent_activation);
         $this->ac_f = $this->createFunc($recurrent_activation);
         $this->ac_c = $this->createFunc($activation);
