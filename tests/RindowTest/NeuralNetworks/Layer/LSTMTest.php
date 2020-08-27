@@ -345,7 +345,7 @@ class Test extends TestCase
         [$outputs,$nextStates] = $layer->forward($inputs,$training=true, $states);
         // 
         $this->assertEquals(
-            [2,2,4],
+            [2,3,4],
             $outputs->shape());
         $this->assertEquals(
             [2,4],
