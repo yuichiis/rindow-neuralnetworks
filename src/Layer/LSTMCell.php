@@ -135,8 +135,6 @@ class LSTMCell extends AbstractRNNCell
     protected function call(NDArray $inputs, array $states, bool $training, object $calcState, array $options=null) : array
     {
         $K = $this->backend;
-        [$batches,$timesteps,$feature]=
-            $inputs->shape();
         $prev_h = $states[0];
         $prev_c = $states[1];
         
