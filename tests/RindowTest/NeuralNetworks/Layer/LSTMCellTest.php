@@ -248,7 +248,10 @@ class Test extends TestCase
              288,288,288,288],
             ],$grads[1]->toArray());
         $this->assertEquals(
-            [4,4,4,4]
+            [272,272,272,272,
+             34,34,34,34,
+             272,272,272,272,
+             288,288,288,288],
             ,$grads[2]->toArray());
     }
 }
