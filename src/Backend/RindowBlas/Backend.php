@@ -425,6 +425,28 @@ class Backend
             $output);    
     }
     
+    public function stick(
+        NDArray $input,
+        NDArray $output,
+        array $begin, array $size,
+        ) {
+        return $this->la->stick(
+            $input,
+            $output,
+            $begin,$size,
+            );    
+    }
+
+    public function stack(
+        array $inputs,
+        int $axis=null
+        ) {
+        return $this->la->stack(
+            $inputs,
+            $axis
+            );    
+    }
+
     public function oneHot(NDArray $indices, int $numClass) : NDArray
     {
         if($indices->ndim()!=1) {
