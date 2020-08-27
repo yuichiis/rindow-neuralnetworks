@@ -323,9 +323,9 @@ class Test extends TestCase
                 'activation'=>null,
             ]);
 
-        $kernel = $mo->ones([5,4]);
-        $recurrent = $mo->ones([4,4]);
-        $bias = $mo->ones([4]);
+        $kernel = $mo->ones([5,4*4]);
+        $recurrent = $mo->ones([4,4*4]);
+        $bias = $mo->ones([4*4]);
         $layer->build(null,
             ['sampleWeights'=>[$kernel,$recurrent,$bias]]
         );
