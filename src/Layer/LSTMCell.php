@@ -155,7 +155,7 @@ class LSTMCell extends AbstractRNNCell
             [0,$this->units*3],[-1,$this->units]);
         
         if($this->ac_c){
-            $x_c = $this->activation->call($x_c,$training);
+            $x_c = $this->ac_c->call($x_c,$training);
         }
         if($this->ac_x){
             $x_i = $this->ac_x->call($x_i,$training);
