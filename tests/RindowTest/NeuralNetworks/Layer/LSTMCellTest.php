@@ -181,8 +181,8 @@ class Test extends TestCase
         [$outputs,$nextStates] = $layer->forward($inputs, $states,$training=true,$object);
         // 
         $this->assertEquals([
-            [8,8,8,8],
-            [8,8,8,8],
+            [576,576,576,576],
+            [576,576,576,576],
             ],$outputs->toArray());
         $this->assertEquals([
             [8,8,8,8],
