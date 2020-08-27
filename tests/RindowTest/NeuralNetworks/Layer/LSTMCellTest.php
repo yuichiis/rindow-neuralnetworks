@@ -28,13 +28,13 @@ class Test extends TestCase
         $this->assertCount(3,$params);
         $this->assertEquals([3,16],$params[0]->shape());
         $this->assertEquals([4,16],$params[1]->shape());
-        $this->assertEquals([4],$params[2]->shape());
+        $this->assertEquals([16],$params[2]->shape());
 
         $grads = $layer->getGrads();
         $this->assertCount(3,$grads);
         $this->assertEquals([3,16],$grads[0]->shape());
         $this->assertEquals([4,16],$grads[1]->shape());
-        $this->assertEquals([4],$grads[2]->shape());
+        $this->assertEquals([16],$grads[2]->shape());
         $this->assertNull(
             $layer->getActivation()
             );
