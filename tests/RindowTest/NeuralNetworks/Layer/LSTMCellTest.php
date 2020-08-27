@@ -208,8 +208,8 @@ class Test extends TestCase
             [1732,1732,1732],
             ],$dInputs->toArray());
         $this->assertEquals([
-            [8,8,8,8],
-            [8,8,8,8],
+            [1732,1732,1732,1732],
+            [1732,1732,1732,1732],
             ],$dPrevStates[0]->toArray());
         $this->assertEquals([
             [8,8,8,8],
