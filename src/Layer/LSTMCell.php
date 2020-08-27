@@ -228,6 +228,6 @@ class LSTMCell extends AbstractRNNCell
         $dInputs = $K->gemm($dOutputs, $this->kernel,1.0,0.0,null,false,true);
         $dPrev_h = $K->gemm($dOutputs, $this->recurrentKernel,1.0,0.0,null,false,true);
 
-        return [$dInput,[$dPrev_h, $dPrev_c]];
+        return [$dInputs,[$dPrev_h, $dPrev_c]];
     }
 }
