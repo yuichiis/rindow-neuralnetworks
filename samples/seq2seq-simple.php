@@ -1,7 +1,7 @@
 <?php
 require __DIR__.'/../vendor/autoload.php';
 
-use InvalidArgumentException;
+//use InvalidArgumentException;
 use Rindow\NeuralNetworks\Support\GenericUtils;
 use Interop\Polite\Math\Matrix\NDArray;
 use Rindow\NeuralNetworks\Layer\AbstractRNNLayer;
@@ -81,7 +81,7 @@ class Encoder extends AbstractRNNLayer
         [$outputs,$states]=$this->rnn->forward($wordvect,$training,$initalStates);
         return [$outputs,$states];
     }
-    
+
     protected function differentiate(NDArray $dOutputs, array $dNextStates=null)
     {
         [$dWordvect,$dStates]=$this->rnn->backward($dOutputs,$dNextStates);
@@ -101,7 +101,7 @@ class Decoder extends AbstractRNNLayer
     protected $embedding;
     protected $rnn;
     protected $dense;
-    
+
     public function __construct(
         $backend,
         $builder,
@@ -148,7 +148,7 @@ class Decoder extends AbstractRNNLayer
         $inputShape = $this->registerLayer($this->dense,$inputShape);
         $this->outputShape = $inputShape;
         $this->statesShapes = $this->rnn->statesShapes();
-        
+
         return $this->outputShape;
     }
 
@@ -171,7 +171,7 @@ class Decoder extends AbstractRNNLayer
         $outputs=$this->dense->forward($outputs,$training);
         return [$outputs,$states];
     }
-    
+
     protected function differentiate(NDArray $dOutputs, array $dNextStates=null)
     {
         $dOutputs = $this->dense->backward($dOutputs);
@@ -187,7 +187,7 @@ class Seq2seq extends AbstractModel
     protected $encode;
     protected $decode;
     protected $encoutShape;
-    
+
     public function __construct($backend,$builder,array $options=null)
     {
         extract($this->extractArgs([
@@ -222,14 +222,14 @@ class Seq2seq extends AbstractModel
         $this->setLastLayer($this->out);
         $this->startVocId = $start_voc_id;
     }
-    
+
     protected function buildLayers(array $options=null) : void
     {
         $this->registerLayer($this->encoder);
         $shape = $this->registerLayer($this->decoder);
         $this->registerLayer($this->out,$shape);
     }
-    
+
     protected function shiftSentence(
         NDArray $sentence)
     {
@@ -255,7 +255,7 @@ class Seq2seq extends AbstractModel
         $outputs = $this->out->forward($outputs,$training);
         return $outputs;
     }
-    
+
     protected function backwardStep(NDArray $dout) : NDArray
     {
         $K = $this->backend;
@@ -264,7 +264,7 @@ class Seq2seq extends AbstractModel
         [$dInputs,$dStates] = $this->encoder->backward($K->zeros($this->encoutShape),$dStates);
         return $dInputs;
     }
-    
+
     public function translate(NDArray $sentence)
     {
         $K = $this->backend;
@@ -295,7 +295,7 @@ class DecHexDataset
         $this->dict_input = array_flip($this->vocab_input);
         $this->dict_target = array_flip($this->vocab_target);
     }
-    
+
     public function dicts()
     {
         return [
@@ -305,7 +305,7 @@ class DecHexDataset
             $this->dict_target,
         ];
     }
-    
+
     public function generate($corp_size,$length)
     {
         $sequence = $this->mo->zeros([$corp_size,$length]);
@@ -326,7 +326,7 @@ class DecHexDataset
         }
         return [$sequence,$target];
     }
-    
+
     public function str2seq(
         string $str,
         array $dic,
@@ -343,7 +343,7 @@ class DecHexDataset
                 $buf[$i]=$sp;
         }
     }
-    
+
     public function seq2str(
         NDArray $buf,
         array $dic
@@ -356,7 +356,7 @@ class DecHexDataset
         }
         return $str;
     }
-    
+
     public function translate($model,$str)
     {
         $inputs = $this->mo->zeros([1,$this->length]);
