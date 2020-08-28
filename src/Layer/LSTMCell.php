@@ -221,8 +221,8 @@ class LSTMCell extends AbstractRNNCell
             ]);
 
         $K->gemm($calcState->prev_h, $dOutputs,
-            1.0,0.0,$this->dRecurrentKernel,true,false);
-        $K->gemm($calcState->inputs, $dOutputs,1.0,0.0,$this->dKernel,true,false);
+            1.0,1.0,$this->dRecurrentKernel,true,false);
+        $K->gemm($calcState->inputs, $dOutputs,1.0,1.0,$this->dKernel,true,false);
         $K->copy($K->sum($dOutputs, $axis=0),$this->dBias);
 
         $dInputs = $K->gemm($dOutputs, $this->kernel,1.0,0.0,null,false,true);
