@@ -16,7 +16,7 @@ class LSTM extends AbstractRNNLayer
     protected $kernelInitializerName;
     protected $recurrentInitializerName;
     protected $biasInitializerName;
-    protected $returnSequence;
+    protected $returnSequences;
     protected $returnState;
     protected $goBackward;
     protected $statefull;
@@ -57,7 +57,7 @@ class LSTM extends AbstractRNNLayer
         $this->kernelInitializerName = $kernel_initializer;
         $this->recurrentInitializerName = $recurrent_initializer;
         $this->biasInitializerName = $bias_initializer;
-        $this->returnSequence=$return_sequence;
+        $this->returnSequences=$return_sequences;
         $this->returnState = $return_state;
         $this->goBackward = $go_backward;
         $this->stateful = $stateful;
@@ -96,7 +96,7 @@ class LSTM extends AbstractRNNLayer
             [$this->units],
             [$this->units],
         ];
-        if($this->returnSequence){
+        if($this->returnSequences){
             $this->outputShape = [$this->timesteps,$this->units];
         }else{
             $this->outputShape = [$this->units];
@@ -132,7 +132,7 @@ class LSTM extends AbstractRNNLayer
                 'kernel_initializer' => $this->kernelInitializerName,
                 'recurrent_initializer' => $this->recurrentInitializerName,
                 'bias_initializer' => $this->biasInitializerName,
-                'return_sequence'=>$this->returnSequence,
+                'return_sequence'=>$this->returnSequences,
                 'return_state'=>$this->returnState,
                 'go_backward'=>$this->goBackward,
                 'stateful'=>$this->stateful,
