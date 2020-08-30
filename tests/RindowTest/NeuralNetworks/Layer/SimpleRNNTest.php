@@ -82,7 +82,7 @@ class Test extends TestCase
             $units=4,
             [
                 'input_shape'=>[5,3],
-                'return_sequence'=>true,
+                'return_sequences'=>true,
                 'return_state'=>true,
             ]);
         $layer->build();
@@ -163,7 +163,7 @@ class Test extends TestCase
             $units=4,
             [
                 'input_shape'=>[5,3],
-                'return_sequence'=>true,
+                'return_sequences'=>true,
                 'return_state'=>true,
             ]);
 
@@ -231,7 +231,7 @@ class Test extends TestCase
             $units=4,
             [
                 'input_shape'=>[5,3],
-                'return_sequence'=>true,
+                'return_sequences'=>true,
                 'return_state'=>true,
             ]);
 
@@ -299,7 +299,7 @@ class Test extends TestCase
             $units=4,
             [
                 'input_shape'=>[3,5],
-                'return_sequence'=>true,
+                'return_sequences'=>true,
                 'return_state'=>true,
                 'activation'=>null,
             ]);
