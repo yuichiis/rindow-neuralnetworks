@@ -126,13 +126,13 @@ class Decoder extends AbstractRNNLayer
             $this->rnn = $builder->layers()->SimpleRNN(
                 $recurrent_units,[
                     'return_state'=>true,
-                    'return_sequence'=>true,
+                    'return_sequences'=>true,
                 ]);
         } elseif($rnn=='lstm') {
             $this->rnn = $builder->layers()->LSTM(
                 $recurrent_units,[
                     'return_state'=>true,
-                    'return_sequence'=>true,
+                    'return_sequences'=>true,
                 ]);
         } else {
             throw new InvalidArgumentException('unknown rnn type: '.$rnn);
