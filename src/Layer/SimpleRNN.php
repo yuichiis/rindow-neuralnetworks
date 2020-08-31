@@ -36,7 +36,7 @@ class SimpleRNN extends AbstractRNNLayer
             'kernel_initializer'=>'sigmoid_normal',
             'recurrent_initializer'=>'sigmoid_normal',
             'bias_initializer'=>'zeros',
-            'return_sequence'=>false,
+            'return_sequences'=>false,
             'return_state'=>false,
             'go_backward'=>false,
             'stateful'=>false,
