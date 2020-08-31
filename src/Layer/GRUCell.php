@@ -198,7 +198,6 @@ class GRUCell extends AbstractRNNCell
         }
         $K->gemm($K->mul($calcState->x_r, $calcState->prev_h), $dX_hh,1.0,1.0,$this->dR_kernel_hh,true,false);
         $dhh_r = $K->gemm($dX_hh, $this->r_kernel_hh,1.0,0.0,null,false,true);
-var_dump($dhh_r->toArray());
         $K->update_add($dPrev_h,$K->mul($calcState->x_r,$dhh_r));
 
         // z gate
@@ -215,6 +214,7 @@ var_dump($dhh_r->toArray());
             $dX_r = $this->ac_r->differentiate($dX_r);
         }
         $K->gemm($calcState->prev_h, $dX_r,1.0,1.0,$this->dR_kernel_r,true,false);
+var_dump($this->dR_kernel_r->toArray());
         $K->gemm($dX_r, $this->r_kernel_r,1.0,1.0,$dPrev_h,false,true);
         
         // stack diff gate outputs
