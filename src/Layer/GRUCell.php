@@ -230,10 +230,6 @@ class GRUCell extends AbstractRNNCell
         $K->gemm($calcState->inputs, $dGateOuts,1.0,1.0,$this->dKernel,true,false);
         $dInputs = $K->gemm($dGateOuts, $this->kernel,1.0,1.0,null,false,true);
 
-var_dump($this->dR_kernel_z->toArray());
-var_dump($this->dR_kernel_r->toArray());
-var_dump($this->dR_kernel_hh->toArray());
-var_dump($this->dR_kernel_z->toArray());
         return [$dInputs,[$dPrev_h]];
     }
 }
