@@ -125,6 +125,7 @@ class LSTMCell extends AbstractRNNCell
                 'input_shape'=>$this->inputShape,
                 'use_bias'=>$this->useBias,
                 'activation'=>$this->activationName,
+                'recurrent_activation'=>$this->recurrentActivationName,
                 'kernel_initializer' => $this->kernelInitializerName,
                 'recurrent_initializer' => $this->recurrentInitializerName,
                 'bias_initializer' => $this->biasInitializerName,
