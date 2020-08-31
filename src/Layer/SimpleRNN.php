@@ -133,4 +133,14 @@ class SimpleRNN extends AbstractRNNLayer
             ]
         ];
     }
+
+    protected function call(NDArray $inputs, bool $training, array $initialStates=null, array $options=null)
+    {
+        return $this->callCell($inputs,$training,$initialStates,$options);
+    }
+    
+    protected function differentiate(NDArray $dOutputs, array $dStates=null)
+    {
+        return $this->differentiateCall($dOutputs,$dStates);
+    }
 }
