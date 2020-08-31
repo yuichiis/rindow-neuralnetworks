@@ -83,16 +83,16 @@ class Backend
         return $kernel;
     }
 
-    public function zeros(array $shape)
+    public function zeros(array $shape,$dtype=null)
     {
-        $x = $this->la->alloc($shape);
+        $x = $this->la->alloc($shape,$dtype);
         $this->la->zeros($x);
         return $x;
     }
 
-    public function ones(array $shape)
+    public function ones(array $shape,$dtype=null)
     {
-        $x = $this->la->alloc($shape);
+        $x = $this->la->alloc($shape,$dtype);
         $this->la->zeros($x);
         $this->la->increment($x,1.0);
         return $x;
