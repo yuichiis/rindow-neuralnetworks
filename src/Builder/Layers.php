@@ -19,6 +19,7 @@ use Rindow\NeuralNetworks\Layer\Dropout;
 use Rindow\NeuralNetworks\Layer\BatchNormalization;
 use Rindow\NeuralNetworks\Layer\SimpleRNN;
 use Rindow\NeuralNetworks\Layer\LSTM;
+use Rindow\NeuralNetworks\Layer\GRU;
 
 class Layers
 {
@@ -147,5 +148,10 @@ class Layers
     public function LSTM(int $units, array $options=null)
     {
         return new LSTM($this->backend, $units, $options);
+    }
+
+    public function GRU(int $units, array $options=null)
+    {
+        return new GRU($this->backend, $units, $options);
     }
 }
