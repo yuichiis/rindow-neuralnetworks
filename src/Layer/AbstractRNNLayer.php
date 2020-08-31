@@ -9,8 +9,8 @@ use InvalidArgumentException;
  */
 abstract class AbstractRNNLayer extends AbstractLayerBase implements RNNLayer
 {
-    //abstract protected function call(NDArray $inputs, bool $training, array $initialStates=null, array $options=null);
-    //abstract protected function differentiate(NDArray $dOutputs, array $dStates=null);
+    abstract protected function call(NDArray $inputs, bool $training, array $initialStates=null, array $options=null);
+    abstract protected function differentiate(NDArray $dOutputs, array $dStates=null);
 
     final public function forward(NDArray $inputs, bool $training, array $initialStates=null,array $options=null)
     {
@@ -45,7 +45,7 @@ abstract class AbstractRNNLayer extends AbstractLayerBase implements RNNLayer
     }
 
     
-    protected function call(NDArray $inputs,bool $training, array $initialStates=null, array $options=null)
+    protected function callCell(NDArray $inputs,bool $training, array $initialStates=null, array $options=null)
     {
         $K = $this->backend;
         [$batches,$timesteps,$feature]=$inputs->shape();
@@ -83,7 +83,7 @@ abstract class AbstractRNNLayer extends AbstractLayerBase implements RNNLayer
         }
     }
 
-    protected function differentiate(NDArray $dOutputs, array $dNextStates=null)
+    protected function differentiateCell(NDArray $dOutputs, array $dNextStates=null)
     {
         $K = $this->backend;
         $dInputs=$K->zeros($this->origInputsShape);
