@@ -329,7 +329,7 @@ class Test extends TestCase
         // 
         $this->assertEquals(
            [[2,3,4],
-            [2,3,4]]
+            [2,3,4]],
             $outputs->toArray());
         $this->assertEquals(
             [2,4],
