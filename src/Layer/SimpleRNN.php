@@ -141,6 +141,6 @@ class SimpleRNN extends AbstractRNNLayer
     
     protected function differentiate(NDArray $dOutputs, array $dStates=null)
     {
-        return $this->differentiateCall($dOutputs,$dStates);
+        return $this->differentiateCell($dOutputs,$dStates);
     }
 }
