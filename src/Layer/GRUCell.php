@@ -202,6 +202,7 @@ class GRUCell extends AbstractRNNCell
 
         // z gate
         $dX_z = $K->mul($dNext_h,$K->sub($calcState->x_hh,$calcState->prev_h));
+var_dump($dX_z->toArray());
         if($this->ac_z){
             $dX_z = $this->ac_z->differentiate($dX_z);
         }
