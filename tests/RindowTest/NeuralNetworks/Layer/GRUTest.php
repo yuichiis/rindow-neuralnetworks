@@ -91,7 +91,7 @@ class Test extends TestCase
         $this->assertEquals([5,4],$layer->outputShape());
     }
 
-    public function testDefaultForwardAndBackword()
+    public function testDefaultForwardAndBackwordWithInitialStates()
     {
         $mo = new MatrixOperator();
         $backend = new Backend($mo);
@@ -151,6 +151,62 @@ class Test extends TestCase
         
         $this->assertEquals($copydOutputs->toArray(),$dOutputs->toArray());
         $this->assertEquals($copydStates[0]->toArray(),$dStates[0]->toArray());
+    }
+
+    public function testDefaultForwardAndBackwordWithoutInitialStatesAnddStates()
+    {
+        $mo = new MatrixOperator();
+        $backend = new Backend($mo);
+        $fn = $backend;
+
+        $layer = new GRU(
+            $backend,
+            $units=4,
+            [
+                'input_shape'=>[5,3],
+            ]);
+
+        $layer->build();
+        $grads = $layer->getGrads();
+        
+        
+        //
+        // forward
+        //
+        //  2 batch
+        $inputs = $mo->ones([6,5,3]);
+        $initialStates = null;
+        $copyInputs = $mo->copy($inputs);
+        $outputs = $layer->forward($inputs,$training=true, $initialStates
+        );
+        // 
+        $this->assertEquals([6,4],$outputs->shape());
+        $this->assertEquals($copyInputs->toArray(),$inputs->toArray());
+
+        //
+        // backword
+        //
+        // 2 batch
+        $dOutputs =
+            $mo->ones([6,4]);
+        $dStates = null;
+
+        $copydOutputs = $mo->copy(
+            $dOutputs);
+        $dInputs = $layer->backward($dOutputs,$dStates);
+        // 2 batch
+        $this->assertEquals([6,5,3],$dInputs->shape());
+        $this->assertNotEquals(
+            $mo->zerosLike($grads[0])->toArray(),
+            $grads[0]->toArray());
+        $this->assertNotEquals(
+            $mo->zerosLike($grads[1])->toArray(),
+            $grads[1]->toArray());
+        $this->assertNotEquals(
+            $mo->zerosLike($grads[2])->toArray(),
+            $grads[2]->toArray());
+        
+        $this->assertEquals($copydOutputs->toArray(),$dOutputs->toArray());
     }
 
     public function testForwardAndBackwordWithReturnSeqquence()
