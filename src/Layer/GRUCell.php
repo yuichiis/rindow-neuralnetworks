@@ -213,7 +213,7 @@ class GRUCell extends AbstractRNNCell
         if($this->ac_r){
             $dX_r = $this->ac_r->differentiate($dX_r);
         }
-        $K->gemm($calcState->prev_h.T, $dX_r,1.0,1.0,$this->dR_kernel_r,true,false);
+        $K->gemm($calcState->prev_h, $dX_r,1.0,1.0,$this->dR_kernel_r,true,false);
         $K->gemm($dX_r, $this->r_kernel_r,1.0,1.0,$dPrev_h,false,true);
         
         // stack diff gate outputs
