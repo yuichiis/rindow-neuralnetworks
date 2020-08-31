@@ -175,8 +175,8 @@ class Test extends TestCase
         [$outputs,$nextStates] = $layer->forward($inputs, $states,$training=true,$object);
         // 
         $this->assertEquals([
-            [576,576,576,576],
-            [576,576,576,576],
+            [281,281,281,281],
+            [281,281,281,281],
             ],$outputs->toArray());
         $this->assertEquals([
             [576,576,576,576],
