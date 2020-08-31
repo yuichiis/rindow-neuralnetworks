@@ -198,8 +198,8 @@ class Test extends TestCase
             [600,600,600],
             ],$dInputs->toArray());
         $this->assertEquals([
-            [1732,1732,1732,1732],
-            [1732,1732,1732,1732],
+            [33802,33802,33802,33802],
+            [33802,33802,33802,33802],
             ],$dPrevStates[0]->toArray());
         $this->assertEquals([
             [272,272,272,272,
