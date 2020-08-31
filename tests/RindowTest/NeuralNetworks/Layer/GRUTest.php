@@ -327,17 +327,12 @@ class Test extends TestCase
             $mo->ones([2,4])];
         [$outputs,$nextStates] = $layer->forward($inputs,$training=true, $states);
         // 
-        $this->assertEquals([
-           [[2,2,3,4],
-            [2,2,3,4],
-            [2,2,3,4]],
-           [[2,2,3,4],
-            [2,2,3,4],
-            [2,2,3,4]],
-        ],$outputs->toArray());
+        $this->assertEquals(
+            [2,3,4],
+            $outputs->shape());
         $this->assertEquals(
             [2,4],
-            $nextStates[0]->toArray());
+            $nextStates[0]->shape());
         //
         // backword
         //
@@ -351,18 +346,18 @@ class Test extends TestCase
         // 2 batch
         $this->assertEquals(
             [2,3,5],
-            $dInputs->toArray());
+            $dInputs->shape());
         $this->assertEquals(
             [2,4],
-            $dPrevStates[0]->toArray());
+            $dPrevStates[0]->shape());
         $this->assertEquals(
             [5,16],
-            $grads[0]->toArray());
+            $grads[0]->shape());
         $this->assertEquals(
             [4,16],
-            $grads[1]->toArray());
+            $grads[1]->shape());
         $this->assertEquals(
             [16],
-            $grads[2]->toArray());
+            $grads[2]->shape());
     }
 }
