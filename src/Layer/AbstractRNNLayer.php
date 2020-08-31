@@ -91,7 +91,7 @@ abstract class AbstractRNNLayer extends AbstractLayerBase implements RNNLayer
             $dNextStates = [];
             $batches = $dOutputs->shape()[0];
             foreach($this->statesShapes as $shape){
-                $dNextStates[] = $K->zeros(array_merge([$batches],$shape));
+                $dNextStates[] = $K->zeros(array_merge([$batches],$shape),$dOutputs->dtype());
             }
         }
 
