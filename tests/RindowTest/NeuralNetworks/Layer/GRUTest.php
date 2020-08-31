@@ -327,10 +327,14 @@ class Test extends TestCase
             $mo->ones([2,4])];
         [$outputs,$nextStates] = $layer->forward($inputs,$training=true, $states);
         // 
-        $this->assertEquals(
-           [[2,3,4],
-            [2,3,4]],
-            $outputs->toArray());
+        $this->assertEquals([
+           [[2,2,3,4],
+            [2,2,3,4],
+            [2,2,3,4]],
+           [[2,2,3,4],
+            [2,2,3,4],
+            [2,2,3,4]],
+        ],$outputs->toArray());
         $this->assertEquals(
             [2,4],
             $nextStates[0]->toArray());
