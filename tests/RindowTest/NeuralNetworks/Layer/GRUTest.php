@@ -357,7 +357,7 @@ class Test extends TestCase
             [12,4],
             $grads[1]->shape());
         $this->assertEquals(
-            [16],
+            [12],
             $grads[2]->shape());
     }
 }
