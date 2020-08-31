@@ -198,11 +198,11 @@ class GRUCell extends AbstractRNNCell
         }
         $K->gemm($K->mul($calcState->x_r, $calcState->prev_h), $dX_hh,1.0,1.0,$this->dR_kernel_hh,true,false);
         $dhh_r = $K->gemm($dX_hh, $this->r_kernel_hh,1.0,0.0,null,false,true);
+var_dump($dhh_r->toArray());
         $K->update_add($dPrev_h,$K->mul($calcState->x_r,$dhh_r));
 
         // z gate
         $dX_z = $K->mul($dNext_h,$K->sub($calcState->x_hh,$calcState->prev_h));
-var_dump($dX_z->toArray());
         if($this->ac_z){
             $dX_z = $this->ac_z->differentiate($dX_z);
         }
