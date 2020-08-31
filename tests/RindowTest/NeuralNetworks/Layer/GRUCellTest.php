@@ -194,8 +194,8 @@ class Test extends TestCase
         [$dInputs,$dPrevStates] = $layer->backward($dOutputs,$dStates,$object);
         // 2 batch
         $this->assertEquals([
-            [1732,1732,1732],
-            [1732,1732,1732],
+            [600,600,600],
+            [600,600,600],
             ],$dInputs->toArray());
         $this->assertEquals([
             [1732,1732,1732,1732],
