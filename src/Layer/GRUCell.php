@@ -196,7 +196,7 @@ class GRUCell extends AbstractRNNCell
         if($this->ac_hh){
             $dX_hh = $this->ac_hh->differentiate($dX_hh);
         }
-        $K->gemm($K-mul($calcState->x_r, $calcState->prev_h), $dX_hh,1.0,1.0,$this->dR_kernel_hh,true,false);
+        $K->gemm($K->mul($calcState->x_r, $calcState->prev_h), $dX_hh,1.0,1.0,$this->dR_kernel_hh,true,false);
         $dhh_r = $K->gemm($dX_hh, $this->r_kernel_hh,1.0,0.0,null,false,true);
         $K->update_add($dPrev_h,$K->mul($calcState->x_r,$dhh_r));
 
