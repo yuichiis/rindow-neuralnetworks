@@ -156,7 +156,7 @@ class GRUCell extends AbstractRNNCell
         
         $x_z = $K->gemm($prev_h, $this->r_kernel_z,1.0,1.0,$x_z);
         $x_r = $K->gemm($prev_h, $this->r_kernel_r,1.0,1.0,$x_r);
-        $x_hh = $K->gemm($K->mul($x_r,$prev_h), $this->kernel_hh,1.0,1.0,$x_hh);
+        $x_hh = $K->gemm($K->mul($x_r,$prev_h), $this->r_kernel_hh,1.0,1.0,$x_hh);
 
         if($this->ac_z){
             $x_z = $this->ac_z->call($x_z,$training);
