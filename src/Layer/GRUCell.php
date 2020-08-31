@@ -96,7 +96,7 @@ class GRUCell extends AbstractRNNCell
         $this->r_kernel_r = $this->recurrentKernel[[$this->units,$this->units*2-1]];
         $this->r_kernel_hh = $this->recurrentKernel[[$this->units*2,$this->units*3-1]];
         $this->dR_kernel_z = $this->dRecurrentKernel[[0,$this->units-1]];
-        $this->dR_kernel_r = $this->recurrentKernel[[$this->units,$this->units*2-1]];
+        $this->dR_kernel_r = $this->dRecurrentKernel[[$this->units,$this->units*2-1]];
         $this->dR_kernel_hh = $this->dRecurrentKernel[[$this->units*2,$this->units*3-1]];
         array_push($shape,$this->units);
         $this->outputShape = $shape;
@@ -233,6 +233,7 @@ class GRUCell extends AbstractRNNCell
 var_dump($this->dR_kernel_z->toArray());
 var_dump($this->dR_kernel_r->toArray());
 var_dump($this->dR_kernel_hh->toArray());
+var_dump($this->dR_kernel_z->toArray());
         return [$dInputs,[$dPrev_h]];
     }
 }
