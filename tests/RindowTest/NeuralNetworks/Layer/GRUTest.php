@@ -351,10 +351,10 @@ class Test extends TestCase
             [2,4],
             $dPrevStates[0]->shape());
         $this->assertEquals(
-            [5,16],
+            [5,12],
             $grads[0]->shape());
         $this->assertEquals(
-            [4,16],
+            [12,4],
             $grads[1]->shape());
         $this->assertEquals(
             [16],
