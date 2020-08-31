@@ -218,7 +218,7 @@ class GRUCell extends AbstractRNNCell
         
         // stack diff gate outputs
         $dGateOuts = $K->stack(
-            [$dX_z,$dR_r,$dX_hh],$axis=1);
+            [$dX_z,$dX_r,$dX_hh],$axis=1);
         $shape = $dGateOuts->shape();
         $batches = array_shift($shape);
         $dGateOuts = $dGateOuts->reshape([
