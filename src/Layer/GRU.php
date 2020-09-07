@@ -18,7 +18,7 @@ class GRU extends AbstractRNNLayer
     protected $biasInitializerName;
     protected $returnSequences;
     protected $returnState;
-    protected $goBackward;
+    protected $goBackwards;
     protected $statefull;
     protected $cell;
     protected $timesteps;
@@ -27,7 +27,7 @@ class GRU extends AbstractRNNLayer
     protected $calcStates;
     protected $initialStates;
     protected $origInputsShape;
-    
+
     public function __construct($backend,int $units, array $options=null)
     {
         extract($this->extractArgs([
@@ -35,12 +35,12 @@ class GRU extends AbstractRNNLayer
             'activation'=>'tanh',
             'recurrent_activation'=>'sigmoid',
             'use_bias'=>true,
-            'kernel_initializer'=>'sigmoid_normal',
-            'recurrent_initializer'=>'sigmoid_normal',
+            'kernel_initializer'=>'glorot_uniform',
+            'recurrent_initializer'=>'random_normal',
             'bias_initializer'=>'zeros',
             'return_sequences'=>false,
             'return_state'=>false,
-            'go_backward'=>false,
+            'go_backwards'=>false,
             'stateful'=>false,
             //'kernel_regularizer'=>null, 'bias_regularizer'=>null,
             //'activity_regularizer'=null,
@@ -59,7 +59,7 @@ class GRU extends AbstractRNNLayer
         $this->biasInitializerName = $bias_initializer;
         $this->returnSequences=$return_sequences;
         $this->returnState = $return_state;
-        $this->goBackward = $go_backward;
+        $this->goBackwards = $go_backwards;
         $this->stateful = $stateful;
         $this->cell = new GRUCell(
             $this->backend,
@@ -133,7 +133,7 @@ class GRU extends AbstractRNNLayer
                 'bias_initializer' => $this->biasInitializerName,
                 'return_sequence'=>$this->returnSequences,
                 'return_state'=>$this->returnState,
-                'go_backward'=>$this->goBackward,
+                'go_backwards'=>$this->goBackwards,
                 'stateful'=>$this->stateful,
             ]
         ];
@@ -143,7 +143,7 @@ class GRU extends AbstractRNNLayer
     {
         return $this->callCell($inputs,$training,$initialStates,$options);
     }
-    
+
     protected function differentiate(NDArray $dOutputs, array $dStates=null)
     {
         return $this->differentiateCell($dOutputs,$dStates);

@@ -5,7 +5,7 @@ use InvalidArgumentException;
 use Interop\Polite\Math\Matrix\NDArray;
 use Rindow\NeuralNetworks\Support\GenericUtils;
 
-class SimpleRNNCell extends AbstractRNNCell 
+class SimpleRNNCell extends AbstractRNNCell
 {
     use GenericUtils;
     protected $backend;
@@ -29,8 +29,8 @@ class SimpleRNNCell extends AbstractRNNCell
             'input_shape'=>null,
             'activation'=>'tanh',
             'use_bias'=>true,
-            'kernel_initializer'=>'sigmoid_normal',
-            'recurrent_initializer'=>'sigmoid_normal',
+            'kernel_initializer'=>'glorot_uniform',
+            'recurrent_initializer'=>'random_normal',
             'bias_initializer'=>'zeros',
             //'kernel_regularizer'=>null, 'bias_regularizer'=>null,
             //'activity_regularizer'=null,
@@ -73,8 +73,12 @@ class SimpleRNNCell extends AbstractRNNCell
             $this->recurrentKernel = $sampleWeights[1];
             $this->bias = $sampleWeights[2];
         } else {
-            $this->kernel = $kernelInitializer([$inputDim,$this->units],$inputDim);
-            $this->recurrentKernel = $recurrentInitializer([$this->units,$this->units],$this->units);
+            $this->kernel = $kernelInitializer(
+                [$inputDim,$this->units],
+                [$inputDim,$this->units]);
+            $this->recurrentKernel = $recurrentInitializer(
+                [$this->units,$this->units],
+                [$this->units,$this->units]);
             if($this->useBias) {
                 $this->bias = $biasInitializer([$this->units]);
             }
@@ -126,7 +130,7 @@ class SimpleRNNCell extends AbstractRNNCell
     {
         $K = $this->backend;
         $prevOutput = $states[0];
-        
+
         if($this->bias){
             $outputs = $K->batch_gemm($inputs, $this->kernel,1.0,1.0,$this->bias);
         } else {

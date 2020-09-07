@@ -27,7 +27,7 @@ abstract class AbstractConv extends AbstractImage implements Layer
     protected $dKernel;
     protected $dBias;
     protected $status;
-    
+
 
     public function __construct($backend,int $filters, $kernel_size, array $options=null)
     {
@@ -39,14 +39,14 @@ abstract class AbstractConv extends AbstractImage implements Layer
             'groups'=>1,
             'activation'=>null,
             'use_bias'=>true,
-            'kernel_initializer'=>"sigmoid_normal",
+            'kernel_initializer'=>"glorot_uniform",
             'bias_initializer'=>"zeros",
             'kernel_regularizer'=>null,
             'bias_regularizer'=>null,
             'activity_regularizer'=>null,
             'kernel_constraint'=>null,
             'bias_constraint'=>null,
-            
+
             'input_shape'=>null,
             'activation'=>null,
             'use_bias'=>true,
@@ -84,7 +84,7 @@ abstract class AbstractConv extends AbstractImage implements Layer
 
         $inputShape = $this->normalizeInputShape($inputShape);
         $kernel_size = $this->kernel_size;
-        $outputShape = 
+        $outputShape =
             $K->calcConvOutputShape(
                 $this->inputShape,
                 $this->kernel_size,
@@ -93,7 +93,7 @@ abstract class AbstractConv extends AbstractImage implements Layer
                 $this->data_format
             );
         array_push($outputShape,$this->filters);
-        
+
         $channels = $this->getChannels();
         array_push($kernel_size,
             $channels);
@@ -103,7 +103,11 @@ abstract class AbstractConv extends AbstractImage implements Layer
             $this->kernel = $sampleWeights[0];
             $this->bias = $sampleWeights[1];
         } else {
-            $this->kernel = $kernelInitializer($kernel_size,array_product(array_merge($this->kernel_size,[$channels])));
+            $tmpSize = array_product($this->kernel_size);
+            $this->kernel = $kernelInitializer(
+                $kernel_size,
+                [$tmpSize*$channels,$tmpSize*$this->filters]
+            );
             if($this->useBias) {
                 $this->bias = $biasInitializer([$this->filters]);
             }

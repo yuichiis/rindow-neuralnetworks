@@ -5,7 +5,7 @@ use InvalidArgumentException;
 use Interop\Polite\Math\Matrix\NDArray;
 use Rindow\NeuralNetworks\Support\GenericUtils;
 
-class GRUCell extends AbstractRNNCell 
+class GRUCell extends AbstractRNNCell
 {
     use GenericUtils;
     protected $backend;
@@ -34,8 +34,8 @@ class GRUCell extends AbstractRNNCell
             'activation'=>'tanh',
             'recurrent_activation'=>'sigmoid',
             'use_bias'=>true,
-            'kernel_initializer'=>'sigmoid_normal',
-            'recurrent_initializer'=>'sigmoid_normal',
+            'kernel_initializer'=>'glorot_uniform',
+            'recurrent_initializer'=>'random_normal',
             'bias_initializer'=>'zeros',
             'unit_forget_bias'=>true,
             //'kernel_regularizer'=>null, 'bias_regularizer'=>null,
@@ -81,8 +81,12 @@ class GRUCell extends AbstractRNNCell
             $this->recurrentKernel = $sampleWeights[1];
             $this->bias = $sampleWeights[2];
         } else {
-            $this->kernel = $kernelInitializer([$inputDim,$this->units*3],$inputDim);
-            $this->recurrentKernel = $recurrentInitializer([$this->units*3,$this->units],$this->units*3);
+            $this->kernel = $kernelInitializer(
+                [$inputDim,$this->units*3],
+                [$inputDim,$this->units]);
+            $this->recurrentKernel = $recurrentInitializer(
+                [$this->units*3,$this->units],
+                [$this->units,$this->units]);
             if($this->useBias) {
                 $this->bias = $biasInitializer([$this->units*3]);
             }
@@ -141,7 +145,7 @@ class GRUCell extends AbstractRNNCell
     {
         $K = $this->backend;
         $prev_h = $states[0];
-        
+
         if($this->bias){
             $gateOuts = $K->batch_gemm($inputs, $this->kernel,1.0,1.0,$this->bias);
         } else {
@@ -153,7 +157,7 @@ class GRUCell extends AbstractRNNCell
             [0,$this->units],[-1,$this->units]);
         $x_hh = $K->slice($gateOuts,
             [0,$this->units*2],[-1,$this->units]);
-        
+
         $x_z = $K->gemm($prev_h, $this->r_kernel_z,1.0,1.0,$x_z);
         $x_r = $K->gemm($prev_h, $this->r_kernel_r,1.0,1.0,$x_r);
         $x_hh = $K->gemm($K->mul($x_r,$prev_h), $this->r_kernel_hh,1.0,1.0,$x_hh);
@@ -165,20 +169,20 @@ class GRUCell extends AbstractRNNCell
         if($this->ac_hh){
             $x_hh = $this->ac_hh->call($x_hh,$training);
         }
-        
+
         // next_h = (1-z) * prev_h + z * hh
         $x1_z = $K->increment($K->scale(-1,$x_z),1);
         $next_h = $K->add(
             $K->mul($x1_z,$prev_h),
             $K->mul($x_z,$x_hh));
-        
+
         $calcState->inputs = $inputs;
         $calcState->prev_h = $prev_h;
         $calcState->x_z = $x_z;
         $calcState->x1_z = $x1_z;
         $calcState->x_r = $x_r;
         $calcState->x_hh = $x_hh;
-        
+
         return [$next_h,[$next_h]];
     }
 
@@ -187,10 +191,10 @@ class GRUCell extends AbstractRNNCell
         $K = $this->backend;
         $dNext_h = $dStates[0];
         $dNext_h = $K->add($dOutputs,$dNext_h);
-        
+
         // dprev_h = dnext_h * (1-z)
         $dPrev_h = $K->mul($dNext_h,$calcState->x1_z);
-        
+
         // hh output
         $dX_hh = $K->mul($dNext_h,$calcState->x_z);
         if($this->ac_hh){
@@ -215,7 +219,7 @@ class GRUCell extends AbstractRNNCell
         }
         $K->gemm($calcState->prev_h, $dX_r,1.0,1.0,$this->dR_kernel_r,true,false);
         $K->gemm($dX_r, $this->r_kernel_r,1.0,1.0,$dPrev_h,false,true);
-        
+
         // stack diff gate outputs
         $dGateOuts = $K->stack(
             [$dX_z,$dX_r,$dX_hh],$axis=1);

@@ -28,7 +28,7 @@ class Dense extends AbstractLayer implements Layer
             'input_shape'=>null,
             'activation'=>null,
             'use_bias'=>true,
-            'kernel_initializer'=>'sigmoid_normal',
+            'kernel_initializer'=>'glorot_uniform',
             'bias_initializer'=>'zeros',
             //'kernel_regularizer'=>null, 'bias_regularizer'=>null,
             //'activity_regularizer'=null,
@@ -43,7 +43,7 @@ class Dense extends AbstractLayer implements Layer
         $this->biasInitializerName = $bias_initializer;
         if($use_bias===null || $use_bias) {
             $this->useBias = true;
-        } 
+        }
         $this->setActivation($activation);
     }
 
@@ -67,7 +67,9 @@ class Dense extends AbstractLayer implements Layer
             $this->kernel = $sampleWeights[0];
             $this->bias = $sampleWeights[1];
         } else {
-            $this->kernel = $kernelInitializer([$this->inputDim,$this->units],$this->inputDim);
+            $this->kernel = $kernelInitializer(
+                [$this->inputDim,$this->units],
+                [$this->inputDim,$this->units]);
             if($this->useBias) {
                 $this->bias = $biasInitializer([$this->units]);
             }

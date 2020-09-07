@@ -5,7 +5,7 @@ use InvalidArgumentException;
 use Interop\Polite\Math\Matrix\NDArray;
 use Rindow\NeuralNetworks\Support\GenericUtils;
 
-class LSTMCell extends AbstractRNNCell 
+class LSTMCell extends AbstractRNNCell
 {
     use GenericUtils;
     protected $backend;
@@ -34,8 +34,8 @@ class LSTMCell extends AbstractRNNCell
             'activation'=>'tanh',
             'recurrent_activation'=>'sigmoid',
             'use_bias'=>true,
-            'kernel_initializer'=>'sigmoid_normal',
-            'recurrent_initializer'=>'sigmoid_normal',
+            'kernel_initializer'=>'glorot_uniform',
+            'recurrent_initializer'=>'random_normal',
             'bias_initializer'=>'zeros',
             'unit_forget_bias'=>true,
             //'kernel_regularizer'=>null, 'bias_regularizer'=>null,
@@ -83,8 +83,12 @@ class LSTMCell extends AbstractRNNCell
             $this->recurrentKernel = $sampleWeights[1];
             $this->bias = $sampleWeights[2];
         } else {
-            $this->kernel = $kernelInitializer([$inputDim,$this->units*4],$inputDim);
-            $this->recurrentKernel = $recurrentInitializer([$this->units,$this->units*4],$this->units*4);
+            $this->kernel = $kernelInitializer([
+                $inputDim,$this->units*4],
+                [$inputDim,$this->units]);
+            $this->recurrentKernel = $recurrentInitializer(
+                [$this->units,$this->units*4],
+                [$this->units,$this->units]);
             if($this->useBias) {
                 $this->bias = $biasInitializer([$this->units*4]);
             }
@@ -138,7 +142,7 @@ class LSTMCell extends AbstractRNNCell
         $K = $this->backend;
         $prev_h = $states[0];
         $prev_c = $states[1];
-        
+
         if($this->bias){
             $outputs = $K->batch_gemm($inputs, $this->kernel,1.0,1.0,$this->bias);
         } else {
@@ -154,7 +158,7 @@ class LSTMCell extends AbstractRNNCell
             [0,$this->units*2],[-1,$this->units]);
         $x_o = $K->slice($outputs,
             [0,$this->units*3],[-1,$this->units]);
-        
+
         if($this->ac_c){
             $x_c = $this->ac_c->call($x_c,$training);
         }
@@ -179,7 +183,7 @@ class LSTMCell extends AbstractRNNCell
         $calcState->x_c = $x_c;
         $calcState->x_o = $x_o;
         $calcState->ac_next_c = $ac_next_c;
-        
+
         return [$next_h,[$next_h,$next_c]];
     }
 
@@ -189,7 +193,7 @@ class LSTMCell extends AbstractRNNCell
         $dNext_h = $dStates[0];
         $dNext_c = $dStates[1];
         $dNext_h = $K->add($dOutputs,$dNext_h);
-        
+
         $dAc_next_c = $K->mul($calcState->x_o,$dNext_h);
         if($this->ac){
             $dAc_next_c = $this->ac->differentiate($dAc_next_c);

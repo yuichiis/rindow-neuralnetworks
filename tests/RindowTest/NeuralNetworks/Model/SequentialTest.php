@@ -210,7 +210,7 @@ class Test extends TestCase
         $model = $nn->models()->Sequential([
             $nn->layers()->Dense($units=128,[
                 'input_shape'=>[2],
-                'kernel_initializer'=>'relu_normal',
+                'kernel_initializer'=>'he_normal',
                 'activation'=>'relu']),
             $nn->layers()->Dense($units=2,
                  ['activation'=>'softmax']),
@@ -449,36 +449,44 @@ class Test extends TestCase
 
         $model = $nn->models()->Sequential([
             $nn->layers()->Conv1D(
-                $filters=5,
+                $filters=128,
                 $kernel_size=3,
-                ['input_shape'=>[5,1],
+                ['input_shape'=>[10,1],
+                'kernel_initializer'=>'he_normal',
                 'activation'=>'relu']),
             $nn->layers()->MaxPooling1D(),
+            $nn->layers()->Conv1D(128,3),
             $nn->layers()->Flatten(),
-            $nn->layers()->Dense($units=10,['activation'=>'relu']),
-            $nn->layers()->Dense($units=5,['activation'=>'softmax']),
+            $nn->layers()->Activation('softmax'),
         ]);
 
         $model->compile([
             'loss'=>$nn->losses()->SparseCategoricalCrossEntropy(),
+            'optimizer'=>$nn->optimizers()->Adam(),
         ]);
-        $this->assertTrue( $model->layers()[4]->getActivation()->fromLogits());
-        $this->assertTrue( $model->lossFunction()->fromLogits());
 
         // training greater or less
-        $x = $mo->arange(
-            5*5,
-            null,null,
-            NDArray::float32
-            )->reshape([5,5,1]);
-        $t = $mo->arange(5);
-        $v_x = $mo->arange(
-            5*5,
-            null,null,
-            NDArray::float32
-            )->reshape([5,5,1]);
-        $v_t = $mo->arange(5);
-        $history = $model->fit($x,$t,['epochs'=>100,'validation_data'=>[$v_x,$v_t],'verbose'=>0]);
+        $x = $mo->array([
+            [[0.1],[0.1],[0.2],[0.2],[0.3],[0.3],[0.4],[0.4],[0.5],[0.5]],
+            [[0.9],[0.9],[0.8],[0.8],[0.7],[0.7],[0.6],[0.6],[0.5],[0.5]],
+            [[0.5],[0.5],[0.6],[0.6],[0.7],[0.7],[0.8],[0.8],[0.9],[0.9]],
+            [[0.5],[0.5],[0.4],[0.4],[0.3],[0.3],[0.2],[0.2],[0.1],[0.1]],
+        ]);
+        $t = $mo->array(
+            [1,0,1,0]
+        );
+        $v_x = $mo->array([
+            [[0.1],[0.1],[0.25],[0.25],[0.35],[0.35],[0.45],[0.45],[0.6], [0.6] ],
+            [[0.9],[0.9],[0.7], [0.7], [0.5], [0.5], [0.3], [0.3], [0.1], [0.1] ],
+            [[0.1],[0.1],[0.11],[0.11],[0.12],[0.12],[0.13],[0.13],[0.14],[0.14]],
+            [[0.5],[0.5],[0.45],[0.45],[0.4], [0.4], [0.35],[0.35],[0.3], [0.3] ],
+        ]);
+        $v_t = $mo->array(
+            [1,0,1,0]
+        );
+        $history = $model->fit(
+            $x,$t,
+            ['epochs'=>300,'validation_data'=>[$v_x,$v_t],'verbose'=>0]);
 
         $this->assertEquals(['loss','accuracy','val_loss','val_accuracy'],array_keys($history));
 
@@ -488,7 +496,7 @@ class Test extends TestCase
             $plt->plot($mo->array($history['accuracy']),null,null,'accuracy');
             $plt->plot($mo->array($history['val_accuracy']),null,null,'val_accuracy');
             $plt->legend();
-            $plt->title('Convolution1D');
+            $plt->title('ConvolutionMaxPool1D');
             $plt->show();
         }
     }
@@ -502,36 +510,44 @@ class Test extends TestCase
 
         $model = $nn->models()->Sequential([
             $nn->layers()->Conv2D(
-                $filters=5,
+                $filters=128,
                 $kernel_size=3,
-                ['input_shape'=>[5,5,1],
-                'activation'=>'relu']),
+                ['input_shape'=>[10,10,1],
+                'kernel_initializer'=>'he_normal',
+                'activation'=>'relu',
+                #'activation'=>'softmax',
+                ]),
             $nn->layers()->MaxPooling2D(),
+            $nn->layers()->Conv2D(128,3),
             $nn->layers()->Flatten(),
-            $nn->layers()->Dense($units=10,['activation'=>'relu']),
-            $nn->layers()->Dense($units=5,['activation'=>'softmax']),
+            $nn->layers()->Activation('softmax'),
         ]);
 
         $model->compile([
             'loss'=>$nn->losses()->SparseCategoricalCrossEntropy(),
+            'optimizer'=>$nn->optimizers()->Adam(),
         ]);
-        $this->assertTrue( $model->layers()[4]->getActivation()->fromLogits());
-        $this->assertTrue( $model->lossFunction()->fromLogits());
 
         // training greater or less
-        $x = $mo->arange(
-            5*5*5,
-            null,null,
-            NDArray::float32
-            )->reshape([5,5,5,1]);
-        $t = $mo->arange(5);
-        $v_x = $mo->arange(
-            5*5*5,
-            null,null,
-            NDArray::float32
-            )->reshape([5,5,5,1]);
-        $v_t = $mo->arange(5);
-        $history = $model->fit($x,$t,['epochs'=>100,'validation_data'=>[$v_x,$v_t],'verbose'=>0]);
+        $x = $mo->zeros([4,10,10,1]);
+        for($i=0;$i<10;$i++) { $x[0][$i][$i][0]=1.0;}
+        for($i=0;$i<10;$i++) { $x[1][$i][9-$i][0]=1.0;}
+        for($i=1;$i<9;$i++)  { $x[2][$i+1][$i+1][0]=1.0;}
+        for($i=1;$i<9;$i++)  { $x[3][$i+1][9-$i][0]=1.0;}
+        $t = $mo->array(
+            [1,0,1,0]
+        );
+        $v_x = $mo->zeros([4,10,10,1]);
+        for($i=0;$i<8;$i++) { $x[0][$i][$i+2][0]=1.0;}
+        for($i=0;$i<8;$i++) { $x[1][$i][9-$i][0]=1.0;}
+        for($i=1;$i<8;$i++) { $x[2][$i+1][$i][0]=1.0;}
+        for($i=1;$i<8;$i++) { $x[3][$i+2][9-$i][0]=1.0;}
+        $v_t = $mo->array(
+            [1,0,1,0]
+        );
+        $history = $model->fit(
+            $x,$t,
+            ['epochs'=>100,'validation_data'=>[$v_x,$v_t],'verbose'=>0]);
 
         $this->assertEquals(['loss','accuracy','val_loss','val_accuracy'],array_keys($history));
 
@@ -541,7 +557,7 @@ class Test extends TestCase
             $plt->plot($mo->array($history['accuracy']),null,null,'accuracy');
             $plt->plot($mo->array($history['val_accuracy']),null,null,'val_accuracy');
             $plt->legend();
-            $plt->title('Convolution2D');
+            $plt->title('Convolution2DMaxPool');
             $plt->show();
         }
     }
@@ -555,35 +571,38 @@ class Test extends TestCase
 
         $model = $nn->models()->Sequential([
             $nn->layers()->Conv3D(
-                $filters=5,
+                $filters=128,
                 $kernel_size=3,
-                ['input_shape'=>[5,5,5,1],
+                ['input_shape'=>[10,10,10,1],
+                'kernel_initializer'=>'he_normal',
                 'activation'=>'relu']),
             $nn->layers()->MaxPooling3D(),
+            $nn->layers()->Conv3D(128,3),
             $nn->layers()->Flatten(),
-            $nn->layers()->Dense($units=10,['activation'=>'relu']),
-            $nn->layers()->Dense($units=5,['activation'=>'softmax']),
+            $nn->layers()->Activation('softmax'),
         ]);
 
         $model->compile([
             'loss'=>$nn->losses()->SparseCategoricalCrossEntropy(),
         ]);
-        $this->assertTrue( $model->layers()[4]->getActivation()->fromLogits());
-        $this->assertTrue( $model->lossFunction()->fromLogits());
 
         // training greater or less
-        $x = $mo->arange(
-            5*5*5*5,
-            null,null,
-            NDArray::float32
-            )->reshape([5,5,5,5,1]);
-        $t = $mo->arange(5);
-        $v_x = $mo->arange(
-            5*5*5*5,
-            null,null,
-            NDArray::float32
-            )->reshape([5,5,5,5,1]);
-        $v_t = $mo->arange(5);
+        $x = $mo->zeros([4,10,10,10,1]);
+        for($i=0;$i<10;$i++) { $x[0][$i][$i][$i][0]=1.0;}
+        for($i=0;$i<10;$i++) { $x[1][$i][$i][9-$i][0]=1.0;}
+        for($i=1;$i<9;$i++)  { $x[2][$i][$i+1][$i+1][0]=1.0;}
+        for($i=1;$i<9;$i++)  { $x[3][$i][$i+1][9-$i][0]=1.0;}
+        $t = $mo->array(
+            [1,0,1,0]
+        );
+        $v_x = $mo->zeros([4,10,10,10,1]);
+        for($i=0;$i<8;$i++) { $x[0][$i][$i][$i+2][0]=1.0;}
+        for($i=0;$i<8;$i++) { $x[1][$i][$i][9-$i][0]=1.0;}
+        for($i=1;$i<8;$i++) { $x[2][$i][$i+1][$i][0]=1.0;}
+        for($i=1;$i<8;$i++) { $x[3][$i][$i+2][9-$i][0]=1.0;}
+        $v_t = $mo->array(
+            [1,0,1,0]
+        );
         $history = $model->fit($x,$t,['epochs'=>100,'validation_data'=>[$v_x,$v_t],'verbose'=>0]);
 
         $this->assertEquals(['loss','accuracy','val_loss','val_accuracy'],array_keys($history));
@@ -594,7 +613,7 @@ class Test extends TestCase
             $plt->plot($mo->array($history['accuracy']),null,null,'accuracy');
             $plt->plot($mo->array($history['val_accuracy']),null,null,'val_accuracy');
             $plt->legend();
-            $plt->title('Convolution3D');
+            $plt->title('Convolution3DMaxPool');
             $plt->show();
         }
     }
@@ -608,36 +627,44 @@ class Test extends TestCase
 
         $model = $nn->models()->Sequential([
             $nn->layers()->Conv1D(
-                $filters=5,
+                $filters=128,
                 $kernel_size=3,
-                ['input_shape'=>[5,1],
+                ['input_shape'=>[10,1],
+                'kernel_initializer'=>'he_normal',
                 'activation'=>'relu']),
             $nn->layers()->AveragePooling1D(),
+            $nn->layers()->Conv1D(128,3),
             $nn->layers()->Flatten(),
-            $nn->layers()->Dense($units=10,['activation'=>'relu']),
-            $nn->layers()->Dense($units=5,['activation'=>'softmax']),
+            $nn->layers()->Activation('softmax'),
         ]);
 
         $model->compile([
             'loss'=>$nn->losses()->SparseCategoricalCrossEntropy(),
+            'optimizer'=>$nn->optimizers()->Adam(),
         ]);
-        $this->assertTrue( $model->layers()[4]->getActivation()->fromLogits());
-        $this->assertTrue( $model->lossFunction()->fromLogits());
 
         // training greater or less
-        $x = $mo->arange(
-            5*5,
-            null,null,
-            NDArray::float32
-            )->reshape([5,5,1]);
-        $t = $mo->arange(5);
-        $v_x = $mo->arange(
-            5*5,
-            null,null,
-            NDArray::float32
-            )->reshape([5,5,1]);
-        $v_t = $mo->arange(5);
-        $history = $model->fit($x,$t,['epochs'=>100,'validation_data'=>[$v_x,$v_t],'verbose'=>0]);
+        $x = $mo->array([
+            [[0.1],[0.1],[0.2],[0.2],[0.3],[0.3],[0.4],[0.4],[0.5],[0.5]],
+            [[0.9],[0.9],[0.8],[0.8],[0.7],[0.7],[0.6],[0.6],[0.5],[0.5]],
+            [[0.5],[0.5],[0.6],[0.6],[0.7],[0.7],[0.8],[0.8],[0.9],[0.9]],
+            [[0.5],[0.5],[0.4],[0.4],[0.3],[0.3],[0.2],[0.2],[0.1],[0.1]],
+        ]);
+        $t = $mo->array(
+            [1,0,1,0]
+        );
+        $v_x = $mo->array([
+            [[0.1],[0.1],[0.25],[0.25],[0.35],[0.35],[0.45],[0.45],[0.6], [0.6] ],
+            [[0.9],[0.9],[0.7], [0.7], [0.5], [0.5], [0.3], [0.3], [0.1], [0.1] ],
+            [[0.1],[0.1],[0.11],[0.11],[0.12],[0.12],[0.13],[0.13],[0.14],[0.14]],
+            [[0.5],[0.5],[0.45],[0.45],[0.4], [0.4], [0.35],[0.35],[0.3], [0.3] ],
+        ]);
+        $v_t = $mo->array(
+            [1,0,1,0]
+        );
+        $history = $model->fit(
+            $x,$t,
+            ['epochs'=>300,'validation_data'=>[$v_x,$v_t],'verbose'=>0]);
 
         $this->assertEquals(['loss','accuracy','val_loss','val_accuracy'],array_keys($history));
 
@@ -647,7 +674,7 @@ class Test extends TestCase
             $plt->plot($mo->array($history['accuracy']),null,null,'accuracy');
             $plt->plot($mo->array($history['val_accuracy']),null,null,'val_accuracy');
             $plt->legend();
-            $plt->title('Convolution');
+            $plt->title('ConvolutionAvgPool1D');
             $plt->show();
         }
     }
@@ -661,36 +688,44 @@ class Test extends TestCase
 
         $model = $nn->models()->Sequential([
             $nn->layers()->Conv2D(
-                $filters=5,
+                $filters=128,
                 $kernel_size=3,
-                ['input_shape'=>[5,5,1],
-                'activation'=>'relu']),
+                ['input_shape'=>[10,10,1],
+                'kernel_initializer'=>'he_normal',
+                'activation'=>'relu',
+                #'activation'=>'softmax',
+                ]),
             $nn->layers()->AveragePooling2D(),
+            $nn->layers()->Conv2D(128,3),
             $nn->layers()->Flatten(),
-            $nn->layers()->Dense($units=10,['activation'=>'relu']),
-            $nn->layers()->Dense($units=5,['activation'=>'softmax']),
+            $nn->layers()->Activation('softmax'),
         ]);
 
         $model->compile([
             'loss'=>$nn->losses()->SparseCategoricalCrossEntropy(),
+            'optimizer'=>$nn->optimizers()->Adam(),
         ]);
-        $this->assertTrue( $model->layers()[4]->getActivation()->fromLogits());
-        $this->assertTrue( $model->lossFunction()->fromLogits());
 
         // training greater or less
-        $x = $mo->arange(
-            5*5*5,
-            null,null,
-            NDArray::float32
-            )->reshape([5,5,5,1]);
-        $t = $mo->arange(5);
-        $v_x = $mo->arange(
-            5*5*5,
-            null,null,
-            NDArray::float32
-            )->reshape([5,5,5,1]);
-        $v_t = $mo->arange(5);
-        $history = $model->fit($x,$t,['epochs'=>100,'validation_data'=>[$v_x,$v_t],'verbose'=>0]);
+        $x = $mo->zeros([4,10,10,1]);
+        for($i=0;$i<10;$i++) { $x[0][$i][$i][0]=1.0;}
+        for($i=0;$i<10;$i++) { $x[1][$i][9-$i][0]=1.0;}
+        for($i=1;$i<9;$i++)  { $x[2][$i+1][$i+1][0]=1.0;}
+        for($i=1;$i<9;$i++)  { $x[3][$i+1][9-$i][0]=1.0;}
+        $t = $mo->array(
+            [1,0,1,0]
+        );
+        $v_x = $mo->zeros([4,10,10,1]);
+        for($i=0;$i<8;$i++) { $x[0][$i][$i+2][0]=1.0;}
+        for($i=0;$i<8;$i++) { $x[1][$i][9-$i][0]=1.0;}
+        for($i=1;$i<8;$i++) { $x[2][$i+1][$i][0]=1.0;}
+        for($i=1;$i<8;$i++) { $x[3][$i+2][9-$i][0]=1.0;}
+        $v_t = $mo->array(
+            [1,0,1,0]
+        );
+        $history = $model->fit(
+            $x,$t,
+            ['epochs'=>100,'validation_data'=>[$v_x,$v_t],'verbose'=>0]);
 
         $this->assertEquals(['loss','accuracy','val_loss','val_accuracy'],array_keys($history));
 
@@ -700,7 +735,7 @@ class Test extends TestCase
             $plt->plot($mo->array($history['accuracy']),null,null,'accuracy');
             $plt->plot($mo->array($history['val_accuracy']),null,null,'val_accuracy');
             $plt->legend();
-            $plt->title('Convolution');
+            $plt->title('Convolution2DAvgPool');
             $plt->show();
         }
     }
@@ -714,35 +749,38 @@ class Test extends TestCase
 
         $model = $nn->models()->Sequential([
             $nn->layers()->Conv3D(
-                $filters=5,
+                $filters=128,
                 $kernel_size=3,
-                ['input_shape'=>[5,5,5,1],
+                ['input_shape'=>[10,10,10,1],
+                'kernel_initializer'=>'he_normal',
                 'activation'=>'relu']),
             $nn->layers()->AveragePooling3D(),
+            $nn->layers()->Conv3D(128,3),
             $nn->layers()->Flatten(),
-            $nn->layers()->Dense($units=10,['activation'=>'relu']),
-            $nn->layers()->Dense($units=5,['activation'=>'softmax']),
+            $nn->layers()->Activation('softmax'),
         ]);
 
         $model->compile([
             'loss'=>$nn->losses()->SparseCategoricalCrossEntropy(),
         ]);
-        $this->assertTrue( $model->layers()[4]->getActivation()->fromLogits());
-        $this->assertTrue( $model->lossFunction()->fromLogits());
 
         // training greater or less
-        $x = $mo->arange(
-            5*5*5*5,
-            null,null,
-            NDArray::float32
-            )->reshape([5,5,5,5,1]);
-        $t = $mo->arange(5);
-        $v_x = $mo->arange(
-            5*5*5*5,
-            null,null,
-            NDArray::float32
-            )->reshape([5,5,5,5,1]);
-        $v_t = $mo->arange(5);
+        $x = $mo->zeros([4,10,10,10,1]);
+        for($i=0;$i<10;$i++) { $x[0][$i][$i][$i][0]=1.0;}
+        for($i=0;$i<10;$i++) { $x[1][$i][$i][9-$i][0]=1.0;}
+        for($i=1;$i<9;$i++)  { $x[2][$i][$i+1][$i+1][0]=1.0;}
+        for($i=1;$i<9;$i++)  { $x[3][$i][$i+1][9-$i][0]=1.0;}
+        $t = $mo->array(
+            [1,0,1,0]
+        );
+        $v_x = $mo->zeros([4,10,10,10,1]);
+        for($i=0;$i<8;$i++) { $x[0][$i][$i][$i+2][0]=1.0;}
+        for($i=0;$i<8;$i++) { $x[1][$i][$i][9-$i][0]=1.0;}
+        for($i=1;$i<8;$i++) { $x[2][$i][$i+1][$i][0]=1.0;}
+        for($i=1;$i<8;$i++) { $x[3][$i][$i+2][9-$i][0]=1.0;}
+        $v_t = $mo->array(
+            [1,0,1,0]
+        );
         $history = $model->fit($x,$t,['epochs'=>100,'validation_data'=>[$v_x,$v_t],'verbose'=>0]);
 
         $this->assertEquals(['loss','accuracy','val_loss','val_accuracy'],array_keys($history));
@@ -753,7 +791,175 @@ class Test extends TestCase
             $plt->plot($mo->array($history['accuracy']),null,null,'accuracy');
             $plt->plot($mo->array($history['val_accuracy']),null,null,'val_accuracy');
             $plt->legend();
-            $plt->title('Convolution');
+            $plt->title('Convolution3DAvgPool');
+            $plt->show();
+        }
+    }
+
+    public function testFitSimpleRNN()
+    {
+        $mo = new MatrixOperator();
+        $backend = new Backend($mo);
+        $nn = new NeuralNetworks($mo,$backend);
+        $plt = new Plot($this->getPlotConfig(),$mo);
+
+        $model = $nn->models()->Sequential([
+            $nn->layers()->SimpleRNN(
+                $units=16,
+                [
+                    'input_shape'=>[4,10],
+                ]),
+                $nn->layers()->Activation('softmax'),
+        ]);
+
+        $model->compile([
+            'loss'=>$nn->losses()->SparseCategoricalCrossEntropy(),
+        ]);
+
+        // training greater or less
+        $x = $mo->array([
+            [0,1,2,9],
+            [9,8,7,6],
+            [1,3,3,4],
+            [5,4,3,2],
+        ]);
+        $t = $mo->array(
+            [1,0,1,0]
+        );
+        $v_x = $mo->array([
+            [2,3,3,4],
+            [1,1,1,4],
+            [4,3,3,1],
+            [9,3,3,2],
+        ]);
+        $v_t = $mo->array(
+            [1,1,0,0]
+        );
+        $x = $mo->la()->onehot($x->reshape([16]),$numClass=10)->reshape([4,4,10]);
+        $v_x = $mo->la()->onehot($v_x->reshape([16]),$numClass=10)->reshape([4,4,10]);
+        $history = $model->fit($x,$t,['epochs'=>300,'validation_data'=>[$v_x,$v_t],'verbose'=>0]);
+
+        $this->assertEquals(['loss','accuracy','val_loss','val_accuracy'],array_keys($history));
+
+        if($this->plot) {
+            $plt->plot($mo->array($history['loss']),null,null,'loss');
+            $plt->plot($mo->array($history['val_loss']),null,null,'val_loss');
+            $plt->plot($mo->array($history['accuracy']),null,null,'accuracy');
+            $plt->plot($mo->array($history['val_accuracy']),null,null,'val_accuracy');
+            $plt->legend();
+            $plt->title('SimpleRNN');
+            $plt->show();
+        }
+    }
+
+    public function testFitLSTM()
+    {
+        $mo = new MatrixOperator();
+        $backend = new Backend($mo);
+        $nn = new NeuralNetworks($mo,$backend);
+        $plt = new Plot($this->getPlotConfig(),$mo);
+
+        $model = $nn->models()->Sequential([
+            $nn->layers()->LSTM(
+                $units=16,
+                [
+                    'input_shape'=>[4,10],
+                ]),
+                $nn->layers()->Activation('softmax'),
+        ]);
+
+        $model->compile([
+            'loss'=>$nn->losses()->SparseCategoricalCrossEntropy(),
+        ]);
+
+        // training greater or less
+        $x = $mo->array([
+            [0,1,2,9],
+            [9,8,7,6],
+            [1,3,3,4],
+            [5,4,3,2],
+        ]);
+        $t = $mo->array(
+            [1,0,1,0]
+        );
+        $v_x = $mo->array([
+            [2,3,3,4],
+            [1,1,1,4],
+            [4,3,3,1],
+            [9,3,3,2],
+        ]);
+        $v_t = $mo->array(
+            [1,1,0,0]
+        );
+        $x = $mo->la()->onehot($x->reshape([16]),$numClass=10)->reshape([4,4,10]);
+        $v_x = $mo->la()->onehot($v_x->reshape([16]),$numClass=10)->reshape([4,4,10]);
+        $history = $model->fit($x,$t,['epochs'=>300,'validation_data'=>[$v_x,$v_t],'verbose'=>0]);
+
+        $this->assertEquals(['loss','accuracy','val_loss','val_accuracy'],array_keys($history));
+
+        if($this->plot) {
+            $plt->plot($mo->array($history['loss']),null,null,'loss');
+            $plt->plot($mo->array($history['val_loss']),null,null,'val_loss');
+            $plt->plot($mo->array($history['accuracy']),null,null,'accuracy');
+            $plt->plot($mo->array($history['val_accuracy']),null,null,'val_accuracy');
+            $plt->legend();
+            $plt->title('LSTM');
+            $plt->show();
+        }
+    }
+
+    public function testFitGRU()
+    {
+        $mo = new MatrixOperator();
+        $backend = new Backend($mo);
+        $nn = new NeuralNetworks($mo,$backend);
+        $plt = new Plot($this->getPlotConfig(),$mo);
+
+        $model = $nn->models()->Sequential([
+            $nn->layers()->GRU(
+                $units=16,
+                [
+                    'input_shape'=>[4,10],
+                ]),
+                $nn->layers()->Activation('softmax'),
+        ]);
+
+        $model->compile([
+            'loss'=>$nn->losses()->SparseCategoricalCrossEntropy(),
+        ]);
+
+        // training greater or less
+        $x = $mo->array([
+            [0,1,2,9],
+            [9,8,7,6],
+            [1,3,3,4],
+            [5,4,3,2],
+        ]);
+        $t = $mo->array(
+            [1,0,1,0]
+        );
+        $v_x = $mo->array([
+            [2,3,3,4],
+            [1,1,1,4],
+            [4,3,3,1],
+            [9,3,3,2],
+        ]);
+        $v_t = $mo->array(
+            [1,1,0,0]
+        );
+        $x = $mo->la()->onehot($x->reshape([16]),$numClass=10)->reshape([4,4,10]);
+        $v_x = $mo->la()->onehot($v_x->reshape([16]),$numClass=10)->reshape([4,4,10]);
+        $history = $model->fit($x,$t,['epochs'=>300,'validation_data'=>[$v_x,$v_t],'verbose'=>0]);
+
+        $this->assertEquals(['loss','accuracy','val_loss','val_accuracy'],array_keys($history));
+
+        if($this->plot) {
+            $plt->plot($mo->array($history['loss']),null,null,'loss');
+            $plt->plot($mo->array($history['val_loss']),null,null,'val_loss');
+            $plt->plot($mo->array($history['accuracy']),null,null,'accuracy');
+            $plt->plot($mo->array($history['val_accuracy']),null,null,'val_accuracy');
+            $plt->legend();
+            $plt->title('GRU');
             $plt->show();
         }
     }

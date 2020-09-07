@@ -44,7 +44,7 @@ abstract class AbstractRNNLayer extends AbstractLayerBase implements RNNLayer
         return $results;
     }
 
-    
+
     protected function callCell(NDArray $inputs,bool $training, array $initialStates=null, array $options=null)
     {
         $K = $this->backend;
@@ -69,7 +69,7 @@ abstract class AbstractRNNLayer extends AbstractLayerBase implements RNNLayer
             $initialStates,
             $training,
             $outputs,
-            $this->goBackward
+            $this->goBackwards
         );
         $this->calcStates = $calcStates;
         $this->origInputsShape = $inputs->shape();
@@ -105,7 +105,7 @@ abstract class AbstractRNNLayer extends AbstractLayerBase implements RNNLayer
             $dNextStates,
             $this->calcStates,
             $dInputs,
-            $this->goBackward
+            $this->goBackwards
         );
         $this->calcStates = null;
         if($this->returnState) {

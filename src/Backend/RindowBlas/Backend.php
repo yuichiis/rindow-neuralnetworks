@@ -7,8 +7,12 @@ use InvalidArgumentException;
 class Backend
 {
     protected $initializers = [
-        'relu_normal'       => 'initializer_relu',
-        'sigmoid_normal'    => 'initializer_sigmoid',
+        'glorot_uniform'    => 'glorot_uniform',
+        'glorot_normal'     => 'glorot_normal',
+        'he_uniform'        => 'he_uniform',
+        'he_normal'         => 'he_normal',
+        'random_uniform'    => 'random_uniform',
+        'random_normal'     => 'random_normal',
         'zeros'             => 'zeros',
         'ones'              => 'ones',
     ];
@@ -48,7 +52,7 @@ class Backend
     {
         return $this->la->alloc($x->shape(),$x->dtype());
     }
-    
+
     public function array($value, $dtype=null)
     {
         return $this->matrixOperator->array(
@@ -62,24 +66,102 @@ class Backend
         return [$this,$this->initializers[$name]];
     }
 
-    public function initializer_relu(array $shape,$nodeNum=null)
+    public function glorot_normal(array $shape,$nodeNum=null)
     {
         $mo = $this->matrixOperator;
         if($nodeNum===null){
-            $nodeNum = array_product($shape);
+            $tmpShape = $shape;
+            $nodeNum = [array_shift($tmpShape)];
+            $nodeNum[] = array_product($tmpShape);
         }
-        $scale = sqrt(2.0 / $nodeNum);
+        [$fanIn,$fanOut]=$nodeNum;
+        $scale = 1/max(($fanIn+$fanOut)/2.0, 1.0);
+        # 0.879... = scipy.stats.truncnorm.std(a=-2, b=2, loc=0., scale=1.)
+        $scale = sqrt($scale) / 0.87962566103423978;
         $kernel = $this->la->randomNormal($shape,0.0,$scale);
         return $kernel;
     }
 
-    public function initializer_sigmoid(array $shape,$nodeNum=null)
+    public function glorot_uniform(array $shape,$nodeNum=null)
     {
         $mo = $this->matrixOperator;
-        if($nodeNum===null)
-            $nodeNum = $shape[0];
-        $scale = sqrt(1.0 / $nodeNum);
+        if($nodeNum===null){
+            $tmpShape = $shape;
+            $nodeNum = [array_shift($tmpShape)];
+            $nodeNum[] = array_product($tmpShape);
+        }
+        [$fanIn,$fanOut]=$nodeNum;
+        $scale = 1/max(($fanIn+$fanOut)/2.0, 1.0);
+        $limit = sqrt(3*$scale);
+        $kernel = $this->la->randomUniform($shape,-$limit,$limit);
+        return $kernel;
+    }
+
+    public function random_normal(array $shape,$nodeNum=null)
+    {
+        $mo = $this->matrixOperator;
+        $mean=0.0;
+        $stddev=0.05;
+        if(is_array($nodeNum)) {
+            if(array_key_exists('mean',$nodeNum)){
+                $mean = $nodeNum['mean'];
+            }
+            if(array_key_exists('stddev',$nodeNum)){
+                $stddev = $nodeNum['stddev'];
+            }
+        }
+        $kernel = $this->la->randomUniform($shape,$mean,$stddev);
+        return $kernel;
+    }
+
+    public function random_uniform(array $shape,$nodeNum=null)
+    {
+        $mo = $this->matrixOperator;
+        $minval=-0.05;
+        $maxval=0.05;
+        if(is_array($nodeNum)) {
+            if(array_key_exists('minval',$nodeNum)){
+                $minval = $nodeNum['minval'];
+            }
+            if(array_key_exists('maxval',$nodeNum)){
+                $maxval = $nodeNum['maxval'];
+            }
+        }
+        $kernel = $this->la->randomUniform($shape,$minval,$maxval);
+        return $kernel;
+    }
+/*
+    public function orthogonal(array $shape,$nodeNum=null)
+    {
+    }
+*/
+
+    public function he_normal(array $shape,$nodeNum=null)
+    {
+        $mo = $this->matrixOperator;
+        if($nodeNum===null){
+            $tmpShape = $shape;
+            $nodeNum = [array_shift($tmpShape),0.05];
+        }
+        [$fanIn,$fanOut]=$nodeNum;
+        $scale = 2/max($fanIn, 1.0);
+        # 0.879... = scipy.stats.truncnorm.std(a=-2, b=2, loc=0., scale=1.)
+        $scale = sqrt($scale) / 0.87962566103423978;
         $kernel = $this->la->randomNormal($shape,0.0,$scale);
+        return $kernel;
+    }
+
+    public function he_uniform(array $shape,$nodeNum=null)
+    {
+        $mo = $this->matrixOperator;
+        if($nodeNum===null){
+            $tmpShape = $shape;
+            $nodeNum = [array_shift($tmpShape),0.05];
+        }
+        [$fanIn,$fanOut]=$nodeNum;
+        $scale = 2/max($fanIn, 1.0);
+        $limit = sqrt(3*$scale);
+        $kernel = $this->la->randomUniform($shape,-$limit,$limit);
         return $kernel;
     }
 
@@ -406,12 +488,12 @@ class Backend
     }
 
     public function scatter(NDArray $indices,NDArray $values,int  $numClass,$axis=null,NDArray $target=null)
-    { 
+    {
         return $this->la->scatter($indices,$values,$numClass,$axis,$target);
     }
 
     public function scatterAdd(NDArray $target,NDArray $indices,NDArray $values,$axis=null)
-    { 
+    {
         return $this->la->scatterAdd($indices,$values,$target,$axis);
     }
 
@@ -422,9 +504,9 @@ class Backend
         return $this->la->slice(
             $input,
             $begin,$size,
-            $output);    
+            $output);
     }
-    
+
     public function stick(
         NDArray $input,
         NDArray $output,
@@ -434,7 +516,7 @@ class Backend
             $input,
             $output,
             $begin,$size
-            );    
+            );
     }
 
     public function stack(
@@ -444,7 +526,31 @@ class Backend
         return $this->la->stack(
             $inputs,
             $axis
-            );    
+            );
+    }
+
+    public function repeat(
+        NDArray $inputs,
+        int $repeats
+        ) {
+        if($inputs->ndim()!=2) {
+            throw new InvalidArgumentException('inputs dimension must be 2D');
+        }
+        return $this->la->repeat(
+            $inputs,
+            $repeats
+            );
+    }
+
+    public function reduceSumRepeated(
+        NDArray $inputs
+        ) {
+        if($inputs->ndim()!=3) {
+            throw new InvalidArgumentException('inputs dimension must be 3D');
+        }
+        return $this->la->reduceSumRepeated(
+            $inputs,
+            );
     }
 
     public function oneHot(NDArray $indices, int $numClass) : NDArray
@@ -548,7 +654,7 @@ class Backend
         //$dInputs = $this->la->scal(1/$dOutputs->shape()[0],$dInputs);
         return $dInputs;
     }
-    
+
     public function conv1d(
         object $status,
         NDArray $inputs,
@@ -571,7 +677,7 @@ class Backend
             $data_format
         );
     }
-    
+
     public function dConv1d(
         object $status,
         NDArray $dOutputs,
@@ -624,7 +730,7 @@ class Backend
             $dOutputs
         );
     }
-    
+
     public function conv2d(
         object $status,
         NDArray $inputs,
@@ -647,7 +753,7 @@ class Backend
             $data_format
         );
     }
-    
+
     public function dConv2d(
         object $status,
         NDArray $dOutputs,
@@ -723,7 +829,7 @@ class Backend
             $data_format
         );
     }
-    
+
     public function dConv3d(
         object $status,
         NDArray $dOutputs,
@@ -795,7 +901,7 @@ class Backend
         $filters = array_pop($filterSize);
         $channels = array_pop($filterSize);
         $filterSize = array_values($filterSize);
-        if($data_format == null || 
+        if($data_format == null ||
            $data_format=='channels_last') {
             $channels_first = false;
         } elseif($data_format=='channels_first') {
@@ -824,13 +930,13 @@ class Backend
         for($i=0;$i<$rank;$i++){
             $outShape[] = array_shift($shape);
         }
-        $cols = 
+        $cols =
             $cols->reshape([$batches*array_product($outShape),
             array_product($filterSize)*$channels]);
         $kernel = $kernel->reshape(
             [array_product($filterSize)*$channels,
              $filters]);
-             
+
         if($bias){
             $outputs = $this->batch_gemm(
                 $cols,
@@ -844,7 +950,7 @@ class Backend
                 $kernel
             );
         }
-            
+
         $status->inputsShape = $inputs->shape();
         $status->kernel = $kernel;
         $status->cols = $cols;
@@ -854,12 +960,12 @@ class Backend
         $status->strides = $strides;
         $status->padding = $padding;
         $status->channels_first = $channels_first;
-        
+
         return $outputs->reshape(
             array_merge([$batches],$outShape,[$filters])
         );
     }
-    
+
     protected function doDConv(
         int $rank,
         object $status,
@@ -892,7 +998,7 @@ class Backend
         if($dBias){
             $this->copy($this->sum($dOutputs, $axis=0),$dBias);
         }
-        
+
         $dInputs = $this->zeros($status->inputsShape);
         $this->la->col2im(
             $dCols,
@@ -904,7 +1010,7 @@ class Backend
         );
         return $dInputs;
     }
-    
+
     protected function doPool(
         int $rank,
         object $status,
@@ -924,7 +1030,7 @@ class Backend
         }
         $tmp = $inputs->shape();
         $batches = array_shift($tmp);
-        if($data_format == null || 
+        if($data_format == null ||
            $data_format=='channels_last') {
             $channels_first = false;
             $channels = array_pop($tmp);
@@ -961,10 +1067,10 @@ class Backend
         for($i=0;$i<$rank;$i++){
             $filterSize[] = array_shift($tmp);
         }
-        $cols = 
+        $cols =
             $cols->reshape([$batches*array_product($outShape)*$channels,
         array_product($filterSize)    ]);
-        
+
         if($pool_mode==null ||
             $pool_mode=='max') {
             $outputs = $this->la->reduceMax(
@@ -1030,7 +1136,7 @@ class Backend
                 $axis=1
             );
         }
-        
+
         $dInputs = $this->zeros(
             $status->inputsShape);
         $this->la->col2im(
@@ -1220,7 +1326,7 @@ class Backend
                 $la->reciprocal($la->copy($predicts),$this->epsilon)));
         }
     }
-    
+
     public function rnnGetTimestep(
         NDArray $source,int $step) : NDArray
     {
@@ -1232,7 +1338,7 @@ class Backend
             $source,
             [0,$step],[-1,1]
         );
-        
+
         return $values->reshape([$batch,$feature]);
     }
 
@@ -1251,7 +1357,7 @@ class Backend
         );
         return $dest;
     }
-    
+
     public function rnn(
         $stepFunction,
         NDArray $inputs,
@@ -1281,7 +1387,7 @@ class Backend
         }
         return [$outputs, $states_t, $calcStates];
     }
-    
+
     public function rnnBackward(
         $stepFunction,
         NDArray $dOutputs,

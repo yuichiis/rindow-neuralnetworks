@@ -6,6 +6,7 @@ use Rindow\NeuralNetworks\Layer\Activation;
 use Rindow\NeuralNetworks\Layer\Embedding;
 use Rindow\NeuralNetworks\Layer\Dense;
 use Rindow\NeuralNetworks\Layer\Flatten;
+use Rindow\NeuralNetworks\Layer\RepeatVector;
 use Rindow\NeuralNetworks\Layer\Conv1D;
 use Rindow\NeuralNetworks\Layer\Conv2D;
 use Rindow\NeuralNetworks\Layer\Conv3D;
@@ -47,6 +48,13 @@ class Layers
         return new Flatten($this->backend, $options);
     }
 
+    public function RepeatVector(
+        int $repeats,
+        array $options=null)
+    {
+        return new RepeatVector($this->backend, $repeats, $options);
+    }
+
     public function Conv1D(
         int $filters, $kernel_size, array $options=null)
     {
@@ -56,7 +64,7 @@ class Layers
             $kernel_size,
             $options);
     }
-    
+
     public function Conv2D(
         int $filters, $kernel_size, array $options=null)
     {
@@ -66,7 +74,7 @@ class Layers
             $kernel_size,
             $options);
     }
-    
+
     public function Conv3D(
         int $filters, $kernel_size, array $options=null)
     {
@@ -76,7 +84,7 @@ class Layers
             $kernel_size,
             $options);
     }
-    
+
     public function MaxPooling1D(
         array $options=null)
     {
@@ -134,17 +142,17 @@ class Layers
     {
         return new BatchNormalization($this->backend,$options);
     }
-    
+
     public function Embedding(int $inputDim,int $outputDim, array $options=null)
     {
         return new Embedding($this->backend, $inputDim, $outputDim, $options);
     }
-    
+
     public function SimpleRNN(int $units, array $options=null)
     {
         return new SimpleRNN($this->backend, $units, $options);
     }
-    
+
     public function LSTM(int $units, array $options=null)
     {
         return new LSTM($this->backend, $units, $options);

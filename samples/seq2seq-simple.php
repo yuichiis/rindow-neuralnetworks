@@ -1,12 +1,13 @@
 <?php
 require __DIR__.'/../vendor/autoload.php';
 
-use InvalidArgumentException;
+//use InvalidArgumentException;
 use Rindow\NeuralNetworks\Support\GenericUtils;
 use Interop\Polite\Math\Matrix\NDArray;
 use Rindow\NeuralNetworks\Layer\AbstractRNNLayer;
 use Rindow\NeuralNetworks\Model\AbstractModel;
 use Rindow\Math\Matrix\MatrixOperator;
+use Rindow\Math\Plot\Plot;
 use Rindow\NeuralNetworks\Backend\RindowBlas\Backend;
 use Rindow\NeuralNetworks\Builder\NeuralNetworks;
 
@@ -53,7 +54,6 @@ class Encoder extends AbstractRNNLayer
             $this->rnn = $builder->layers()->GRU(
                 $recurrent_units,[
                     'return_state'=>true,
-                    'return_sequences'=>true,
                 ]);
         } else {
             throw new InvalidArgumentException('unknown rnn type: '.$rnn);
@@ -173,7 +173,7 @@ class Decoder extends AbstractRNNLayer
             'word_vec_size'=>$this->wordVecSize,
             'recurrent_units'=>$this->recurrentUnits,
             'dense_units'=>$this->denseUnits,
-            ];
+        ];
     }
 
     protected function call(NDArray $inputs,bool $training, array $initalStates=null, array $options=null)
@@ -398,26 +398,31 @@ class DecHexDataset
     }
 
 }
-#$rnn = 'simple';
-#$rnn = 'lstm';
+//$rnn = 'simple';
+//$rnn = 'lstm';
 $rnn = 'gru';
 $corp_size = 10000;
 $test_size = 100;
 $mo = new MatrixOperator();
 $backend = new Backend($mo);
 $nn = new NeuralNetworks($mo,$backend);
+$plt = new Plot(null,$mo);
 $dataset = new DecHexDataset($mo);
 [$dec,$hex]=$dataset->loadData($corp_size);
 $train_inputs = $dec[[0,$corp_size-$test_size-1]];
 $train_target = $hex[[0,$corp_size-$test_size-1]];
-$test_input = $dec[[$corp_size-$test_size,$corp_size-1]];
+$test_inputs = $dec[[$corp_size-$test_size,$corp_size-1]];
 $test_target = $hex[[$corp_size-$test_size,$corp_size-1]];
 $input_length = $train_inputs->shape()[1];
 [$iv,$tv,$input_dic,$target_dic]=$dataset->dicts();
 $input_vocab_size = count($input_dic);
 $target_vocab_size = count($target_dic);
 
-echo "[".$dataset->seq2str($train_inputs[0],$dataset->vocab_input)."]=>[".$dataset->seq2str($train_target[0],$dataset->vocab_target)."]\n";
+$batch_size=128;
+echo "rnn type=$rnn\n";
+echo "train,test: ".$train_inputs->shape()[0].",".$test_inputs->shape()[0]."\n";
+echo "[".$dataset->seq2str($train_inputs[0],$dataset->vocab_input)."]=>["
+        .$dataset->seq2str($train_target[0],$dataset->vocab_target)."]\n";
 
 $seq2seq = new Seq2seq($backend,$nn,[
     'rnn'=>$rnn,
@@ -434,7 +439,7 @@ $seq2seq->compile([
     'optimizer'=>$nn->optimizers()->Adam(),
     ]);
 $history = $seq2seq->fit($train_inputs,$train_target,
-    ['epochs'=>5,'batch_size'=>128,'validation_data'=>[$test_input,$test_target]]);
+    ['epochs'=>5,'batch_size'=>$batch_size,'validation_data'=>[$test_inputs,$test_target]]);
 
 $samples = ['10','255','1024'];
 foreach ($samples as $value) {
@@ -442,3 +447,11 @@ foreach ($samples as $value) {
         $seq2seq,$value);
     echo "[$value]=>[$target]\n";
 }
+
+$plt->plot($mo->array($history['accuracy']),null,null,'accuracy');
+$plt->plot($mo->array($history['val_accuracy']),null,null,'val_accuracy');
+$plt->plot($mo->array($history['loss']),null,null,'loss');
+$plt->plot($mo->array($history['val_loss']),null,null,'val_loss');
+$plt->legend();
+$plt->title('seq2seq-basic');
+$plt->show();

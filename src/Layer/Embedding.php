@@ -24,7 +24,7 @@ class Embedding extends AbstractLayer implements Layer
     {
         extract($this->extractArgs([
             'input_length'=>null,
-            'kernel_initializer'=>'sigmoid_normal',
+            'kernel_initializer'=>'random_uniform',
         ],$options));
         $this->backend = $K = $backend;
         if($input_length!=null){
@@ -53,7 +53,10 @@ class Embedding extends AbstractLayer implements Layer
         if($sampleWeights) {
             $this->kernel = $sampleWeights[0];
         } else {
-            $this->kernel = $kernelInitializer([$this->inputDim,$this->outputDim]);
+            $this->kernel = $kernelInitializer(
+                [$this->inputDim,$this->outputDim],
+                [$this->inputDim,$this->outputDim]
+            );
         }
         $this->dKernel = $K->zerosLike($this->kernel);
         $this->outputShape = array_merge($inputShape,[$this->outputDim]);

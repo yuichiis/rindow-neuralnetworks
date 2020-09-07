@@ -34,7 +34,7 @@ abstract class AbstractModel implements Model
     protected $grads = [];
     protected $built = false;
     protected $shapeInspection=true;
- 
+
     public function __construct($backend,$builder,$hda)
     {
         $this->backend = $backend;
@@ -68,7 +68,7 @@ abstract class AbstractModel implements Model
     {
         return $this->grads;
     }
-    
+
     public function layers() : array
     {
         return $this->layers;
@@ -78,12 +78,12 @@ abstract class AbstractModel implements Model
     {
         return $this->lastLayer;
     }
-    
+
     protected function setLastLayer($lastLayer)
     {
         $this->lastLayer = $lastLayer;
     }
-    
+
     public function compile(array $options=null) : void
     {
         extract($this->extractArgs([
@@ -107,7 +107,8 @@ abstract class AbstractModel implements Model
             throw new InvalidArgumentException('no layer');
         }
         $activation = $lastLayer->getActivation();
-        if($loss=='SparseCategoricalCrossEntropy') {
+        if($loss=='SparseCategoricalCrossEntropy'||
+            $loss=='sparse_categorical_crossentropy') {
             $loss = $this->builder->losses()->SparseCategoricalCrossEntropy();
         }
         if($loss instanceof SparseCategoricalCrossEntropy) {
@@ -156,7 +157,7 @@ abstract class AbstractModel implements Model
         }
         $this->built = true;
     }
-    
+
     protected function addWeights($weights)
     {
         if($weights instanceof LayerBase){
@@ -167,7 +168,7 @@ abstract class AbstractModel implements Model
             throw new InvalidArgumentException('invalid type to add weights');
         }
     }
-    
+
     protected function registerLayer(LayerBase $layer,array $inputShape=null) : array
     {
         $this->layers[] = $layer;
@@ -175,7 +176,7 @@ abstract class AbstractModel implements Model
         $this->addWeights($layer);
         return $outputShape;
     }
-    
+
     public function setShapeInspection(bool $enable)
     {
         if($this->shapeInspection==$enable)
@@ -385,7 +386,7 @@ abstract class AbstractModel implements Model
     {
         $layerNames = [];
         $layers = [];
-        
+
         foreach ($this->layers as $layer) {
             $name = $layer->getName();
             $layerNames[] = $name;
@@ -400,7 +401,7 @@ abstract class AbstractModel implements Model
     public function toJson() : string
     {
         [$layerNames,$layers] = $this->generateLayersConfig();
-        
+
         $modelConfig = [
             'model' => [
                 'class' => get_class($this),

@@ -26,7 +26,7 @@ abstract class AbstractLayerBase implements LayerBase
     {
         return $this->activation;
     }
-    
+
     public function setActivation(
         $activation) : void
     {
@@ -109,7 +109,7 @@ abstract class AbstractLayerBase implements LayerBase
             throw new InvalidArgumentException('invalid type to add weights');
         }
     }
-    
+
     public function getParams() : array
     {
         return $this->params;
@@ -134,7 +134,7 @@ abstract class AbstractLayerBase implements LayerBase
     {
         return $this->name;
     }
-    
+
     public function setShapeInspection(bool $enable)
     {
         $this->shapeInspection = $enable;
@@ -195,7 +195,7 @@ abstract class AbstractLayerBase implements LayerBase
             }
         }
     }
-    
+
     protected function registerLayer(LayerBase $layer,array $inputShape=null) : array
     {
         $this->layers[] = $layer;

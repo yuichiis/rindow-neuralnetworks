@@ -4,7 +4,7 @@ namespace Rindow\NeuralNetworks\Model;
 use InvalidArgumentException;
 use UnexpectedValueException;
 use LogicException;
-use Rindow\NeuralNetworks\Layer\Layer;
+use Rindow\NeuralNetworks\Layer\LayerBase;
 use Interop\Polite\Math\Matrix\NDArray;
 
 class Sequential extends AbstractModel
@@ -21,7 +21,7 @@ class Sequential extends AbstractModel
 
     public function add($layer) : void
     {
-        if(!($layer instanceof Layer)) {
+        if(!($layer instanceof LayerBase)) {
             throw new InvalidArgumentException('invalid Layer');
         }
         $this->layers[] = $layer;
