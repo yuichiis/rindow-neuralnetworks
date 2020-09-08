@@ -133,19 +133,6 @@ class Backend
 
     public function orthogonal(array $shape,$nodeNum=null)
     {
-        
-        num_rows = 1
-        for dim in shape[:-1]:
-            num_rows *= dim
-        num_cols = shape[-1]
-        flat_shape = (num_rows, num_cols)
-        rng = np.random
-        if self.seed is not None:
-            rng = np.random.RandomState(self.seed)
-            self.seed += 1
-        a = rng.normal(0.0, 1.0, flat_shape)
-        u, _, v = np.linalg.svd(a, full_matrices=False)
-
         $tmpShape = $shape;
         $num_cols = array_pop($tmpShape);
         $num_rows = (int)array_product($tmoShape);
