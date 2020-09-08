@@ -13,7 +13,7 @@ class Backend
         'he_normal'         => 'he_normal',
         'random_uniform'    => 'random_uniform',
         'random_normal'     => 'random_normal',
-        'orthogonal'        => 'orthogonal'
+        'orthogonal'        => 'orthogonal',
         'zeros'             => 'zeros',
         'ones'              => 'ones',
     ];
