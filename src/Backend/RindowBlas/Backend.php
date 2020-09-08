@@ -561,7 +561,7 @@ class Backend
             throw new InvalidArgumentException('inputs dimension must be 3D');
         }
         return $this->la->reduceSumRepeated(
-            $inputs,
+            $inputs
             );
     }
 
