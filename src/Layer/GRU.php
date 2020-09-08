@@ -36,7 +36,7 @@ class GRU extends AbstractRNNLayer
             'recurrent_activation'=>'sigmoid',
             'use_bias'=>true,
             'kernel_initializer'=>'glorot_uniform',
-            'recurrent_initializer'=>'random_normal',
+            'recurrent_initializer'=>'orthogonal',
             'bias_initializer'=>'zeros',
             'return_sequences'=>false,
             'return_state'=>false,
