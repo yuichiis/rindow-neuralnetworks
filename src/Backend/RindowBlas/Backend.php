@@ -138,7 +138,7 @@ class Backend
         $num_cols = array_pop($tmpShape);
         $num_rows = (int)array_product($tmpShape);
         $flat_shape = [$num_rows,$num_cols];
-        $a = $this->la()->randomNormal(
+        $a = $this->la->randomNormal(
             $flat_shape);
         [$u,$s,$vt] = $this->la()->svd($a);
         # Pick the one with the correct shape.
