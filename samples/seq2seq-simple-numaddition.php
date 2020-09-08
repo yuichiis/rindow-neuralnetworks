@@ -199,12 +199,15 @@ $model = $nn->models()->Sequential([
     ),
 ]);
 
+echo "Compile model...\n";
+
 $model->compile([
     'loss'=>'sparse_categorical_crossentropy',
     'optimizer'=>$nn->optimizers()->Adam(),
     ]);
 
 # Train the model
+echo "Ttain model...\n";
 
 $epochs = 30;
 $batch_size = 32;
