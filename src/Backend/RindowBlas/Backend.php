@@ -110,7 +110,7 @@ class Backend
                 $stddev = $nodeNum['stddev'];
             }
         }
-        $kernel = $this->la->randomUniform($shape,$mean,$stddev);
+        $kernel = $this->la->randomNormal($shape,$mean,$stddev);
         return $kernel;
     }
 
@@ -139,13 +139,15 @@ class Backend
             num_rows *= dim
         num_cols = shape[-1]
         flat_shape = (num_rows, num_cols)
-        $num_cols = array_pop($shape);
-        $num_rows = (int)array_product($shape);
         rng = np.random
         if self.seed is not None:
             rng = np.random.RandomState(self.seed)
             self.seed += 1
         a = rng.normal(0.0, 1.0, flat_shape)
+
+        $num_cols = array_pop($shape);
+        $num_rows = (int)array_product($shape);
+        $a = $this->la()->randomNormal()
         u, _, v = np.linalg.svd(a, full_matrices=False)
         # Pick the one with the correct shape.
         q = u if u.shape == flat_shape else v
