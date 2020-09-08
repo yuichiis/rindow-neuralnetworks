@@ -144,15 +144,17 @@ class Backend
             rng = np.random.RandomState(self.seed)
             self.seed += 1
         a = rng.normal(0.0, 1.0, flat_shape)
-
-        $num_cols = array_pop($shape);
-        $num_rows = (int)array_product($shape);
-        $a = $this->la()->randomNormal(
-            [$num_rows,$num_cols]);
-        [$u,$s,$vt] = $this->la()->svd($a);
         u, _, v = np.linalg.svd(a, full_matrices=False)
+
+        $tmpShape = $shape;
+        $num_cols = array_pop($tmpShape);
+        $num_rows = (int)array_product($tmoShape);
+        $flat_shape = [$num_rows,$num_cols];
+        $a = $this->la()->randomNormal(
+            $flat_shape);
+        [$u,$s,$vt] = $this->la()->svd($a);
         # Pick the one with the correct shape.
-        q = u if u.shape == flat_shape else v
+        q = ($u->shape()==$flat_shape)?$u: $v;
         q = q.reshape(shape)
         return self.gain * q[:shape[0], :shape[1]]
     }
