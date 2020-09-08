@@ -140,7 +140,7 @@ class Backend
         $flat_shape = [$num_rows,$num_cols];
         $a = $this->la->randomNormal(
             $flat_shape,0.0,1.0);
-        [$u,$s,$vt] = $this->la()->svd($a);
+        [$u,$s,$vt] = $this->la->svd($a);
         # Pick the one with the correct shape.
         $q = ($u->shape()==$flat_shape)?$u: $v;
         $q = $q->reshape($shape);
