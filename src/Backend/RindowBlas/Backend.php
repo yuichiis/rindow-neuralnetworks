@@ -147,7 +147,8 @@ class Backend
 
         $num_cols = array_pop($shape);
         $num_rows = (int)array_product($shape);
-        $a = $this->la()->randomNormal()
+        $a = $this->la()->randomNormal(
+            [$num_rows,$num_cols])
         u, _, v = np.linalg.svd(a, full_matrices=False)
         # Pick the one with the correct shape.
         q = u if u.shape == flat_shape else v
