@@ -154,8 +154,8 @@ class Backend
             $flat_shape);
         [$u,$s,$vt] = $this->la()->svd($a);
         # Pick the one with the correct shape.
-        q = ($u->shape()==$flat_shape)?$u: $v;
-        q = q.reshape(shape)
+        $q = ($u->shape()==$flat_shape)?$u: $v;
+        $q = $q->reshape($shape);
         return self.gain * q[:shape[0], :shape[1]]
     }
 
