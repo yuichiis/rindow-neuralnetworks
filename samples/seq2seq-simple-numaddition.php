@@ -196,7 +196,7 @@ $model = $nn->models()->Sequential([
     $nn->layers()->Dense(
         count($target_dic),
         ['activation'=>'softmax'],
-    )
+    ),
 ]);
 
 $model->compile([
