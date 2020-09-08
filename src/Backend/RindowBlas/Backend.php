@@ -136,7 +136,7 @@ class Backend
     {
         $tmpShape = $shape;
         $num_cols = array_pop($tmpShape);
-        $num_rows = (int)array_product($tmoShape);
+        $num_rows = (int)array_product($tmpShape);
         $flat_shape = [$num_rows,$num_cols];
         $a = $this->la()->randomNormal(
             $flat_shape);
