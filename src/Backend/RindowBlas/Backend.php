@@ -144,7 +144,7 @@ class Backend
         # Pick the one with the correct shape.
         $q = ($u->shape()==$flat_shape)?$u: $v;
         $q = $q->reshape($shape);
-        return $this->la()->slice($q,[0,0], [$shape[0],$shape[1]]);
+        return $this->la->slice($q,[0,0], [$shape[0],$shape[1]]);
     }
 
 
