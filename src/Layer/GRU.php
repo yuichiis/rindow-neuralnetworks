@@ -20,6 +20,7 @@ class GRU extends AbstractRNNLayer
     protected $returnState;
     protected $goBackwards;
     protected $statefull;
+    protected $resetAfter;
     protected $cell;
     protected $timesteps;
     protected $feature;
@@ -42,6 +43,7 @@ class GRU extends AbstractRNNLayer
             'return_state'=>false,
             'go_backwards'=>false,
             'stateful'=>false,
+            'reset_after'=>true,
             //'kernel_regularizer'=>null, 'bias_regularizer'=>null,
             //'activity_regularizer'=null,
             //'kernel_constraint'=null, 'bias_constraint'=null,
@@ -61,6 +63,7 @@ class GRU extends AbstractRNNLayer
         $this->returnState = $return_state;
         $this->goBackwards = $go_backwards;
         $this->stateful = $stateful;
+        $this->resetAfter = $reset_after;
         $this->cell = new GRUCell(
             $this->backend,
             $this->units,
@@ -71,6 +74,7 @@ class GRU extends AbstractRNNLayer
             'kernel_initializer'=>$this->kernelInitializerName,
             'recurrent_initializer'=>$this->recurrentInitializerName,
             'bias_initializer'=>$this->biasInitializerName,
+            'reset_after'=>$this->resetAfter,
             ]);
     }
 
@@ -135,6 +139,7 @@ class GRU extends AbstractRNNLayer
                 'return_state'=>$this->returnState,
                 'go_backwards'=>$this->goBackwards,
                 'stateful'=>$this->stateful,
+                'reset_after'=>$this->resetAfter,
             ]
         ];
     }

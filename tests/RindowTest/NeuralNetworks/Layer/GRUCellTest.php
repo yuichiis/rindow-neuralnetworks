@@ -27,6 +27,38 @@ class Test extends TestCase
         $params = $layer->getParams();
         $this->assertCount(3,$params);
         $this->assertEquals([3,12],$params[0]->shape());
+        $this->assertEquals([4,12],$params[1]->shape());
+        $this->assertEquals([2,12],$params[2]->shape());
+
+        $grads = $layer->getGrads();
+        $this->assertCount(3,$grads);
+        $this->assertEquals([3,12],$grads[0]->shape());
+        $this->assertEquals([4,12],$grads[1]->shape());
+        $this->assertEquals([2,12],$grads[2]->shape());
+        $this->assertNull(
+            $layer->getActivation()
+            );
+
+        //$this->assertEquals([3],$layer->inputShape());
+        $this->assertEquals([4],$layer->outputShape());
+    }
+
+    public function testInitializeWithoutResetAfter()
+    {
+        $mo = new MatrixOperator();
+        $backend = new Backend($mo);
+        $layer = new GRUCell(
+            $backend,
+            $units=4,
+            [
+                'input_shape'=>[3],
+                'reset_after'=>false,
+            ]);
+
+        $layer->build();
+        $params = $layer->getParams();
+        $this->assertCount(3,$params);
+        $this->assertEquals([3,12],$params[0]->shape());
         $this->assertEquals([12,4],$params[1]->shape());
         $this->assertEquals([12],$params[2]->shape());
 
@@ -88,8 +120,8 @@ class Test extends TestCase
 
         $layer->build();
         $grads = $layer->getGrads();
-        
-        
+
+
         //
         // forward
         //
@@ -101,7 +133,7 @@ class Test extends TestCase
         $copyStates = [
             $mo->copy($states[0])];
         [$outputs,$nextStates] = $layer->forward($inputs, $states,$training=true,$object);
-        // 
+        //
         $this->assertEquals([2,4],$outputs->shape());
         $this->assertCount(1,$nextStates);
         $this->assertEquals([2,4],$nextStates[0]->shape());
@@ -135,12 +167,12 @@ class Test extends TestCase
         $this->assertNotEquals(
             $mo->zerosLike($grads[2])->toArray(),
             $grads[2]->toArray());
-        
+
         $this->assertEquals($copydOutputs->toArray(),$dOutputs->toArray());
         $this->assertEquals($copydStates[0]->toArray(),$dStates[0]->toArray());
     }
 
-    public function testOutputsAndGrads()
+    public function testOutputsAndGradsWithResetAfter()
     {
         $mo = new MatrixOperator();
         $backend = new Backend($mo);
@@ -156,15 +188,15 @@ class Test extends TestCase
             ]);
 
         $kernel = $mo->ones([3,4*3]);
-        $recurrent = $mo->ones([4*3,4]);
-        $bias = $mo->ones([4*3]);
+        $recurrent = $mo->ones([4,4*3]);
+        $bias = $mo->ones([2,4*3]);
         $layer->build(null,
             ['sampleWeights'=>[$kernel,$recurrent,$bias]]
         );
         $this->assertNull($layer->getActivation());
         $grads = $layer->getGrads();
-        
-        
+
+
         //
         // forward
         //
@@ -173,7 +205,104 @@ class Test extends TestCase
         $states = [$mo->ones([2,4])];
         $object = new \stdClass();
         [$outputs,$nextStates] = $layer->forward($inputs, $states,$training=true,$object);
-        // 
+        //
+        $this->assertEquals([
+            [73,73,73,73],
+            [73,73,73,73],
+            ],$outputs->toArray());
+        $this->assertEquals([
+            [73,73,73,73],
+            [73,73,73,73],
+            ],$nextStates[0]->toArray());
+        //
+        // backword
+        //
+        // 2 batch
+        $dOutputs =
+            $mo->ones([2,4]);
+        $dStates =
+            [$mo->ones([2,4])];
+
+        [$dInputs,$dPrevStates] = $layer->backward($dOutputs,$dStates,$object);
+        // 2 batch
+        $this->assertEquals([
+            [3376,3376,3376],
+            [3376,3376,3376],
+            ],$dInputs->toArray());
+        $this->assertEquals([
+            [3360,3360,3360,3360],
+            [3360,3360,3360,3360],
+            ],$dPrevStates[0]->toArray());
+        $this->assertEquals([
+            [32,32,32,32,
+             1620,1620,1620,1620,
+             36,36,36,36],
+             [32,32,32,32,
+              1620,1620,1620,1620,
+              36,36,36,36],
+              [32,32,32,32,
+               1620,1620,1620,1620,
+               36,36,36,36],
+            ],$grads[0]->toArray());
+        $this->assertEquals([
+            [32,32,32,32,
+             1620,1620,1620,1620,
+             36,36,36,36],
+            [32,32,32,32,
+             1620,1620,1620,1620,
+             36,36,36,36],
+            [32,32,32,32,
+             1620,1620,1620,1620,
+             36,36,36,36],
+            [32,32,32,32,
+             1620,1620,1620,1620,
+             36,36,36,36],
+            ],$grads[1]->toArray());
+        $this->assertEquals([
+            [32,32,32,32,
+             1620,1620,1620,1620,
+             36,36,36,36],
+            [32,32,32,32,
+             1620,1620,1620,1620,
+             36,36,36,36],
+         ],$grads[2]->toArray());
+    }
+
+    public function testOutputsAndGradsWithoutResetAfter()
+    {
+        $mo = new MatrixOperator();
+        $backend = new Backend($mo);
+        $fn = $backend;
+
+        $layer = new GRUCell(
+            $backend,
+            $units=4,
+            [
+                'input_shape'=>[3],
+                'activation'=>null,
+                'recurrent_activation'=>null,
+                'reset_after'=>false,
+            ]);
+
+        $kernel = $mo->ones([3,4*3]);
+        $recurrent = $mo->ones([4*3,4]);
+        $bias = $mo->ones([4*3]);
+        $layer->build(null,
+            ['sampleWeights'=>[$kernel,$recurrent,$bias]]
+        );
+        $this->assertNull($layer->getActivation());
+        $grads = $layer->getGrads();
+
+
+        //
+        // forward
+        //
+        //  2 batch
+        $inputs = $mo->ones([2,3]);
+        $states = [$mo->ones([2,4])];
+        $object = new \stdClass();
+        [$outputs,$nextStates] = $layer->forward($inputs, $states,$training=true,$object);
+        //
         $this->assertEquals([
             [281,281,281,281],
             [281,281,281,281],

@@ -187,11 +187,13 @@ $model = $nn->models()->Sequential([
         ['input_length'=>$input_length]
     ),
     # Encoder
-    $nn->layers()->GRU(128),
+    //$nn->layers()->GRU(128),
+    $nn->layers()->LSTM(128),
     # Expand to answer length and peeking hidden states
     $nn->layers()->RepeatVector($output_length),
     # Decoder
-    $nn->layers()->GRU(128, ['return_sequences'=>true]),
+    //$nn->layers()->GRU(128, ['return_sequences'=>true]),
+    $nn->layers()->LSTM(128, ['return_sequences'=>true]),
     # Output
     $nn->layers()->Dense(
         count($target_dic),
@@ -203,11 +205,16 @@ echo "Compile model...\n";
 
 $model->compile([
     'loss'=>'sparse_categorical_crossentropy',
-    'optimizer'=>$nn->optimizers()->Adam(),
+    #'optimizer'=>$nn->optimizers()->Adam(['lr'=>0.0025]),
+    'optimizer'=>'sgd',
     ]);
+$model->summary();
+foreach($model->weights() as $w) {
+    echo '('.implode(',',$w->shape()).'):'.$mo->la()->amax($w)."\n";
+}
 
 # Train the model
-echo "Ttain model...\n";
+echo "Train model...\n";
 
 $epochs = 30;
 $batch_size = 32;

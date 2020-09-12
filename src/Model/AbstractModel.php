@@ -93,8 +93,13 @@ abstract class AbstractModel implements Model
         ],$options));
 
         // resolve optimizer
-        if($optimizer=='SGD') {
+        if(is_string($optimizer)) {
+            $optimizer = strtolower($optimizer);
+        }
+        if($optimizer=='sgd') {
             $optimizer = $this->builder->optimizers()->Sgd();
+        } elseif($optimizer=='adam') {
+            $optimizer = $this->builder->optimizers()->Adam();
         }
         if(!($optimizer instanceof Optimizer)) {
             throw new InvalidArgumentException('invalid optimizer');
@@ -107,7 +112,10 @@ abstract class AbstractModel implements Model
             throw new InvalidArgumentException('no layer');
         }
         $activation = $lastLayer->getActivation();
-        if($loss=='SparseCategoricalCrossEntropy'||
+        if(is_string($loss)) {
+            $loss = strtolower($loss);
+        }
+        if($loss=='sparsecategoricalcrossentropy'||
             $loss=='sparse_categorical_crossentropy') {
             $loss = $this->builder->losses()->SparseCategoricalCrossEntropy();
         }

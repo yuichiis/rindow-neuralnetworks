@@ -35,7 +35,7 @@ class LSTMCell extends AbstractRNNCell
             'recurrent_activation'=>'sigmoid',
             'use_bias'=>true,
             'kernel_initializer'=>'glorot_uniform',
-            'recurrent_initializer'=>'random_normal',
+            'recurrent_initializer'=>'orthogonal',
             'bias_initializer'=>'zeros',
             'unit_forget_bias'=>true,
             //'kernel_regularizer'=>null, 'bias_regularizer'=>null,
@@ -225,13 +225,18 @@ class LSTMCell extends AbstractRNNCell
                 array_product($shape)
             ]);
 
-        $K->gemm($calcState->prev_h, $dOutputs,
-            1.0,1.0,$this->dRecurrentKernel,true,false);
-        $K->gemm($calcState->inputs, $dOutputs,1.0,1.0,$this->dKernel,true,false);
-        $K->copy($K->sum($dOutputs, $axis=0),$this->dBias);
+        $K->gemm($calcState->prev_h, $dOutputs,1.0,1.0,
+            $this->dRecurrentKernel,true,false);
+        $K->gemm($calcState->inputs, $dOutputs,1.0,1.0,
+            $this->dKernel,true,false);
+        if($this->dBias) {
+            $K->update_add($this->dBias,$K->sum($dOutputs, $axis=0));
+        }
 
-        $dInputs = $K->gemm($dOutputs, $this->kernel,1.0,0.0,null,false,true);
-        $dPrev_h = $K->gemm($dOutputs, $this->recurrentKernel,1.0,0.0,null,false,true);
+        $dInputs = $K->gemm($dOutputs, $this->kernel,1.0,0.0,
+            null,false,true);
+        $dPrev_h = $K->gemm($dOutputs, $this->recurrentKernel,1.0,0.0,
+            null,false,true);
 
         return [$dInputs,[$dPrev_h, $dPrev_c]];
     }

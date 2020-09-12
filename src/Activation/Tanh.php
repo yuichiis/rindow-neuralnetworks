@@ -19,7 +19,8 @@ class Tanh extends AbstractActivation
     {
         $K = $this->backend;
         // dx = dy * (1 - y^2)
-        $dInputs = $K->mul($dOutputs,$K->increment($K->scale(-1,$K->square($this->outputs)),1));
+        $dInputs = $K->mul($dOutputs,$K->increment(
+            $K->scale(-1,$K->square($this->outputs)),1));
         return $dInputs;
     }
 }

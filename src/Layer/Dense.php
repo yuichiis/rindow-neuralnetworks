@@ -147,7 +147,8 @@ class Dense extends AbstractLayer implements Layer
 
         // update params
         $K->gemm($this->inputs, $dOutputs,1.0,0.0,$this->dKernel,true,false);
-        $K->copy($K->sum($dOutputs, $axis=0),$this->dBias);
+        if($this->dBias)
+            $K->copy($K->sum($dOutputs, $axis=0),$this->dBias);
 
         return $dInputs->reshape($this->origInputsShape);
     }

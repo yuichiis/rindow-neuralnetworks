@@ -13,6 +13,7 @@ class GRUCell extends AbstractRNNCell
     protected $useBias;
     protected $kernelInitializer;
     protected $biasInitializer;
+    protected $resetAfter;
     protected $ac;
     protected $ac_i;
     protected $ac_f;
@@ -22,9 +23,13 @@ class GRUCell extends AbstractRNNCell
     protected $kernel;
     protected $recurrentKernel;
     protected $bias;
+    protected $inputBias;
+    protected $recurentBias;
     protected $dKernel;
     protected $dRecurrentKernel;
     protected $dBias;
+    protected $dInputBias;
+    protected $dRecurentBias;
     protected $inputs;
 
     public function __construct($backend,int $units, array $options=null)
@@ -35,9 +40,9 @@ class GRUCell extends AbstractRNNCell
             'recurrent_activation'=>'sigmoid',
             'use_bias'=>true,
             'kernel_initializer'=>'glorot_uniform',
-            'recurrent_initializer'=>'random_normal',
+            'recurrent_initializer'=>'orthogonal',
             'bias_initializer'=>'zeros',
-            'unit_forget_bias'=>true,
+            'reset_after'=>true,
             //'kernel_regularizer'=>null, 'bias_regularizer'=>null,
             //'activity_regularizer'=null,
             //'kernel_constraint'=null, 'bias_constraint'=null,
@@ -57,6 +62,7 @@ class GRUCell extends AbstractRNNCell
         $this->kernelInitializerName = $kernel_initializer;
         $this->recurrentInitializerName = $recurrent_initializer;
         $this->biasInitializerName = $bias_initializer;
+        $this->resetAfter = $reset_after;
     }
 
     public function build(array $inputShape=null, array $options=null) : array
@@ -79,29 +85,58 @@ class GRUCell extends AbstractRNNCell
         if($sampleWeights) {
             $this->kernel = $sampleWeights[0];
             $this->recurrentKernel = $sampleWeights[1];
-            $this->bias = $sampleWeights[2];
+            if($this->useBias) {
+                $this->bias = $sampleWeights[2];
+                if($this->resetAfter) {
+                    $this->inputBias = $this->bias[0];
+                    $this->recurrentBias = $this->bias[1];
+                } else {
+                    $this->inputBias = $this->bias;
+                }
+            }
         } else {
             $this->kernel = $kernelInitializer(
                 [$inputDim,$this->units*3],
-                [$inputDim,$this->units]);
-            $this->recurrentKernel = $recurrentInitializer(
-                [$this->units*3,$this->units],
-                [$this->units,$this->units]);
+                [$inputDim,$this->units*3]);
+            if($this->resetAfter) {
+                $this->recurrentKernel = $recurrentInitializer(
+                    [$this->units,$this->units*3],
+                    [$this->units,$this->units*3]);
+            } else {
+                $this->recurrentKernel = $recurrentInitializer(
+                    [$this->units*3,$this->units],
+                    [$this->units*3,$this->units]);
+            }
             if($this->useBias) {
-                $this->bias = $biasInitializer([$this->units*3]);
+                if($this->resetAfter) {
+                    $this->bias = $biasInitializer([2,$this->units*3]);
+                    $this->inputBias = $this->bias[0];
+                    $this->recurrentBias = $this->bias[1];
+                } else {
+                    $this->bias = $biasInitializer([$this->units*3]);
+                    $this->inputBias = $this->bias;
+                }
             }
         }
         $this->dKernel = $K->zerosLike($this->kernel);
         $this->dRecurrentKernel = $K->zerosLike($this->recurrentKernel);
         if($this->bias) {
             $this->dBias = $K->zerosLike($this->bias);
+            if($this->resetAfter) {
+                $this->dInputBias = $this->dBias[0];
+                $this->dRecurrentBias = $this->dBias[1];
+            } else {
+                $this->dInputBias = $this->dBias;
+            }
         }
-        $this->r_kernel_z = $this->recurrentKernel[[0,$this->units-1]];
-        $this->r_kernel_r = $this->recurrentKernel[[$this->units,$this->units*2-1]];
-        $this->r_kernel_hh = $this->recurrentKernel[[$this->units*2,$this->units*3-1]];
-        $this->dR_kernel_z = $this->dRecurrentKernel[[0,$this->units-1]];
-        $this->dR_kernel_r = $this->dRecurrentKernel[[$this->units,$this->units*2-1]];
-        $this->dR_kernel_hh = $this->dRecurrentKernel[[$this->units*2,$this->units*3-1]];
+        if(!$this->resetAfter) {
+            $this->r_kernel_z = $this->recurrentKernel[[0,$this->units-1]];
+            $this->r_kernel_r = $this->recurrentKernel[[$this->units,$this->units*2-1]];
+            $this->r_kernel_hh = $this->recurrentKernel[[$this->units*2,$this->units*3-1]];
+            $this->dR_kernel_z = $this->dRecurrentKernel[[0,$this->units-1]];
+            $this->dR_kernel_r = $this->dRecurrentKernel[[$this->units,$this->units*2-1]];
+            $this->dR_kernel_hh = $this->dRecurrentKernel[[$this->units*2,$this->units*3-1]];
+        }
         array_push($shape,$this->units);
         $this->outputShape = $shape;
         return $this->outputShape;
@@ -147,10 +182,12 @@ class GRUCell extends AbstractRNNCell
         $prev_h = $states[0];
 
         if($this->bias){
-            $gateOuts = $K->batch_gemm($inputs, $this->kernel,1.0,1.0,$this->bias);
+            $gateOuts = $K->batch_gemm($inputs, $this->kernel,
+                1.0,1.0,$this->inputBias);
         } else {
             $gateOuts = $K->gemm($inputs, $this->kernel);
         }
+
         $x_z = $K->slice($gateOuts,
             [0,0],[-1,$this->units]);
         $x_r = $K->slice($gateOuts,
@@ -158,18 +195,45 @@ class GRUCell extends AbstractRNNCell
         $x_hh = $K->slice($gateOuts,
             [0,$this->units*2],[-1,$this->units]);
 
-        $x_z = $K->gemm($prev_h, $this->r_kernel_z,1.0,1.0,$x_z);
-        $x_r = $K->gemm($prev_h, $this->r_kernel_r,1.0,1.0,$x_r);
-        $x_hh = $K->gemm($K->mul($x_r,$prev_h), $this->r_kernel_hh,1.0,1.0,$x_hh);
+        if($this->resetAfter) {
+            if($this->bias) {
+                $internalOutput = $K->batch_gemm($prev_h, $this->recurrentKernel,
+                    1.0,1.0, $this->recurrentBias);
+            } else {
+                $internalOutput = $K->gemm($prev_h, $this->recurrentKernel);
+            }
 
-        if($this->ac_z){
-            $x_z = $this->ac_z->call($x_z,$training);
-            $x_r = $this->ac_r->call($x_r,$training);
-        }
-        if($this->ac_hh){
-            $x_hh = $this->ac_hh->call($x_hh,$training);
-        }
+            $internal_z = $K->slice($internalOutput,
+                [0,0],[-1,$this->units]);
+            $internal_r = $K->slice($internalOutput,
+                [0,$this->units],[-1,$this->units]);
+            $internal_hh = $K->slice($internalOutput,
+                [0,$this->units*2],[-1,$this->units]);
 
+            $K->update_add($x_z,$internal_z);
+            $K->update_add($x_r,$internal_r);
+            if($this->ac_z){
+                $x_z = $this->ac_z->call($x_z,$training);
+                $x_r = $this->ac_r->call($x_r,$training);
+            }
+            $internal_hh = $K->mul($x_r,$internal_hh);
+            $K->update_add($x_hh,$internal_hh);
+            if($this->ac_hh){
+                $x_hh = $this->ac_hh->call($x_hh,$training);
+            }
+        } else {
+            $x_z = $K->gemm($prev_h, $this->r_kernel_z,1.0,1.0,$x_z);
+            $x_r = $K->gemm($prev_h, $this->r_kernel_r,1.0,1.0,$x_r);
+            if($this->ac_z){
+                $x_z = $this->ac_z->call($x_z,$training);
+                $x_r = $this->ac_r->call($x_r,$training);
+            }
+            $x_r_prev_r = $K->mul($x_r,$prev_h);
+            $x_hh = $K->gemm($x_r_prev_r, $this->r_kernel_hh,1.0,1.0,$x_hh);
+            if($this->ac_hh){
+                $x_hh = $this->ac_hh->call($x_hh,$training);
+            }
+        }
         // next_h = (1-z) * prev_h + z * hh
         $x1_z = $K->increment($K->scale(-1,$x_z),1);
         $next_h = $K->add(
@@ -182,6 +246,11 @@ class GRUCell extends AbstractRNNCell
         $calcState->x1_z = $x1_z;
         $calcState->x_r = $x_r;
         $calcState->x_hh = $x_hh;
+        if($this->resetAfter) {
+            $calcState->internal_hh = $internal_hh;
+        } else {
+            $calcState->x_r_prev_r = $x_r_prev_r;
+        }
 
         return [$next_h,[$next_h]];
     }
@@ -194,31 +263,65 @@ class GRUCell extends AbstractRNNCell
 
         // dprev_h = dnext_h * (1-z)
         $dPrev_h = $K->mul($dNext_h,$calcState->x1_z);
-
-        // hh output
         $dX_hh = $K->mul($dNext_h,$calcState->x_z);
-        if($this->ac_hh){
-            $dX_hh = $this->ac_hh->differentiate($dX_hh);
-        }
-        $K->gemm($K->mul($calcState->x_r, $calcState->prev_h), $dX_hh,1.0,1.0,$this->dR_kernel_hh,true,false);
-        $dhh_r = $K->gemm($dX_hh, $this->r_kernel_hh,1.0,0.0,null,false,true);
-        $K->update_add($dPrev_h,$K->mul($calcState->x_r,$dhh_r));
-
-        // z gate
         $dX_z = $K->mul($dNext_h,$K->sub($calcState->x_hh,$calcState->prev_h));
-        if($this->ac_z){
-            $dX_z = $this->ac_z->differentiate($dX_z);
-        }
-        $K->gemm($calcState->prev_h, $dX_z,1.0,1.0,$this->dR_kernel_z,true,false);
-        $K->gemm($dX_z, $this->r_kernel_z,1.0,1.0,$dPrev_h,false,true);
 
-        // r gate
-        $dX_r = $K->mul($dhh_r,$calcState->prev_h);
-        if($this->ac_r){
-            $dX_r = $this->ac_r->differentiate($dX_r);
+        if($this->resetAfter) {
+            // hh output
+            if($this->ac_hh){
+                $dX_hh = $this->ac_hh->differentiate($dX_hh);
+            }
+            $d_internal_hh = $K->mul($dX_hh,$calcState->x_r);
+            $dX_r = $K->mul($dX_hh,$calcState->internal_hh);
+
+            // z gate
+            if($this->ac_z){
+                $dX_z = $this->ac_z->differentiate($dX_z);
+            }
+            // r gate
+            if($this->ac_r){
+                $dX_r = $this->ac_r->differentiate($dX_r);
+            }
+            $dInternalOutput = $K->stack(
+                [$dX_z,$dX_r,$dX_hh],$axis=1);
+            $shape = $dInternalOutput->shape();
+            $batches = array_shift($shape);
+            $dInternalOutput = $dInternalOutput->reshape([
+                    $batches,
+                    array_product($shape)
+            ]);
+
+            if($this->dRecurrentBias) {
+                $K->update_add($this->dRecurrentBias,$K->sum($dInternalOutput, $axis=0));
+            }
+            $K->gemm($calcState->prev_h, $dInternalOutput,1.0,1.0,
+                $this->dRecurrentKernel,true,false);
+            $K->gemm($dInternalOutput, $this->recurrentKernel,1.0,1.0,
+                $dPrev_h,false,true);
+        } else {
+            // hh output
+            if($this->ac_hh){
+                $dX_hh = $this->ac_hh->differentiate($dX_hh);
+            }
+            $K->gemm($calcState->x_r_prev_r, $dX_hh, 1.0,1.0,$this->dR_kernel_hh,true,false);
+            $dhh_r = $K->gemm($dX_hh, $this->r_kernel_hh,1.0,0.0,null,false,true);
+            $K->update_add($dPrev_h,$K->mul($calcState->x_r,$dhh_r));
+
+            // z gate
+            if($this->ac_z){
+                $dX_z = $this->ac_z->differentiate($dX_z);
+            }
+            $K->gemm($calcState->prev_h, $dX_z,1.0,1.0,$this->dR_kernel_z,true,false);
+            $K->gemm($dX_z, $this->r_kernel_z,1.0,1.0,$dPrev_h,false,true);
+
+            // r gate
+            $dX_r = $K->mul($dhh_r,$calcState->prev_h);
+            if($this->ac_r){
+                $dX_r = $this->ac_r->differentiate($dX_r);
+            }
+            $K->gemm($calcState->prev_h, $dX_r,1.0,1.0,$this->dR_kernel_r,true,false);
+            $K->gemm($dX_r, $this->r_kernel_r,1.0,1.0,$dPrev_h,false,true);
         }
-        $K->gemm($calcState->prev_h, $dX_r,1.0,1.0,$this->dR_kernel_r,true,false);
-        $K->gemm($dX_r, $this->r_kernel_r,1.0,1.0,$dPrev_h,false,true);
 
         // stack diff gate outputs
         $dGateOuts = $K->stack(
@@ -228,12 +331,13 @@ class GRUCell extends AbstractRNNCell
         $dGateOuts = $dGateOuts->reshape([
                 $batches,
                 array_product($shape)
-            ]);
+        ]);
 
-        $K->copy($K->sum($dGateOuts, $axis=0),$this->dBias);
+        if($this->dInputBias) {
+            $K->update_add($this->dInputBias,$K->sum($dGateOuts, $axis=0));
+        }
         $K->gemm($calcState->inputs, $dGateOuts,1.0,1.0,$this->dKernel,true,false);
         $dInputs = $K->gemm($dGateOuts, $this->kernel,1.0,1.0,null,false,true);
-
         return [$dInputs,[$dPrev_h]];
     }
 }

@@ -30,7 +30,7 @@ class SimpleRNNCell extends AbstractRNNCell
             'activation'=>'tanh',
             'use_bias'=>true,
             'kernel_initializer'=>'glorot_uniform',
-            'recurrent_initializer'=>'random_normal',
+            'recurrent_initializer'=>'orthogonal',
             'bias_initializer'=>'zeros',
             //'kernel_regularizer'=>null, 'bias_regularizer'=>null,
             //'activity_regularizer'=null,
@@ -129,42 +129,42 @@ class SimpleRNNCell extends AbstractRNNCell
     protected function call(NDArray $inputs, array $states, bool $training, object $calcState, array $options=null) : array
     {
         $K = $this->backend;
-        $prevOutput = $states[0];
-
+        $prev_h = $states[0];
         if($this->bias){
             $outputs = $K->batch_gemm($inputs, $this->kernel,1.0,1.0,$this->bias);
         } else {
             $outputs = $K->gemm($inputs, $this->kernel);
         }
-        $outputs = $K->gemm($prevOutput, $this->recurrentKernel,1.0,1.0,$outputs);
-        if($this->activation)
+        $outputs = $K->gemm($prev_h, $this->recurrentKernel,1.0,1.0,$outputs);
+        if($this->activation) {
             $outputs = $this->activation->call($outputs,$training);
+        }
 
         $calcState->inputs = $inputs;
-        $calcState->prevOutput = $prevOutput;
+        $calcState->prev_h = $prev_h;
         return [$outputs,[$outputs]];
     }
 
     protected function differentiate(NDArray $dOutputs, array $dStates, object $calcState) : array
     {
         $K = $this->backend;
-        $dState = $dStates[0];
-        $dOutputs = $K->add($dOutputs,$dState);
-        if($this->activation)
+        $dNext_h = $dStates[0];
+        $dOutputs = $K->add($dOutputs,$dNext_h);
+        if($this->activation) {
             $dOutputs = $this->activation->differentiate($dOutputs);
+        }
         $dInputs = $K->zerosLike($calcState->inputs);
         if($this->bias) {
             $K->update_add($this->dBias,$K->sum($dOutputs,$axis=0));
         }
         // Add RecurrentKernel grad
-        $K->gemm($calcState->prevOutput, $dOutputs,1.0,1.0,$this->dRecurrentKernel,true);
+        $K->gemm($calcState->prev_h, $dOutputs,1.0,1.0,$this->dRecurrentKernel,true);
         // backward PrevOutput grad
-        $dPrevOutput = $K->gemm($dOutputs, $this->recurrentKernel,1.0,0,null,false,true);
+        $dPrev_h = $K->gemm($dOutputs, $this->recurrentKernel,1.0,0,null,false,true);
         // Add Kernel grad
         $K->gemm($calcState->inputs, $dOutputs,1.0,1.0,$this->dKernel,true);
         // backward inputs grad
         $dInputs = $K->gemm($dOutputs, $this->kernel,1.0,0,null,false,true);
-
-        return [$dInputs, [$dPrevOutput]];
+        return [$dInputs, [$dPrev_h]];
     }
 }

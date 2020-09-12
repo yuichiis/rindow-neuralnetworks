@@ -27,6 +27,38 @@ class Test extends TestCase
         $params = $layer->getParams();
         $this->assertCount(3,$params);
         $this->assertEquals([3,4*3],$params[0]->shape());
+        $this->assertEquals([4,4*3],$params[1]->shape());
+        $this->assertEquals([2,4*3],$params[2]->shape());
+
+        $grads = $layer->getGrads();
+        $this->assertCount(3,$grads);
+        $this->assertEquals([3,4*3],$grads[0]->shape());
+        $this->assertEquals([4,4*3],$grads[1]->shape());
+        $this->assertEquals([2,4*3],$grads[2]->shape());
+        $this->assertNull(
+            $layer->getActivation()
+            );
+
+        //$this->assertEquals([3],$layer->inputShape());
+        $this->assertEquals([4],$layer->outputShape());
+    }
+
+    public function testInitializeWithoutResetAfter()
+    {
+        $mo = new MatrixOperator();
+        $backend = new Backend($mo);
+        $layer = new GRU(
+            $backend,
+            $units=4,
+            [
+                'input_shape'=>[5,3],
+                'reset_after'=>false,
+            ]);
+
+        $layer->build();
+        $params = $layer->getParams();
+        $this->assertCount(3,$params);
+        $this->assertEquals([3,4*3],$params[0]->shape());
         $this->assertEquals([4*3,4],$params[1]->shape());
         $this->assertEquals([4*3],$params[2]->shape());
 
@@ -106,8 +138,8 @@ class Test extends TestCase
 
         $layer->build();
         $grads = $layer->getGrads();
-        
-        
+
+
         //
         // forward
         //
@@ -119,7 +151,7 @@ class Test extends TestCase
             $mo->copy($initialStates[0])];
         $outputs = $layer->forward($inputs,$training=true, $initialStates
         );
-        // 
+        //
         $this->assertEquals([6,4],$outputs->shape());
         $this->assertEquals($copyInputs->toArray(),$inputs->toArray());
 
@@ -148,7 +180,7 @@ class Test extends TestCase
         $this->assertNotEquals(
             $mo->zerosLike($grads[2])->toArray(),
             $grads[2]->toArray());
-        
+
         $this->assertEquals($copydOutputs->toArray(),$dOutputs->toArray());
         $this->assertEquals($copydStates[0]->toArray(),$dStates[0]->toArray());
     }
@@ -168,8 +200,8 @@ class Test extends TestCase
 
         $layer->build();
         $grads = $layer->getGrads();
-        
-        
+
+
         //
         // forward
         //
@@ -179,7 +211,7 @@ class Test extends TestCase
         $copyInputs = $mo->copy($inputs);
         $outputs = $layer->forward($inputs,$training=true, $initialStates
         );
-        // 
+        //
         $this->assertEquals([6,4],$outputs->shape());
         $this->assertEquals($copyInputs->toArray(),$inputs->toArray());
 
@@ -205,7 +237,7 @@ class Test extends TestCase
         $this->assertNotEquals(
             $mo->zerosLike($grads[2])->toArray(),
             $grads[2]->toArray());
-        
+
         $this->assertEquals($copydOutputs->toArray(),$dOutputs->toArray());
     }
 
@@ -226,8 +258,8 @@ class Test extends TestCase
 
         $layer->build();
         $grads = $layer->getGrads();
-        
-        
+
+
         //
         // forward
         //
@@ -240,7 +272,7 @@ class Test extends TestCase
             $mo->copy($initialStates[0])];
         [$outputs,$nextStates] = $layer->forward($inputs,$training=true, $initialStates
         );
-        // 
+        //
         $this->assertEquals([6,5,4],$outputs->shape());
         $this->assertCount(1,$nextStates);
         $this->assertEquals([6,4],$nextStates[0]->shape());
@@ -274,7 +306,7 @@ class Test extends TestCase
         $this->assertNotEquals(
             $mo->zerosLike($grads[2])->toArray(),
             $grads[2]->toArray());
-        
+
         $this->assertEquals($copydOutputs->toArray(),$dOutputs->toArray());
         $this->assertEquals($copydStates[0]->toArray(),$dStates[0]->toArray());
     }
@@ -296,8 +328,8 @@ class Test extends TestCase
 
         $layer->build();
         $grads = $layer->getGrads();
-        
-        
+
+
         //
         // forward
         //
@@ -308,7 +340,7 @@ class Test extends TestCase
         //$copyStates = [$mo->copy($initialStates[0])];
         [$outputs,$nextStates] = $layer->forward($inputs,$training=true, $initialStates
         );
-        // 
+        //
         $this->assertEquals([6,5,4],$outputs->shape());
         $this->assertCount(1,$nextStates);
         $this->assertEquals([6,4],$nextStates[0]->shape());
@@ -342,7 +374,7 @@ class Test extends TestCase
         $this->assertNotEquals(
             $mo->zerosLike($grads[2])->toArray(),
             $grads[2]->toArray());
-        
+
         $this->assertEquals($copydOutputs->toArray(),$dOutputs->toArray());
         $this->assertEquals($copydStates[0]->toArray(),$dStates[0]->toArray());
     }
@@ -365,15 +397,15 @@ class Test extends TestCase
             ]);
 
         $kernel = $mo->ones([5,4*3]);
-        $recurrent = $mo->ones([4*3,4]);
-        $bias = $mo->ones([4*3]);
+        $recurrent = $mo->ones([4,4*3]);
+        $bias = $mo->ones([2,4*3]);
         $layer->build(null,
             ['sampleWeights'=>[$kernel,$recurrent,$bias]]
         );
         $this->assertNull($layer->getActivation());
         $grads = $layer->getGrads();
-        
-        
+
+
         //
         // forward
         //
@@ -382,7 +414,7 @@ class Test extends TestCase
         $states = [
             $mo->ones([2,4])];
         [$outputs,$nextStates] = $layer->forward($inputs,$training=true, $states);
-        // 
+        //
         $this->assertEquals(
             [2,3,4],
             $outputs->shape());
@@ -410,10 +442,10 @@ class Test extends TestCase
             [5,12],
             $grads[0]->shape());
         $this->assertEquals(
-            [12,4],
+            [4,12],
             $grads[1]->shape());
         $this->assertEquals(
-            [12],
+            [2,12],
             $grads[2]->shape());
     }
 }

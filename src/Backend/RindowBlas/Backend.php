@@ -140,11 +140,13 @@ class Backend
         $flat_shape = [$num_rows,$num_cols];
         $a = $this->la->randomNormal(
             $flat_shape,0.0,1.0);
-        [$u,$s,$vt] = $this->la->svd($a);
+        [$u,$s,$vt] = $this->la->svd($a,$full_matrices=false);
+
         # Pick the one with the correct shape.
-        $q = ($u->shape()==$flat_shape)?$u: $v;
+        $q = ($u->shape()==$flat_shape)? $u : $vt;
         $q = $q->reshape($shape);
-        return $this->la->slice($q,[0,0], [$shape[0],$shape[1]]);
+        $kernel = $this->la->slice($q,[0,0], [$shape[0],$shape[1]]);
+        return $kernel;
     }
 
 
@@ -406,6 +408,11 @@ class Backend
         return $this->la->tanh($x);
     }
 
+    public function asum(NDArray $x)
+    {
+        return $this->la->asum($x);
+    }
+
     public function sum(NDArray $x, int $axis=null)
     {
         if($axis===null) {
@@ -437,6 +444,16 @@ class Backend
     {
         $mo = $this->matrixOperator;
         return $mo->min($x,$axis);
+    }
+
+    public function amax(NDArray $x)
+    {
+        return $this->la->amax($x);
+    }
+
+    public function amin(NDArray $x)
+    {
+        return $this->la->amin($x);
     }
 
     public function argMax(NDArray $x,int $axis=null,$dtype=null)
@@ -1389,7 +1406,9 @@ class Backend
         foreach($tm as $t){
             $calcState = new \stdClass();
             $calcStates[$t] = $calcState;
-            [$outputs_t, $states_t] = $stepFunction($this->rnnGetTimestep($inputs, $t), $states_t,$training,$calcState);
+            [$outputs_t, $states_t] = $stepFunction(
+                $this->rnnGetTimestep($inputs, $t),
+                $states_t,$training,$calcState);
             if($outputs){
                 $this->rnnSetTimestep($outputs,$t,$outputs_t);
             }
@@ -1411,10 +1430,10 @@ class Backend
     {
         $ndim = $dOutputs->ndim();
         if($ndim == 2) {
-            $seq = false;
+            $return_sequences = false;
             $zero = $this->zerosLike($dOutputs);
         } elseif($ndim == 3) {
-            $seq = true;
+            $return_sequences = true;
             $zero = null;
         } else {
             throw new InvalidArgumentException('invalid dOutputs shape');
@@ -1430,7 +1449,7 @@ class Backend
         $doutputs_t = null;
         $states_t = $dStates;
         foreach($tm as $t){
-            if($seq){
+            if($return_sequences){
                 $doutputs_t = $this->rnnGetTimestep($dOutputs, $t);
             }else{
                 if($doutputs_t==null){
