@@ -265,6 +265,8 @@ class GRUCell extends AbstractRNNCell
         //  next_h = (1-z) * prev_h + z * hh
         // backward:
         // dprev_h = dnext_h * (1-z)
+        // dz = dnext_h * hh
+        // dhh = dnext_h * z
         $dPrev_h = $K->mul($dNext_h,$calcState->x1_z);
         $dX_hh = $K->mul($dNext_h,$calcState->x_z);
         $dX_z = $K->mul($dNext_h,$K->sub($calcState->x_hh,$calcState->prev_h));
