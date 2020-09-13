@@ -282,8 +282,8 @@ class GRUCell extends AbstractRNNCell
             // internal_hh = (prev_h dot Wh)+b2
             // hh = hh1 + r*internal_hh
             // backward:
-            // r = dhh * internal_hh
             // d_internal_hh = dhh * r
+            // r = dhh * internal_hh
             $d_internal_hh = $K->mul($dX_hh,$calcState->x_r);
             $dX_r = $K->mul($dX_hh,$calcState->internal_hh);
 
