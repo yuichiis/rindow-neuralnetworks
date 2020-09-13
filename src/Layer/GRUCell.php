@@ -216,6 +216,7 @@ class GRUCell extends AbstractRNNCell
                 $x_z = $this->ac_z->call($x_z,$training);
                 $x_r = $this->ac_r->call($x_r,$training);
             }
+            // hh = hh + (r * internal_hh)
             $internal_hh = $K->mul($x_r,$internal_hh);
             $K->update_add($x_hh,$internal_hh);
             if($this->ac_hh){
@@ -276,6 +277,7 @@ class GRUCell extends AbstractRNNCell
             if($this->ac_hh){
                 $dX_hh = $this->ac_hh->differentiate($dX_hh);
             }
+            
             $d_internal_hh = $K->mul($dX_hh,$calcState->x_r);
             $dX_r = $K->mul($dX_hh,$calcState->internal_hh);
 
