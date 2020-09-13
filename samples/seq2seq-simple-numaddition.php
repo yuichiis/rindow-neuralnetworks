@@ -194,7 +194,9 @@ $model = $nn->models()->Sequential([
     # Expand to answer length and peeking hidden states
     $nn->layers()->RepeatVector($output_length),
     # Decoder
-    $nn->layers()->GRU(128, ['return_sequences'=>true]),
+    $nn->layers()->GRU(128, ['return_sequences'=>true,
+         'reset_after'=>false,
+    ]),
     //$nn->layers()->LSTM(128, ['return_sequences'=>true]),
     # Output
     $nn->layers()->Dense(
