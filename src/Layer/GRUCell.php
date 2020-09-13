@@ -301,7 +301,7 @@ class GRUCell extends AbstractRNNCell
                 $dX_r = $this->ac_r->differentiate($dX_r);
             }
             $dInternalOutput = $K->stack(
-                [$dX_z,$dX_r,$dX_hh],$axis=1);
+                [$dX_z,$dX_r,$d_internal_hh],$axis=1);
             $shape = $dInternalOutput->shape();
             $batches = array_shift($shape);
             $dInternalOutput = $dInternalOutput->reshape([
