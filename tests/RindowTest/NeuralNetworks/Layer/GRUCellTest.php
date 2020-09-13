@@ -234,7 +234,7 @@ class Test extends TestCase
             [4256,4256,4256,4256],
             ],$dPrevStates[0]->toArray());
         $this->assertEquals([
-            [32,32,32,32,
+            [192,192,192,192,
              1620,1620,1620,1620,
              36,36,36,36],
              [32,32,32,32,
