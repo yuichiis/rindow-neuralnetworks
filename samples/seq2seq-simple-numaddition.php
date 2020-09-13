@@ -187,13 +187,13 @@ $model = $nn->models()->Sequential([
         ['input_length'=>$input_length]
     ),
     # Encoder
-    //$nn->layers()->GRU(128),
-    $nn->layers()->LSTM(128),
+    $nn->layers()->GRU(128),
+    //$nn->layers()->LSTM(128),
     # Expand to answer length and peeking hidden states
     $nn->layers()->RepeatVector($output_length),
     # Decoder
-    //$nn->layers()->GRU(128, ['return_sequences'=>true]),
-    $nn->layers()->LSTM(128, ['return_sequences'=>true]),
+    $nn->layers()->GRU(128, ['return_sequences'=>true]),
+    //$nn->layers()->LSTM(128, ['return_sequences'=>true]),
     # Output
     $nn->layers()->Dense(
         count($target_dic),
