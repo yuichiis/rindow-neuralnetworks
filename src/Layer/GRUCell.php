@@ -300,6 +300,11 @@ class GRUCell extends AbstractRNNCell
             if($this->ac_r){
                 $dX_r = $this->ac_r->differentiate($dX_r);
             }
+            // forward:
+            // zx = (inputs dot Wk)+b1
+            // internal_x = (prev_h dot Wh)+b2
+            // z = zx + internal_x
+
             $dInternalOutput = $K->stack(
                 [$dX_z,$dX_r,$d_internal_hh],$axis=1);
             $shape = $dInternalOutput->shape();
