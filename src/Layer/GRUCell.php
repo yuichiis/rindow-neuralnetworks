@@ -301,7 +301,7 @@ class GRUCell extends AbstractRNNCell
                 $dX_r = $this->ac_r->differentiate($dX_r);
             }
             // forward:
-            // zx = (inputs dot Wk)+b1
+            // rx = (inputs dot Wk)+b1
             // internal_x = (prev_h dot Wh)+b2
             // z = zx + internal_x
 
