@@ -311,6 +311,8 @@ class GRUCell extends AbstractRNNCell
             // d_rx = d_r
             // d_internal_r = d_r
 
+            // recurrent dot
+            // forward
             $dInternalOutput = $K->stack(
                 [$dX_z,$dX_r,$d_internal_hh],$axis=1);
             $shape = $dInternalOutput->shape();
