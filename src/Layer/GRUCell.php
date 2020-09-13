@@ -303,7 +303,7 @@ class GRUCell extends AbstractRNNCell
             // forward:
             // rx = (inputs dot Wk)+b1
             // internal_r = (prev_h dot Wh)+b2
-            // z = zx + internal_x
+            // r = zx + internal_x
 
             $dInternalOutput = $K->stack(
                 [$dX_z,$dX_r,$d_internal_hh],$axis=1);
