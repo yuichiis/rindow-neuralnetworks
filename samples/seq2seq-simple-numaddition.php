@@ -205,8 +205,8 @@ echo "Compile model...\n";
 
 $model->compile([
     'loss'=>'sparse_categorical_crossentropy',
-    #'optimizer'=>$nn->optimizers()->Adam(['lr'=>0.0025]),
-    'optimizer'=>'sgd',
+    'optimizer'=>$nn->optimizers()->Adam(['lr'=>0.0025]),
+    #'optimizer'=>'sgd',
     ]);
 $model->summary();
 foreach($model->weights() as $w) {
