@@ -187,7 +187,9 @@ $model = $nn->models()->Sequential([
         ['input_length'=>$input_length]
     ),
     # Encoder
-    $nn->layers()->GRU(128),
+    $nn->layers()->GRU(128,
+        ['reset_after'=>false]
+    ),
     //$nn->layers()->LSTM(128),
     # Expand to answer length and peeking hidden states
     $nn->layers()->RepeatVector($output_length),
