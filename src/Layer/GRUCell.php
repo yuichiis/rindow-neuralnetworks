@@ -275,8 +275,8 @@ class GRUCell extends AbstractRNNCell
         if($this->resetAfter) {
             // hh output
             // forward:
-            // hh = (prev_h dot Wk)
-            //    + (r * internal_hh)
+            // hh = (inputs dot Wk)
+            //    + (r * (prev_h dot Wh)
             if($this->ac_hh){
                 $dX_hh = $this->ac_hh->differentiate($dX_hh);
             }
