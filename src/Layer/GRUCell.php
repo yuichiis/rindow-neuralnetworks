@@ -318,7 +318,7 @@ class GRUCell extends AbstractRNNCell
             //     recurrent_kernel
             // backward:
             // d_recurrent_kernel = 
-            // d_internaloutput dot h_prev
+            // h_prev.T dot d_internaloutput 
             // dh_prev = d_internaloutput
             //     dot recurrent_kernel
             $dInternalOutput = $K->stack(
