@@ -320,7 +320,7 @@ class GRUCell extends AbstractRNNCell
             // d_recurrent_kernel = 
             // h_prev.T dot d_internaloutput 
             // dh_prev = d_internaloutput
-            //     dot recurrent_kernel
+            //     dot recurrent_kernel.T
             $dInternalOutput = $K->stack(
                 [$dX_z,$dX_r,$d_internal_hh],$axis=1);
             $shape = $dInternalOutput->shape();
