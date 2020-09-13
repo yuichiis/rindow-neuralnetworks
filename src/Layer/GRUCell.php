@@ -281,6 +281,7 @@ class GRUCell extends AbstractRNNCell
             // hh1 = (inputs dot Wk)+b1
             // internal_hh = (prev_h dot Wh)+b2
             // hh = hh1 + r*internal_hh
+            //
             // backward:
             // d_internal_hh = dhh * r
             // r = dhh * internal_hh
