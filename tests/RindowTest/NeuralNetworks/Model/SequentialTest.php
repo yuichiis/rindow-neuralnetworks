@@ -1056,7 +1056,7 @@ class Test extends TestCase
         );
         $x = $mo->la()->onehot($x->reshape([16]),$numClass=10)->reshape([4,4,10]);
         $v_x = $mo->la()->onehot($v_x->reshape([16]),$numClass=10)->reshape([4,4,10]);
-        $history = $model->fit($x,$t,['epochs'=>300,'validation_data'=>[$v_x,$v_t],'verbose'=>0]);
+        $history = $model->fit($x,$t,['epochs'=>300,'batch_size'=>1,'validation_data'=>[$v_x,$v_t],'verbose'=>0]);
 
         $this->assertEquals(['loss','accuracy','val_loss','val_accuracy'],array_keys($history));
 
@@ -1118,7 +1118,7 @@ class Test extends TestCase
         );
         $x = $mo->la()->onehot($x->reshape([16]),$numClass=10)->reshape([4,4,10]);
         $v_x = $mo->la()->onehot($v_x->reshape([16]),$numClass=10)->reshape([4,4,10]);
-        $history = $model->fit($x,$t,['epochs'=>300,'validation_data'=>[$v_x,$v_t],'verbose'=>0]);
+        $history = $model->fit($x,$t,['epochs'=>300,'batch_size'=>1,'validation_data'=>[$v_x,$v_t],'verbose'=>0]);
 
         $this->assertEquals(['loss','accuracy','val_loss','val_accuracy'],array_keys($history));
 

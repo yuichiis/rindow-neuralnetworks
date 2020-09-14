@@ -187,15 +187,15 @@ $model = $nn->models()->Sequential([
         ['input_length'=>$input_length]
     ),
     # Encoder
-    $nn->layers()->GRU(128,
-        ['reset_after'=>false]
+    $nn->layers()->GRU(128
+        #['reset_after'=>false]
     ),
     //$nn->layers()->LSTM(128),
     # Expand to answer length and peeking hidden states
     $nn->layers()->RepeatVector($output_length),
     # Decoder
     $nn->layers()->GRU(128, ['return_sequences'=>true,
-         'reset_after'=>false,
+        #'reset_after'=>false,
     ]),
     //$nn->layers()->LSTM(128, ['return_sequences'=>true]),
     # Output
@@ -209,7 +209,8 @@ echo "Compile model...\n";
 
 $model->compile([
     'loss'=>'sparse_categorical_crossentropy',
-    'optimizer'=>$nn->optimizers()->Adam(['lr'=>0.0025]),
+    #'optimizer'=>$nn->optimizers()->Adam(['lr'=>0.0025]),
+    'optimizer'=>'adam',
     #'optimizer'=>'sgd',
     ]);
 $model->summary();

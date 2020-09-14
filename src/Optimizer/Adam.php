@@ -95,12 +95,12 @@ class Adam implements Optimizer
             #$K->update($p,$K->sub($p,$K->mul($K->scale($lr_t,$m),
             #                                 $K->rsqrt($v,$this->epsilon))));
 
-            // m = m + ( 1 - beta_1 ) * ( g - m )
-            // v = v + ( 1 - beta_2 ) * ( g**2 - v )
-            // p = p - lr_t * m / ( sqrt(v) + epsilon )
-            $K->update_add($m, $K->scale((1 - $this->beta1),$K->sub($g, $m)));
-            $K->update_add($v, $K->scale((1 - $this->beta2),$K->sub($K->square($g),$v)));
-            $K->update_sub($p, $K->scale($lr_t, $K->mul($m, $K->rsqrt($v,$this->epsilon))));
+            // m += ( 1 - beta_1 ) * ( g - m )
+            // v += ( 1 - beta_2 ) * ( g**2 - v )
+            // p -= lr_t * m / ( sqrt(v) + epsilon )
+            $K->update_add($m, $K->sub($g, $m), (1 - $this->beta1));
+            $K->update_add($v, $K->sub($K->square($g),$v), (1 - $this->beta2));
+            $K->update_sub($p, $K->mul($m, $K->rsqrt($v,$this->epsilon)), $lr_t);
         }
     }
 }

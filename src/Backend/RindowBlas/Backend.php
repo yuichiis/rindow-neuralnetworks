@@ -304,15 +304,18 @@ class Backend
         return $x;
     }
 
-    public function update_add(NDArray $x, NDArray $increment) : NDArray
+    public function update_add(NDArray $x, NDArray $increment, float $alpha=null) : NDArray
     {
-        $this->la->axpy($increment,$x);
+        $this->la->axpy($increment,$x,$alpha);
         return $x;
     }
 
-    public function update_sub(NDArray $x, NDArray $decrement) : NDArray
+    public function update_sub(NDArray $x, NDArray $decrement, float $alpha=null) : NDArray
     {
-        $this->la->axpy($decrement,$x,-1.0);
+        if($alpha===null) {
+            $alpha = 1.0;
+        }
+        $this->la->axpy($decrement,$x,-1.0*$alpha);
         return $x;
     }
 
