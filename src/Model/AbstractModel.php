@@ -13,6 +13,7 @@ use Rindow\NeuralNetworks\Loss\Loss;
 use Rindow\NeuralNetworks\Loss\SparseCategoricalCrossEntropy;
 use Rindow\NeuralNetworks\Loss\CategoricalCrossEntropy;
 use Rindow\NeuralNetworks\Loss\BinaryCrossEntropy;
+use Rindow\NeuralNetworks\Callback\CallbackList;
 use Interop\Polite\Math\Matrix\NDArray;
 
 abstract class AbstractModel implements Model
@@ -206,6 +207,7 @@ abstract class AbstractModel implements Model
             'epochs'=>1,
             'verbose'=>1,
             'validation_data'=>null,
+            'callbacks'=>null,
             'shuffle'=>true,
         ],$options));
         $inputCount = $inputs->shape()[0];
@@ -220,6 +222,7 @@ abstract class AbstractModel implements Model
             $history['val_loss'] = [];
             $history['val_accuracy'] = [];
         }
+        $callbacks = new CallbackList($this,$callbacks);
         if($verbose>=1) {
             $this->console('Train on '.$inputCount.' samples');
             if($val_inputs) {
@@ -228,7 +231,9 @@ abstract class AbstractModel implements Model
             }
             $this->console("\n");
         }
+        $callbacks->onTrainBegin();
         for($epoch=0;$epoch<$epochs;$epoch++) {
+            $callbacks->onEpochBegin($epoch);
             $startTime = time();
             if($verbose>=1) {
                 $this->console('Epoch '.($epoch+1).'/'.$epochs." ");
@@ -254,11 +259,13 @@ abstract class AbstractModel implements Model
                     if($indicate>$indicateCount)
                         $indicate = 0;
                 }
+                $callbacks->onTrainBatchBegin($batchIndex);
                 [$loss,$accuracy] = $this->trainingStep(
                     $choice[$batchIndex],$batch_size,$inputCount,$inputs,$tests,$shuffle,$this->metrics);
                 $totalLoss += $loss;
                 $totalAccuracy += $accuracy;
                 $this->setShapeInspection(false);
+                $callbacks->onTrainBatchEnd($batchIndex,['loss'=>$loss,'accuracy'=>$accuracy]);
             }
 
             if(in_array('loss',$this->metrics)) {
@@ -267,13 +274,14 @@ abstract class AbstractModel implements Model
             if(in_array('accuracy',$this->metrics)) {
                 $history['accuracy'][] = $totalAccuracy / $batchIndexCount;
             }
+            $logs = ['loss'=>$totalLoss,'accuracy'=>$totalAccuracy];
             if($val_inputs) {
                 [$loss, $accuracy] = $this->evaluate($val_inputs, $val_test,
-                    ['batch_size'=>$batch_size,'verbose'=>0]);
+                    ['batch_size'=>$batch_size,'verbose'=>0,'callbacks'=>$callbacks]);
                 $history['val_loss'][] = $loss;
                 $history['val_accuracy'][] = $accuracy;
+                $logs = ['val_loss'=>$loss,'val_accuracy'=>$accuracy];
             }
-
             if($verbose>=1) {
                 $sec = time() - $startTime;
                 $this->console(' - '.$sec." sec.\n");
@@ -282,6 +290,7 @@ abstract class AbstractModel implements Model
                 }
                 $this->console("\n");
             }
+            $callbacks->onEpochEnd($epoch,$logs);
         }
         $this->setShapeInspection(true);
         return $history;
@@ -332,18 +341,24 @@ abstract class AbstractModel implements Model
         extract($this->extractArgs([
             'batch_size'=>32,
             'verbose'=>0,
+            'callbacks'=>null,
         ],$options));
         $totalLoss = 0.0;
         $totalAccuracy = 0.0;
         $inputCount = $x->shape()[0];
         $batchIndexCount = (int)ceil($inputCount / $batch_size);
+        if(!($callbacks instanceof CallbackList)) {
+            $callbacks = new CallbackList($this,$callbacks);
+        }
         if($verbose>=1) {
             $startTime = time();
         }
+        $callbacks->onTestBegin();
         for($batchIndex=0;$batchIndex<$batchIndexCount;$batchIndex++) {
             if($verbose>=1) {
                     $this->console('.');
             }
+            $callbacks->onTestBatchBegin($batchIndex);
             $batchStart = $batchIndex*$batch_size;
             $batchEnd = ($batchIndex+1)*$batch_size-1;
             if($batchEnd>=$inputCount)
@@ -351,9 +366,12 @@ abstract class AbstractModel implements Model
             $inputs = $x[[$batchStart,$batchEnd]];
             $trues  = $t[[$batchStart,$batchEnd]];
             $preds = $this->forwardStep($inputs,$trues,$training=false);
-            $totalLoss += $this->lossFunction->loss($trues,$preds);
+            $loss = $this->lossFunction->loss($trues,$preds);
             //$preds = $this->forwardLastlayer($preds);
-            $totalAccuracy += $this->lossFunction->accuracy($trues,$preds);
+            $accuracy = $this->lossFunction->accuracy($trues,$preds);
+            $callbacks->onTestBatchEnd($batchIndex,['val_loss'=>$loss,'val_accuracy'=>$accuracy]);
+            $totalLoss += $loss;
+            $totalAccuracy += $accuracy;
         }
         $totalLoss = $totalLoss / $batchIndexCount;
         $totalAccuracy = $totalAccuracy / $batchIndexCount;
@@ -364,15 +382,22 @@ abstract class AbstractModel implements Model
             $this->console(' accuracy:'.sprintf('%2.4f',$totalAccuracy));
             $this->console("\n");
         }
+        $callbacks->onTestEnd(['val_loss'=>$totalLoss,'val_accuracy'=>$totalAccuracy]);
         return [$totalLoss,$totalAccuracy];
     }
 
     public function predict($inputs, array $options=null) : NDArray
     {
-        //extract($this->extractArgs([
-        //],$options));
+        extract($this->extractArgs([
+            'callbacks'=>null,
+        ],$options));
 
+        if(!($callbacks instanceof CallbackList)) {
+            $callbacks = new CallbackList($this,$callbacks);
+        }
+        $callbacks->onPredictBegin();
         $outputs = $this->forwardStep($inputs,$trues=null, $training=false);
+        $callbacks->onPredictEnd();
         return $outputs;
         //return $this->forwardLastlayer($outputs);
     }

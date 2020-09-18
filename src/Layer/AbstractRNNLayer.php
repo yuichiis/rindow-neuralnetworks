@@ -61,7 +61,7 @@ abstract class AbstractRNNLayer extends AbstractLayerBase implements RNNLayer
         }
         $outputs = null;
         if($this->returnSequences){
-            $outputs=$K->zeros([$batches,$timesteps,$this->units]);
+            $outputs = $K->zeros([$batches,$timesteps,$this->units]);
         }
         [$outputs,$states,$calcStates] = $K->rnn(
             [$this->cell,'forward'],

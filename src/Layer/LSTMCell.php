@@ -48,11 +48,8 @@ class LSTMCell extends AbstractRNNCell
         if($use_bias) {
             $this->useBias = $use_bias;
         }
-        $this->ac = $this->createFunction($activation);
-        $this->ac_i = $this->createFunction($recurrent_activation);
-        $this->ac_f = $this->createFunction($recurrent_activation);
-        $this->ac_c = $this->createFunction($activation);
-        $this->ac_o = $this->createFunction($recurrent_activation);
+        $this->activation = $this->createFunction($activation);
+        $this->recurrentActivation = $this->createFunction($recurrent_activation);
         $this->kernelInitializer = $K->getInitializer($kernel_initializer);
         $this->recurrentInitializer = $K->getInitializer($recurrent_initializer);
         $this->biasInitializer   = $K->getInitializer($bias_initializer);
@@ -159,18 +156,23 @@ class LSTMCell extends AbstractRNNCell
         $x_o = $K->slice($outputs,
             [0,$this->units*3],[-1,$this->units]);
 
-        if($this->ac_c){
-            $x_c = $this->ac_c->call($x_c,$training);
+        if($this->activation){
+            $x_c = $this->activation->forward($x_c,$training);
+            $calcState->ac_c = $this->activation->getStates();
         }
-        if($this->ac_i){
-            $x_i = $this->ac_i->call($x_i,$training);
-            $x_f = $this->ac_f->call($x_f,$training);
-            $x_o = $this->ac_o->call($x_o,$training);
+        if($this->recurrentActivation){
+            $x_i = $this->recurrentActivation->forward($x_i,$training);
+            $calcState->ac_i = $this->recurrentActivation->getStates();
+            $x_f = $this->recurrentActivation->forward($x_f,$training);
+            $calcState->ac_f = $this->recurrentActivation->getStates();
+            $x_o = $this->recurrentActivation->forward($x_o,$training);
+            $calcState->ac_o = $this->recurrentActivation->getStates();
         }
         $next_c = $K->add($K->mul($x_f,$prev_c),$K->mul($x_i,$x_c));
         $ac_next_c = $next_c;
-        if($this->ac){
-            $ac_next_c = $this->ac->call($ac_next_c,$training);
+        if($this->activation){
+            $ac_next_c = $this->activation->forward($ac_next_c,$training);
+            $calcState->ac = $this->activation->getStates();
         }
         // next_h = o * ac_next_c
         $next_h = $K->mul($x_o,$ac_next_c);
@@ -195,8 +197,9 @@ class LSTMCell extends AbstractRNNCell
         $dNext_h = $K->add($dOutputs,$dNext_h);
 
         $dAc_next_c = $K->mul($calcState->x_o,$dNext_h);
-        if($this->ac){
-            $dAc_next_c = $this->ac->differentiate($dAc_next_c);
+        if($this->activation){
+            $this->activation->setStates($calcState->ac);
+            $dAc_next_c = $this->activation->backward($dAc_next_c);
         }
         $dNext_c = $K->add($dNext_c, $dAc_next_c);
 
@@ -207,13 +210,17 @@ class LSTMCell extends AbstractRNNCell
         $dx_o = $K->mul($dNext_h,$calcState->ac_next_c);
         $dx_c = $K->mul($dNext_c,$calcState->x_i);
 
-        if($this->ac_i){
-            $dx_i = $this->ac_i->differentiate($dx_i);
-            $dx_f = $this->ac_f->differentiate($dx_f);
-            $dx_o = $this->ac_o->differentiate($dx_o);
+        if($this->recurrentActivation){
+            $this->recurrentActivation->setStates($calcState->ac_i);
+            $dx_i = $this->recurrentActivation->backward($dx_i);
+            $this->recurrentActivation->setStates($calcState->ac_f);
+            $dx_f = $this->recurrentActivation->backward($dx_f);
+            $this->recurrentActivation->setStates($calcState->ac_o);
+            $dx_o = $this->recurrentActivation->backward($dx_o);
         }
-        if($this->ac_c){
-            $dx_c = $this->ac_c->differentiate($dx_c);
+        if($this->activation){
+            $this->activation->setStates($calcState->ac_c);
+            $dx_c = $this->activation->backward($dx_c);
         }
 
         $dOutputs = $K->stack(

@@ -12,6 +12,23 @@ use Rindow\NeuralNetworks\Activation\Tanh;
 
 class Test extends TestCase
 {
+    public function verifyGradient($mo, $function, NDArray $x)
+    {
+        $f = function($x) use ($mo,$function){
+            $y = $function->forward($x,$training=true);
+            return $y;
+        };
+        $grads = $mo->la()->numericalGradient(1e-3,$f,$x);
+        $outputs = $function->forward($x,$training=true);
+        $dOutputs = $mo->ones($outputs->shape(),$outputs->dtype());
+        $dInputs = $function->backward($dOutputs);
+#echo "\n";
+#echo "grads=".$mo->toString($grads[0],'%5.3f',true)."\n\n";
+#echo "dInputs=".$mo->toString($dInputs,'%5.3f',true)."\n\n";
+#echo $mo->asum($mo->op($grads[0],'-',$dInputs))."\n";
+        return $mo->la()->isclose($grads[0],$dInputs,1e-0,1e-1);
+    }
+
     public function testDefaultInitialize()
     {
         $mo = new MatrixOperator();
@@ -448,4 +465,151 @@ class Test extends TestCase
             [2,12],
             $grads[2]->shape());
     }
+
+    public function testVarifyReturnSequences()
+    {
+        $mo = new MatrixOperator();
+        $backend = new Backend($mo);
+        $fn = $backend;
+
+        $layer = new GRU(
+            $backend,
+            $units=3,
+            [
+                'input_shape'=>[4,10],
+                'return_sequences'=>true,
+                #'return_state'=>true,
+                #'activation'=>null,
+            ]);
+        $layer->build();
+        $weights = $layer->getParams();
+
+        $x = $mo->array([
+            [0,1,2,9],
+        ]);
+        $x = $mo->la()->onehot($x->reshape([4]),$numClass=10)->reshape([1,4,10]);
+        $outputs = $layer->forward($x,$training=true);
+
+        $this->assertTrue(
+            $this->verifyGradient($mo,$layer,$x));
+    }
+
+    public function testVarifyWithoutResetAfter()
+    {
+        $mo = new MatrixOperator();
+        $backend = new Backend($mo);
+        $fn = $backend;
+
+        $layer = new GRU(
+            $backend,
+            $units=3,
+            [
+                'input_shape'=>[4,10],
+                'return_sequences'=>true,
+                #'return_state'=>true,
+                #'activation'=>null,
+                'reset_after'=>false,
+            ]);
+        $layer->build();
+        $weights = $layer->getParams();
+
+        $x = $mo->array([
+            [0,1,2,9],
+        ]);
+        $x = $mo->la()->onehot($x->reshape([4]),$numClass=10)->reshape([1,4,10]);
+        $outputs = $layer->forward($x,$training=true);
+
+        $this->assertTrue(
+            $this->verifyGradient($mo,$layer,$x));
+    }
+/*
+    public function testDebug4()
+    {
+        $mo = new MatrixOperator();
+        $backend = new Backend($mo);
+        $fn = $backend;
+
+        $layer = new GRU(
+            $backend,
+            $units=10,
+            [
+                'input_shape'=>[4,10],
+                'return_sequences'=>true,
+                #'return_state'=>true,
+                'activation'=>null,
+                'recurrent_activation'=>null,
+            ]);
+        $kernel = $mo->ones([10,30]);
+        $recurrent_kernel = $mo->ones([10,30]);
+        $bias = $mo->zeros([2,30]);
+        $layer->build(null,[
+            'sampleWeights'=>[
+                $kernel,$recurrent_kernel,$bias,
+            ]
+        ]);
+        $weights = $layer->getParams();
+        //var_dump($weights[0]->shape());
+        //var_dump($weights[1]->shape());
+        //var_dump($weights[2]->shape());
+
+        $x = $mo->array([
+            [0,1,2,9],
+        ]);
+        $x = $mo->la()->onehot($x->reshape([4]),$numClass=10)->reshape([1,4,10]);
+        $outputs = $layer->forward($x,$training=true);
+        echo "outputs=".$mo->toString($outputs,'%5.2f',true);
+
+        $ones = $mo->ones($outputs->shape());
+        $dInputs = $layer->backward($ones);
+        echo "dInputs=".$mo->toString($dInputs,'%5.2f',true);
+
+        #$this->assertTrue(
+        #    $this->verifyGradient($mo,$layer,$x));
+    }
+
+    public function testDebug1()
+    {
+        $mo = new MatrixOperator();
+        $backend = new Backend($mo);
+        $fn = $backend;
+
+        $layer = new GRU(
+            $backend,
+            $units=10,
+            [
+                'input_shape'=>[1,10],
+                'return_sequences'=>true,
+                #'return_state'=>true,
+                'activation'=>null,
+                'recurrent_activation'=>null,
+                #'reset_after'=>false,
+            ]);
+        $kernel = $mo->ones([10,30]);
+        $recurrent_kernel = $mo->ones([10,30]);
+        $bias = $mo->zeros([2,30]);
+        #$recurrent_kernel = $mo->ones([30,10]);
+        #$bias = $mo->zeros([30]);
+        $layer->build(null,[
+            'sampleWeights'=>[
+                $kernel,$recurrent_kernel,$bias,
+            ]
+        ]);
+        $weights = $layer->getParams();
+        //var_dump($weights[0]->shape());
+        //var_dump($weights[1]->shape());
+        //var_dump($weights[2]->shape());
+
+        $x = $mo->array([
+            [1],
+        ]);
+        $x = $mo->la()->onehot($x->reshape([1]),$numClass=10)->reshape([1,1,10]);
+        $outputs = $layer->forward($x,$training=true);
+        echo "outputs=".$mo->toString($outputs,'%5.2f',true);
+
+        $ones = $mo->ones($outputs->shape());
+        $dInputs = $layer->backward($ones);
+        #$this->assertTrue(
+        #    $this->verifyGradient($mo,$layer,$x));
+    }
+*/
 }

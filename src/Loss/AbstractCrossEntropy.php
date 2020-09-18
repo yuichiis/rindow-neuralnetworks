@@ -41,14 +41,14 @@ abstract class AbstractCrossEntropy  implements Loss,Activation
         ];
     }
 
-    public function call(NDArray $inputs, bool $training) : NDArray
+    public function forward(NDArray $inputs, bool $training) : NDArray
     {
         $K = $this->backend;
         $this->outputs = $this->activationFunction($inputs);
         return $this->outputs;
     }
 
-    public function differentiate(NDArray $dOutputs) : NDArray
+    public function backward(NDArray $dOutputs) : NDArray
     {
         $K = $this->backend;
         if($this->fromLogits) {

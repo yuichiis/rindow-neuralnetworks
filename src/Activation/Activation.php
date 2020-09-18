@@ -5,6 +5,6 @@ use Interop\Polite\Math\Matrix\NDArray;
 
 interface Activation
 {
-    public function call(NDArray $inputs, bool $training) : NDArray;
-    public function differentiate(NDArray $dOutputs) : NDArray;
+    public function forward(NDArray $inputs, bool $training) : NDArray;
+    public function backward(NDArray $dOutputs) : NDArray;
 }

@@ -12,6 +12,19 @@ use Rindow\NeuralNetworks\Activation\Tanh;
 
 class Test extends TestCase
 {
+    public function verifyGradient($mo, $function, NDArray $x)
+    {
+        $f = function($x) use ($mo,$function){
+            $y = $function->forward($x,$training=true);
+            return $y;
+        };
+        $grads = $mo->la()->numericalGradient(1e-3,$f,$x);
+        $outputs = $function->forward($x,$training=true);
+        $dOutputs = $mo->ones($outputs->shape(),$outputs->dtype());
+        $dInputs = $function->backward($dOutputs);
+        return $mo->la()->isclose($grads[0],$dInputs,1e-4,1e-4);
+    }
+
     public function testDefaultInitialize()
     {
         $mo = new MatrixOperator();
@@ -106,8 +119,8 @@ class Test extends TestCase
 
         $layer->build();
         $grads = $layer->getGrads();
-        
-        
+
+
         //
         // forward
         //
@@ -120,7 +133,7 @@ class Test extends TestCase
             $mo->copy($initialStates[1])];
         $outputs = $layer->forward($inputs,$training=true, $initialStates
         );
-        // 
+        //
         $this->assertEquals([6,4],$outputs->shape());
         $this->assertEquals($copyInputs->toArray(),$inputs->toArray());
 
@@ -150,7 +163,7 @@ class Test extends TestCase
         $this->assertNotEquals(
             $mo->zerosLike($grads[2])->toArray(),
             $grads[2]->toArray());
-        
+
         $this->assertEquals($copydOutputs->toArray(),$dOutputs->toArray());
         $this->assertEquals($copydStates[0]->toArray(),$dStates[0]->toArray());
         $this->assertEquals($copydStates[1]->toArray(),$dStates[1]->toArray());
@@ -173,8 +186,8 @@ class Test extends TestCase
 
         $layer->build();
         $grads = $layer->getGrads();
-        
-        
+
+
         //
         // forward
         //
@@ -189,7 +202,7 @@ class Test extends TestCase
             $mo->copy($initialStates[1])];
         [$outputs,$nextStates] = $layer->forward($inputs,$training=true, $initialStates
         );
-        // 
+        //
         $this->assertEquals([6,5,4],$outputs->shape());
         $this->assertCount(2,$nextStates);
         $this->assertEquals([6,4],$nextStates[0]->shape());
@@ -228,7 +241,7 @@ class Test extends TestCase
         $this->assertNotEquals(
             $mo->zerosLike($grads[2])->toArray(),
             $grads[2]->toArray());
-        
+
         $this->assertEquals($copydOutputs->toArray(),$dOutputs->toArray());
         $this->assertEquals($copydStates[0]->toArray(),$dStates[0]->toArray());
         $this->assertEquals($copydStates[1]->toArray(),$dStates[1]->toArray());
@@ -251,8 +264,8 @@ class Test extends TestCase
 
         $layer->build();
         $grads = $layer->getGrads();
-        
-        
+
+
         //
         // forward
         //
@@ -263,7 +276,7 @@ class Test extends TestCase
         //$copyStates = [$mo->copy($initialStates[0])];
         [$outputs,$nextStates] = $layer->forward($inputs,$training=true, $initialStates
         );
-        // 
+        //
         $this->assertEquals([6,5,4],$outputs->shape());
         $this->assertCount(2,$nextStates);
         $this->assertEquals([6,4],$nextStates[0]->shape());
@@ -301,7 +314,7 @@ class Test extends TestCase
         $this->assertNotEquals(
             $mo->zerosLike($grads[2])->toArray(),
             $grads[2]->toArray());
-        
+
         $this->assertEquals($copydOutputs->toArray(),$dOutputs->toArray());
         $this->assertEquals($copydStates[0]->toArray(),$dStates[0]->toArray());
         $this->assertEquals($copydStates[1]->toArray(),$dStates[1]->toArray());
@@ -332,8 +345,8 @@ class Test extends TestCase
         );
         $this->assertNull($layer->getActivation());
         $grads = $layer->getGrads();
-        
-        
+
+
         //
         // forward
         //
@@ -343,7 +356,7 @@ class Test extends TestCase
             $mo->ones([2,4]),
             $mo->ones([2,4])];
         [$outputs,$nextStates] = $layer->forward($inputs,$training=true, $states);
-        // 
+        //
         $this->assertEquals(
             [2,3,4],
             $outputs->shape());
@@ -383,5 +396,33 @@ class Test extends TestCase
         $this->assertEquals(
             [16],
             $grads[2]->shape());
+    }
+
+    public function testVarifyReturnSequences()
+    {
+        $mo = new MatrixOperator();
+        $backend = new Backend($mo);
+        $fn = $backend;
+
+        $layer = new LSTM(
+            $backend,
+            $units=3,
+            [
+                'input_shape'=>[4,10],
+                'return_sequences'=>true,
+                #'return_state'=>true,
+                #'activation'=>null,
+            ]);
+        $layer->build();
+        $weights = $layer->getParams();
+
+        $x = $mo->array([
+            [0,1,2,9],
+        ]);
+        $x = $mo->la()->onehot($x->reshape([4]),$numClass=10)->reshape([1,4,10]);
+        $outputs = $layer->forward($x,$training=true);
+
+        $this->assertTrue(
+            $this->verifyGradient($mo,$layer,$x));
     }
 }

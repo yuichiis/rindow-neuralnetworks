@@ -19,7 +19,7 @@ class Activation extends AbstractLayer implements Layer
         $this->inputShape = $input_shape;
         $this->setActivation($activation);
     }
-    
+
     public function getConfig() : array
     {
         return [
@@ -34,14 +34,14 @@ class Activation extends AbstractLayer implements Layer
     {
         $outputs = $inputs;
         if($this->activation)
-            $outputs = $this->activation->call($outputs,$training);
+            $outputs = $this->activation->forward($outputs,$training);
         return $outputs;
     }
 
     protected function differentiate(NDArray $dOutputs) : NDArray
     {
         if($this->activation)
-            $dOutputs = $this->activation->differentiate($dOutputs);
+            $dOutputs = $this->activation->backward($dOutputs);
         return $dOutputs;
     }
 }

@@ -5,6 +5,7 @@ use Interop\Polite\Math\Matrix\NDArray;
 use Rindow\NeuralNetworks\Layer\Activation;
 use Rindow\NeuralNetworks\Layer\Embedding;
 use Rindow\NeuralNetworks\Layer\Dense;
+use Rindow\NeuralNetworks\Layer\Input;
 use Rindow\NeuralNetworks\Layer\Flatten;
 use Rindow\NeuralNetworks\Layer\RepeatVector;
 use Rindow\NeuralNetworks\Layer\Conv1D;
@@ -40,6 +41,12 @@ class Layers
     public function Dense(int $units, array $options=null)
     {
         return new Dense($this->backend, $units, $options);
+    }
+
+    public function Input(
+        array $options=null)
+    {
+        return new Input($this->backend, $options);
     }
 
     public function Flatten(

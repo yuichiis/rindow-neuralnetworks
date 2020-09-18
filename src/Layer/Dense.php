@@ -132,7 +132,7 @@ class Dense extends AbstractLayer implements Layer
         array_push($shape,$this->units);
         $outputs = $outputs->reshape($shape);
         if($this->activation)
-            $outputs = $this->activation->call($outputs,$training);
+            $outputs = $this->activation->forward($outputs,$training);
         return $outputs;
     }
 
@@ -140,7 +140,7 @@ class Dense extends AbstractLayer implements Layer
     {
         $K = $this->backend;
         if($this->activation)
-            $dOutputs = $this->activation->differentiate($dOutputs);
+            $dOutputs = $this->activation->backward($dOutputs);
         $dInputs = $K->zerosLike($this->inputs);
         $dOutputs=$dOutputs->reshape($this->flattenOutputsShape);
         $K->gemm($dOutputs, $this->kernel,1.0,0.0,$dInputs,false,true);

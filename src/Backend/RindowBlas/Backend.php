@@ -330,10 +330,10 @@ class Backend
         return $this->la->scal($a, $x);
     }
 
-    public function increment(NDArray $x, float $a)
+    public function increment(NDArray $x, float $b, float $a=null)
     {
         $x = $this->la->copy($x);
-        return $this->la->increment($x, $a);
+        return $this->la->increment($x, $b, $a);
     }
 
     public function pow(NDArray $x, float $y)
@@ -408,7 +408,7 @@ class Backend
 
     public function tanh($x)
     {
-        return $this->la->tanh($x);
+        return $this->la->tanh($this->la->copy($x));
     }
 
     public function asum(NDArray $x)
@@ -619,10 +619,15 @@ class Backend
 
     public function dSigmoid(NDArray $dOutputs, NDArray $outputs) : NDArray
     {
-        $la = $this->la;
         // dx = dy * ( 1 - y ) * y
-        return $la->multiply($dOutputs,$la->multiply($outputs,
-            $la->increment($la->copy($outputs),1.0,-1.0)));
+        $dx = $this->onesLike($outputs);
+        $this->update_sub($dx,$outputs);
+        $this->update_mul($dx,$outputs);
+        $this->update_mul($dx,$dOutputs);
+        return $dx;
+
+        //return $la->multiply($dOutputs,$la->multiply($outputs,
+        //    $la->increment($la->copy($outputs),1.0,-1.0)));
     }
 
     public function softmax(NDArray $X) : NDArray
@@ -1255,10 +1260,13 @@ class Backend
         $orgTrues = $trues;
         $orgPredicts = $predicts;
         if($ndim==1){
-            ;
+            if($predicts->ndim()!=2){
+                $msg = 'trues=['.implode(',',$orgTrues->shape()).'],predict=['.implode(',',$orgPredicts->shape()).']';
+                throw new InvalidArgumentException('unmatch shape of dimensions:'.$msg);
+            }
         } elseif($ndim==2) {
-            if($predicts->ndim()<3){
-                $msg = '['.implode(',',$orgTrues->shape()).'] ['.implode(',',$orgPredicts->shape()).']';
+            if($predicts->ndim()!=3){
+                $msg = 'trues=['.implode(',',$orgTrues->shape()).'],predict=['.implode(',',$orgPredicts->shape()).']';
                 throw new InvalidArgumentException('unmatch shape of dimensions:'.$msg);
             }
             $trues = $trues->reshape([$trues->size()]);
@@ -1270,13 +1278,11 @@ class Backend
         } elseif($ndim>2) {
             throw new InvalidArgumentException('categorical\'s "trues" must be shape of [batchsize,1].');
         }
-        $shape = $predicts->shape();
-        $batchSize = array_shift($shape);
+        $batchSize = $predicts->shape()[0];
         if($trues->shape()!=[$batchSize]){
-            $msg = '['.implode(',',$orgTrues->shape()).'] ['.implode(',',$orgPredicts->shape()).']';
+            $msg = 'trues=['.implode(',',$orgTrues->shape()).'],predict=['.implode(',',$orgPredicts->shape()).']';
             throw new InvalidArgumentException('unmatch shape of dimensions:'.$msg);
         }
-
         //  E = - 1/N * sum-n(sum-k(t-nk * log(y-nk)))
         return -1.0 * $la->sum($la->log($la->increment(
                 //$la->selectAxis1($predicts,$trues),
@@ -1291,8 +1297,15 @@ class Backend
         $origPredictsShape = $predicts->shape();
         $ndim = $trues->ndim();
         if($ndim==1){
-            ;
+            if($predicts->ndim()!=2){
+                $msg = 'trues=['.implode(',',$orgTrues->shape()).'],predict=['.implode(',',$orgPredicts->shape()).']';
+                throw new InvalidArgumentException('unmatch shape of dimensions:'.$msg);
+            }
         } elseif($ndim==2) {
+            if($predicts->ndim()!=3){
+                $msg = 'trues=['.implode(',',$orgTrues->shape()).'],predict=['.implode(',',$orgPredicts->shape()).']';
+                throw new InvalidArgumentException('unmatch shape of dimensions:'.$msg);
+            }
             $trues = $trues->reshape([$trues->size()]);
             $predictsShape = $origPredictsShape;
             $inputDim = array_pop($predictsShape);
@@ -1306,15 +1319,17 @@ class Backend
             $msg = '['.implode(',',$trues->shape()).'] ['.implode(',',$predicts->shape()).']';
             throw new InvalidArgumentException('unmatch shape of dimensions:'.$msg);
         }
+        $batchSize = $predicts->shape()[0];
         $numClass = $predicts->shape()[1];
         if($fromLogits) {
             // dx = (y - t)      #  t=onehot(trues), y=softmax(x)
             $dInputs = $la->copy($predicts);
             $la->onehot($trues,$numClass,-1,$dInputs);
+            $la->scal(1.0/$batchSize,$dInputs);
         } else {
             // dx = - trues / predicts
             $trues = $la->onehot($trues,$numClass);
-            $dInputs = $la->scal(-1.0,$la->multiply($trues,
+            $dInputs = $la->scal(-1.0/$batchSize,$la->multiply($trues,
                 $la->reciprocal($la->copy($predicts),$this->epsilon)));
         }
         return $dInputs->reshape($origPredictsShape);
@@ -1330,8 +1345,9 @@ class Backend
         }
         //  E = - 1/N * sum-n(sum-k(t-nk * log(y-nk)))
         $batchSize = $predicts->shape()[0];
+        $tmp = $la->log($la->increment($la->copy($predicts),$this->epsilon));
         return -1.0 * $la->sum($la->multiply($trues,
-            $la->log($la->increment($la->copy($predicts),$this->epsilon)))) / $batchSize;
+            $tmp)) / $batchSize;
 
         // way for clip
         //$predicts = $this->la->maximum($this->epsilon,
@@ -1358,6 +1374,57 @@ class Backend
                 $la->reciprocal($la->copy($predicts),$this->epsilon)));
         }
     }
+
+    public function binaryCrossEntropy(
+        NDArray $trues, NDArray $predicts) : float
+    {
+        if($trues->shape()!=$predicts->shape()){
+            throw new InvalidArgumentException('must be same shape of dimensions');
+        }
+        $la = $this->la;
+        #if($fromLogits) {
+            #$predicts = $this->sigmoid($predicts);
+            #// p = limit(p,epsilon,1-epsilon)
+            #// p = log( p / 1 - p )
+            #$predicts = $this->log($la->multiply($predicts,
+            #    $la->reciprocal($this->copy($predicts),1,-1)));
+        #} else {
+        $predicts = $la->minimum(1-$this->epsilon, $la->maximum($this->epsilon,
+                $la->copy($predicts)));
+        #}
+        // E =  t      * -log( p ) +
+        //     (1 - t) * -log( 1 - p )
+        $batchSize = $predicts->shape()[0];
+        return $la->sum($la->axpy($la->multiply($la->copy($trues),
+                                        $la->scal(-1,$la->log($la->copy($predicts)))),
+                        $la->multiply($la->increment($la->copy($trues),1,-1),
+                                        $la->scal(-1,$la->log(
+                                            $la->increment($la->copy($predicts),1,-1))))))
+                                            / $batchSize;
+    }
+
+    public function dBinaryCrossEntropy(
+        NDArray $trues, NDArray $predicts, bool $fromLogits=null) : NDArray
+    {
+        $la = $this->la;
+        if($trues->shape()!=$predicts->shape()){
+            throw new InvalidArgumentException('must be same shape of dimensions');
+        }
+        $batchSize = $predicts->shape()[0];
+        if($fromLogits) {
+            // dx = p - t    :  y = sigmoid(x)
+            return $la->scal(1/$batchSize, $la->axpy($trues,$la->copy($predicts),-1));
+        } else {
+            // dx = - t / p + (1-t)/(1-p)  : p = predicts
+            return $la->scal(1/$batchSize,$la->axpy(
+                $la->multiply($trues,
+                    $la->reciprocal($la->copy($predicts),$this->epsilon)),
+                $la->multiply($la->increment($la->copy($trues),1,-1),
+                    $la->reciprocal($la->increment($la->copy($predicts),1,-1))),
+            -1.0));
+        }
+    }
+
 
     public function rnnGetTimestep(
         NDArray $source,int $step) : NDArray
@@ -1467,64 +1534,7 @@ class Backend
         }
         return [$dInputs, $states_t];
     }
-/*
-    public function binaryCrossEntropy(
-        NDArray $trues, NDArray $predicts, bool $fromLogits=null) : float
-    {
-        if($trues->shape()!=$predicts->shape()){
-            throw new InvalidArgumentException('must be same shape of dimensions');
-        }
-        $la = $this->la;
-        if(!$fromLogits) {
-            //$predicts = $this->la->maximum($this->epsilon,
-            //    $this->la->minimum(1-$this->epsilon,$this->la->copy($predicts)));
-            // z = log( x / (1-x) )
-            $predicts = $la->log($la->multiply($predicts,
-                                            $la->reciprocal($predicts,1,-1)));
-            // sigmoid(z) = 1 / (1 + exp(-z))
-            //            = 1 / (1 + exp(-log(x/(1-x))))
-            //            = x
-        }
-        $batchSize = $predicts->shape()[0];
-        // E = t * -log(sigmoid(x)) + (1 - t) * -log(1 - sigmoid(x))
-        //   = x - x * t + log(1 + exp(-x))
-        return $la->sum($la->axpy($predicts,$la->axpy(
-            $la->multiply($predicts,$la->copy($trues)),
-            $la->log($la->increment($la->exp(
-                $la->scal(-1,$la->copy($predicts)))))))) / $batchSize;
-        // python
-        //if not from_logits:
-        //    output = np.clip(output, 1e-7, 1 - 1e-7)
-        //    output = np.log(output / (1 - output))
-        //output = sigmoid(output)
-        //  E = -target * log(output) + -(1 - target) * log(1 - output))
-        //return (-target * np.log(output)) +
-        //        (-(1 - target) * np.log(1 - output))
 
-        // part2
-        //self.loss = cross_entropy_error(self.t, np.c_[1 - self.y, self.y])
-        //  cross_entropy_error = - 1/N * sum-n(sum-k(t-nk * log(y-nk)))
-    }
-
-    public function dBinaryCrossEntropy(
-        NDArray $trues, NDArray $predicts, bool $fromLogits=null) : NDArray
-    {
-        $la = $this->la;
-        if($trues->shape()!=$predicts->shape()){
-            throw new InvalidArgumentException('must be same shape of dimensions');
-        }
-        if($fromLogits) {
-            // dx = y - t    :  y = sigmoid(x)
-            return $la->axpy($trues,$la->copy($predicts),-1);
-        } else {
-            // dx = - trues / predicts
-            return $la->scal(-1.0,$la->multiply($trues,
-                $la->reciprocal($la->copy($predicts),$this->epsilon)));
-        }
-        // part2
-        //dx = (self.y - self.t) * dout / batch_size
-    }
-*/
 
     public function equalTest($a,$b)
     {

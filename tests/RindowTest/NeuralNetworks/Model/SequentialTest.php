@@ -9,6 +9,60 @@ use Rindow\NeuralNetworks\Model\ModelLoader;
 use Rindow\Math\Plot\Plot;
 use Rindow\Math\Plot\Renderer\GDDriver;
 use Interop\Polite\Math\Matrix\NDArray;
+use Rindow\NeuralNetworks\Callback\AbstractCallback;
+
+class WeightLog extends AbstractCallback
+{
+    protected $gradlog = [];
+    public function __construct($mo)
+    {
+        parent::__construct();
+        $this->mo = $mo;
+        $this->prev_w = null;
+    }
+
+    public function onEpochEnd(int $epoch, array $logs=null) : void
+    {
+        #echo "\n";
+        $model = $this->getModel();
+        $weights = $model->weights();
+        if($this->prev_w==null) {
+            $this->prev_w = $weights;
+            return;
+        }
+        $num = 0;
+        $next = [];
+        foreach($weights as $key => $w) {
+            $prev = $this->prev_w[$key];
+            $g = $this->mo->op($prev,'-',$w);
+            if(in_array($num,[100])) {
+                for($i=0;$i<3;$i++) {
+                    $name = 'g'.$num.$i.'('.implode(',',$w->shape()).')';
+                    if(!isset($this->gradlog[$name])) {
+                        $this->gradlog[$name] = [];
+                    }
+                    $gg = $this->mo->la()->slice($w,[0,$i*128],[-1,128]);
+                    $this->gradlog[$name][] = abs($this->mo->amax($gg));
+                }
+            } else {
+                $name = 'g'.$num.'('.implode(',',$w->shape()).')';
+                if(!isset($this->gradlog[$name])) {
+                    $this->gradlog[$name] = [];
+                }
+                $this->gradlog[$name][] = abs($this->mo->amax($g));
+            }
+            #echo sprintf("%7.2f",strval())." ";
+            $num++;
+            $next[] = $this->mo->copy($w);
+        }
+        $this->prev_w = $next;
+    }
+
+    public function getGradlog()
+    {
+        return $this->gradlog;
+    }
+}
 
 class Test extends TestCase
 {
@@ -160,7 +214,7 @@ class Test extends TestCase
         $history = $model->fit($x,$t,['epochs'=>100,'verbose'=>0]);
 
         [$loss,$accuracy] = $model->evaluate($x,$t);
-        $this->assertLessThan(0.3,$loss);
+        $this->assertLessThan(1.0,$loss);
         $this->assertEquals(1.0,$accuracy);
     }
 
@@ -376,7 +430,9 @@ class Test extends TestCase
 
         $model->compile([
             'loss'=>$nn->losses()->BinaryCrossEntropy(),
+            #'optimizer'=>'adam',
         ]);
+        $model->summary();
         $this->assertTrue( $model->layers()[1]->getActivation()->fromLogits());
         $this->assertTrue( $model->lossFunction()->fromLogits());
 
@@ -385,7 +441,7 @@ class Test extends TestCase
         $t = $mo->array([0, 0, 0, 1, 1, 1]);
         $v_x = $mo->array([[5, 1], [1, 5], [2, 6], [6, 1], [1, 7], [7, 2]]);
         $v_t = $mo->array([1, 0, 0, 1, 0, 1]);
-        $history = $model->fit($x,$t,['epochs'=>100,'validation_data'=>[$v_x,$v_t],'verbose'=>0]);
+        $history = $model->fit($x,$t,['epochs'=>100,'batch_size'=>16,'validation_data'=>[$v_x,$v_t],'verbose'=>0]);
 
         $this->assertEquals(['loss','accuracy','val_loss','val_accuracy'],array_keys($history));
 
@@ -796,6 +852,72 @@ class Test extends TestCase
         }
     }
 
+    public function testFitEmbeding()
+    {
+        $mo = new MatrixOperator();
+        $backend = new Backend($mo);
+        $nn = new NeuralNetworks($mo,$backend);
+        $plt = new Plot($this->getPlotConfig(),$mo);
+
+        $model = $nn->models()->Sequential([
+            $nn->layers()->Embedding($inputDim=10,$outputDim=10,
+                [
+                    'input_length'=>4,
+                    #'kernel_initializer'=>'glorot_normal',
+            ]),
+            $nn->layers()->Activation('softmax'),
+        ]);
+
+        $model->compile([
+            'loss'=>$nn->losses()->SparseCategoricalCrossEntropy(),
+            'optimizer'=>'adam',
+        ]);
+        $model->summary();
+        foreach($model->weights() as $w) {
+            echo '('.implode(',',$w->shape()).'):'.$mo->la()->amax($w)."\n";
+        }
+
+        // training sequences
+        $x = $mo->array([
+            [0,1,2,9],
+            [9,8,7,6],
+            [1,3,3,4],
+            [5,4,3,2],
+        ]);
+        $t = $mo->array([
+            [0,1,2,9],
+            [9,8,7,6],
+            [1,3,3,4],
+            [5,4,3,2],
+        ]);
+        $v_x = $mo->array([
+            [2,3,3,4],
+            [1,1,1,4],
+            [4,3,3,1],
+            [9,3,3,2],
+        ]);
+        $v_t = $mo->array([
+            [2,3,3,4],
+            [1,1,1,4],
+            [4,3,3,1],
+            [9,3,3,2],
+        ]);
+
+        $history = $model->fit($x,$t,['epochs'=>300,'batch_size'=>1,'validation_data'=>[$v_x,$v_t],'verbose'=>0]);
+
+        $this->assertEquals(['loss','accuracy','val_loss','val_accuracy'],array_keys($history));
+
+        if($this->plot) {
+            $plt->plot($mo->array($history['loss']),null,null,'loss');
+            $plt->plot($mo->array($history['val_loss']),null,null,'val_loss');
+            $plt->plot($mo->array($history['accuracy']),null,null,'accuracy');
+            $plt->plot($mo->array($history['val_accuracy']),null,null,'val_accuracy');
+            $plt->legend();
+            $plt->title('Embedding');
+            $plt->show();
+        }
+    }
+
     public function testFitSimpleRNN()
     {
         $mo = new MatrixOperator();
@@ -820,12 +942,12 @@ class Test extends TestCase
             'loss'=>$nn->losses()->SparseCategoricalCrossEntropy(),
             'optimizer'=>'adam',
         ]);
-        $model->summary();
-        foreach($model->weights() as $w) {
-            echo $mo->la()->amax($w)."\n";
-        }
+        #$model->summary();
+        #foreach($model->weights() as $w) {
+        #    echo '('.implode(',',$w->shape()).'):'.$mo->la()->amax($w)."\n";
+        #}
 
-        // training greater or less
+        // training up and down
         $x = $mo->array([
             [0,1,2,9],
             [9,8,7,6],
@@ -847,28 +969,7 @@ class Test extends TestCase
         $x = $mo->la()->onehot($x->reshape([16]),$numClass=10)->reshape([4,4,10]);
         $v_x = $mo->la()->onehot($v_x->reshape([16]),$numClass=10)->reshape([4,4,10]);
 
-        #$x = $mo->array([
-        #    [0],
-        #    [9],
-        #    [1],
-        #    [5],
-        #]);
-        #$t = $mo->array(
-        #    [0,9,1,5]
-        #);
-        #$v_x = $mo->array([
-        #    [2],
-        #    [1],
-        #    [4],
-        #    [9],
-        #]);
-        #$v_t = $mo->array(
-        #    [2,1,4,9]
-        #);
-        #$x = $mo->la()->onehot($x->reshape([4]),$numClass=10)->reshape([4,1,10]);
-        #$v_x = $mo->la()->onehot($v_x->reshape([4]),$numClass=10)->reshape([4,1,10]);
-
-        $history = $model->fit($x,$t,['epochs'=>300,'validation_data'=>[$v_x,$v_t],'verbose'=>0]);
+        $history = $model->fit($x,$t,['epochs'=>300,'batch_size'=>1,'validation_data'=>[$v_x,$v_t],'verbose'=>0]);
 
         $this->assertEquals(['loss','accuracy','val_loss','val_accuracy'],array_keys($history));
 
@@ -879,6 +980,85 @@ class Test extends TestCase
             $plt->plot($mo->array($history['val_accuracy']),null,null,'val_accuracy');
             $plt->legend();
             $plt->title('SimpleRNN');
+            $plt->show();
+        }
+    }
+
+    public function testFitSimpleRNNRetSeq()
+    {
+        $mo = new MatrixOperator();
+        $backend = new Backend($mo);
+        $nn = new NeuralNetworks($mo,$backend);
+        $plt = new Plot($this->getPlotConfig(),$mo);
+
+        $model = $nn->models()->Sequential([
+            $nn->layers()->SimpleRNN(
+                $units=10,
+                [
+                    'input_shape'=>[4,10],
+                    #'input_shape'=>[1,10],
+                    #'kernel_initializer'=>'glorot_normal',
+                    #'recurrent_initializer'=>'glorot_normal',
+                    #'recurrent_initializer'=>'glorot_normal',
+                    'return_sequences'=>true,
+            ]),
+            $nn->layers()->Activation('softmax'),
+        ]);
+
+        $model->compile([
+            'loss'=>$nn->losses()->SparseCategoricalCrossEntropy(),
+            'optimizer'=>'adam',
+        ]);
+        #$model->summary();
+        #foreach($model->weights() as $w) {
+        #    echo '('.implode(',',$w->shape()).'):'.$mo->la()->amax($w)."\n";
+        #}
+
+        // training sequences
+        $x = $mo->array([
+            [0,1,2,9],
+            [9,8,7,6],
+            [1,3,3,4],
+            [5,4,3,2],
+        ]);
+        $t = $mo->array([
+            [0,1,2,9],
+            [9,8,7,6],
+            [1,3,3,4],
+            [5,4,3,2],
+        ]);
+        $v_x = $mo->array([
+            [2,3,3,4],
+            [1,1,1,4],
+            [4,3,3,1],
+            [9,3,3,2],
+        ]);
+        $v_t = $mo->array([
+            [2,3,3,4],
+            [1,1,1,4],
+            [4,3,3,1],
+            [9,3,3,2],
+        ]);
+        $x = $mo->la()->onehot($x->reshape([16]),$numClass=10)->reshape([4,4,10]);
+        $v_x = $mo->la()->onehot($v_x->reshape([16]),$numClass=10)->reshape([4,4,10]);
+
+        $callback = new WeightLog($mo);
+        $history = $model->fit($x,$t,['epochs'=>300,'batch_size'=>1,'validation_data'=>[$v_x,$v_t],'verbose'=>0,'callbacks'=>[$callback]]);
+
+        $this->assertEquals(['loss','accuracy','val_loss','val_accuracy'],array_keys($history));
+
+        if($this->plot) {
+            $plt->plot($mo->array($history['loss']),null,null,'loss');
+            $plt->plot($mo->array($history['val_loss']),null,null,'val_loss');
+            $plt->plot($mo->array($history['accuracy']),null,null,'accuracy');
+            $plt->plot($mo->array($history['val_accuracy']),null,null,'val_accuracy');
+            $plt->legend();
+            $plt->title('SimpleRNN return_sequences');
+            $plt->figure();
+            foreach ($callback->getGradlog() as $key => $log) {
+                $plt->plot($mo->array($log),null,null,$label=$key);
+            }
+            $plt->legend();
             $plt->show();
         }
     }
@@ -907,12 +1087,12 @@ class Test extends TestCase
 
         $model->compile([
             'loss'=>'sparse_categorical_crossentropy',
-            #'optimizer'=>'adam',
-            'optimizer'=>'sgd',
+            'optimizer'=>'adam',
+            #'optimizer'=>'sgd',
         ]);
         #$model->summary();
         #foreach($model->weights() as $w) {
-        #    echo $mo->la()->amax($w)."\n";
+        #    echo '('.implode(',',$w->shape()).'):'.$mo->la()->amax($w)."\n";
         #}
         #return;
 
@@ -937,7 +1117,7 @@ class Test extends TestCase
         $x = $mo->la()->onehot($x->reshape([4]),$numClass=10)->reshape([4,10]);
         $v_x = $mo->la()->onehot($v_x->reshape([4]),$numClass=10)->reshape([4,10]);
 
-        $history = $model->fit($x,$t,['epochs'=>300,'validation_data'=>[$v_x,$v_t],'verbose'=>0]);
+        $history = $model->fit($x,$t,['epochs'=>300,'batch_size'=>1,'validation_data'=>[$v_x,$v_t],'verbose'=>0]);
 
         $this->assertEquals(['loss','accuracy','val_loss','val_accuracy'],array_keys($history));
 
@@ -951,7 +1131,6 @@ class Test extends TestCase
             $plt->show();
         }
     }
-
     public function testFitLSTM()
     {
         $mo = new MatrixOperator();
@@ -974,7 +1153,7 @@ class Test extends TestCase
         ]);
         //$model->summary();
 
-        // training greater or less
+        // training up and down
         $x = $mo->array([
             [0,1,2,9],
             [9,8,7,6],
@@ -995,7 +1174,7 @@ class Test extends TestCase
         );
         $x = $mo->la()->onehot($x->reshape([16]),$numClass=10)->reshape([4,4,10]);
         $v_x = $mo->la()->onehot($v_x->reshape([16]),$numClass=10)->reshape([4,4,10]);
-        $history = $model->fit($x,$t,['epochs'=>300,'validation_data'=>[$v_x,$v_t],'verbose'=>0]);
+        $history = $model->fit($x,$t,['epochs'=>300,'batch_size'=>1,'validation_data'=>[$v_x,$v_t],'verbose'=>0]);
 
         $this->assertEquals(['loss','accuracy','val_loss','val_accuracy'],array_keys($history));
 
@@ -1006,6 +1185,71 @@ class Test extends TestCase
             $plt->plot($mo->array($history['val_accuracy']),null,null,'val_accuracy');
             $plt->legend();
             $plt->title('LSTM');
+            $plt->show();
+        }
+    }
+
+    public function testFitLSTMRetSeq()
+    {
+        $mo = new MatrixOperator();
+        $backend = new Backend($mo);
+        $nn = new NeuralNetworks($mo,$backend);
+        $plt = new Plot($this->getPlotConfig(),$mo);
+
+        $model = $nn->models()->Sequential([
+            $nn->layers()->LSTM(
+                $units=16,
+                [
+                    'input_shape'=>[4,10],
+                    'return_sequences'=>true,
+                ]),
+                $nn->layers()->Activation('softmax'),
+        ]);
+
+        $model->compile([
+            'loss'=>$nn->losses()->SparseCategoricalCrossEntropy(),
+            'optimizer'=>$nn->optimizers()->Adam(),
+        ]);
+        //$model->summary();
+
+        // training up and down
+        $x = $mo->array([
+            [0,1,2,9],
+            [9,8,7,6],
+            [1,3,3,4],
+            [5,4,3,2],
+        ]);
+        $t = $mo->array([
+            [0,1,2,9],
+            [9,8,7,6],
+            [1,3,3,4],
+            [5,4,3,2],
+        ]);
+        $v_x = $mo->array([
+            [2,3,3,4],
+            [1,1,1,4],
+            [4,3,3,1],
+            [9,3,3,2],
+        ]);
+        $v_t = $mo->array([
+            [2,3,3,4],
+            [1,1,1,4],
+            [4,3,3,1],
+            [9,3,3,2],
+        ]);
+        $x = $mo->la()->onehot($x->reshape([16]),$numClass=10)->reshape([4,4,10]);
+        $v_x = $mo->la()->onehot($v_x->reshape([16]),$numClass=10)->reshape([4,4,10]);
+        $history = $model->fit($x,$t,['epochs'=>300,'batch_size'=>1,'validation_data'=>[$v_x,$v_t],'verbose'=>0]);
+
+        $this->assertEquals(['loss','accuracy','val_loss','val_accuracy'],array_keys($history));
+
+        if($this->plot) {
+            $plt->plot($mo->array($history['loss']),null,null,'loss');
+            $plt->plot($mo->array($history['val_loss']),null,null,'val_loss');
+            $plt->plot($mo->array($history['accuracy']),null,null,'accuracy');
+            $plt->plot($mo->array($history['val_accuracy']),null,null,'val_accuracy');
+            $plt->legend();
+            $plt->title('LSTM return_sequences');
             $plt->show();
         }
     }
@@ -1030,12 +1274,12 @@ class Test extends TestCase
             'loss'=>$nn->losses()->SparseCategoricalCrossEntropy(),
             'optimizer'=>'adam',
         ]);
-        $model->summary();
-        foreach($model->weights() as $w) {
-            echo '('.implode(',',$w->shape()).'):'.$mo->la()->amax($w)."\n";
-        }
+        #$model->summary();
+        #foreach($model->weights() as $w) {
+        #    echo '('.implode(',',$w->shape()).'):'.$mo->la()->amax($w)."\n";
+        #}
 
-        // training greater or less
+        // training up and down
         $x = $mo->array([
             [0,1,2,9],
             [9,8,7,6],
@@ -1092,12 +1336,12 @@ class Test extends TestCase
             'loss'=>$nn->losses()->SparseCategoricalCrossEntropy(),
             'optimizer'=>'adam',
         ]);
-        $model->summary();
-        foreach($model->weights() as $w) {
-            echo '('.implode(',',$w->shape()).'):'.$mo->la()->amax($w)."\n";
-        }
+        #$model->summary();
+        #foreach($model->weights() as $w) {
+        #    echo '('.implode(',',$w->shape()).'):'.$mo->la()->amax($w)."\n";
+        #}
 
-        // training greater or less
+        // training up and down
         $x = $mo->array([
             [0,1,2,9],
             [9,8,7,6],
@@ -1129,6 +1373,155 @@ class Test extends TestCase
             $plt->plot($mo->array($history['val_accuracy']),null,null,'val_accuracy');
             $plt->legend();
             $plt->title('GRU without reset_after');
+            $plt->show();
+        }
+    }
+
+    public function testFitGRURetSeq()
+    {
+        $mo = new MatrixOperator();
+        $backend = new Backend($mo);
+        $nn = new NeuralNetworks($mo,$backend);
+        $plt = new Plot($this->getPlotConfig(),$mo);
+
+        $model = $nn->models()->Sequential([
+            $nn->layers()->GRU(
+                $units=10,
+                [
+                    'input_shape'=>[4,10],
+                    #'input_shape'=>[1,10],
+                    #'kernel_initializer'=>'glorot_normal',
+                    #'recurrent_initializer'=>'glorot_normal',
+                    #'recurrent_initializer'=>'glorot_normal',
+                    'return_sequences'=>true,
+            ]),
+            $nn->layers()->Activation('softmax'),
+        ]);
+
+        $model->compile([
+            'loss'=>$nn->losses()->SparseCategoricalCrossEntropy(),
+            'optimizer'=>'adam',
+        ]);
+        #$model->summary();
+        #foreach($model->weights() as $w) {
+        #    echo '('.implode(',',$w->shape()).'):'.$mo->la()->amax($w)."\n";
+        #}
+
+        // training sequences
+        $x = $mo->array([
+            [0,1,2,9],
+            [9,8,7,6],
+            [1,3,3,4],
+            [5,4,3,2],
+        ]);
+        $t = $mo->array([
+            [0,1,2,9],
+            [9,8,7,6],
+            [1,3,3,4],
+            [5,4,3,2],
+        ]);
+        $v_x = $mo->array([
+            [2,3,3,4],
+            [1,1,1,4],
+            [4,3,3,1],
+            [9,3,3,2],
+        ]);
+        $v_t = $mo->array([
+            [2,3,3,4],
+            [1,1,1,4],
+            [4,3,3,1],
+            [9,3,3,2],
+        ]);
+        $x = $mo->la()->onehot($x->reshape([16]),$numClass=10)->reshape([4,4,10]);
+        $v_x = $mo->la()->onehot($v_x->reshape([16]),$numClass=10)->reshape([4,4,10]);
+
+        $callback = new WeightLog($mo);
+        $history = $model->fit($x,$t,['epochs'=>300,'batch_size'=>1,'validation_data'=>[$v_x,$v_t],'verbose'=>0,'callbacks'=>[$callback]]);
+
+        $this->assertEquals(['loss','accuracy','val_loss','val_accuracy'],array_keys($history));
+
+        if($this->plot) {
+            $plt->plot($mo->array($history['loss']),null,null,'loss');
+            $plt->plot($mo->array($history['val_loss']),null,null,'val_loss');
+            $plt->plot($mo->array($history['accuracy']),null,null,'accuracy');
+            $plt->plot($mo->array($history['val_accuracy']),null,null,'val_accuracy');
+            $plt->legend();
+            $plt->title('GRU return_sequences');
+            $plt->figure();
+            foreach ($callback->getGradlog() as $key => $log) {
+                $plt->plot($mo->array($log),null,null,$label=$key);
+            }
+            $plt->legend();
+            $plt->show();
+        }
+    }
+
+    public function testFitRepeatVector()
+    {
+        $mo = new MatrixOperator();
+        $backend = new Backend($mo);
+        $nn = new NeuralNetworks($mo,$backend);
+        $plt = new Plot($this->getPlotConfig(),$mo);
+
+        $model = $nn->models()->Sequential([
+            $nn->layers()->Dense(
+                $units=16,
+                [
+                    'input_shape'=>[4,10],
+                ]),
+                $nn->layers()->Flatten(),
+                $nn->layers()->RepeatVector(3),
+                $nn->layers()->Dense(10),
+                $nn->layers()->Activation('softmax'),
+        ]);
+
+        $model->compile([
+            'loss'=>$nn->losses()->SparseCategoricalCrossEntropy(),
+            'optimizer'=>'adam',
+        ]);
+        #$model->summary();
+        #foreach($model->weights() as $w) {
+        #    echo '('.implode(',',$w->shape()).'):'.$mo->la()->amax($w)."\n";
+        #}
+
+        // training up and down
+        $x = $mo->array([
+            [0,1,2,9],
+            [9,8,7,6],
+            [1,3,3,4],
+            [5,4,3,2],
+        ]);
+        $t = $mo->array([
+            [0,1,0],
+            [1,0,1],
+            [0,1,0],
+            [1,0,1],
+        ]);
+        $v_x = $mo->array([
+            [2,3,3,4],
+            [1,1,1,4],
+            [4,3,3,1],
+            [9,3,3,2],
+        ]);
+        $v_t = $mo->array([
+            [0,1,0],
+            [0,1,0],
+            [1,0,1],
+            [1,0,1],
+        ]);
+        $x = $mo->la()->onehot($x->reshape([16]),$numClass=10)->reshape([4,4,10]);
+        $v_x = $mo->la()->onehot($v_x->reshape([16]),$numClass=10)->reshape([4,4,10]);
+        $history = $model->fit($x,$t,['epochs'=>300,'batch_size'=>1,'validation_data'=>[$v_x,$v_t],'verbose'=>0]);
+
+        $this->assertEquals(['loss','accuracy','val_loss','val_accuracy'],array_keys($history));
+
+        if($this->plot) {
+            $plt->plot($mo->array($history['loss']),null,null,'loss');
+            $plt->plot($mo->array($history['val_loss']),null,null,'val_loss');
+            $plt->plot($mo->array($history['accuracy']),null,null,'accuracy');
+            $plt->plot($mo->array($history['val_accuracy']),null,null,'val_accuracy');
+            $plt->legend();
+            $plt->title('RepeatVector');
             $plt->show();
         }
     }

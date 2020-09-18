@@ -10,6 +10,7 @@ use Rindow\Math\Matrix\MatrixOperator;
 use Rindow\Math\Plot\Plot;
 use Rindow\NeuralNetworks\Backend\RindowBlas\Backend;
 use Rindow\NeuralNetworks\Builder\NeuralNetworks;
+use Rindow\NeuralNetworks\Callback\AbstractCallback;
 
 $TRAINING_SIZE = 5000;
 $DIGITS = 2;
@@ -180,17 +181,87 @@ $y_val   = $answers[[$split_at,$corpus_size-1]];
 
 echo "train,test: ".$x_train->shape()[0].",".$y_train->shape()[0]."\n";
 
+#$x_train = $mo->la()->onehot(
+#    $x_train->reshape([$x_train->size()]),
+#    $numClasses=count($input_voc)
+#    )->reshape([$x_train->shape()[0],$x_train->shape()[1],count($input_voc)]);
+#$x_val = $mo->la()->onehot(
+#    $x_val->reshape([$x_val->size()]),
+#    $numClasses=count($target_voc)
+#    )->reshape([$x_val->shape()[0],$x_val->shape()[1],count($target_voc)]);
+
 echo "Build model...\n";
+
+class WeightLog extends AbstractCallback
+{
+    protected $gradlog = [];
+    public function __construct($mo)
+    {
+        parent::__construct();
+        $this->mo = $mo;
+        $this->prev_w = null;
+    }
+
+    public function onEpochEnd(int $epoch, array $logs=null) : void
+    {
+        #echo "\n";
+        $model = $this->getModel();
+        $weights = $model->weights();
+        if($this->prev_w==null) {
+            $this->prev_w = $weights;
+            return;
+        }
+        $num = 0;
+        $next = [];
+        foreach($weights as $key => $w) {
+            $prev = $this->prev_w[$key];
+            $g = $this->mo->op($prev,'-',$w);
+            if(in_array($num,[1,2,4,5])) {
+                for($i=0;$i<3;$i++) {
+                    $name = 'g'.$num.$i.'('.implode(',',$w->shape()).')';
+                    if(!isset($this->gradlog[$name])) {
+                        $this->gradlog[$name] = [];
+                    }
+                    $gg = $this->mo->la()->slice($w,[0,$i*128],[-1,128]);
+                    $this->gradlog[$name][] = abs($this->mo->amax($gg));
+                }
+            } else {
+                $name = 'g'.$num.'('.implode(',',$w->shape()).')';
+                if(!isset($this->gradlog[$name])) {
+                    $this->gradlog[$name] = [];
+                }
+                $this->gradlog[$name][] = abs($this->mo->amax($w));
+            }
+            #echo sprintf("%7.2f",strval())." ";
+            $num++;
+            $next[] = $this->mo->copy($w);
+        }
+        $this->prev_w = $next;
+    }
+
+    public function getGradlog()
+    {
+        return $this->gradlog;
+    }
+}
+#$callback = new WeightLog($mo);
 
 $model = $nn->models()->Sequential([
     $nn->layers()->Embedding(count($input_dic), 16,
         ['input_length'=>$input_length]
     ),
+    #$nn->layers()->Input(
+    #    ['shape'=>[$input_length,count($input_voc)]]
+    #),
     # Encoder
     $nn->layers()->GRU(128
         #['reset_after'=>false]
     ),
     //$nn->layers()->LSTM(128),
+    #$nn->layers()->SimpleRNN(128),
+    #$nn->layers()->Conv1D(128,['activation'=>'relu']),
+    #$nn->layers()->MaxPooling1D(),
+    #$nn->layers()->Flatten(),
     # Expand to answer length and peeking hidden states
     $nn->layers()->RepeatVector($output_length),
     # Decoder
@@ -198,6 +269,7 @@ $model = $nn->models()->Sequential([
         #'reset_after'=>false,
     ]),
     //$nn->layers()->LSTM(128, ['return_sequences'=>true]),
+    #$nn->layers()->SimpleRNN(128, ['return_sequences'=>true]),
     # Output
     $nn->layers()->Dense(
         count($target_dic),
@@ -230,7 +302,8 @@ $history = $model->fit(
     [
         'epochs'=>$epochs,
         'batch_size'=>$batch_size,
-        'validation_data'=>[$x_val, $y_val]
+        'validation_data'=>[$x_val, $y_val],
+        #'callbacks'=>[$callback],
     ]
 );
 
@@ -238,6 +311,12 @@ for($i=0;$i<10;$i++) {
     $idx = $mo->random()->randomInt($corpus_size);
     $question = $questions[$idx];
     $input = $question->reshape([1,$input_length]);
+
+    #$input = $mo->la()->onehot(
+    #    $input->reshape([$input->size()]),
+    #    $numClasses=count($input_voc)
+    #    )->reshape([$input->shape()[0],$input->shape()[1],count($input_voc)]);
+
     $predict = $model->predict($input);
     $predict_seq = $mo->argMax($predict[0]->reshape([$output_length,count($target_dic)]),$axis=1);
     $predict_str = $dataset->seq2str($predict_seq,$target_voc);
@@ -254,5 +333,33 @@ $plt->plot($mo->array($history['val_accuracy']),null,null,'val_accuracy');
 $plt->plot($mo->array($history['loss']),null,null,'loss');
 $plt->plot($mo->array($history['val_loss']),null,null,'val_loss');
 $plt->legend();
-$plt->title('seq2seq-simple');
+$plt->title('seq2seq-simple-numaddition');
+#[$figure, $axes] = $plt->subplots(4,5);
+#$idx = 0;
+#$wnum = 0;
+#foreach($model->weights() as $w) {
+#    echo '('.implode(',',$w->shape()).'):'.$mo->la()->amax($w)."\n";
+#    if(in_array($wnum,[1,2,4,5])) {
+#        for($i=0;$i<3;$i++) {
+#            $ww = $mo->la()->slice($w,[0,$i*128],[-1,128]);
+#            $axes[$idx]->imshow($ww);
+#            $axes[$idx]->setTitle('GRU'.$wnum);
+#            $idx++;
+#        }
+#    } elseif($w->ndim()==1) {
+#        $axes[$idx]->plot($w);
+#        $idx++;
+#    } elseif($w->ndim()==2) {
+#        $axes[$idx]->imshow($w);
+#        $idx++;
+#    } else {
+#        echo "#$idx is ".$w->ndim()."\n";
+#    }
+#    $wnum++;
+#}
+#$plt->figure();
+#foreach ($callback->getGradlog() as $key => $gradlog) {
+#    $plt->plot($mo->array($gradlog),null,null,$key);
+#}
+#$plt->legend();
 $plt->show();

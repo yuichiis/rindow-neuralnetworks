@@ -5,21 +5,21 @@ use Interop\Polite\Math\Matrix\NDArray;
 
 class ReLU extends AbstractActivation
 {
-    protected $mask;
+    #protected $mask;
 
-    public function call(NDArray $inputs, bool $training) : NDArray
+    protected function call(NDArray $inputs, bool $training) : NDArray
     {
         $K = $this->backend;
-        $this->inputs = $inputs;
+        $this->states->inputs = $inputs;
         $outputs = $K->relu($inputs);
         return $outputs;
     }
 
-    public function differentiate(NDArray $dOutputs) : NDArray
+    protected function differentiate(NDArray $dOutputs) : NDArray
     {
         $K = $this->backend;
         //$mask = $K->cast($K->greater($this->inputs, 0.0),NDArray::float32);
-        $mask = $K->greater($this->inputs,0.0);
+        $mask = $K->greater($this->states->inputs,0.0);
         $dInputs = $K->mul($dOutputs,$mask);
         return $dInputs;
     }

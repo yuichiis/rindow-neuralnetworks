@@ -126,7 +126,7 @@ class SimpleRNN extends AbstractRNNLayer
                 'kernel_initializer' => $this->kernelInitializerName,
                 'recurrent_initializer' => $this->recurrentInitializerName,
                 'bias_initializer' => $this->biasInitializerName,
-                'return_sequence'=>$this->returnSequences,
+                'return_sequences'=>$this->returnSequences,
                 'return_state'=>$this->returnState,
                 'go_backward'=>$this->goBackwards,
                 'stateful'=>$this->stateful,

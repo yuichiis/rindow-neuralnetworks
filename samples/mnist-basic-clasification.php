@@ -79,7 +79,7 @@ fwrite(STDERR,"creating model ...\n");
 $model = $nn->models()->Sequential([
     $nn->layers()->Dense($units=128,
         ['input_shape'=>$inputShape,
-        'kernel_initializer'=>'relu_normal',
+        'kernel_initializer'=>'he_normal',
         'activation'=>'relu',
         ]),
     $nn->layers()->Dense($units=10,
@@ -87,7 +87,7 @@ $model = $nn->models()->Sequential([
 ]);
 
 $model->compile([
-    'optimizer'=>$nn->optimizers()->Adam()
+    'optimizer'=>'adam',
 ]);
 
 fwrite(STDERR,"training model ...\n");

@@ -5,24 +5,20 @@ use Interop\Polite\Math\Matrix\NDArray;
 
 class Sigmoid extends AbstractActivation
 {
-    protected $outputs;
     protected $incorporatedLoss = false;
 
-    public function call(NDArray $inputs, bool $training) : NDArray
+    protected function call(NDArray $inputs, bool $training) : NDArray
     {
         $K = $this->backend;
-        $this->outputs = $K->sigmoid($inputs);
-        return $this->outputs;
+        $outputs = $K->sigmoid($inputs);
+        $this->states->outputs = $outputs;
+        return $outputs;
     }
 
-    public function differentiate(NDArray $dOutputs) : NDArray
+    protected function differentiate(NDArray $dOutputs) : NDArray
     {
         $K = $this->backend;
-        $dx = $K->onesLike($this->outputs);
-        $K->update_sub($dx,$this->outputs);
-        $K->update_mul($dx,$this->outputs);
-        $K->update_mul($dx,$dOutputs);
-        $dInputs = $dx;
+        $dInputs = $K->dSigmoid($dOutputs, $this->states->outputs);
         return $dInputs;
     }
 }

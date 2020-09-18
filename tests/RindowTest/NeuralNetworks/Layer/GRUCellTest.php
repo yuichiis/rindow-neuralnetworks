@@ -12,6 +12,23 @@ use Rindow\NeuralNetworks\Activation\Tanh;
 
 class Test extends TestCase
 {
+    public function verifyGradient($mo, $function, NDArray $x,array $states)
+    {
+        $f = function($x) use ($mo,$function,$states){
+            $object = new \stdClass();
+            [$y,$states] = $function->forward($x,$states,$training=true,$object);
+            return $y;
+        };
+        $grads = $mo->la()->numericalGradient(1e-3,$f,$x);
+        $object = new \stdClass();
+        [$outputs,$next_states] = $function->forward($x,$states,$training=true,$object);
+        $dOutputs = $mo->ones($outputs->shape(),$outputs->dtype());
+        $dNextStates = [$mo->zeros([1,3])];
+        [$dInputs,$dPrevStates] = $function->backward($dOutputs,$dNextStates,$object);
+
+        return $mo->la()->isclose($grads[0],$dInputs,1e-4,1e-4);
+    }
+
     public function testDefaultInitialize()
     {
         $mo = new MatrixOperator();
@@ -35,9 +52,6 @@ class Test extends TestCase
         $this->assertEquals([3,12],$grads[0]->shape());
         $this->assertEquals([4,12],$grads[1]->shape());
         $this->assertEquals([2,12],$grads[2]->shape());
-        $this->assertNull(
-            $layer->getActivation()
-            );
 
         //$this->assertEquals([3],$layer->inputShape());
         $this->assertEquals([4],$layer->outputShape());
@@ -67,9 +81,6 @@ class Test extends TestCase
         $this->assertEquals([3,12],$grads[0]->shape());
         $this->assertEquals([12,4],$grads[1]->shape());
         $this->assertEquals([12],$grads[2]->shape());
-        $this->assertNull(
-            $layer->getActivation()
-            );
 
         //$this->assertEquals([3],$layer->inputShape());
         $this->assertEquals([4],$layer->outputShape());
@@ -207,12 +218,12 @@ class Test extends TestCase
         [$outputs,$nextStates] = $layer->forward($inputs, $states,$training=true,$object);
         //
         $this->assertEquals([
-            [433,433,433,433],
-            [433,433,433,433],
+            [-383,-383,-383,-383],
+            [-383,-383,-383,-383],
             ],$outputs->toArray());
         $this->assertEquals([
-            [433,433,433,433],
-            [433,433,433,433],
+            [-383,-383,-383,-383],
+            [-383,-383,-383,-383],
             ],$nextStates[0]->toArray());
         //
         // backword
@@ -226,45 +237,45 @@ class Test extends TestCase
         [$dInputs,$dPrevStates] = $layer->backward($dOutputs,$dStates,$object);
         // 2 batch
         $this->assertEquals([
-            [3696,3696,3696],
-            [3696,3696,3696],
+            [-3328,-3328,-3328],
+            [-3328,-3328,-3328],
             ],$dInputs->toArray());
         $this->assertEquals([
-            [4256,4256,4256,4256],
-            [4256,4256,4256,4256],
+            [-3822,-3822,-3822,-3822],
+            [-3822,-3822,-3822,-3822],
             ],$dPrevStates[0]->toArray());
         $this->assertEquals([
-            [192,192,192,192,
-             1620,1620,1620,1620,
-             36,36,36,36],
-            [192,192,192,192,
-              1620,1620,1620,1620,
-              36,36,36,36],
-            [192,192,192,192,
-               1620,1620,1620,1620,
-               36,36,36,36],
+            [-192,-192,-192,-192,
+             -1440,-1440,-1440,-1440,
+             -32,-32,-32,-32],
+            [-192,-192,-192,-192,
+             -1440,-1440,-1440,-1440,
+             -32,-32,-32,-32],
+            [-192,-192,-192,-192,
+             -1440,-1440,-1440,-1440,
+             -32,-32,-32,-32],
             ],$grads[0]->toArray());
         $this->assertEquals([
-            [192,192,192,192,
-             1620,1620,1620,1620,
-             324,324,324,324],
-            [192,192,192,192,
-             1620,1620,1620,1620,
-             324,324,324,324],
-            [192,192,192,192,
-             1620,1620,1620,1620,
-             324,324,324,324],
-            [192,192,192,192,
-             1620,1620,1620,1620,
-             324,324,324,324],
+            [-192,-192,-192,-192,
+             -1440,-1440,-1440,-1440,
+             -288,-288,-288,-288],
+            [-192,-192,-192,-192,
+             -1440,-1440,-1440,-1440,
+             -288,-288,-288,-288],
+            [-192,-192,-192,-192,
+             -1440,-1440,-1440,-1440,
+             -288,-288,-288,-288],
+            [-192,-192,-192,-192,
+             -1440,-1440,-1440,-1440,
+             -288,-288,-288,-288],
             ],$grads[1]->toArray());
         $this->assertEquals([
-            [192,192,192,192,
-             1620,1620,1620,1620,
-             36,36,36,36],
-            [192,192,192,192,
-             1620,1620,1620,1620,
-             324,324,324,324],
+            [-192,-192,-192,-192,
+             -1440,-1440,-1440,-1440,
+             -32,-32,-32,-32],
+            [-192,-192,-192,-192,
+             -1440,-1440,-1440,-1440,
+             -288,-288,-288,-288],
          ],$grads[2]->toArray());
     }
 
@@ -304,12 +315,12 @@ class Test extends TestCase
         [$outputs,$nextStates] = $layer->forward($inputs, $states,$training=true,$object);
         //
         $this->assertEquals([
-            [281,281,281,281],
-            [281,281,281,281],
+            [-244,-244,-244,-244],
+            [-244,-244,-244,-244],
             ],$outputs->toArray());
         $this->assertEquals([
-            [281,281,281,281],
-            [281,281,281,281],
+            [-244,-244,-244,-244],
+            [-244,-244,-244,-244],
             ],$nextStates[0]->toArray());
         //
         // backword
@@ -323,42 +334,99 @@ class Test extends TestCase
         [$dInputs,$dPrevStates] = $layer->backward($dOutputs,$dStates,$object);
         // 2 batch
         $this->assertEquals([
-            [600,600,600],
-            [600,600,600],
+            [-560,-560,-560],
+            [-560,-560,-560],
             ],$dInputs->toArray());
         $this->assertEquals([
-            [1034,1034,1034,1034],
-            [1034,1034,1034,1034],
+            [-936,-936,-936,-936],
+            [-936,-936,-936,-936],
             ],$dPrevStates[0]->toArray());
         $this->assertEquals([
-            [140,140,140,140,
-             128,128,128,128,
-             32,32,32,32],
-            [140,140,140,140,
-             128,128,128,128,
-             32,32,32,32],
-            [140,140,140,140,
-             128,128,128,128,
-             32,32,32,32],
+            [-140,-140,-140,-140,
+             -112,-112,-112,-112,
+             -28,-28,-28,-28],
+            [-140,-140,-140,-140,
+             -112,-112,-112,-112,
+             -28,-28,-28,-28],
+            [-140,-140,-140,-140,
+             -112,-112,-112,-112,
+             -28,-28,-28,-28],
             ],$grads[0]->toArray());
         $this->assertEquals([
-            [140,140,140,140],
-            [140,140,140,140],
-            [140,140,140,140],
-            [140,140,140,140],
-            [128,128,128,128],
-            [128,128,128,128],
-            [128,128,128,128],
-            [128,128,128,128],
-            [256,256,256,256],
-            [256,256,256,256],
-            [256,256,256,256],
-            [256,256,256,256],
+            [-140,-140,-140,-140],
+            [-140,-140,-140,-140],
+            [-140,-140,-140,-140],
+            [-140,-140,-140,-140],
+            [-112,-112,-112,-112],
+            [-112,-112,-112,-112],
+            [-112,-112,-112,-112],
+            [-112,-112,-112,-112],
+            [-224,-224,-224,-224],
+            [-224,-224,-224,-224],
+            [-224,-224,-224,-224],
+            [-224,-224,-224,-224],
             ],$grads[1]->toArray());
         $this->assertEquals(
-            [140,140,140,140,
-             128,128,128,128,
-             32,32,32,32],
+            [-140,-140,-140,-140,
+             -112,-112,-112,-112,
+             -28,-28,-28,-28],
             $grads[2]->toArray());
+    }
+
+    public function testVarifyGradientResetAfter()
+    {
+        $mo = new MatrixOperator();
+        $backend = new Backend($mo);
+        $fn = $backend;
+
+        $layer = new GRUCell(
+            $backend,
+            $units=3,
+            [
+                'input_shape'=>[10],
+                #'activation'=>null,
+            ]);
+        $layer->build();
+        $weights = $layer->getParams();
+
+        $x = $mo->array([
+            [1],
+        ]);
+        $states = [$mo->zeros([1,3])];
+        $object = new \stdClass();
+        $x = $mo->la()->onehot($x->reshape([1]),$numClass=10)->reshape([1,10]);
+        $outputs = $layer->forward($x,$states,$training=true,$object);
+
+        $this->assertTrue(
+            $this->verifyGradient($mo,$layer,$x,$states));
+    }
+
+    public function testVarifyGradientWithoutResetAfter()
+    {
+        $mo = new MatrixOperator();
+        $backend = new Backend($mo);
+        $fn = $backend;
+
+        $layer = new GRUCell(
+            $backend,
+            $units=3,
+            [
+                'input_shape'=>[10],
+                #'activation'=>null,
+                'reset_after'=>false,
+            ]);
+        $layer->build();
+        $weights = $layer->getParams();
+
+        $x = $mo->array([
+            [1],
+        ]);
+        $states = [$mo->zeros([1,3])];
+        $object = new \stdClass();
+        $x = $mo->la()->onehot($x->reshape([1]),$numClass=10)->reshape([1,10]);
+        $outputs = $layer->forward($x,$states,$training=true,$object);
+
+        $this->assertTrue(
+            $this->verifyGradient($mo,$layer,$x,$states));
     }
 }

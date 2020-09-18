@@ -6,7 +6,7 @@ use Interop\Polite\Math\Matrix\NDArray;
 class Conv1D extends AbstractConv implements Layer
 {
     protected $rank = 1;
-    
+
     protected function call(NDArray $inputs, bool $training) : NDArray
     {
         $K = $this->backend;
@@ -21,7 +21,7 @@ class Conv1D extends AbstractConv implements Layer
                 $this->data_format
         );
         if($this->activation)
-            $outputs = $this->activation->call($outputs,$training);
+            $outputs = $this->activation->forward($outputs,$training);
         return $outputs;
     }
 
@@ -29,7 +29,7 @@ class Conv1D extends AbstractConv implements Layer
     {
         $K = $this->backend;
         if($this->activation)
-            $dOutputs = $this->activation->differentiate($dOutputs);
+            $dOutputs = $this->activation->backward($dOutputs);
         $dInputs = $K->dConv1d(
             $this->status,
             $dOutputs,

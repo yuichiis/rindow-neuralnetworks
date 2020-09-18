@@ -137,7 +137,8 @@ class SimpleRNNCell extends AbstractRNNCell
         }
         $outputs = $K->gemm($prev_h, $this->recurrentKernel,1.0,1.0,$outputs);
         if($this->activation) {
-            $outputs = $this->activation->call($outputs,$training);
+            $outputs = $this->activation->forward($outputs,$training);
+            $calcState->activation = $this->activation->getStates();
         }
 
         $calcState->inputs = $inputs;
@@ -151,7 +152,8 @@ class SimpleRNNCell extends AbstractRNNCell
         $dNext_h = $dStates[0];
         $dOutputs = $K->add($dOutputs,$dNext_h);
         if($this->activation) {
-            $dOutputs = $this->activation->differentiate($dOutputs);
+            $this->activation->setStates($calcState->activation);
+            $dOutputs = $this->activation->backward($dOutputs);
         }
         $dInputs = $K->zerosLike($calcState->inputs);
         if($this->bias) {

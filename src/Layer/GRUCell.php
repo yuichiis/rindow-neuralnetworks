@@ -14,11 +14,8 @@ class GRUCell extends AbstractRNNCell
     protected $kernelInitializer;
     protected $biasInitializer;
     protected $resetAfter;
-    protected $ac;
-    protected $ac_i;
-    protected $ac_f;
-    protected $ac_c;
-    protected $ac_o;
+    protected $activation;
+    protected $recurrentActivation;
 
     protected $kernel;
     protected $recurrentKernel;
@@ -53,9 +50,8 @@ class GRUCell extends AbstractRNNCell
         if($use_bias) {
             $this->useBias = $use_bias;
         }
-        $this->ac_hh = $this->createFunction($activation);
-        $this->ac_z = $this->createFunction($recurrent_activation);
-        $this->ac_r = $this->createFunction($recurrent_activation);
+        $this->activation = $this->createFunction($activation);
+        $this->recurrentActivation = $this->createFunction($recurrent_activation);
         $this->kernelInitializer = $K->getInitializer($kernel_initializer);
         $this->recurrentInitializer = $K->getInitializer($recurrent_initializer);
         $this->biasInitializer   = $K->getInitializer($bias_initializer);
@@ -182,64 +178,71 @@ class GRUCell extends AbstractRNNCell
         $prev_h = $states[0];
 
         if($this->bias){
-            $gateOuts = $K->batch_gemm($inputs, $this->kernel,
+            $matrix_x = $K->batch_gemm($inputs, $this->kernel,
                 1.0,1.0,$this->inputBias);
         } else {
-            $gateOuts = $K->gemm($inputs, $this->kernel);
+            $matrix_x = $K->gemm($inputs, $this->kernel);
         }
 
-        $x_z = $K->slice($gateOuts,
+        $x_z = $K->slice($matrix_x,
             [0,0],[-1,$this->units]);
-        $x_r = $K->slice($gateOuts,
+        $x_r = $K->slice($matrix_x,
             [0,$this->units],[-1,$this->units]);
-        $x_hh = $K->slice($gateOuts,
+        $x_hh = $K->slice($matrix_x,
             [0,$this->units*2],[-1,$this->units]);
 
         if($this->resetAfter) {
             if($this->bias) {
-                $internalOutput = $K->batch_gemm($prev_h, $this->recurrentKernel,
+                $matrix_inner = $K->batch_gemm($prev_h, $this->recurrentKernel,
                     1.0,1.0, $this->recurrentBias);
             } else {
-                $internalOutput = $K->gemm($prev_h, $this->recurrentKernel);
+                $matrix_inner = $K->gemm($prev_h, $this->recurrentKernel);
             }
 
-            $internal_z = $K->slice($internalOutput,
+            $internal_z = $K->slice($matrix_inner,
                 [0,0],[-1,$this->units]);
-            $internal_r = $K->slice($internalOutput,
+            $internal_r = $K->slice($matrix_inner,
                 [0,$this->units],[-1,$this->units]);
-            $internal_hh = $K->slice($internalOutput,
+            $internal_hh = $K->slice($matrix_inner,
                 [0,$this->units*2],[-1,$this->units]);
 
             $K->update_add($x_z,$internal_z);
             $K->update_add($x_r,$internal_r);
-            if($this->ac_z){
-                $x_z = $this->ac_z->call($x_z,$training);
-                $x_r = $this->ac_r->call($x_r,$training);
+
+            if($this->recurrentActivation){
+                $x_z = $this->recurrentActivation->forward($x_z,$training);
+                $calcState->ac_z = $this->recurrentActivation->getStates();
+                $x_r = $this->recurrentActivation->forward($x_r,$training);
+                $calcState->ac_r = $this->recurrentActivation->getStates();
             }
             // hh = hh + (r * internal_hh)
             $internal_hh = $K->mul($x_r,$internal_hh);
             $K->update_add($x_hh,$internal_hh);
-            if($this->ac_hh){
-                $x_hh = $this->ac_hh->call($x_hh,$training);
+            if($this->activation){
+                $x_hh = $this->activation->forward($x_hh,$training);
+                $calcState->ac_hh = $this->activation->getStates();
             }
-        } else {
+        } else { // if(reset_after==false)
             $x_z = $K->gemm($prev_h, $this->r_kernel_z,1.0,1.0,$x_z);
             $x_r = $K->gemm($prev_h, $this->r_kernel_r,1.0,1.0,$x_r);
-            if($this->ac_z){
-                $x_z = $this->ac_z->call($x_z,$training);
-                $x_r = $this->ac_r->call($x_r,$training);
+            if($this->recurrentActivation){
+                $x_z = $this->recurrentActivation->forward($x_z,$training);
+                $calcState->ac_z = $this->recurrentActivation->getStates();
+                $x_r = $this->recurrentActivation->forward($x_r,$training);
+                $calcState->ac_r = $this->recurrentActivation->getStates();
             }
             $x_r_prev_r = $K->mul($x_r,$prev_h);
             $x_hh = $K->gemm($x_r_prev_r, $this->r_kernel_hh,1.0,1.0,$x_hh);
-            if($this->ac_hh){
-                $x_hh = $this->ac_hh->call($x_hh,$training);
+            if($this->activation){
+                $x_hh = $this->activation->forward($x_hh,$training);
+                $calcState->ac_hh = $this->activation->getStates();
             }
         }
-        // next_h = (1-z) * prev_h + z * hh
+        // next_h = z * prev_h +  (1-z) * hh
         $x1_z = $K->increment($K->scale(-1,$x_z),1);
         $next_h = $K->add(
-            $K->mul($x1_z,$prev_h),
-            $K->mul($x_z,$x_hh));
+            $K->mul($x_z,$prev_h),
+            $K->mul($x1_z,$x_hh));
 
         $calcState->inputs = $inputs;
         $calcState->prev_h = $prev_h;
@@ -252,7 +255,6 @@ class GRUCell extends AbstractRNNCell
         } else {
             $calcState->x_r_prev_r = $x_r_prev_r;
         }
-
         return [$next_h,[$next_h]];
     }
 
@@ -263,19 +265,20 @@ class GRUCell extends AbstractRNNCell
         $dNext_h = $K->add($dOutputs,$dNext_h);
 
         // forward:
-        //  next_h = (1-z) * prev_h + z * hh
+        //  next_h = z * prev_h + (1-z) * hh
         // backward:
-        // dprev_h = dnext_h * (1-z)
-        // d_hh = dnext_h * z
-        // d_z = dnext_h * (hh - prev_h)
-        $dPrev_h = $K->mul($dNext_h,$calcState->x1_z);
-        $dX_hh = $K->mul($dNext_h,$calcState->x_z);
-        $dX_z = $K->mul($dNext_h,$K->sub($calcState->x_hh,$calcState->prev_h));
+        // dprev_h = dnext_h * z
+        // d_hh = dnext_h * (1-z)
+        // d_z = dnext_h * (prev_h - hh)
+        $dPrev_h = $K->mul($dNext_h,$calcState->x_z);
+        $dX_hh = $K->mul($dNext_h,$calcState->x1_z);
+        $dX_z = $K->mul($dNext_h,$K->sub($calcState->prev_h,$calcState->x_hh));
 
         if($this->resetAfter) {
             // hh output
-            if($this->ac_hh){
-                $dX_hh = $this->ac_hh->differentiate($dX_hh);
+            if($this->activation){
+                $this->activation->setStates($calcState->ac_hh);
+                $dX_hh = $this->activation->backward($dX_hh);
             }
             // forward:
             // hhx = (inputs dot Wk)+b1
@@ -289,8 +292,9 @@ class GRUCell extends AbstractRNNCell
             $dX_r = $K->mul($dX_hh,$calcState->internal_hh);
 
             // z gate
-            if($this->ac_z){
-                $dX_z = $this->ac_z->differentiate($dX_z);
+            if($this->recurrentActivation){
+                $this->recurrentActivation->setStates($calcState->ac_z);
+                $dX_z = $this->recurrentActivation->backward($dX_z);
             }
             // forward:
             // zx = (inputs dot Wk)+b1
@@ -300,8 +304,9 @@ class GRUCell extends AbstractRNNCell
             // d_zx = d_z
             // d_internal_z = d_z
             // r gate
-            if($this->ac_r){
-                $dX_r = $this->ac_r->differentiate($dX_r);
+            if($this->recurrentActivation){
+                $this->recurrentActivation->setStates($calcState->ac_r);
+                $dX_r = $this->recurrentActivation->backward($dX_r);
             }
             // forward:
             // rx = (inputs dot Wk)+b1
@@ -317,8 +322,8 @@ class GRUCell extends AbstractRNNCell
             // internalOutput = h_prev dot
             //     recurrent_kernel
             // backward:
-            // d_recurrent_kernel = 
-            // h_prev.T dot d_internaloutput 
+            // d_recurrent_kernel =
+            // h_prev.T dot d_internaloutput
             // dh_prev = d_internaloutput
             //     dot recurrent_kernel.T
             $dInternalOutput = $K->stack(
@@ -339,24 +344,27 @@ class GRUCell extends AbstractRNNCell
                 $dPrev_h,false,true);
         } else {
             // hh output
-            if($this->ac_hh){
-                $dX_hh = $this->ac_hh->differentiate($dX_hh);
+            if($this->activation){
+                $this->activation->setStates($calcState->ac_hh);
+                $dX_hh = $this->activation->backward($dX_hh);
             }
             $K->gemm($calcState->x_r_prev_r, $dX_hh, 1.0,1.0,$this->dR_kernel_hh,true,false);
             $dhh_r = $K->gemm($dX_hh, $this->r_kernel_hh,1.0,0.0,null,false,true);
             $K->update_add($dPrev_h,$K->mul($calcState->x_r,$dhh_r));
 
             // z gate
-            if($this->ac_z){
-                $dX_z = $this->ac_z->differentiate($dX_z);
+            if($this->recurrentActivation){
+                $this->recurrentActivation->setStates($calcState->ac_z);
+                $dX_z = $this->recurrentActivation->backward($dX_z);
             }
             $K->gemm($calcState->prev_h, $dX_z,1.0,1.0,$this->dR_kernel_z,true,false);
             $K->gemm($dX_z, $this->r_kernel_z,1.0,1.0,$dPrev_h,false,true);
 
             // r gate
             $dX_r = $K->mul($dhh_r,$calcState->prev_h);
-            if($this->ac_r){
-                $dX_r = $this->ac_r->differentiate($dX_r);
+            if($this->recurrentActivation){
+                $this->recurrentActivation->setStates($calcState->ac_r);
+                $dX_r = $this->recurrentActivation->backward($dX_r);
             }
             $K->gemm($calcState->prev_h, $dX_r,1.0,1.0,$this->dR_kernel_r,true,false);
             $K->gemm($dX_r, $this->r_kernel_r,1.0,1.0,$dPrev_h,false,true);
