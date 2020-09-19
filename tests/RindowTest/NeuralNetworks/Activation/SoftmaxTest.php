@@ -19,7 +19,7 @@ class Test extends TestCase
         $outputs = $function->forward($x, ...$args);
         $ones = $mo->ones($outputs->shape(),$outputs->dtype());
         $dInputs = $function->backward($ones);
-        return $mo->la()->isclose($grads[0],$dInputs,1e-4,1e-4);
+        return $mo->la()->isclose($grads[0],$dInputs,null,1e-4);
     }
 
     public function testNormal()

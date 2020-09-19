@@ -22,7 +22,11 @@ class Test extends TestCase
         $outputs = $function->forward($x,$training=true);
         $dOutputs = $mo->ones($outputs->shape(),$outputs->dtype());
         $dInputs = $function->backward($dOutputs);
-        return $mo->la()->isclose($grads[0],$dInputs,1e-4,1e-4);
+#echo "\n";
+#echo "grads=".$mo->toString($grads[0],'%5.3f',true)."\n\n";
+#echo "dInputs=".$mo->toString($dInputs,'%5.3f',true)."\n\n";
+#echo $mo->asum($mo->op($grads[0],'-',$dInputs))."\n";
+        return $mo->la()->isclose($grads[0],$dInputs,null,1e-4);
     }
 
     public function testDefaultInitialize()
@@ -398,7 +402,7 @@ class Test extends TestCase
             $grads[2]->shape());
     }
 
-    public function testVarifyReturnSequences()
+    public function testVerifyReturnSequences()
     {
         $mo = new MatrixOperator();
         $backend = new Backend($mo);

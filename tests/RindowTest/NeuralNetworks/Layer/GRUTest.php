@@ -26,7 +26,7 @@ class Test extends TestCase
 #echo "grads=".$mo->toString($grads[0],'%5.3f',true)."\n\n";
 #echo "dInputs=".$mo->toString($dInputs,'%5.3f',true)."\n\n";
 #echo $mo->asum($mo->op($grads[0],'-',$dInputs))."\n";
-        return $mo->la()->isclose($grads[0],$dInputs,1e-0,1e-1);
+        return $mo->la()->isclose($grads[0],$dInputs,1e-1);#,1e-0,1e-1);
     }
 
     public function testDefaultInitialize()
@@ -466,7 +466,7 @@ class Test extends TestCase
             $grads[2]->shape());
     }
 
-    public function testVarifyReturnSequences()
+    public function testVerifyReturnSequences()
     {
         $mo = new MatrixOperator();
         $backend = new Backend($mo);
@@ -491,10 +491,10 @@ class Test extends TestCase
         $outputs = $layer->forward($x,$training=true);
 
         $this->assertTrue(
-            $this->verifyGradient($mo,$layer,$x));
+            $this->verifyGradient($mo,$layer,$x,1e-3));
     }
 
-    public function testVarifyWithoutResetAfter()
+    public function testVerifyWithoutResetAfter()
     {
         $mo = new MatrixOperator();
         $backend = new Backend($mo);
@@ -537,7 +537,7 @@ class Test extends TestCase
                 'return_sequences'=>true,
                 #'return_state'=>true,
                 'activation'=>null,
-                'recurrent_activation'=>null,
+                #'recurrent_activation'=>null,
             ]);
         $kernel = $mo->ones([10,30]);
         $recurrent_kernel = $mo->ones([10,30]);
@@ -557,11 +557,11 @@ class Test extends TestCase
         ]);
         $x = $mo->la()->onehot($x->reshape([4]),$numClass=10)->reshape([1,4,10]);
         $outputs = $layer->forward($x,$training=true);
-        echo "outputs=".$mo->toString($outputs,'%5.2f',true);
+        echo "outputs=".$mo->toString($outputs,'%5.3f',true);
 
         $ones = $mo->ones($outputs->shape());
         $dInputs = $layer->backward($ones);
-        echo "dInputs=".$mo->toString($dInputs,'%5.2f',true);
+        echo "dInputs=".$mo->toString($dInputs,'%5.3f',true);
 
         #$this->assertTrue(
         #    $this->verifyGradient($mo,$layer,$x));

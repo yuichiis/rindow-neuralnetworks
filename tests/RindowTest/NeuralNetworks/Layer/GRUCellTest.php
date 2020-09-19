@@ -26,7 +26,7 @@ class Test extends TestCase
         $dNextStates = [$mo->zeros([1,3])];
         [$dInputs,$dPrevStates] = $function->backward($dOutputs,$dNextStates,$object);
 
-        return $mo->la()->isclose($grads[0],$dInputs,1e-4,1e-4);
+        return $mo->la()->isclose($grads[0],$dInputs,1e-4);
     }
 
     public function testDefaultInitialize()
@@ -373,7 +373,7 @@ class Test extends TestCase
             $grads[2]->toArray());
     }
 
-    public function testVarifyGradientResetAfter()
+    public function testVerifyGradientResetAfter()
     {
         $mo = new MatrixOperator();
         $backend = new Backend($mo);
@@ -401,7 +401,7 @@ class Test extends TestCase
             $this->verifyGradient($mo,$layer,$x,$states));
     }
 
-    public function testVarifyGradientWithoutResetAfter()
+    public function testVerifyGradientWithoutResetAfter()
     {
         $mo = new MatrixOperator();
         $backend = new Backend($mo);

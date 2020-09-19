@@ -23,7 +23,7 @@ class Test extends TestCase
         $grads = $mo->la()->numericalGradient(1e-3,$f,$x);
         $outputs = $function->loss($t,$x);
         $dInputs = $function->differentiateLoss();
-        return $mo->la()->isclose($grads[0],$dInputs,1e-4,1e-4);
+        return $mo->la()->isclose($grads[0],$dInputs,1e-4);
     }
 
     public function testGraph()

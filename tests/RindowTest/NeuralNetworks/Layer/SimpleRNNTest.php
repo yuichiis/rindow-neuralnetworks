@@ -22,7 +22,7 @@ class Test extends TestCase
         $outputs = $function->forward($x,$training=true);
         $dOutputs = $mo->ones($outputs->shape(),$outputs->dtype());
         $dInputs = $function->backward($dOutputs);
-        return $mo->la()->isclose($grads[0],$dInputs,1e-4,1e-4);
+        return $mo->la()->isclose($grads[0],$dInputs,1e-4);
     }
 
     public function testDefaultInitialize()
@@ -380,7 +380,7 @@ class Test extends TestCase
             ,$grads[2]->toArray());
     }
 
-    public function testVarifyReturnSequences()
+    public function testVerifyReturnSequences()
     {
         $mo = new MatrixOperator();
         $backend = new Backend($mo);
@@ -392,6 +392,35 @@ class Test extends TestCase
             [
                 'input_shape'=>[4,10],
                 'return_sequences'=>true,
+                #'return_state'=>true,
+                #'activation'=>null,
+            ]);
+        $layer->build();
+        $weights = $layer->getParams();
+
+        $x = $mo->array([
+            [0,1,2,9],
+        ]);
+        $x = $mo->la()->onehot($x->reshape([4]),$numClass=10)->reshape([1,4,10]);
+        $outputs = $layer->forward($x,$training=true);
+
+        $this->assertTrue(
+            $this->verifyGradient($mo,$layer,$x));
+    }
+
+    public function testVerifyGoBackwards()
+    {
+        $mo = new MatrixOperator();
+        $backend = new Backend($mo);
+        $fn = $backend;
+
+        $layer = new SimpleRNN(
+            $backend,
+            $units=3,
+            [
+                'input_shape'=>[4,10],
+                'return_sequences'=>true,
+                'go_backwards'=>true,
                 #'return_state'=>true,
                 #'activation'=>null,
             ]);
