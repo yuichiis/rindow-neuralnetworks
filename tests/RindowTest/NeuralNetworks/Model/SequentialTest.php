@@ -432,7 +432,7 @@ class Test extends TestCase
             'loss'=>$nn->losses()->BinaryCrossEntropy(),
             #'optimizer'=>'adam',
         ]);
-        $model->summary();
+        //$model->summary();
         $this->assertTrue( $model->layers()[1]->getActivation()->fromLogits());
         $this->assertTrue( $model->lossFunction()->fromLogits());
 
@@ -498,6 +498,13 @@ class Test extends TestCase
 
     public function testFitConv1DandMaxPooling1D()
     {
+        if(extension_loaded('rindow_openblas')) {
+            $num_of_filters=128;
+            $epoch = 300;
+        } else {
+            $num_of_filters=16;
+            $epoch = 50;
+        }
         $mo = new MatrixOperator();
         $backend = new Backend($mo);
         $nn = new NeuralNetworks($mo,$backend);
@@ -505,13 +512,13 @@ class Test extends TestCase
 
         $model = $nn->models()->Sequential([
             $nn->layers()->Conv1D(
-                $filters=128,
+                $filters=$num_of_filters,#128,
                 $kernel_size=3,
                 ['input_shape'=>[10,1],
                 'kernel_initializer'=>'he_normal',
                 'activation'=>'relu']),
             $nn->layers()->MaxPooling1D(),
-            $nn->layers()->Conv1D(128,3),
+            $nn->layers()->Conv1D($num_of_filters/*128*/,3),
             $nn->layers()->Flatten(),
             $nn->layers()->Activation('softmax'),
         ]);
@@ -542,7 +549,7 @@ class Test extends TestCase
         );
         $history = $model->fit(
             $x,$t,
-            ['epochs'=>300,'validation_data'=>[$v_x,$v_t],'verbose'=>0]);
+            ['epochs'=>$epoch/*300*/,'validation_data'=>[$v_x,$v_t],'verbose'=>0]);
 
         $this->assertEquals(['loss','accuracy','val_loss','val_accuracy'],array_keys($history));
 
@@ -559,6 +566,13 @@ class Test extends TestCase
 
     public function testFitConv2DandMaxPooling2D()
     {
+        if(extension_loaded('rindow_openblas')) {
+            $num_of_filters=128;
+            $epoch = 300;
+        } else {
+            $num_of_filters=8;
+            $epoch = 30;
+        }
         $mo = new MatrixOperator();
         $backend = new Backend($mo);
         $nn = new NeuralNetworks($mo,$backend);
@@ -566,7 +580,7 @@ class Test extends TestCase
 
         $model = $nn->models()->Sequential([
             $nn->layers()->Conv2D(
-                $filters=128,
+                $filters=$num_of_filters,#128,
                 $kernel_size=3,
                 ['input_shape'=>[10,10,1],
                 'kernel_initializer'=>'he_normal',
@@ -574,7 +588,7 @@ class Test extends TestCase
                 #'activation'=>'softmax',
                 ]),
             $nn->layers()->MaxPooling2D(),
-            $nn->layers()->Conv2D(128,3),
+            $nn->layers()->Conv2D($num_of_filters/*128*/,3),
             $nn->layers()->Flatten(),
             $nn->layers()->Activation('softmax'),
         ]);
@@ -603,7 +617,7 @@ class Test extends TestCase
         );
         $history = $model->fit(
             $x,$t,
-            ['epochs'=>100,'validation_data'=>[$v_x,$v_t],'verbose'=>0]);
+            ['epochs'=>$epoch/*100*/,'validation_data'=>[$v_x,$v_t],'verbose'=>0]);
 
         $this->assertEquals(['loss','accuracy','val_loss','val_accuracy'],array_keys($history));
 
@@ -620,6 +634,13 @@ class Test extends TestCase
 
     public function testFitConv3DandMaxPooling3D()
     {
+        if(extension_loaded('rindow_openblas')) {
+            $num_of_filters=128;
+            $epoch = 300;
+        } else {
+            $num_of_filters=8;
+            $epoch = 20;
+        }
         $mo = new MatrixOperator();
         $backend = new Backend($mo);
         $nn = new NeuralNetworks($mo,$backend);
@@ -627,13 +648,13 @@ class Test extends TestCase
 
         $model = $nn->models()->Sequential([
             $nn->layers()->Conv3D(
-                $filters=128,
+                $filters=$num_of_filters,#128,
                 $kernel_size=3,
                 ['input_shape'=>[10,10,10,1],
                 'kernel_initializer'=>'he_normal',
                 'activation'=>'relu']),
             $nn->layers()->MaxPooling3D(),
-            $nn->layers()->Conv3D(128,3),
+            $nn->layers()->Conv3D($num_of_filters/*128*/,3),
             $nn->layers()->Flatten(),
             $nn->layers()->Activation('softmax'),
         ]);
@@ -659,7 +680,7 @@ class Test extends TestCase
         $v_t = $mo->array(
             [1,0,1,0]
         );
-        $history = $model->fit($x,$t,['epochs'=>100,'validation_data'=>[$v_x,$v_t],'verbose'=>0]);
+        $history = $model->fit($x,$t,['epochs'=>$epoch/*100*/,'validation_data'=>[$v_x,$v_t],'verbose'=>0]);
 
         $this->assertEquals(['loss','accuracy','val_loss','val_accuracy'],array_keys($history));
 
@@ -676,6 +697,13 @@ class Test extends TestCase
 
     public function testFitConv1DandAveragePooling1D()
     {
+        if(extension_loaded('rindow_openblas')) {
+            $num_of_filters=128;
+            $epoch = 300;
+        } else {
+            $num_of_filters=16;
+            $epoch = 50;
+        }
         $mo = new MatrixOperator();
         $backend = new Backend($mo);
         $nn = new NeuralNetworks($mo,$backend);
@@ -683,13 +711,13 @@ class Test extends TestCase
 
         $model = $nn->models()->Sequential([
             $nn->layers()->Conv1D(
-                $filters=128,
+                $filters=$num_of_filters,#128,
                 $kernel_size=3,
                 ['input_shape'=>[10,1],
                 'kernel_initializer'=>'he_normal',
                 'activation'=>'relu']),
             $nn->layers()->AveragePooling1D(),
-            $nn->layers()->Conv1D(128,3),
+            $nn->layers()->Conv1D($num_of_filters/*128*/,3),
             $nn->layers()->Flatten(),
             $nn->layers()->Activation('softmax'),
         ]);
@@ -720,7 +748,7 @@ class Test extends TestCase
         );
         $history = $model->fit(
             $x,$t,
-            ['epochs'=>300,'validation_data'=>[$v_x,$v_t],'verbose'=>0]);
+            ['epochs'=>$epoch/*300*/,'validation_data'=>[$v_x,$v_t],'verbose'=>0]);
 
         $this->assertEquals(['loss','accuracy','val_loss','val_accuracy'],array_keys($history));
 
@@ -737,6 +765,13 @@ class Test extends TestCase
 
     public function testFitConv2DandAveragePooling2D()
     {
+        if(extension_loaded('rindow_openblas')) {
+            $num_of_filters=128;
+            $epoch = 300;
+        } else {
+            $num_of_filters=8;
+            $epoch = 30;
+        }
         $mo = new MatrixOperator();
         $backend = new Backend($mo);
         $nn = new NeuralNetworks($mo,$backend);
@@ -744,7 +779,7 @@ class Test extends TestCase
 
         $model = $nn->models()->Sequential([
             $nn->layers()->Conv2D(
-                $filters=128,
+                $filters=$num_of_filters,#128,
                 $kernel_size=3,
                 ['input_shape'=>[10,10,1],
                 'kernel_initializer'=>'he_normal',
@@ -752,7 +787,7 @@ class Test extends TestCase
                 #'activation'=>'softmax',
                 ]),
             $nn->layers()->AveragePooling2D(),
-            $nn->layers()->Conv2D(128,3),
+            $nn->layers()->Conv2D($num_of_filters/*128*/,3),
             $nn->layers()->Flatten(),
             $nn->layers()->Activation('softmax'),
         ]);
@@ -781,7 +816,7 @@ class Test extends TestCase
         );
         $history = $model->fit(
             $x,$t,
-            ['epochs'=>100,'validation_data'=>[$v_x,$v_t],'verbose'=>0]);
+            ['epochs'=>$epoch,'validation_data'=>[$v_x,$v_t],'verbose'=>0]);
 
         $this->assertEquals(['loss','accuracy','val_loss','val_accuracy'],array_keys($history));
 
@@ -798,6 +833,13 @@ class Test extends TestCase
 
     public function testFitConv3DandAveragePooling3D()
     {
+        if(extension_loaded('rindow_openblas')) {
+            $num_of_filters=128;
+            $epoch = 300;
+        } else {
+            $num_of_filters=8;
+            $epoch = 20;
+        }
         $mo = new MatrixOperator();
         $backend = new Backend($mo);
         $nn = new NeuralNetworks($mo,$backend);
@@ -805,13 +847,13 @@ class Test extends TestCase
 
         $model = $nn->models()->Sequential([
             $nn->layers()->Conv3D(
-                $filters=128,
+                $filters=$num_of_filters,#128,
                 $kernel_size=3,
                 ['input_shape'=>[10,10,10,1],
                 'kernel_initializer'=>'he_normal',
                 'activation'=>'relu']),
             $nn->layers()->AveragePooling3D(),
-            $nn->layers()->Conv3D(128,3),
+            $nn->layers()->Conv3D($num_of_filters/*128*/,3),
             $nn->layers()->Flatten(),
             $nn->layers()->Activation('softmax'),
         ]);
@@ -837,7 +879,7 @@ class Test extends TestCase
         $v_t = $mo->array(
             [1,0,1,0]
         );
-        $history = $model->fit($x,$t,['epochs'=>100,'validation_data'=>[$v_x,$v_t],'verbose'=>0]);
+        $history = $model->fit($x,$t,['epochs'=>$epoch/*100*/,'validation_data'=>[$v_x,$v_t],'verbose'=>0]);
 
         $this->assertEquals(['loss','accuracy','val_loss','val_accuracy'],array_keys($history));
 
@@ -854,6 +896,11 @@ class Test extends TestCase
 
     public function testFitEmbeding()
     {
+        if(extension_loaded('rindow_openblas')) {
+            $epoch = 300;
+        } else {
+            $epoch = 50;
+        }
         $mo = new MatrixOperator();
         $backend = new Backend($mo);
         $nn = new NeuralNetworks($mo,$backend);
@@ -872,10 +919,10 @@ class Test extends TestCase
             'loss'=>$nn->losses()->SparseCategoricalCrossEntropy(),
             'optimizer'=>'adam',
         ]);
-        $model->summary();
-        foreach($model->weights() as $w) {
-            echo '('.implode(',',$w->shape()).'):'.$mo->la()->amax($w)."\n";
-        }
+        //$model->summary();
+        //foreach($model->weights() as $w) {
+        //    echo '('.implode(',',$w->shape()).'):'.$mo->la()->amax($w)."\n";
+        //}
 
         // training sequences
         $x = $mo->array([
@@ -903,7 +950,7 @@ class Test extends TestCase
             [9,3,3,2],
         ]);
 
-        $history = $model->fit($x,$t,['epochs'=>300,'batch_size'=>1,'validation_data'=>[$v_x,$v_t],'verbose'=>0]);
+        $history = $model->fit($x,$t,['epochs'=>$epoch/*300*/,'batch_size'=>1,'validation_data'=>[$v_x,$v_t],'verbose'=>0]);
 
         $this->assertEquals(['loss','accuracy','val_loss','val_accuracy'],array_keys($history));
 
@@ -920,6 +967,11 @@ class Test extends TestCase
 
     public function testFitSimpleRNN()
     {
+        if(extension_loaded('rindow_openblas')) {
+            $epoch = 300;
+        } else {
+            $epoch = 100;
+        }
         $mo = new MatrixOperator();
         $backend = new Backend($mo);
         $nn = new NeuralNetworks($mo,$backend);
@@ -969,7 +1021,7 @@ class Test extends TestCase
         $x = $mo->la()->onehot($x->reshape([16]),$numClass=10)->reshape([4,4,10]);
         $v_x = $mo->la()->onehot($v_x->reshape([16]),$numClass=10)->reshape([4,4,10]);
 
-        $history = $model->fit($x,$t,['epochs'=>300,'batch_size'=>1,'validation_data'=>[$v_x,$v_t],'verbose'=>0]);
+        $history = $model->fit($x,$t,['epochs'=>$epoch/*300*/,'batch_size'=>1,'validation_data'=>[$v_x,$v_t],'verbose'=>0]);
 
         $this->assertEquals(['loss','accuracy','val_loss','val_accuracy'],array_keys($history));
 
@@ -986,6 +1038,11 @@ class Test extends TestCase
 
     public function testFitSimpleRNNRetSeq()
     {
+        if(extension_loaded('rindow_openblas')) {
+            $epoch = 300;
+        } else {
+            $epoch = 100;
+        }
         $mo = new MatrixOperator();
         $backend = new Backend($mo);
         $nn = new NeuralNetworks($mo,$backend);
@@ -1043,7 +1100,7 @@ class Test extends TestCase
         $v_x = $mo->la()->onehot($v_x->reshape([16]),$numClass=10)->reshape([4,4,10]);
 
         $callback = new WeightLog($mo);
-        $history = $model->fit($x,$t,['epochs'=>300,'batch_size'=>1,'validation_data'=>[$v_x,$v_t],'verbose'=>0,'callbacks'=>[$callback]]);
+        $history = $model->fit($x,$t,['epochs'=>$epoch/*300*/,'batch_size'=>1,'validation_data'=>[$v_x,$v_t],'verbose'=>0,'callbacks'=>[$callback]]);
 
         $this->assertEquals(['loss','accuracy','val_loss','val_accuracy'],array_keys($history));
 
@@ -1065,6 +1122,11 @@ class Test extends TestCase
 
     public function testFitSimSimpleRNN()
     {
+        if(extension_loaded('rindow_openblas')) {
+            $epoch = 300;
+        } else {
+            $epoch = 100;
+        }
         $mo = new MatrixOperator();
         $backend = new Backend($mo);
         $nn = new NeuralNetworks($mo,$backend);
@@ -1117,7 +1179,7 @@ class Test extends TestCase
         $x = $mo->la()->onehot($x->reshape([4]),$numClass=10)->reshape([4,10]);
         $v_x = $mo->la()->onehot($v_x->reshape([4]),$numClass=10)->reshape([4,10]);
 
-        $history = $model->fit($x,$t,['epochs'=>300,'batch_size'=>1,'validation_data'=>[$v_x,$v_t],'verbose'=>0]);
+        $history = $model->fit($x,$t,['epochs'=>$epoch/*300*/,'batch_size'=>1,'validation_data'=>[$v_x,$v_t],'verbose'=>0]);
 
         $this->assertEquals(['loss','accuracy','val_loss','val_accuracy'],array_keys($history));
 
@@ -1133,6 +1195,11 @@ class Test extends TestCase
     }
     public function testFitLSTM()
     {
+        if(extension_loaded('rindow_openblas')) {
+            $epoch = 300;
+        } else {
+            $epoch = 100;
+        }
         $mo = new MatrixOperator();
         $backend = new Backend($mo);
         $nn = new NeuralNetworks($mo,$backend);
@@ -1174,7 +1241,7 @@ class Test extends TestCase
         );
         $x = $mo->la()->onehot($x->reshape([16]),$numClass=10)->reshape([4,4,10]);
         $v_x = $mo->la()->onehot($v_x->reshape([16]),$numClass=10)->reshape([4,4,10]);
-        $history = $model->fit($x,$t,['epochs'=>300,'batch_size'=>1,'validation_data'=>[$v_x,$v_t],'verbose'=>0]);
+        $history = $model->fit($x,$t,['epochs'=>$epoch/*300*/,'batch_size'=>1,'validation_data'=>[$v_x,$v_t],'verbose'=>0]);
 
         $this->assertEquals(['loss','accuracy','val_loss','val_accuracy'],array_keys($history));
 
@@ -1191,6 +1258,11 @@ class Test extends TestCase
 
     public function testFitLSTMRetSeq()
     {
+        if(extension_loaded('rindow_openblas')) {
+            $epoch = 300;
+        } else {
+            $epoch = 100;
+        }
         $mo = new MatrixOperator();
         $backend = new Backend($mo);
         $nn = new NeuralNetworks($mo,$backend);
@@ -1239,7 +1311,7 @@ class Test extends TestCase
         ]);
         $x = $mo->la()->onehot($x->reshape([16]),$numClass=10)->reshape([4,4,10]);
         $v_x = $mo->la()->onehot($v_x->reshape([16]),$numClass=10)->reshape([4,4,10]);
-        $history = $model->fit($x,$t,['epochs'=>300,'batch_size'=>1,'validation_data'=>[$v_x,$v_t],'verbose'=>0]);
+        $history = $model->fit($x,$t,['epochs'=>$epoch/*300*/,'batch_size'=>1,'validation_data'=>[$v_x,$v_t],'verbose'=>0]);
 
         $this->assertEquals(['loss','accuracy','val_loss','val_accuracy'],array_keys($history));
 
@@ -1256,6 +1328,11 @@ class Test extends TestCase
 
     public function testFitGRUDefault()
     {
+        if(extension_loaded('rindow_openblas')) {
+            $epoch = 300;
+        } else {
+            $epoch = 100;
+        }
         $mo = new MatrixOperator();
         $backend = new Backend($mo);
         $nn = new NeuralNetworks($mo,$backend);
@@ -1300,7 +1377,7 @@ class Test extends TestCase
         );
         $x = $mo->la()->onehot($x->reshape([16]),$numClass=10)->reshape([4,4,10]);
         $v_x = $mo->la()->onehot($v_x->reshape([16]),$numClass=10)->reshape([4,4,10]);
-        $history = $model->fit($x,$t,['epochs'=>300,'batch_size'=>1,'validation_data'=>[$v_x,$v_t],'verbose'=>0]);
+        $history = $model->fit($x,$t,['epochs'=>$epoch/*300*/,'batch_size'=>1,'validation_data'=>[$v_x,$v_t],'verbose'=>0]);
 
         $this->assertEquals(['loss','accuracy','val_loss','val_accuracy'],array_keys($history));
 
@@ -1317,6 +1394,11 @@ class Test extends TestCase
 
     public function testFitGRUWithoutResetAfter()
     {
+        if(extension_loaded('rindow_openblas')) {
+            $epoch = 300;
+        } else {
+            $epoch = 100;
+        }
         $mo = new MatrixOperator();
         $backend = new Backend($mo);
         $nn = new NeuralNetworks($mo,$backend);
@@ -1362,7 +1444,7 @@ class Test extends TestCase
         );
         $x = $mo->la()->onehot($x->reshape([16]),$numClass=10)->reshape([4,4,10]);
         $v_x = $mo->la()->onehot($v_x->reshape([16]),$numClass=10)->reshape([4,4,10]);
-        $history = $model->fit($x,$t,['epochs'=>300,'batch_size'=>1,'validation_data'=>[$v_x,$v_t],'verbose'=>0]);
+        $history = $model->fit($x,$t,['epochs'=>$epoch/*300*/,'batch_size'=>1,'validation_data'=>[$v_x,$v_t],'verbose'=>0]);
 
         $this->assertEquals(['loss','accuracy','val_loss','val_accuracy'],array_keys($history));
 
@@ -1379,6 +1461,11 @@ class Test extends TestCase
 
     public function testFitGRURetSeq()
     {
+        if(extension_loaded('rindow_openblas')) {
+            $epoch = 300;
+        } else {
+            $epoch = 100;
+        }
         $mo = new MatrixOperator();
         $backend = new Backend($mo);
         $nn = new NeuralNetworks($mo,$backend);
@@ -1436,7 +1523,7 @@ class Test extends TestCase
         $v_x = $mo->la()->onehot($v_x->reshape([16]),$numClass=10)->reshape([4,4,10]);
 
         $callback = new WeightLog($mo);
-        $history = $model->fit($x,$t,['epochs'=>300,'batch_size'=>1,'validation_data'=>[$v_x,$v_t],'verbose'=>0,'callbacks'=>[$callback]]);
+        $history = $model->fit($x,$t,['epochs'=>$epoch/*300*/,'batch_size'=>1,'validation_data'=>[$v_x,$v_t],'verbose'=>0,'callbacks'=>[$callback]]);
 
         $this->assertEquals(['loss','accuracy','val_loss','val_accuracy'],array_keys($history));
 
@@ -1458,6 +1545,11 @@ class Test extends TestCase
 
     public function testFitRepeatVector()
     {
+        if(extension_loaded('rindow_openblas')) {
+            $epoch = 300;
+        } else {
+            $epoch = 50;
+        }
         $mo = new MatrixOperator();
         $backend = new Backend($mo);
         $nn = new NeuralNetworks($mo,$backend);
@@ -1511,7 +1603,7 @@ class Test extends TestCase
         ]);
         $x = $mo->la()->onehot($x->reshape([16]),$numClass=10)->reshape([4,4,10]);
         $v_x = $mo->la()->onehot($v_x->reshape([16]),$numClass=10)->reshape([4,4,10]);
-        $history = $model->fit($x,$t,['epochs'=>300,'batch_size'=>1,'validation_data'=>[$v_x,$v_t],'verbose'=>0]);
+        $history = $model->fit($x,$t,['epochs'=>$epoch/*300*/,'batch_size'=>1,'validation_data'=>[$v_x,$v_t],'verbose'=>0]);
 
         $this->assertEquals(['loss','accuracy','val_loss','val_accuracy'],array_keys($history));
 

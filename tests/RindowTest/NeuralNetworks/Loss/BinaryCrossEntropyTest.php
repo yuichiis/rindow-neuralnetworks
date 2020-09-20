@@ -23,7 +23,19 @@ class Test extends TestCase
         $grads = $mo->la()->numericalGradient(1e-3,$f,$x);
         $outputs = $function->loss($t,$x);
         $dInputs = $function->differentiateLoss();
-        return $mo->la()->isclose($grads[0],$dInputs,1e-4);
+#echo "\n";
+#echo "grads=".$mo->toString($grads[0],'%5.3f',true)."\n\n";
+#echo "dInputs=".$mo->toString($dInputs,'%5.3f',true)."\n\n";
+#echo $mo->asum($mo->op($grads[0],'-',$dInputs))."\n";
+        return $mo->la()->isclose($grads[0],$dInputs,null,1e-4);
+    }
+
+    public function getPlotConfig()
+    {
+        return [
+            'renderer.skipCleaning' => true,
+            'renderer.skipRunViewer' => getenv('TRAVIS_PHP_VERSION') ? true : false,
+        ];
     }
 
     public function testGraph()
@@ -31,7 +43,7 @@ class Test extends TestCase
         $mo = new MatrixOperator();
         $backend = new Backend($mo);
         $nn = new NeuralNetworks($mo,$backend);
-        $plt = new Plot(null,$mo);
+        $plt = new Plot($this->getPlotConfig(),$mo);
         $loss = $nn->losses()->BinaryCrossEntropy();
         $x = [0.1,0.3,0.5,0.7,0.9,0.1,0.3,0.5,0.7,0.9];
         $t = [1,1,1,1,1,0,0,0,0,0];
