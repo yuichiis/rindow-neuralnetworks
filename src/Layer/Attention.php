@@ -27,8 +27,10 @@ class Activation extends AbstractLayerBase
             ],
         ];
     }
+    
+    public function forward(array $inputs, bool $training) : array
 
-    protected function call(array $inputs, bool $training) : NDArray
+    protected function call(array $inputs, bool $training) : array
     {
         if(count($inputs)!=2||count($inputs)!=3) {
             throw new InvalidArgumentException('Must have 2 or 3 arguments');
@@ -45,7 +47,7 @@ class Activation extends AbstractLayerBase
         $attentionWeight = $K->softmax($scores);
 
         $contextVector = $K->gemm($attentionWeight, $value);
-        return $contextVector;
+        return [$contextVector];
     }
 
     protected function differentiate(NDArray $dOutputs) : array
