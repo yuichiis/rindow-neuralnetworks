@@ -75,7 +75,7 @@ class Activation extends AbstractLayerBase
     {
         $K = $this->backend;
         $dAttentionWeight = $K->gemm($dOutputs,$this->value,null,null,null,false,true);
-        $dValue = $K->gemm($this->attentionWeight,$dOutputs);
+        $dValue = $K->gemm($this->attentionWeight,$dOutputs,null,null,null,true,false);
         $dScore = $K->dSoftmax($this->scores,$dAttentionWeight);
         
         $dkey = $K->gemm($dScore,$this->query);
