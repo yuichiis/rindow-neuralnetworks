@@ -43,6 +43,7 @@ class Activation extends AbstractLayerBase
 
     protected function call(array $inputs, bool $training) : array
     {
+        $K = $this->backend;
         $query = $inputs[0];
         $value = $inputs[1];
         if(count($inputs)==3) {
@@ -60,7 +61,8 @@ class Activation extends AbstractLayerBase
 
     protected function differentiate(NDArray $dOutputs) : array
     {
-        
+        $K = $this->backend;
+        $dValue = $K->gemm($dOutputs,$this->attentionWeight)
         return $dInputs;
     }
 }
