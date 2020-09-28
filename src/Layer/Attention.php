@@ -35,7 +35,7 @@ class Activation extends AbstractLayerBase
     
     protected function backword(NDArray $dOutputs) : array
     {
-        return $this->differentiate($inputs,$training);
+        return $this->differentiate($dOutputs);
     }
 
     protected function call(array $inputs, bool $training) : array
