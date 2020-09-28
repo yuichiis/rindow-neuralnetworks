@@ -55,7 +55,7 @@ class Activation extends AbstractLayerBase
         $attentionWeight = $K->softmax($scores);
 
         $contextVector = $K->gemm($attentionWeight, $value);
-        return [$contextVector];
+        return $contextVector;
     }
 
     protected function differentiate(NDArray $dOutputs) : array
