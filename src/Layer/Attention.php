@@ -29,6 +29,10 @@ class Activation extends AbstractLayerBase
     }
     
     public function forward(array $inputs, bool $training) : array
+    {
+        return $inputs;
+    }
+    protected function differentiate(NDArray $dOutputs) : array
 
     protected function call(array $inputs, bool $training) : array
     {
