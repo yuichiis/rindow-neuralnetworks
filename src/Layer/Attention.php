@@ -30,6 +30,9 @@ class Activation extends AbstractLayerBase
     
     public function forward(array $inputs, bool $training) : array
     {
+        if(count($inputs)!=2||count($inputs)!=3) {
+            throw new InvalidArgumentException('Must have 2 or 3 arguments');
+        }
         return $this->call($inputs,$training);
     }
     
@@ -40,9 +43,6 @@ class Activation extends AbstractLayerBase
 
     protected function call(array $inputs, bool $training) : array
     {
-        if(count($inputs)!=2||count($inputs)!=3) {
-            throw new InvalidArgumentException('Must have 2 or 3 arguments');
-        }
         $query = $inputs[0];
         $value = $inputs[1];
         if(count($inputs)==3) {
