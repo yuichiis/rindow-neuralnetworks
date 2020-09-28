@@ -74,7 +74,7 @@ class Activation extends AbstractLayerBase
     protected function differentiate(NDArray $dOutputs) : array
     {
         $K = $this->backend;
-        $dAttentionWeight = $K->gemm($dOutputs,$this->value,1.0,0.0,null,false,true);
+        $dAttentionWeight = $K->gemm($dOutputs,$this->value,null,null,null,false,true);
         $dValue = $K->gemm($dOutputs,$this->attentionWeight);
         $dScore = $K->dSoftmax($this->scores,$dAttentionWeight);
         
