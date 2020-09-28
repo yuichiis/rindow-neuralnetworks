@@ -48,8 +48,10 @@ class Activation extends AbstractLayerBase
         $value = $inputs[1];
         if(count($inputs)==3) {
             $key = $inputs[2];
+            $this->sameValue = false;
         } else {
             $key = $inputs[1];
+            $this->sameValue = true;
         }
 
         $scores = $K->gemm($query, $key, null,null,null,null, $tranB=true);
