@@ -12,6 +12,8 @@ class Activation extends AbstractLayerBase
     protected $query;
     protected $value;
     protected $key;
+    protected $scores;
+    protected $attentionWeight;
 
     public function __construct($backend, array $options=null)
     {
