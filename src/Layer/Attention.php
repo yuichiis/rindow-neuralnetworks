@@ -65,6 +65,7 @@ class Activation extends AbstractLayerBase
         $this->attentionWeight = $attentionWeight;
         $this->query = $query;
         $this->key = $key;
+        $this->scores = $scores;
         return $contextVector;
     }
 
