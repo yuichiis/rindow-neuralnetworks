@@ -58,6 +58,8 @@ class Activation extends AbstractLayerBase
         $contextVector = $K->gemm($attentionWeight, $value);
         $this->value = $value;
         $this->attentionWeight = $attentionWeight;
+        $this->query = $query;
+        $this->key = $key;
         return $contextVector;
     }
 
