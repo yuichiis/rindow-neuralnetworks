@@ -56,6 +56,8 @@ class Activation extends AbstractLayerBase
         $attentionWeight = $K->softmax($scores);
 
         $contextVector = $K->gemm($attentionWeight, $value);
+        $this->value = $value;
+        $this->attentionWeight = $attentionWeight;
         return $contextVector;
     }
 
