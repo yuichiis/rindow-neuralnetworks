@@ -28,7 +28,7 @@ class Activation extends AbstractLayerBase
         ];
     }
     
-    public function forward(array $inputs, bool $training) : array
+    public function forward(array $inputs, bool $training) : NDArray
     {
         if(count($inputs)!=2||count($inputs)!=3) {
             throw new InvalidArgumentException('Must have 2 or 3 arguments');
