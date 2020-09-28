@@ -36,7 +36,7 @@ class Activation extends AbstractLayerBase
         return $this->call($inputs,$training);
     }
     
-    protected function backword(array $dOutputs) : array
+    protected function backword(NDArray $dOutputs) : array
     {
         return $this->differentiate($dOutputs);
     }
@@ -58,7 +58,7 @@ class Activation extends AbstractLayerBase
         return [$contextVector];
     }
 
-    protected function differentiate(array $dOutputs) : array
+    protected function differentiate(NDArray $dOutputs) : array
     {
         
         return $dInputs;
