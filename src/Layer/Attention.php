@@ -73,7 +73,10 @@ class Activation extends AbstractLayerBase
         $dScore = $K->dSoftmax($scores,$dAttentionWeight);
         $dkey = $K->gemm($dScore,$this->query);
         $dQuery = $K->gemm($this->key,$dScore)
-        
+        if($this->sameKey) {
+            $K->update_add($dKey,$dValue);
+            return [$dQuery,$dValue];
+        }
         return $dInputs;
     }
 }
