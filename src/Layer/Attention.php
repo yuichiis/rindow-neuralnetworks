@@ -63,6 +63,8 @@ class Activation extends AbstractLayerBase
     {
         $K = $this->backend;
         $dValue = $K->gemm($dOutputs,$this->attentionWeight);
+        $dAttentionWeight = $K->gemm($this->value,$dOutputs);
+        
         return $dInputs;
     }
 }
