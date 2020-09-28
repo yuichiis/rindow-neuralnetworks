@@ -76,7 +76,8 @@ class Activation extends AbstractLayerBase
         if($this->sameKey) {
             $K->update_add($dKey,$dValue);
             return [$dQuery,$dValue];
+        } else {
+            return [$dQuery,$dValue,$dKey];
         }
-        return $dInputs;
     }
 }
