@@ -74,7 +74,7 @@ class Activation extends AbstractLayerBase
         $dkey = $K->gemm($dScore,$this->query);
         $dQuery = $K->gemm($this->key,$dScore)
         if($this->sameKey) {
-            $K->update_add($dKey,$dValue);
+            $K->update_add($dValue,$dKey);
             return [$dQuery,$dValue];
         } else {
             return [$dQuery,$dValue,$dKey];
