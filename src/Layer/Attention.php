@@ -9,6 +9,9 @@ class Activation extends AbstractLayerBase
 {
     use GenericUtils;
     protected $backend;
+    protected $query;
+    protected $value;
+    protected $key;
 
     public function __construct($backend, array $options=null)
     {
