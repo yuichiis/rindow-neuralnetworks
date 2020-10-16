@@ -514,6 +514,19 @@ class Backend
         return $this->la->gemm($a, $b, $alpha, $beta, $outputs);
     }
 
+    public function matmul(
+        NDArray $a,
+        NDArray $b,
+        bool $transA=null,
+        bool $transB=null,
+        NDArray $c=null,
+        float $alpha=null,
+        float $beta=null
+        )
+    {
+        return $this->la->matmul($a,$b,$transA,$transB,$c,$alpha,$beta);
+    }
+
     public function select(NDArray $source,NDArray $selector,$axis=null)
     {
         return $this->la->select($source,$selector,$axis);
@@ -557,6 +570,28 @@ class Backend
         ) {
         return $this->la->stack(
             $inputs,
+            $axis
+            );
+    }
+
+    public function concat(
+        array $inputs,
+        int $axis=null
+        ) {
+        return $this->la->concat(
+            $inputs,
+            $axis
+            );
+    }
+
+    public function split(
+        NDArray $value,
+        array $sizeSplits,
+        int $axis=null
+        ) {
+        return $this->la->split(
+            $value,
+            $sizeSplits,
             $axis
             );
     }
@@ -675,7 +710,7 @@ class Backend
     {
         $la = $this->la;
         if($dOutputs->shape()!=$outputs->shape()){
-            throw new InvalidArgumentException('unmatch predicts shape: ['.implode(',',$predicts->shape()).']');
+            throw new InvalidArgumentException('unmatch predicts shape: ['.implode(',',$dOutputs->shape()).'] ['.implode(',',$outputs->shape()).']');
         }
 
         // softmax:  yk      = exp(ak) / sumj(exp(aj))
@@ -685,11 +720,15 @@ class Backend
 
         // dx = (y * dy) - sum(y * dy) * y
         $dx = $la->multiply($outputs, $la->copy($dOutputs));
+        $shape = $orgShape = $dx->shape();
+        $n = array_pop($shape);
+        $m = (int)array_product($shape);
+        $dx = $dx->reshape([$m,$n]);
         $dInputs = $la->axpy(
             $la->multiply($la->reduceSum($dx, $axis=1),
-                                $la->copy($outputs),$trans=true),$dx,-1.0);
+                                $la->copy($outputs->reshape([$m,$n])),$trans=true),$dx,-1.0);
         //$dInputs = $this->la->scal(1/$dOutputs->shape()[0],$dInputs);
-        return $dInputs;
+        return $dInputs->reshape($orgShape);
     }
 
     public function conv1d(

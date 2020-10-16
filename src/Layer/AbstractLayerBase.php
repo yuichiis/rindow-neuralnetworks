@@ -73,9 +73,13 @@ abstract class AbstractLayerBase implements LayerBase
         if($this->inputShape===null)
             $this->inputShape = $inputShape;
         if($this->inputShape!==$inputShape) {
-            throw new InvalidArgumentException(
-                'Input shape is inconsistent: ['.implode(',',$this->inputShape).
-                '] and ['.implode(',',$inputShape).']');
+            if(is_array($this->inputShape)&&is_int($this->inputShape[0])) {
+                $msg = 'Input shape is inconsistent: ['.implode(',',$this->inputShape).
+                '] and ['.implode(',',$inputShape).']';
+            } else {
+                $msg = 'Input shape is inconsistent';
+            }
+            throw new InvalidArgumentException($msg);
         } elseif($inputShape===null) {
             throw new InvalidArgumentException('Input shape is not defined');
         }
