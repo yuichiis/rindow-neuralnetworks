@@ -1,5 +1,5 @@
 <?php
-namespace Rindow\NeuralNetworks\Preprocessing\Sequence;
+namespace Rindow\NeuralNetworks\Data\Sequence;
 
 use Interop\Polite\Math\Matrix\NDArray;
 use Rindow\NeuralNetworks\Support\GenericUtils;

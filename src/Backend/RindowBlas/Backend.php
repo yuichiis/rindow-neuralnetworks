@@ -60,6 +60,12 @@ class Backend
             $value,$dtype);
     }
 
+    public function fill(array $shape, $value, $dtype=null)
+    {
+        return $this->matrixOperator->full(
+            $shape,$value,$dtype);
+    }
+
     public function getInitializer($name)
     {
         if(!array_key_exists($name,$this->initializers))
@@ -1292,7 +1298,8 @@ class Backend
 
 
     public function sparseCategoricalCrossEntropy(
-        NDArray $trues, NDArray $predicts) : float
+        NDArray $trues, NDArray $predicts,
+        bool $fromLogits=null, string $reduction=null)
     {
         $la = $this->la;
         $ndim = $trues->ndim();
@@ -1330,7 +1337,8 @@ class Backend
     }
 
     public function dSparseCategoricalCrossEntropy(
-        NDArray $trues, NDArray $predicts, bool $fromLogits=null) : NDArray
+        NDArray $trues, NDArray $predicts,
+        bool $fromLogits=null, string $reduction=null) : NDArray
     {
         $la = $this->la;
         $origPredictsShape = $predicts->shape();

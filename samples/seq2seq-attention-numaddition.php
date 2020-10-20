@@ -254,7 +254,7 @@ class Seq2seq extends AbstractModel
         return $dInputs;
     }
 
-    public function translate(NDArray $sentence)
+    public function predict(NDArray $inputs, array $options=null) : NDArray
     {
         $K = $this->backend;
         $inputLength = $sentence->size();

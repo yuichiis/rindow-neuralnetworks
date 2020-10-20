@@ -36,11 +36,15 @@ abstract class AbstractModel implements Model
     protected $built = false;
     protected $shapeInspection=true;
 
-    public function __construct($backend,$builder,$hda)
+    public function __construct($backend,$builder,$hda=null)
     {
         $this->backend = $backend;
         $this->builder = $builder;
-        $this->hda = $hda;
+        if($hda===null) {
+            $this->hda = $builder->utils()->HDA();
+        } else {
+            $this->hda = $hda;
+        }
     }
 
     protected function console($message)
@@ -319,7 +323,7 @@ abstract class AbstractModel implements Model
         }
 
         $preds = $this->forwardStep($inputs, $trues, $training=true);
-        $loss  = $this->lossFunction->loss($trues,$preds);
+        $loss  = $this->loss($trues,$preds);
         if(is_nan($loss)) {
             throw new UnexpectedValueException("loss is unexpected value");
         }
@@ -334,6 +338,11 @@ abstract class AbstractModel implements Model
 
         $this->optimizer->update($this->params, $this->grads);
         return [$loss,$accuracy];
+    }
+
+    protected function loss(NDArray $trues,NDArray $preds) : float
+    {
+        return $this->lossFunction->loss($trues,$preds);
     }
 
     public function evaluate(NDArray $x, NDArray $t, array $options=null) : array
@@ -386,7 +395,7 @@ abstract class AbstractModel implements Model
         return [$totalLoss,$totalAccuracy];
     }
 
-    public function predict($inputs, array $options=null) : NDArray
+    public function predict(NDArray $inputs, array $options=null) : NDArray
     {
         extract($this->extractArgs([
             'callbacks'=>null,
