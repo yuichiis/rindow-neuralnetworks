@@ -1299,7 +1299,7 @@ class Backend
 
     public function sparseCategoricalCrossEntropy(
         NDArray $trues, NDArray $predicts,
-        bool $fromLogits=null, string $reduction=null)
+        bool $fromLogits=null)
     {
         $la = $this->la;
         $ndim = $trues->ndim();
@@ -1338,7 +1338,7 @@ class Backend
 
     public function dSparseCategoricalCrossEntropy(
         NDArray $trues, NDArray $predicts,
-        bool $fromLogits=null, string $reduction=null) : NDArray
+        bool $fromLogits=null) : NDArray
     {
         $la = $this->la;
         $origPredictsShape = $predicts->shape();

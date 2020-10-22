@@ -204,6 +204,8 @@ abstract class AbstractLayerBase implements LayerBase
     {
         $this->layers[] = $layer;
         $outputShape = $layer->build($inputShape);
+        $name = basename(str_replace('\\',DIRECTORY_SEPARATOR,get_class($layer)));
+        $layer->setName($name);
         $this->addWeights($layer);
         return $outputShape;
     }

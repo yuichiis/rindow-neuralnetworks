@@ -180,7 +180,7 @@ class Encoder extends AbstractRNNLayer
 
     public function build(array $inputShape=null, array $options=null) : array
     {
-        $inputShape=$this->normalizeInputShape($inputShape);
+        $inputShape = $this->normalizeInputShape($inputShape);
         $inputShape = $this->registerLayer($this->embedding,$inputShape);
         $inputShape = $this->registerLayer($this->rnn,$inputShape);
         $this->outputShape = $inputShape;
@@ -203,9 +203,9 @@ class Encoder extends AbstractRNNLayer
         bool $training,
         array $initial_state=null,
         array $options=null
-        ) : NDArray
+        ) : array
     {
-        $wordVect = $this->embedding->forward($inputs);
+        $wordVect = $this->embedding->forward($inputs,$training);
         [$outputs,$states] = $this->rnn->forward(
             $wordVect,$training,$initial_state);
         return [$outputs, $states];
@@ -243,6 +243,7 @@ class Decoder extends AbstractRNNLayer
         int $vocabSize,
         int $wordVectSize,
         int $units,
+        int $inputLength,
         int $targetLength
         )
     {
@@ -266,7 +267,7 @@ class Decoder extends AbstractRNNLayer
         $inputShape=$this->normalizeInputShape($inputShape);
         $inputShape = $this->registerLayer($this->embedding,$inputShape);
         $rnnShape = $this->registerLayer($this->rnn,$inputShape);
-        $inputShape = $this->registerLayer($this->attention,
+        [$inputShape,$scoresShape] = $this->registerLayer($this->attention,
             [$inputShape,[$this->targetLength,$this->units]]);
         $inputShape = $this->registerLayer($this->concat,[$inputShape,$rnnShape]);
         $inputShape = $this->registerLayer($this->dense,$inputShape);
@@ -292,18 +293,19 @@ class Decoder extends AbstractRNNLayer
         array $initial_state=null,
         array $options=null
         ) : array
+    {
         $K = $this->backend;
         $encOutputs=$options['enc_outputs'];
 
-        $x = $this->embedding->forward($inputs);
-        $rnnSequence,$states = $this->rnn->forward(
+        $x = $this->embedding->forward($inputs,$training);
+        [$rnnSequence,$states] = $this->rnn->forward(
             $x,$training,$initial_state);
 
         [$contextVector,$attentionScores] = $this->attention->forward(
-            [$rnnSequence,$encOutputs]);
+            [$rnnSequence,$encOutputs],$training);
         $outputs = $this->concat->forward([$contextVector, $rnnSequence]);
 
-        $outputs = $this->dense->forward($outputs);
+        $outputs = $this->dense->forward($outputs,$training);
         $this->contextVectorShape = $contextVector->shape();
         $this->rnnSequenceShape = $rnnSequence->shape();
         $this->attentionScores = $attentionScores;
@@ -332,6 +334,8 @@ class Decoder extends AbstractRNNLayer
 class Seq2seq extends AbstractModel
 {
     public function __construct(
+        $backend,
+        $builder,
         $inputLength=null,
         $inputVocabSize=null,
         $outputLength=null,
@@ -342,16 +346,22 @@ class Seq2seq extends AbstractModel
         $endVocId=0
         )
     {
-        self::__construct($backend,$builder);
-        $this->encoder = Encoder(
+        parent::__construct($backend,$builder);
+        $this->encoder = new Encoder(
+            $backend,
+            $builder,
             $inputVocabSize,
             $wordVectSize,
             $units
         );
-        $this->decoder = Decoder(
+        $this->decoder = new Decoder(
+            $backend,
+            $builder,
             $targetVocabSize,
             $wordVectSize,
-            $units
+            $units,
+            $inputLength,
+            $outputLength
         );
         $this->out = $builder->layers()->Activation('softmax');
         $this->setLastLayer($this->out);
@@ -364,13 +374,15 @@ class Seq2seq extends AbstractModel
 
     protected function buildLayers(array $options=null) : void
     {
-        $shape = $this->registerLayer($this->encoder);
+        $shape = [$this->inputLength];
+        $encOutputsShape = $this->registerLayer($this->encoder,$shape);
+        $shape = [$this->outputLength];
         $shape = $this->registerLayer($this->decoder,$shape);
         $this->registerLayer($this->out,$shape);
     }
 
     public function shiftLeftSentence(
-        NDArray $sentence,
+        NDArray $sentence
         ) : NDArray
     {
         $shape = $sentence->shape();
@@ -433,10 +445,10 @@ class Seq2seq extends AbstractModel
         $status = [$K->zeros([$batchs, $this->units])];
         [$encOutputs, $status] = $this->encoder($inputs, $training=false, $status);
 
-        $decInputs = $K->array([[$this->start_voc_id]],$inputs->dtype());
+        $decInputs = $K->array([[$this->startVocId]],$inputs->dtype());
 
         $result = [];
-        for($t=0;$t<$this->output_length;$t++) {
+        for($t=0;$t<$this->outputLength;$t++) {
             [$predictions, $status] = $this->decoder->forward(
                 $decInputs, $training=false, $status, $encOutputs);
 
@@ -448,7 +460,7 @@ class Seq2seq extends AbstractModel
 
             $result[] = $predictedId;
 
-            if($this->endVocId == $predictedId):
+            if($this->endVocId == $predictedId)
                 break;
 
             # the predicted ID is fed back into the model
@@ -459,7 +471,7 @@ class Seq2seq extends AbstractModel
         return $result;
     }
 
-    public function plot_attention(
+    public function plotAttention(
         $attention, $sentence, $predictedSentence)
     {
         $plt = $this->plt;
@@ -472,20 +484,96 @@ class Seq2seq extends AbstractModel
     }
 }
 
+$numExamples=100;#5000;
+$numWords=128;
+$epochs = 1;#10
+$batchSize = 64;
+$wordVectSize=256;#256
+$units=256;#1024
+
+
 $mo = new MatrixOperator();
 $nn = new NeuralNetworks($mo);
-
-$lossObject = $nn->losses->SparseCategoricalCrossentropy();
-
-def loss_function(real, pred):
-
-$numExamples=5000;
-$numWords=128;
-
 $dataset = new EngFraDataset($mo);
-[$input_tensor, $target_tensor, $inp_lang, $targ_lang_tokenizer]
-    = $dataset->loadData(null,$numExamples,$numWords);
 
+echo "Generating data...\n";
+[$inputTensor, $targetTensor, $inpLang, $targLang]
+    = $dataset->loadData(null,$numExamples,$numWords);
+$valSize = intval(floor(count($inputTensor)/10));
+$trainSize = count($inputTensor)-$valSize;
+$inputTensorTrain = $inputTensor[[0,$trainSize-1]];
+$inputTensorVal = $inputTensor[[$trainSize,$trainSize+$valSize-1]];
+$targetTensorTrain = $targetTensor[[0,$trainSize-1]];
+$targetTensorVal = $targetTensor[[$trainSize,$trainSize+$valSize-1]];
+
+$inputLength  = $inputTensor->shape()[1];
+$outputLength = $targetTensor->shape()[1];
+$inputVocabSize = $inpLang->numWords();
+$targetVocabSize = $targLang->numWords();
+$corpusSize = count($inputTensor);
+
+echo "num_examples: $numExamples\n";
+echo "num_words: $numWords\n";
+echo "epoch: $epochs\n";
+echo "embedding_dim: $wordVectSize\n";
+echo "units: $units\n";
+echo "Total questions: $corpusSize\n";
+echo "Input  word dictionary: $inputVocabSize(".$inpLang->numWords(true).")\n";
+echo "Target word dictionary: $targetVocabSize(".$targLang->numWords(true).")\n";
+echo "Input length: $inputLength\n";
+echo "Output length: $outputLength\n";
+
+
+
+$seq2seq = new Seq2seq(
+    $nn->backend(),
+    $nn,
+    $inputLength,
+    $inputVocabSize,
+    $outputLength,
+    $targetVocabSize,
+    $wordVectSize,
+    $units,
+    $targLang->wordToIndex('<start>'),
+    $targLang->wordToIndex('<end>')
+);
+
+echo "Compile model...\n";
+$seq2seq->compile([
+    'loss'=>'sparse_categorical_crossentropy',
+    'optimizer'=>'adam',
+    'metrics'=>['accuracy','loss'],
+]);
+
+echo "Train model...\n";
+$history = $seq2seq->fit(
+    $inputTensorTrain,
+    $targetTensorTrain,
+    [
+        'batch_size'=>$batchSize,
+        'epochs'=>$epochs,
+        'validation_data'=>[$inputTensorVal,$targetTensorVal],
+        #callbacks=[checkpoint],
+    ]);
+
+$choice = $mo->random()->choice($corpusSize,10,false);
+foreach($choice as $idx)
+{
+    $question = $inputTensor[$idx]->reshape([1,$inputLength]);
+    $attentionPlot = $this->mo->zeros([$outputLength, $inputLength]);
+    [$predict, $attentionPlot] = $seq2seq->predict(
+        $question,['attention_plot'=>$attentionPlot]);
+    $answer = $targetTensor[$idx]->reshape([1,$targetLength]);;
+    $sentence = $inpLang->sequencesToTexts($question)[0];
+    $predictedSentence = $targLang->sequencesToTexts($predict)[0];
+    $targetSentence = $targLang->sequencesToTexts($answer)[0];
+    echo "Input: $sentence\n";
+    echo "Predict: $predictedSentence\n";
+    echo "Target: $targetSentence\n";
+    echo "\n";
+    #attention_plot = attention_plot[:len(predicted_sentence.split(' ')), :len(sentence.split(' '))]
+    $seq2seq.plotAttention($attentionPlot,  explode(' ',$sentence), explode(' ',$predictedSentence));
+}
 
 /*
             #sentence = dataset.preprocess_sentence(sentence)

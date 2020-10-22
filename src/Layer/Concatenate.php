@@ -28,19 +28,19 @@ class Concatenate extends AbstractLayerBase
         $this->inputShape = $input_shapes;
     }
 
-    public function build(array $inputShape=null, array $options=null) : array
+    public function build(array $inputShapes=null, array $options=null) : array
     {
         $K = $this->backend;
-        $inputShape = $this->normalizeInputShape($inputShape);
-        if(count($inputShape)<2) {
+        $inputShapes = $this->normalizeInputShape($inputShapes);
+        if(count($inputShapes)<2) {
             throw new InvalidArgumentException('num of inputs must be greater then 2 or equal: input dims is '.count($inputShape));
-        }
-        if(!is_array($inputShape[0])) {
-            throw new InvalidArgumentException('input_shapes must be the list of shape:');
         }
         $m = 0;
         $baseShape = null;
-        foreach ($inputShape as $idx => $shape) {
+        foreach ($inputShapes as $idx => $shape) {
+            if(!is_array($shape)) {
+                throw new InvalidArgumentException('input_shapes must be the list of shape:');
+            }
             if($this->axis < 0) {
                 $axis = 1 + count($shape) + $this->axis;
             } else {
