@@ -40,8 +40,8 @@ class Attention extends AbstractLayerBase
                 throw new InvalidArgumentException('input_shapes must be the list of shape:');
             }
         }
-        [$tq, $dim] = $inputShape[0];
-        [$tv, $tdim] = $inputShape[1];
+        [$tq, $dim] = $inputShape[0];  // Query
+        [$tv, $tdim] = $inputShape[1]; // Value
         if($dim!=$tdim) {
             throw new InvalidArgumentException('Unmatch query shape and value shape:'.
             '['.implode(',',$inputShape[0]).'],['.implode(',',$inputShape[1]).']');
@@ -119,8 +119,9 @@ class Attention extends AbstractLayerBase
         $shape = $scores->shape();
         $batchNum = array_shift($shape);
         if($shape!=$this->scoresShape) {
-            throw new InvalidArgumentException('unmatch output shape: ['.
-                implode(',',$shape).'], must be ['.implode(',',$this->scoresShape).'] in '.$this->name.':'.$direction);
+            $shape = $this->shapeToString($shape);
+            $scoresShape = $this->shapeToString($this->scoresShape);
+            throw new InvalidArgumentException('unmatch scores shape: '.$shape.', must be '.scoresShape.' in '.$this->name.':'.$direction);
         }
     }
 

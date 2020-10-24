@@ -167,7 +167,7 @@ class Tokenizer
         return $texts;
     }
 
-    public function SequencesToTextsGenerator($sequences)
+    public function sequencesToTextsGenerator($sequences)
     {
         if(!is_iterable($sequences)) {
             throw new InvalidArgumentException('sequences must be list of sequence.');
@@ -181,6 +181,9 @@ class Tokenizer
             }
             $vect = [];
             foreach ($seq as $num) {
+                if(!is_int($num)) {
+                    throw new InvalidArgumentException('sequence includes "'.gettype($num).'". it must be numeric.');
+                }
                 if(array_key_exists($num,$this->indexToWord)) {
                     $w = $this->indexToWord[$num];
                     if($numWords==null || $num<$numWords) {
