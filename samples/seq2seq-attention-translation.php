@@ -103,7 +103,7 @@ class EngFraDataset
         if($tokenizer==null) {
             $tokenizer = new Tokenizer($this->mo,[
                 'num_words'=>$numWords,
-                'filters'=>"\"#$%&()*+,-./:;=@[\\]^_`{|}~\t\n",
+                'filters'=>"\"\'#$%&()*+,-./:;=@[\\]^_`{|}~\t\n",
                 'specials'=>"?.!,¿",
             ]);
         }
@@ -174,7 +174,8 @@ class Encoder extends AbstractRNNLayer
         $this->embedding = $builder->layers()->Embedding($vocabSize,$wordVectSize);
         $this->rnn = $builder->layers()->GRU(
             $units,
-            ['return_state'=>true,'return_sequences'=>true]
+            ['return_state'=>true,'return_sequences'=>true,
+             'recurrent_initializer'=>'glorot_uniform']
         );
     }
 
@@ -255,7 +256,8 @@ class Decoder extends AbstractRNNLayer
         $this->targetLength = $targetLength;
         $this->embedding = $builder->layers()->Embedding($vocabSize, $wordVectSize);
         $this->rnn = $builder->layers()->GRU($units,
-            ['return_state'=>true,'return_sequences'=>true]
+            ['return_state'=>true,'return_sequences'=>true,
+             'recurrent_initializer'=>'glorot_uniform']
         );
         $this->attention = $builder->layers()->Attention(
             ['return_attention_scores'=>true]);
@@ -415,19 +417,14 @@ class Seq2seq extends AbstractModel
 
     protected function loss(NDArray $trues,NDArray $preds) : float
     {
-        $K = $this->backend;
         $trues = $this->shiftLeftSentence($trues);
-        #$mask = $K->equal($trues, $K->zerosLike($trues));
-        #$mask2 = $K->oneHot($trues,$preds->shape()[2]);
+        return parent::loss($trues,$preds);
+    }
 
-        $loss = $this->lossFunction->loss($trues,$preds);
-
-        #mask = tf.cast(mask, dtype=loss_.dtype)
-
-        #loss_ *= mask
-
-        #return tf.reduce_mean(loss_)
-        return $loss;
+    protected function accuracy(NDArray $trues,NDArray $preds) : float
+    {
+        $trues = $this->shiftLeftSentence($trues);
+        return parent::accuracy($trues,$preds);
     }
 
     protected function backwardStep(NDArray $dOutputs) : NDArray
@@ -496,9 +493,9 @@ class Seq2seq extends AbstractModel
     }
 }
 
-$numExamples=5000;#30000
+$numExamples=30000;#30000
 $numWords=256;
-$epochs = 1;#10
+$epochs = 10;#10
 $batchSize = 64;
 $wordVectSize=256;#256
 $units=256;#1024
@@ -519,10 +516,10 @@ echo "Generating data...\n";
     = $dataset->loadData(null,$numExamples,$numWords);
 $valSize = intval(floor(count($inputTensor)/10));
 $trainSize = count($inputTensor)-$valSize;
-$inputTensorTrain = $inputTensor[[0,$trainSize-1]];
-$inputTensorVal = $inputTensor[[$trainSize,$trainSize+$valSize-1]];
+$inputTensorTrain  = $inputTensor[[0,$trainSize-1]];
 $targetTensorTrain = $targetTensor[[0,$trainSize-1]];
-$targetTensorVal = $targetTensor[[$trainSize,$trainSize+$valSize-1]];
+$inputTensorVal  = $inputTensor[[$trainSize,$valSize+$trainSize-1]];
+$targetTensorVal = $targetTensor[[$trainSize,$valSize+$trainSize-1]];
 
 $inputLength  = $inputTensor->shape()[1];
 $outputLength = $targetTensor->shape()[1];
@@ -576,7 +573,7 @@ $seq2seq->compile([
 #$v=$targLang->sequencesToTexts($targetTensorVal[[0,10]]);
 #foreach(array_map(null,$a->getArrayCopy(),$v->getArrayCopy()) as  $values) {
 #    [$i,$t] = $values;
-#    echo "input:".$i."\n";
+#    echo "input: ".$i."\n";
 #    echo "target:".$t."\n";
 #}
 #exit();
@@ -591,7 +588,7 @@ $history = $seq2seq->fit(
         #callbacks=[checkpoint],
     ]);
 
-$choice = $mo->random()->choice($corpusSize,1,false);
+$choice = $mo->random()->choice($corpusSize,10,false);
 foreach($choice as $idx)
 {
     $question = $inputTensor[$idx]->reshape([1,$inputLength]);
@@ -602,9 +599,9 @@ foreach($choice as $idx)
     $sentence = $inpLang->sequencesToTexts($question)[0];
     $predictedSentence = $targLang->sequencesToTexts($predict)[0];
     $targetSentence = $targLang->sequencesToTexts($answer)[0];
-    echo "Input: $sentence\n";
+    echo "Input:   $sentence\n";
     echo "Predict: $predictedSentence\n";
-    echo "Target: $targetSentence\n";
+    echo "Target:  $targetSentence\n";
     echo "\n";
     #attention_plot = attention_plot[:len(predicted_sentence.split(' ')), :len(sentence.split(' '))]
     $seq2seq->plotAttention($attentionPlot,  explode(' ',$sentence), explode(' ',$predictedSentence));

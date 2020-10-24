@@ -331,7 +331,7 @@ abstract class AbstractModel implements Model
 
         if(in_array('accuracy',$metrics)) {
             //$preds = $this->forwardLastlayer($preds);
-            $accuracy = $this->lossFunction->accuracy($trues,$preds);
+            $accuracy = $this->accuracy($trues,$preds);
         } else {
             $accuracy = 0;
         }
@@ -343,6 +343,11 @@ abstract class AbstractModel implements Model
     protected function loss(NDArray $trues,NDArray $preds) : float
     {
         return $this->lossFunction->loss($trues,$preds);
+    }
+
+    protected function accuracy(NDArray $trues,NDArray $preds) : float
+    {
+        return $this->lossFunction->accuracy($trues,$preds);
     }
 
     public function evaluate(NDArray $x, NDArray $t, array $options=null) : array
@@ -375,9 +380,9 @@ abstract class AbstractModel implements Model
             $inputs = $x[[$batchStart,$batchEnd]];
             $trues  = $t[[$batchStart,$batchEnd]];
             $preds = $this->forwardStep($inputs,$trues,$training=false);
-            $loss = $this->lossFunction->loss($trues,$preds);
+            $loss  = $this->loss($trues,$preds);
             //$preds = $this->forwardLastlayer($preds);
-            $accuracy = $this->lossFunction->accuracy($trues,$preds);
+            $accuracy = $this->accuracy($trues,$preds);
             $callbacks->onTestBatchEnd($batchIndex,['val_loss'=>$loss,'val_accuracy'=>$accuracy]);
             $totalLoss += $loss;
             $totalAccuracy += $accuracy;
