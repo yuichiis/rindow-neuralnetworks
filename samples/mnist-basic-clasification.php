@@ -91,6 +91,7 @@ $model = $nn->models()->Sequential([
 $model->compile([
     'optimizer'=>'adam',
 ]);
+$model->summary();
 
 fwrite(STDERR,"training model ...\n");
 $history = $model->fit($train_img,$train_label,

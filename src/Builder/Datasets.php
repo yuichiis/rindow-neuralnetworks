@@ -4,6 +4,7 @@ namespace Rindow\NeuralNetworks\Builder;
 use Rindow\NeuralNetworks\Dataset\Mnist;
 use Rindow\NeuralNetworks\Dataset\FashionMnist;
 use Rindow\NeuralNetworks\Dataset\Cifar10;
+use LogicException;
 
 class Datasets
 {
@@ -15,6 +16,19 @@ class Datasets
     public function __construct($matrixOperator)
     {
         $this->matrixOperator = $matrixOperator;
+    }
+
+    public function __get( string $name )
+    {
+        if(!method_exists($this,$name)) {
+            throw new LogicException('Unknown dataset: '.$name);
+        }
+        return $this->$name();
+    }
+
+    public function __set( string $name, $value ) : void
+    {
+        throw new LogicException('Invalid operation to set');
     }
 
     public function mnist()

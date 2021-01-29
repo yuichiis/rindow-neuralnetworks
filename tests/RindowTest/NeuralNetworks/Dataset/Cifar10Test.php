@@ -21,6 +21,14 @@ class Test extends TestCase
         $this->pickleFile = sys_get_temp_dir().'/rindow/nn/datasets/cifar-10-batches-bin/cifar10.pkl';
     }
 
+    public function getPlotConfig()
+    {
+        return [
+            'renderer.skipCleaning' => true,
+            'renderer.skipRunViewer' => getenv('TRAVIS_PHP_VERSION') ? true : false,
+        ];
+    }
+
     public function testDownloadFiles()
     {
         $mo = new MatrixOperator();
@@ -40,7 +48,7 @@ class Test extends TestCase
 
         $mo = new MatrixOperator();
         $nn = new NeuralNetworks($mo);
-        $plot = new Plot(null,$mo);
+        $plt = new Plot($this->getPlotConfig(),$mo);
 
         [[$train_img,$train_label],[$test_img,$test_label]] =
             $nn->datasets()->cifar10()->loadData();
@@ -75,7 +83,7 @@ class Test extends TestCase
         //    'figure.rightMargin' => 0,
         //    'figure.topMargin' => 0,
         //];
-        $plot = new Plot(null,$mo);
+        $plt = new Plot($this->getPlotConfig(),$mo);
 
         [[$train_img,$train_label],[$test_img,$test_label]] =
             $nn->datasets()->cifar10()->loadData();

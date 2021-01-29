@@ -90,8 +90,8 @@ $model = $nn->models()->Sequential([
         ['input_shape'=>$inputShape,
         'kernel_initializer'=>'he_normal',
         'activation'=>'relu']),
-    #$nn->layers()->MaxPooling2D(),
-    $nn->layers()->AveragePooling2D(),
+    $nn->layers()->MaxPooling2D(),
+    //$nn->layers()->AveragePooling2D(),
     $nn->layers()->Flatten(),
     $nn->layers()->Dense($units=128,
         ['kernel_initializer'=>'he_normal',
@@ -103,10 +103,11 @@ $model = $nn->models()->Sequential([
 $model->compile([
     'optimizer'=>$nn->optimizers()->Adam()
 ]);
+$model->summary();
 
 fwrite(STDERR,"training model ...\n");
 $history = $model->fit($train_img,$train_label,
-    ['epochs'=>$epochs,'batch_size'=>256,'validation_data'=>[$test_img,$test_label]]);
+    ['epochs'=>$epochs,'batch_size'=>1024,'validation_data'=>[$test_img,$test_label]]);
 
 $model->save(__DIR__.'/mnist-conv2d-model.model',$portable=true);
 

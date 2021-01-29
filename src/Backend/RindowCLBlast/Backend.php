@@ -64,6 +64,11 @@ class Backend
         $this->la->fp64();
     }
 
+    public function accelerated()
+    {
+        return $this->la->accelerated();
+    }
+
     public function epsilon()
     {
         return $this->epsilon;
@@ -205,7 +210,6 @@ class Backend
         $flat_shape = [$num_rows,$num_cols];
         $a = $this->la->randomNormal($flat_shape,0.0,1.0);
         [$u,$s,$vt] = $this->la->svd($a,$full_matrices=false);
-
         # Pick the one with the correct shape.
         $q = ($u->shape()==$flat_shape)? $u : $vt;
         $q = $q->reshape($shape);
@@ -240,7 +244,7 @@ class Backend
         $scale = 2/max($fanIn, 1.0);
         $limit = sqrt(3*$scale);
         //$events = $this->la->newEventList();
-        $kernel = $this->la->randomUniform($shape,-$limit,$limit,null,null,null,$events);
+        $kernel = $this->la->randomUniform($shape,-$limit,$limit);
         //$events->wait();
         return $kernel;
     }
@@ -511,7 +515,13 @@ class Backend
     public function min(NDArray $x,int $axis=null)
     {
         $mo = $this->matrixOperator;
-        return $mo->min($x,$axis);
+        if($axis===null) {
+            return $this->la->min($x);
+        } else {
+            $x = $this->la->scal(-1,$this->la->copy($x));
+            $r = $this->la->reduceMax($x,$axis);
+            return $this->la->scal(-1,$r);
+        }
     }
 
     public function amax(NDArray $x)

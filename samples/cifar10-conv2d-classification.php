@@ -146,6 +146,7 @@ if(file_exists(__DIR__.'/cifar10-conv2d-model.model')) {
         'optimizer'=>$nn->optimizers()->Adam()
     ]);
 }
+$model->summary();
 
 fwrite(STDERR,"training model ...\n");
 $history = $model->fit($train_img,$train_label,

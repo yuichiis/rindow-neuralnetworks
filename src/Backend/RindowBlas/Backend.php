@@ -47,6 +47,11 @@ class Backend
         $this->la->fp64();
     }
 
+    public function accelerated()
+    {
+        return $this->la->accelerated();
+    }
+
     public function epsilon()
     {
         return $this->epsilon;
@@ -61,6 +66,12 @@ class Backend
     {
         $mo = $this->matrixOperator;
         return $mo->dtypeToString($dtype);
+    }
+
+    public function toString(NDArray $array,string $format=null,$indent=null) : string
+    {
+        $mo = $this->matrixOperator;
+        return $mo->toString($array,$format,$indent);
     }
 
     public function alloc(array $shape,$dtype=null)
