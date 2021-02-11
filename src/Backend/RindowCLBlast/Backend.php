@@ -608,9 +608,9 @@ class Backend
         return $this->la->matmul($a,$b,$transA,$transB,$c,$alpha,$beta);
     }
 
-    public function select(NDArray $source,NDArray $selector,$axis=null)
+    public function gather(NDArray $source,NDArray $indices,$axis=null)
     {
-        return $this->la->select($source,$selector,$axis);
+        return $this->la->gather($source,$indices,$axis);
     }
 
     public function scatter(NDArray $indices,NDArray $values,int  $numClass,$axis=null,NDArray $target=null)
@@ -679,14 +679,13 @@ class Backend
 
     public function repeat(
         NDArray $inputs,
-        int $repeats
+        int $repeats,
+        int $axis=null
         ) {
-        if($inputs->ndim()!=2) {
-            throw new InvalidArgumentException('inputs dimension must be 2D');
-        }
         return $this->la->repeat(
             $inputs,
-            $repeats
+            $repeats,
+            $axis
             );
     }
 
@@ -1448,8 +1447,7 @@ class Backend
         }
         //  E = - 1/N * sum-n(sum-k(t-nk * log(y-nk)))
         return -1.0 * $la->sum($la->log($la->increment(
-                //$la->selectAxis1($predicts,$trues),
-                $la->select($predicts,$trues,$axis=1),
+                $la->gather($predicts,$trues,$axis=1),
                 $this->epsilon)))->toArray() / $batchSize;
     }
 

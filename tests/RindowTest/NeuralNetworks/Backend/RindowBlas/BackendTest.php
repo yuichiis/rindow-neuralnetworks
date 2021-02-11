@@ -1099,7 +1099,7 @@ class Test extends TestCase
         $indices = $K->cast($K->scale(9.999,$kernel),NDArray::int32);
         $ones = $K->ones([2000,1]);
         $frequency = $K->zeros([10,1]);
-        $K->scatterAdd($frequency,$indices,$ones,$axis=0);
+        $K->scatterAdd($frequency,$indices,$ones);
         $plt = new Plot($this->getPlotConfig(),$mo);
         $x = $mo->arange(10,$min,($max-$min)/10,NDArray::float32);
         $plt->plot($x,$K->ndarray($frequency->reshape([10])));
@@ -1127,7 +1127,7 @@ class Test extends TestCase
         $indices = $K->cast($K->scale(9.999,$kernel),NDArray::int32);
         $ones = $K->ones([2000,1]);
         $frequency = $K->zeros([10,1]);
-        $K->scatterAdd($frequency,$indices,$ones,$axis=0);
+        $K->scatterAdd($frequency,$indices,$ones);
         $plt = new Plot($this->getPlotConfig(),$mo);
         $x = $mo->arange(10,$min,($max-$min)/10,NDArray::float32);
         $plt->plot($x,$K->ndarray($frequency->reshape([10])));
@@ -1156,7 +1156,7 @@ class Test extends TestCase
         $indices = $K->cast($K->scale(9.999,$kernel),NDArray::int32);
         $ones = $K->ones([2000,1]);
         $frequency = $K->zeros([10,1]);
-        $K->scatterAdd($frequency,$indices,$ones,$axis=0);
+        $K->scatterAdd($frequency,$indices,$ones);
         $plt = new Plot($this->getPlotConfig(),$mo);
         $x = $mo->arange(10,$min,($max-$min)/10,NDArray::float32);
         $plt->plot($x,$K->ndarray($frequency->reshape([10])));
@@ -1185,7 +1185,7 @@ class Test extends TestCase
         $indices = $K->cast($K->scale(9.999,$kernel),NDArray::int32);
         $ones = $K->ones([2000,1]);
         $frequency = $K->zeros([10,1]);
-        $K->scatterAdd($frequency,$indices,$ones,$axis=0);
+        $K->scatterAdd($frequency,$indices,$ones);
         $plt = new Plot($this->getPlotConfig(),$mo);
         $x = $mo->arange(10,$min,($max-$min)/10,NDArray::float32);
         $plt->plot($x,$K->ndarray($frequency->reshape([10])));
@@ -1217,7 +1217,7 @@ class Test extends TestCase
         $indices = $K->cast($K->scale($bins-0.001,$kernel),NDArray::int32);
         $ones = $K->ones([$m*$n,1]);
         $frequency = $K->zeros([$bins,1]);
-        $K->scatterAdd($frequency,$indices,$ones,$axis=0);
+        $K->scatterAdd($frequency,$indices,$ones);
         $plt = new Plot($this->getPlotConfig(),$mo);
         $x = $mo->arange($bins,$min,($max-$min)/$bins,NDArray::float32);
         $plt->plot($x,$K->ndarray($frequency->reshape([$bins])));

@@ -21,6 +21,7 @@ class NeuralNetworks
     protected $optimizers;
     protected $networks;
     protected $datasets;
+    protected $data;
     protected $utils;
 
     public function __construct($matrixOperator=null,$backend=null)
@@ -102,6 +103,14 @@ class NeuralNetworks
             $this->datasets = new Datasets($this->matrixOperator);
         }
         return $this->datasets;
+    }
+
+    public function data()
+    {
+        if($this->data==null) {
+            $this->data = new Data($this->matrixOperator);
+        }
+        return $this->data;
     }
 
     public function utils()

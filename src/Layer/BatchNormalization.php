@@ -66,10 +66,12 @@ class BatchNormalization extends AbstractLayer implements Layer
         } elseif($inputShape===null) {
             throw new InvalidArgumentException('Input shape is not defined');
         }
-        if(count($inputShape)!=1) {
-            throw new InvalidArgumentException(
-                'Unsuppored input shape: ['.implode(',',$inputShape).']');
-        }
+        //if(count($inputShape)!=1) {
+        //    throw new InvalidArgumentException(
+        //        'Unsuppored input shape: ['.implode(',',$inputShape).']');
+        //}
+        $origInputShape = $inputShape;
+        $inputShape = [(int)array_product($inputShape)];
         if($sampleWeights) {
             $this->beta = $sampleWeights[0];
             $this->gamma = $sampleWeights[1];
@@ -83,8 +85,9 @@ class BatchNormalization extends AbstractLayer implements Layer
         $this->movingMean = $movingMeanInitializer($inputShape);
         $this->movingVariance = $movingVarianceInitializer($inputShape);
 
-        $this->inputShape = $inputShape;
-        $this->outputShape = $inputShape;
+        $this->features = $inputShape[0];
+        $this->inputShape = $origInputShape;
+        $this->outputShape = $origInputShape;
         return $this->outputShape;
     }
 
@@ -115,6 +118,9 @@ class BatchNormalization extends AbstractLayer implements Layer
     protected function call(NDArray $inputs, bool $training) : NDArray
     {
         $K = $this->backend;
+        $origShape = $inputs->shape();
+        $batchSize = $origShape[0];
+        $inputs = $inputs->reshape([$batchSize,$this->features]);
 
         // normalization
         if($training) {
@@ -138,13 +144,15 @@ class BatchNormalization extends AbstractLayer implements Layer
 
         $outputs = $K->add($K->mul($this->gamma, $xn), $this->beta);
 
-        return $outputs;
+        return $outputs->reshape($origShape);
     }
 
     protected function differentiate(NDArray $dOutputs) : NDArray
     {
         $K = $this->backend;
-        $batchSize = $dOutputs->shape()[0];
+        $origShape = $dOutputs->shape();
+        $batchSize = $origShape[0];
+        $dOutputs = $dOutputs->reshape([$batchSize,$this->features]);
 
         $dbeta = $K->sum($dOutputs,$axis=0);
         $dgamma = $K->sum($K->mul($this->xn, $dOutputs), $axis=0);
@@ -164,6 +172,6 @@ class BatchNormalization extends AbstractLayer implements Layer
         $this->dBeta = $dbeta;
         $this->dGamma = $dgamma;
 
-        return $dInputs;
+        return $dInputs->reshape($origShape);
     }
 }

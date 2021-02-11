@@ -265,7 +265,7 @@ abstract class AbstractModel implements Model
             for($batchIndex=0;$batchIndex<$batchIndexCount;$batchIndex++) {
                 if($verbose>=1) {
                     if($indicate==0)
-                        $this->console('.');
+                        $this->progressBar($epoch,$epochs,$startTime,$batchIndex,$batchIndexCount,25);
                     $indicate++;
                     if($indicate>$indicateCount)
                         $indicate = 0;
@@ -295,7 +295,7 @@ abstract class AbstractModel implements Model
             }
             if($verbose>=1) {
                 $sec = time() - $startTime;
-                $this->console(' - '.$sec." sec.\n");
+                $this->console("- ${sec} sec.\n");
                 foreach ($history as $key => $value) {
                     $this->console(' '.$key.':'.sprintf('%2.4f',array_pop($value)));
                 }
@@ -305,6 +305,26 @@ abstract class AbstractModel implements Model
         }
         $this->setShapeInspection(true);
         return $history;
+    }
+
+    public function progressBar($epoch,$epochs,$startTime,$batchIndex,$batchIndexCount,$maxDot)
+    {
+        $epoch++;
+        if($batchIndex==0) {
+            $this->console("\rEpoch ${epoch}/${epochs} ");
+            return;
+        }
+        $completion = $batchIndex/$batchIndexCount;
+        $elapsed = time() - $startTime;
+        $estimated = $elapsed / $completion;
+        $remaining = $estimated - $elapsed;
+        $dot = (int)ceil($maxDot*$completion);
+        $sec = $remaining % 60;
+        $min = (int)floor($remaining/60) % 60;
+        $hour = (int)floor($remaining/3600);
+        $rem_string = ($hour?$hour.':':'').sprintf('%02d:%02d',$min,$sec);
+        $this->console("\rEpoch $epoch/$epochs [".str_repeat('.',$dot).str_repeat(' ',$maxDot-$dot).
+            "] ${elapsed} sec. remain:${rem_string}  ");
     }
 
     protected function trainingStep($batchIndex,$batchSize,$inputCount,$x,$t,$shuffle,$metrics)
@@ -327,8 +347,8 @@ abstract class AbstractModel implements Model
             } else {
                 $choice = $K->zeros([1]);
             }
-            $inputs = $K->select($inputs,$choice);
-            $trues  = $K->select($trues,$choice);
+            $inputs = $K->gather($inputs,$choice);
+            $trues  = $K->gather($trues,$choice);
         }
 
         $preds = $this->forwardStep($inputs, $trues, $training=true);
@@ -452,7 +472,7 @@ abstract class AbstractModel implements Model
         $totalParams = 0;
         foreach ($this->layers as $layer) {
             $type = basename(str_replace('\\',DIRECTORY_SEPARATOR,get_class($layer)));
-            echo str_pad($layer->getName().'('.$type.')',29);
+            echo substr(str_pad($layer->getName().'('.$type.')',29),0,29);
             echo str_pad('('.implode(',',$layer->outputShape()).')',27);
             $nump = 0;
             foreach($layer->getParams() as $p) {
@@ -512,6 +532,52 @@ abstract class AbstractModel implements Model
         $K = $this->backend;
         if(!isset($modelWeights['layers']))
             $modelWeights['layers'] = [];
+        foreach($this->weights() as $idx => $param) {
+            $param=$K->ndarray($param);
+            if($portable)
+                $param = $this->converPortableSaveMode($param);
+            $modelWeights['layers'][$idx] = serialize($param);
+        }
+        $optimizer = $this->optimizer();
+        if(!isset($modelWeights['optimizer']))
+            $modelWeights['optimizer'] = [];
+        foreach ($optimizer->getWeights() as $idx => $weights) {
+            $weights=$K->ndarray($weights);
+            $modelWeights['optimizer'][$idx] = serialize($weights);
+        }
+    }
+
+    public function loadWeights($modelWeights) : void
+    {
+        $K = $this->backend;
+        foreach($this->weights() as $idx => $param) {
+            $data = unserialize($modelWeights['layers'][$idx]);
+            $data = $K->array($data);
+            $K->copy($data,$param);
+        }
+        $optimizer = $this->optimizer();
+        $optimizer->build($this->weights());
+        foreach ($optimizer->getWeights() as $idx => $weights) {
+            $data = unserialize($modelWeights['optimizer'][$idx]);
+            $data = $K->array($data);
+            $K->copy($data,$weights);
+        }
+    }
+
+    protected function converPortableSaveMode($ndarray) : NDArray
+    {
+        if($ndarray instanceof \Rindow\Math\Matrix\NDArrayPhp) {
+            $ndarray = $ndarray->reshape($ndarray->shape());
+            $ndarray->setPortableSerializeMode(true);
+        }
+        return $ndarray;
+    }
+/*
+    public function saveWeights(&$modelWeights,$portable=null) : void
+    {
+        $K = $this->backend;
+        if(!isset($modelWeights['layers']))
+            $modelWeights['layers'] = [];
         foreach($this->layers() as $layer) {
             if(!isset($modelWeights['layers'][$layer->getName()]))
                 $modelWeights['layers'][$layer->getName()] = [];
@@ -529,15 +595,6 @@ abstract class AbstractModel implements Model
             $weights=$K->ndarray($weights);
             $modelWeights['optimizer'][$idx] = serialize($weights);
         }
-    }
-
-    protected function converPortableSaveMode($ndarray) : NDArray
-    {
-        if($ndarray instanceof \Rindow\Math\Matrix\NDArrayPhp) {
-            $ndarray = $ndarray->reshape($ndarray->shape());
-            $ndarray->setPortableSerializeMode(true);
-        }
-        return $ndarray;
     }
 
     public function loadWeights($modelWeights) : void
@@ -559,12 +616,25 @@ abstract class AbstractModel implements Model
             $K->copy($data,$weights);
         }
     }
-
+*/
     public function save($filepath,$portable=null) : void
     {
         $f = $this->hda->open($filepath);
         $f['modelConfig'] = $this->toJson();
         $f['modelWeights'] = [];
         $this->saveWeights($f['modelWeights'],$portable);
+    }
+
+    public function saveWeightsToFile($filepath,$portable=null) : void
+    {
+        $f = $this->hda->open($filepath);
+        $f['modelWeights'] = [];
+        $this->saveWeights($f['modelWeights'],$portable);
+    }
+
+    public function loadWeightsFromFile($filepath)
+    {
+        $f = $this->hda->open($filepath,'r');
+        $this->loadWeights($f['modelWeights']);
     }
 }

@@ -1,6 +1,7 @@
 <?php
 namespace Rindow\NeuralNetworks\Builder;
 
+use Interop\Polite\Math\Matrix\NDArray;
 use Rindow\NeuralNetworks\Dataset\Mnist;
 use Rindow\NeuralNetworks\Dataset\FashionMnist;
 use Rindow\NeuralNetworks\Dataset\Cifar10;
