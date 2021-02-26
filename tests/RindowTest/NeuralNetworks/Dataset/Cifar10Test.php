@@ -57,14 +57,14 @@ class Test extends TestCase
         $this->assertTrue(file_exists($pickleFile));
 
         if($this->plot) {
-            [$figure, $axes] = $plot->subplots(5,7);
+            [$figure, $axes] = $plt->subplots(5,7);
             for($i=0;$i<count($axes);$i++) {
                 $axes[$i]->setAspect('equal');
                 $axes[$i]->setFrame(false);
                 $axes[$i]->imshow($train_img[$i],
                     null,null,null,$origin='upper');
             }
-            $plot->show();
+            $plt->show();
         }
     }
 
@@ -89,13 +89,13 @@ class Test extends TestCase
             $nn->datasets()->cifar10()->loadData();
 
         if($this->plot) {
-            [$figure, $axes] = $plot->subplots(5,7);
+            [$figure, $axes] = $plt->subplots(5,7);
             for($i=0;$i<count($axes);$i++) {
                 $axes[$i]->setAspect('equal');
                 $axes[$i]->setFrame(false);
                 $axes[$i]->imshow($train_img[$i],null,null,null,$origin='upper');
             }
-            $plot->show();
+            $plt->show();
         }
     }
 

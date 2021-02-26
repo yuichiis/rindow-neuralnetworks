@@ -4,7 +4,9 @@ namespace Rindow\NeuralNetworks\Builder;
 use Interop\Polite\Math\Matrix\NDArray;
 use Rindow\NeuralNetworks\Data\Dataset\NDArrayDataset;
 use Rindow\NeuralNetworks\Data\Dataset\CSVDataset;
+use Rindow\NeuralNetworks\Data\Dataset\ClassifiedTextDataset;
 use Rindow\NeuralNetworks\Data\Image\ImageFilter;
+use Rindow\NeuralNetworks\Data\Sequence\TextClassifiedDataset;
 use LogicException;
 
 class Data
@@ -29,12 +31,12 @@ class Data
         throw new LogicException('Invalid operation to set');
     }
 
-    public function NDArray(NDArray $inputs, array $options=null)
+    public function NDArrayDataset(NDArray $inputs, array $options=null)
     {
         return new NDArrayDataset($this->matrixOperator, $inputs, $options);
     }
 
-    public function CSV(string $path, array $options=null)
+    public function CSVDataset(string $path, array $options=null)
     {
         return new CSVDataset($this->matrixOperator, $path, $options);
     }
@@ -44,11 +46,21 @@ class Data
         return new ImageFilter($this->matrixOperator, $options);
     }
 
-    public function ImageGenerator(NDArray $inputs, array $options=null)
+    public function ImageDataGenerator(NDArray $inputs, array $options=null)
     {
         $leftargs = [];
         $filter = new ImageFilter($this->matrixOperator, $options, $leftargs);
         $leftargs['filter']=$filter;
         return new NDArrayDataset($this->matrixOperator, $inputs, $leftargs);
+    }
+
+    public function ClassifiedTextDataset(string $path, array $options=null)
+    {
+        return new ClassifiedTextDataset($this->matrixOperator, $path, $options);
+    }
+
+    public function TextClassifiedDataset(string $path, array $options=null)
+    {
+        return new TextClassifiedDataset($this->matrixOperator, $path, $options);
     }
 }

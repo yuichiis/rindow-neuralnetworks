@@ -9,7 +9,7 @@ use LogicException;
 use Countable;
 use IteratorAggregate;
 
-class CSVDataset implements Countable,IteratorAggregate
+class CSVDataset implements Countable,IteratorAggregate,Dataset
 {
     use GenericUtils;
     protected $mo;
@@ -25,15 +25,18 @@ class CSVDataset implements Countable,IteratorAggregate
     protected $enclosure;
     protected $escape;
     protected $filenames;
+    protected $maxSteps=0;
+    protected $maxDatasetSize=0;
 
     public function __construct(
-        $mo, string $path, array $options=null
+        $mo, string $path, array $options=null,
+        array &$leftargs=null
         )
     {
         extract($this->extractArgs([
             'pattern'=>null,
-            'batchSize'=>1,
-            'skipHeader'=>false,
+            'batch_size'=>32,
+            'skip_header'=>false,
             'filter'=>null,
             'crawler'=>null,
             'shuffle'=>false,
@@ -41,13 +44,13 @@ class CSVDataset implements Countable,IteratorAggregate
             'delimiter'=>',',
             'enclosure'=>'"',
             'escape'=>'\\',
-        ],$options));
+        ],$options,$leftargs));
         $this->mo = $mo;
         $this->crawler = $crawler;
         $this->path = $path;
         $this->pattern = $pattern;
-        $this->batchSize = $batchSize;
-        $this->skipHeader = $skipHeader;
+        $this->batchSize = $batch_size;
+        $this->skipHeader = $skip_header;
         $this->filter = $filter;
         if($crawler==null) {
             $crawler = new Dir();
@@ -60,14 +63,24 @@ class CSVDataset implements Countable,IteratorAggregate
         $this->escape = $escape;
     }
 
-    public function setFilter(DatasetFilter $filter)
+    public function setFilter(DatasetFilter $filter) : void
     {
         $this->filter = $filter;
     }
 
+    public function batchSize() : int
+    {
+        return $this->batchSize;
+    }
+
+    public function datasetSize() : int
+    {
+        return $this->maxDatasetSize;
+    }
+
     public function count()
     {
-        throw new LogicException('Unsuppored operation');
+        return $this->maxSteps;
     }
 
     protected function getFilenames()
@@ -97,6 +110,9 @@ class CSVDataset implements Countable,IteratorAggregate
 
     public function  getIterator()
     {
+        if(!($this->filter instanceof DatasetFilter)) {
+            throw new LogicException('DatasetFilter is not specified');
+        }
         $la = $this->mo->la();
         $filenames = $this->getFilenames();
         $rows = 0;
@@ -118,24 +134,29 @@ class CSVDataset implements Countable,IteratorAggregate
                 $rows++;
                 if($rows>=$batchSize) {
                     $inputset = $this->filter->translate($inputs);
+                    $this->maxDatasetSize += $rows;
                     $rows = 0;
                     if($this->shuffle) {
                         $inputset = $this->shuffleData($inputset[0],$inputset[1]);
                     }
                     yield $steps => $inputset;
                     $steps++;
+                    $this->maxSteps = max($this->maxSteps,$steps);
                     $inputs = [];
                     $tests = null;
                 }
             }
             fclose($f);
         }
+        $this->maxDatasetSize += $rows;
         if($rows) {
             $inputset = $this->filter->translate($inputs);
             if($this->shuffle) {
                 $inputset = $this->shuffleData($inputset[0],$inputset[1]);
             }
             yield $steps => $inputset;
+            $steps++;
+            $this->maxSteps = max($this->maxSteps,$steps);
         }
     }
 }

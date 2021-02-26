@@ -7,7 +7,7 @@ use InvalidArgumentException;
 use Countable;
 use IteratorAggregate;
 
-class NDArrayDataset implements Countable,IteratorAggregate
+class NDArrayDataset implements Countable,IteratorAggregate,Dataset
 {
     use GenericUtils;
     protected $mo;
@@ -21,14 +21,15 @@ class NDArrayDataset implements Countable,IteratorAggregate
         $mo,
         NDArray $inputs,
         array $options=null,
+        array &$leftargs=null
         )
     {
         extract($this->extractArgs([
             'tests'=>null,
-            'batchSize'=>null,
-            'shuffle'=>false,
+            'batch_size'=>32,
+            'shuffle'=>true,
             'filter'=>null,
-        ],$options));
+        ],$options,$leftargs));
         $this->mo = $mo;
         $this->inputs = $inputs;
         if($tests!==null) {
@@ -38,19 +39,29 @@ class NDArrayDataset implements Countable,IteratorAggregate
             }
         }
         $this->tests = $tests;
-        $this->batchSize = $batchSize;
+        $this->batchSize = $batch_size;
         $this->shuffle = $shuffle;
         $this->filter = $filter;
     }
 
-    public function setFilter(DatasetFilter $filter)
+    public function setFilter(DatasetFilter $filter) : void
     {
         $this->filter = $filter;
     }
 
+    public function batchSize() : int
+    {
+        return $this->batchSize;
+    }
+
+    public function datasetSize() : int
+    {
+        return count($this->inputs);
+    }
+
     public function count()
     {
-        return (int)ceil($count/$batchSize);
+        return (int)ceil(count($this->inputs)/$this->batchSize);
     }
 
     public function  getIterator()

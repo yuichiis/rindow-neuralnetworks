@@ -485,30 +485,30 @@ class Backend
         return $this->la->asum($x);
     }
 
-    public function sum(NDArray $x, int $axis=null)
+    public function sum(NDArray $x, int $axis=null, NDArray $r=null)
     {
         if($axis===null) {
             return $this->la->sum($x);
         } else {
-            return $this->la->reduceSum($x,$axis);
+            return $this->la->reduceSum($x,$axis,$r);
         }
     }
 
-    public function mean(NDArray $x,int $axis=null)
+    public function mean(NDArray $x,int $axis=null, NDArray $r=null)
     {
         if($axis===null) {
             return $this->la->sum($x) / $x->size();
         } else {
-            return $this->la->reduceMean($x,$axis);
+            return $this->la->reduceMean($x,$axis,$r);
         }
     }
 
-    public function max(NDArray $x,int $axis=null)
+    public function max(NDArray $x,int $axis=null, NDArray $r=null)
     {
         if($axis===null) {
             return $this->la->max($x);
         } else {
-            return $this->la->reduceMax($x,$axis);
+            return $this->la->reduceMax($x,$axis,$r);
         }
     }
 

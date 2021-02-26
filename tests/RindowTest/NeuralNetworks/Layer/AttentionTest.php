@@ -114,7 +114,7 @@ class Test extends TestCase
         $inputs = [$query,$value];
         $copyInputs = [$K->copy($query),$K->copy($value)];
         [$outputs,$scores] = $layer->forward($inputs, $training=true,
-                        ['return_attention_scores'=>true],
+                        ['return_attention_scores'=>true]
         );
         //
         $this->assertEquals([2,2,4],$scores->shape());
