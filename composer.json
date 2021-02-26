@@ -9,8 +9,7 @@
         "rindow/rindow-math-matrix": ">=1.0.13"
     },
     "require-dev": {
-        "rindow/rindow-math-plot": ">=1.0.3",
-        "ext-pdo_sqlite": "for save model"
+        "rindow/rindow-math-plot": ">=1.0.3"
     },
     "suggest": {
         "rindow/rindow-math-plot": "when visualize machine learning results",
