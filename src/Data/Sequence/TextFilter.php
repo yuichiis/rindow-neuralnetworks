@@ -109,7 +109,7 @@ class TextFilter implements DatasetFilter
         return $classname;
     }
 
-    public function translate($inputs, $tests=null) : array
+    public function translate(iterable $inputs, iterable $tests=null) : array
     {
         //$this->tokenizer->fitOnTexts($inputs);
         $sequences = $this->tokenizer->textsToSequences($inputs);
