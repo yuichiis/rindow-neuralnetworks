@@ -22,7 +22,7 @@ class Preprocessor
             'dtype'=>NDArray::int32,
             'padding'=>"pre",
             'truncating'=>"pre",
-            'value'=>0.0,
+            'value'=>0,
         ],$options));
         if(!is_iterable($sequences)) {
             throw new InvalidArgumentException('sequences must be iterable.');

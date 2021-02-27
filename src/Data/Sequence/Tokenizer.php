@@ -233,7 +233,7 @@ class Tokenizer
             }
             $vect = [];
             foreach ($seq as $num) {
-                if(!is_numeric($num)) {
+                if(!is_int($num)) {
                     throw new InvalidArgumentException('sequence includes "'.gettype($num).'". it must be numeric.');
                 }
                 if(array_key_exists($num,$this->indexToWord)) {

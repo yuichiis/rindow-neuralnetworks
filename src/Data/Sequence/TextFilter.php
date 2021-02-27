@@ -35,9 +35,9 @@ class TextFilter implements DatasetFilter
             'preprocessor'=>null,
             'maxlen'=>null,
             'dtype'=>NDArray::int32,
-            'padding'=>"pre",
-            'truncating'=>"pre",
-            'value'=>0.0,
+            'padding'=>"post",
+            'truncating'=>"post",
+            'value'=>0,
         ],$options,$leftargs));
         $this->mo = $mo;
         if($tokenizer==null) {
@@ -120,6 +120,7 @@ class TextFilter implements DatasetFilter
             'truncating'=>$this->truncating,
             'value'=>$this->value,
         ]);
+        //var_dump($inputsArray->toArray());
 
         $testsCount = count($tests);
         $testsArray = $this->mo->la()->alloc([$testsCount],$this->dtype);
