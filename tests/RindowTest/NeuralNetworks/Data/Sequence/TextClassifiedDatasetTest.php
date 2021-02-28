@@ -19,11 +19,14 @@ class Test extends TestCase
         foreach ($tests as $key => $value) {
             $testResults['i'.$key] = $value;
         }
-        asort($results);
+        asort($results,SORT_STRING);
         $testResults2 = [];
+        echo "key=";
         foreach ($results as $key => $txt) {
+            echo $key.",";
             $testResults2[] = $testResults[$key];
         }
+        echo "\n";
         $results = array_values($results);
         return [$results,$testResults2];
     }
