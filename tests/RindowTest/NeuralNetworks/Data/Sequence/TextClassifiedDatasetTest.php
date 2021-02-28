@@ -64,13 +64,24 @@ class Test extends TestCase
         $this->assertEquals([5],$tests->shape());
         $txts = $tokenizer->sequencesToTexts($inputs);
         $this->assertCount(5,$txts);
-        var_dump($txts);
-        $this->assertEquals("negative0 comment text",$txts[0]);
-        $this->assertEquals("negative1 text",$txts[1]);
-        $this->assertEquals("positive0 message text",$txts[2]);
-        $this->assertEquals("positive1 some message text",$txts[3]);
-        $this->assertEquals("positive2 text",$txts[4]);
-        $this->assertEquals([0,0,1,1,1],$tests->toArray());
+        $results = [];
+        $testResults = [];
+        foreach ($txts as $key => $txt) {
+            $results[$key] = $txt;
+        }
+        asort($results);
+        foreach ($results as $key => $txt) {
+            $testResults[] = $tests[$key];
+        }
+        $results = array_values($results);
+        $this->assertEquals([
+            "negative0 comment text",
+            "negative1 text",
+            "positive0 message text",
+            "positive1 some message text",
+            "positive2 text",
+        ],$results);
+        $this->assertEquals([0,0,1,1,1],$testResults);
     }
 
     public function testJustloaddata()
