@@ -42,6 +42,9 @@ class Preprocessor
                 $max = $maxlen;
             }
         }
+        if($dtype==NDArray::float32||$dtype==NDArray::float64) {
+            $value = (float)$value;
+        }
         $tensor = $this->mo->full([$size,$max],$value,$dtype);
         $i = 0;
         foreach ($sequences as $sequence) {

@@ -147,6 +147,9 @@ class Tokenizer
                     $text,$this->filters,$this->specials,$this->lower,$this->split);
             }
             foreach ($seq as $w) {
+                if(is_float($w)) {
+                    $w = (int)$w;
+                }
                 if(array_key_exists($w,$this->wordCounts)) {
                     $this->wordCounts[$w]++;
                 } else {
