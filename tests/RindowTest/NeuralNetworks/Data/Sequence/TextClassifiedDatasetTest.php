@@ -43,12 +43,16 @@ class Test extends TestCase
         // sequential access
         $datas = [];
         $sets = [];
+        $liseqs = [];
+        $lilabels = [];
         foreach ($dataset as $key => $value) {
             $datas[] = $value;
             [$texts,$labels] = $value;
             foreach($texts as $key => $text) {
                 $label = $labels[$key];
                 $sets[] = [$text,$label];
+                $liseqs[] = $text;
+                $lilabels[] = $label;
             }
         }
         $this->assertCount(3,$datas);
@@ -60,8 +64,9 @@ class Test extends TestCase
 
         $tokenizer = $dataset->getTokenizer();
         $this->assertEquals(10,$tokenizer->numWords());
-        $textDatas = $tokenizer->sequencesToTexts($datas[0][0]);
-        $this->assertEquals('negative0 comment text',$textDatas[0]);
+        $textDatas = $tokenizer->sequencesToTexts($liseqs);
+        [$liseqs,$lilabels] = $this->sortResult($textDatas,$lilabels);
+        $this->assertEquals('negative0 comment text',$liseqs[0]);
         // epoch 2
         $datas = [];
         foreach ($dataset as $key => $value) {
