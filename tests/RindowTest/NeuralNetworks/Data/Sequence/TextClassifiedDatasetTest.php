@@ -63,6 +63,8 @@ class Test extends TestCase
         $this->assertEquals([5,4],$inputs->shape());
         $this->assertEquals([5],$tests->shape());
         $txts = $tokenizer->sequencesToTexts($inputs);
+        $this->assertCount(5,$txts);
+        var_dump($txts);
         $this->assertEquals("negative0 comment text",$txts[0]);
         $this->assertEquals("negative1 text",$txts[1]);
         $this->assertEquals("positive0 message text",$txts[2]);
