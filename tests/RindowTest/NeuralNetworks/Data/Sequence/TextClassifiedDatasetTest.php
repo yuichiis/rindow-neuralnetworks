@@ -14,14 +14,18 @@ class Test extends TestCase
         $results = [];
         $testResults = [];
         foreach ($inputs as $key => $txt) {
-            $results[$key] = $txt;
+            $results['i'.$key] = $txt;
+        }
+        foreach ($tests as $key => $value) {
+            $testResults['i'.$key] = $value;
         }
         asort($results);
+        $testResults2 = [];
         foreach ($results as $key => $txt) {
-            $testResults[] = $tests[$key];
+            $testResults2[] = $testResults[$key];
         }
         $results = array_values($results);
-        return [$results,$testResults];
+        return [$results,$testResults2];
     }
 
     public function testNormal()
