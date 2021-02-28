@@ -74,7 +74,9 @@ class Test extends TestCase
         }
         $this->assertCount(3,$datas);
 
-        $this->assertEquals(['neg','pos'],$dataset->classnames());
+        $classnames = $dataset->classnames();
+        sort($classnames);
+        $this->assertEquals(['neg','pos'],$classnames);
         //public function loadData(string $filePath=null)
 
         [$inputs,$tests] = $dataset->loadData();
