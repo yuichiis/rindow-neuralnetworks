@@ -90,6 +90,7 @@ class Test extends TestCase
         $classnames = $dataset->classnames();
         sort($classnames);
         $this->assertEquals(['neg','pos'],$classnames);
+        $classnames = $dataset->classnames();
         //public function loadData(string $filePath=null)
 
         [$inputs,$tests] = $dataset->loadData();
