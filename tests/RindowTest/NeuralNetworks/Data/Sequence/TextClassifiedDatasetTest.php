@@ -20,6 +20,8 @@ class Test extends TestCase
             $testResults['i'.$key] = $value;
         }
         asort($results,SORT_STRING);
+        echo "test=";
+        var_dump($testResults);
         $testResults2 = [];
         echo "key=";
         foreach ($results as $key => $txt) {
@@ -27,6 +29,8 @@ class Test extends TestCase
             $testResults2[] = $testResults[$key];
         }
         echo "\n";
+        echo "test2=";
+        var_dump($testResults2);
         $results = array_values($results);
         return [$results,$testResults2];
     }
