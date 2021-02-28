@@ -19,24 +19,22 @@ class Test extends TestCase
         foreach ($tests as $key => $value) {
             $testResults['i'.$key] = $value;
         }
-        echo "results=";
-        var_dump($results);
         asort($results,SORT_STRING);
-        echo "asort=";
-        var_dump($results);
-        echo "test=";
-        var_dump($testResults);
         $testResults2 = [];
-        echo "key=";
         foreach ($results as $key => $txt) {
-            echo $key.",";
             $testResults2[] = $testResults[$key];
         }
-        echo "\n";
-        echo "test2=";
-        var_dump($testResults2);
         $results = array_values($results);
         return [$results,$testResults2];
+    }
+
+    public function int2label($tests,$classnames)
+    {
+        $testResults = [];
+        foreach ($tests as $value) {
+            $testResults[] = $classnames[$value];
+        }
+        return $testResults;
     }
 
     public function testNormal()
@@ -100,8 +98,9 @@ class Test extends TestCase
         $this->assertEquals([5,4],$inputs->shape());
         $this->assertEquals([5],$tests->shape());
         $txts = $tokenizer->sequencesToTexts($inputs);
+        $lbls = $this->int2label($tests,$classnames);
         $this->assertCount(5,$txts);
-        [$results,$testResults] = $this->sortResult($txts,$tests);
+        [$results,$testResults] = $this->sortResult($txts,$lbls);
         $this->assertEquals([
             "negative0 comment text",
             "negative1 text",
@@ -109,7 +108,7 @@ class Test extends TestCase
             "positive1 some message text",
             "positive2 text",
         ],$results);
-        $this->assertEquals([0,0,1,1,1],$testResults);
+        $this->assertEquals(['neg','neg','pos','pos','pos'],$testResults);
     }
 
     public function testJustloaddata()
@@ -128,14 +127,16 @@ class Test extends TestCase
         );
 
         [$inputs,$tests] = $dataset->loadData();
+        $classnames = $dataset->classnames();
         $tokenizer = $dataset->getTokenizer();
         $this->assertInstanceof(NDArray::class,$inputs);
         $this->assertInstanceof(NDArray::class,$tests);
         $this->assertEquals([5,4],$inputs->shape());
         $this->assertEquals([5],$tests->shape());
         $txts = $tokenizer->sequencesToTexts($inputs);
+        $lbls = $this->int2label($tests,$classnames);
         $this->assertCount(5,$txts);
-        [$results,$testResults] = $this->sortResult($txts,$tests);
+        [$results,$testResults] = $this->sortResult($txts,$lbls);
         $this->assertEquals([
             "negative0 comment text",
             "negative1 text",
@@ -143,7 +144,7 @@ class Test extends TestCase
             "positive1 some message text",
             "positive2 text",
         ],$results);
-        $this->assertEquals([0,0,1,1,1],$testResults);
+        $this->assertEquals(['neg','neg','pos','pos','pos'],$testResults);
     }
 
     public function testLoadValidationData()
@@ -164,6 +165,7 @@ class Test extends TestCase
         [$inputs,$tests] = $dataset->loadData();
         $tokenizer = $dataset->getTokenizer();
         $labels = $dataset->getLabels();
+        $classnames = $dataset->classnames();
         $val_dataset = new TextClassifiedDataset(
             $mo,
             __DIR__.'/../Dataset/text',
@@ -183,8 +185,9 @@ class Test extends TestCase
         $this->assertEquals([5,4],$val_inputs->shape());
         $this->assertEquals([5],$val_tests->shape());
         $txts = $tokenizer->sequencesToTexts($val_inputs);
+        $lbls = $this->int2label($val_tests,$classnames);
         $this->assertCount(5,$txts);
-        [$results,$testResults] = $this->sortResult($txts,$tests);
+        [$results,$testResults] = $this->sortResult($txts,$lbls);
         $this->assertEquals([
             "negative0 comment text",
             "negative1 text",
@@ -192,6 +195,6 @@ class Test extends TestCase
             "positive1 some message text",
             "positive2 text",
         ],$results);
-        $this->assertEquals([0,0,1,1,1],$testResults);
+        $this->assertEquals(['neg','neg','pos','pos','pos'],$testResults);
     }
 }
