@@ -9,6 +9,21 @@ use Rindow\NeuralNetworks\Data\Sequence\TextClassifiedDataset;
 
 class Test extends TestCase
 {
+    public function sortResult($inputs,$tests)
+    {
+        $results = [];
+        $testResults = [];
+        foreach ($inputs as $key => $txt) {
+            $results[$key] = $txt;
+        }
+        asort($results);
+        foreach ($results as $key => $txt) {
+            $testResults[] = $tests[$key];
+        }
+        $results = array_values($results);
+        return [$results,$testResults];
+    }
+
     public function testNormal()
     {
         $mo = new MatrixOperator();
@@ -64,16 +79,7 @@ class Test extends TestCase
         $this->assertEquals([5],$tests->shape());
         $txts = $tokenizer->sequencesToTexts($inputs);
         $this->assertCount(5,$txts);
-        $results = [];
-        $testResults = [];
-        foreach ($txts as $key => $txt) {
-            $results[$key] = $txt;
-        }
-        asort($results);
-        foreach ($results as $key => $txt) {
-            $testResults[] = $tests[$key];
-        }
-        $results = array_values($results);
+        [$results,$testResults] = $this->sortResult($txts,$tests);
         $this->assertEquals([
             "negative0 comment text",
             "negative1 text",
@@ -106,11 +112,16 @@ class Test extends TestCase
         $this->assertEquals([5,4],$inputs->shape());
         $this->assertEquals([5],$tests->shape());
         $txts = $tokenizer->sequencesToTexts($inputs);
-        $this->assertEquals("negative0 comment text",$txts[0]);
-        $this->assertEquals("negative1 text",$txts[1]);
-        $this->assertEquals("positive0 message text",$txts[2]);
-        $this->assertEquals("positive1 some message text",$txts[3]);
-        $this->assertEquals("positive2 text",$txts[4]);
+        $this->assertCount(5,$txts);
+        [$results,$testResults] = $this->sortResult($txts,$tests);
+        $this->assertEquals([
+            "negative0 comment text",
+            "negative1 text",
+            "positive0 message text",
+            "positive1 some message text",
+            "positive2 text",
+        ],$results);
+        $this->assertEquals([0,0,1,1,1],$testResults);
     }
 
     public function testLoadValidationData()
@@ -150,10 +161,15 @@ class Test extends TestCase
         $this->assertEquals([5,4],$val_inputs->shape());
         $this->assertEquals([5],$val_tests->shape());
         $txts = $tokenizer->sequencesToTexts($val_inputs);
-        $this->assertEquals("negative0 comment text",$txts[0]);
-        $this->assertEquals("negative1 text",$txts[1]);
-        $this->assertEquals("positive0 message text",$txts[2]);
-        $this->assertEquals("positive1 some message text",$txts[3]);
-        $this->assertEquals("positive2 text",$txts[4]);
+        $this->assertCount(5,$txts);
+        [$results,$testResults] = $this->sortResult($txts,$tests);
+        $this->assertEquals([
+            "negative0 comment text",
+            "negative1 text",
+            "positive0 message text",
+            "positive1 some message text",
+            "positive2 text",
+        ],$results);
+        $this->assertEquals([0,0,1,1,1],$testResults);
     }
 }
