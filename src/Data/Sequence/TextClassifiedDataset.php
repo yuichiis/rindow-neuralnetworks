@@ -116,22 +116,5 @@ class TextClassifiedDataset extends ClassifiedDirectoryDataset
         $sets = $this->filter->translate($inputs, $tests);
         $this->console(" Done.\n");
         return $sets;
-        //$inputs = $this->filter->getPreprocessor()
-        //    ->padSequences($sequences,[
-        //        'maxlen'=>$this->maxlen,
-        //        'dtype'=>$this->dtype,
-        //        'padding'=>$this->padding,
-        //        'truncating'=>$this->truncating,
-        //        'value'=>$this->value,
-        //    ]);
-        //$this->console(" Done.\n");
-        //$ntests = $this->mo->la()->alloc([count($tests)],NDArray::int32);
-        //$labels = $this->filter->labels();
-        //$this->console("Generating labels ...");
-        //foreach($tests as $i => $value) {
-        //    $ntests[$i] = $labels[$value];
-        //}
-        //$this->console(" Done.\n");
-        //return [$inputs,$ntests];
     }
 }

@@ -165,7 +165,6 @@ class Test extends TestCase
 
         [$inputs,$tests] = $dataset->loadData();
         $tokenizer = $dataset->getTokenizer();
-        $labels = $dataset->getLabels();
         $classnames = $dataset->classnames();
         $val_dataset = new TextClassifiedDataset(
             $mo,
@@ -175,7 +174,7 @@ class Test extends TestCase
                 'batch_size'=>2,
                 //'verbose'=>1,
                 'tokenizer'=>$tokenizer,
-                'labels'=>$labels,
+                'classnames'=>$classnames,
             ]
         );
 

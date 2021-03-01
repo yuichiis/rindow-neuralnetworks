@@ -4,6 +4,7 @@ namespace Rindow\NeuralNetworks\Data\Dataset;
 use Interop\Polite\Math\Matrix\NDArray;
 use Rindow\NeuralNetworks\Support\GenericUtils;
 use Rindow\NeuralNetworks\Support\Dir;
+use ArrayObject;
 use InvalidArgumentException;
 use LogicException;
 use Countable;
@@ -79,6 +80,21 @@ class ClassifiedDirectoryDataset implements Countable,IteratorAggregate,Dataset
         return $this->filenames;
     }
 
+    protected function readContents($filename)
+    {
+        return file_get_contents($filename);
+    }
+
+    protected function makeBatchInputs($inputs)
+    {
+        return $inputs;
+    }
+
+    protected function makeBatchTests($tests)
+    {
+        return $tests;
+    }
+
     public function  getIterator()
     {
         $la = $this->mo->la();
@@ -87,15 +103,17 @@ class ClassifiedDirectoryDataset implements Countable,IteratorAggregate,Dataset
         $this->maxDatasetSize = 0;
         $rows = 0;
         $steps = 0;
-        $batchSize = $this->batchSize;
+        $inputs = [];
+        $tests = [];
+        $paths = [];
         foreach($filenames as $filename) {
             $sepfilename = explode(DIRECTORY_SEPARATOR,substr($filename,$prefixLength));
             $label = $sepfilename[0];
             if(count($sepfilename)<2) {
                 continue;
             }
-            $content = file_get_contents($filename);
-            if($batchSize==0) {
+            $content = $this->readContents($filename);
+            if($this->batchSize==0) {
                 // stream mode
                 if($this->unclassified) {
                     $data = $content;
@@ -106,13 +124,16 @@ class ClassifiedDirectoryDataset implements Countable,IteratorAggregate,Dataset
                 $rows++;
                 continue;
             }
-            $rows++;
             $inputs[] = $content;
             $tests[] = $label;
-            if($rows>=$batchSize) {
+            $paths[] = $filename;
+            $rows++;
+            if($rows>=$this->batchSize) {
+                $inputs = $this->makeBatchInputs($inputs);
+                $tests = $this->makeBatchTests($tests);
                 $inputsets = [$inputs,$tests];
                 if($this->filter) {
-                    $inputsets = $this->filter->translate($inputs,$tests);
+                    $inputsets = $this->filter->translate($inputs,$tests,$paths);
                 }
                 $this->maxDatasetSize += $rows;
                 $rows = 0;
@@ -126,17 +147,20 @@ class ClassifiedDirectoryDataset implements Countable,IteratorAggregate,Dataset
                 $this->maxSteps = max($this->maxSteps,$steps);
                 $inputs = [];
                 $tests = [];
+                $paths = [];
             }
         }
         $this->maxDatasetSize += $rows;
-        if($batchSize==0) {
+        if($this->batchSize==0) {
             // stream mode
             return;
         }
         if($rows) {
+            $inputs = $this->makeBatchInputs($inputs);
+            $tests = $this->makeBatchTests($tests);
             $inputsets = [$inputs,$tests];
             if($this->filter) {
-                $inputsets = $this->filter->translate($inputs,$tests);
+                $inputsets = $this->filter->translate($inputs,$tests,$paths);
             }
             if($this->unclassified) {
                 $data = $inputsets[0];

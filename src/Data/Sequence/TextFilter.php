@@ -22,7 +22,7 @@ class TextFilter implements DatasetFilter
         extract($this->extractArgs([
             'padding'=>'post',
             'tokenizer'=>null,
-            'labels'=>[],
+            'classnames'=>[],
             'analyzer'=>null,
             'num_words'=>null,
             'tokenizer_filters'=>"!\"\'#$%&()*+,-./:;<=>?@[\\]^_`{|}~\t\n\r",
@@ -57,7 +57,7 @@ class TextFilter implements DatasetFilter
         if($preprocessor==null) {
             $preprocessor = new Preprocessor($mo);
         }
-        $this->labels = $labels;
+        $this->labels = array_flip($classnames);
         $this->preprocessor = $preprocessor;
         //if($maxlen==null||$maxlen<1) {
         //    throw new InvalidArgumentException('maxlen must be greater then 0');
@@ -109,7 +109,10 @@ class TextFilter implements DatasetFilter
         return $classname;
     }
 
-    public function translate(iterable $inputs, iterable $tests=null) : array
+    public function translate(
+        iterable $inputs,
+        iterable $tests=null,
+        $options=null) : array
     {
         //$this->tokenizer->fitOnTexts($inputs);
         $sequences = $this->tokenizer->textsToSequences($inputs);
