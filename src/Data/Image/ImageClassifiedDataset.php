@@ -82,7 +82,7 @@ class ImageClassifiedDataset extends ClassifiedDirectoryDataset
         }
         $height = $this->height;
         $width = $this->width;
-        $channels = $this->channels;
+        $channels = 3;
         $array = $this->mo->zeros(
             [$height, $width, $channels], $this->dtype);
         $imHeight = imagesy($image);
@@ -131,9 +131,10 @@ class ImageClassifiedDataset extends ClassifiedDirectoryDataset
 
     protected function makeBatchInputs($inputs)
     {
+        $channels = 3;
         $batchSize = count($inputs);
         $batch = $this->mo->zeros(
-            [$batchSize, $this->height, $this->width, $this->channels], $this->dtype);
+            [$batchSize, $this->height, $this->width, $channels], $this->dtype);
         $la = $this->mo->la();
         foreach ($inputs as $rowid => $content) {
             $la->copy($content,$batch[$rowid]);

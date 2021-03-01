@@ -17,12 +17,10 @@ class ClassifiedDirectoryDataset implements Countable,IteratorAggregate,Dataset
     protected $path;
     protected $pattern;
     protected $batchSize;
-    protected $filter;
     protected $crawler;
-    protected $length;
-    protected $delimiter;
-    protected $enclosure;
-    protected $escape;
+    protected $filter;
+    protected $unclassified;
+    protected $shuffle;
     protected $filenames;
     protected $maxSteps=0;
     protected $maxDatasetSize=0;
@@ -38,6 +36,7 @@ class ClassifiedDirectoryDataset implements Countable,IteratorAggregate,Dataset
             'crawler'=>null,
             'filter'=>null,
             'unclassified'=>false,
+            'shuffle'=>false,
         ],$options,$leftargs));
         $this->mo = $mo;
         $this->crawler = $crawler;
@@ -50,6 +49,7 @@ class ClassifiedDirectoryDataset implements Countable,IteratorAggregate,Dataset
         $this->crawler = $crawler;
         $this->filter = $filter;
         $this->unclassified = $unclassified;
+        $this->shuffle = $shuffle;
     }
 
     public function setFilter(DatasetFilter $filter) : void
@@ -74,9 +74,20 @@ class ClassifiedDirectoryDataset implements Countable,IteratorAggregate,Dataset
 
     protected function getFilenames()
     {
-        if($this->filenames===null) {
-            $this->filenames = $this->crawler->glob($this->path,$this->pattern);
+        if($this->filenames!==null) {
+            return $this->filenames;
         }
+        $filenames = $this->crawler->glob($this->path,$this->pattern);
+        $size = count($filenames);
+        if($this->shuffle && $size>0) {
+            $choice = $this->mo->la()->randomSequence($size);
+            $newFilenames = [];
+            foreach ($choice as $idx) {
+                $newFilenames[] = $filenames[$idx];
+            }
+            $filenames = $newFilenames;
+        }
+        $this->filenames = $filenames;
         return $this->filenames;
     }
 
