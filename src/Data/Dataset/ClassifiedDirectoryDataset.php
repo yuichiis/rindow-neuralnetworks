@@ -21,6 +21,8 @@ class ClassifiedDirectoryDataset implements Countable,IteratorAggregate,Dataset
     protected $filter;
     protected $unclassified;
     protected $shuffle;
+    protected $limit;
+    protected $restrictedByClass;
     protected $filenames;
     protected $maxSteps=0;
     protected $maxDatasetSize=0;
@@ -37,6 +39,8 @@ class ClassifiedDirectoryDataset implements Countable,IteratorAggregate,Dataset
             'filter'=>null,
             'unclassified'=>false,
             'shuffle'=>false,
+            'limit'=>null,
+            'restricted_by_class'=>null,
         ],$options,$leftargs));
         $this->mo = $mo;
         $this->crawler = $crawler;
@@ -50,6 +54,10 @@ class ClassifiedDirectoryDataset implements Countable,IteratorAggregate,Dataset
         $this->filter = $filter;
         $this->unclassified = $unclassified;
         $this->shuffle = $shuffle;
+        $this->limit = $limit;
+        if($restricted_by_class) {
+            $this->restrictedByClass = array_flip($restricted_by_class);
+        }
     }
 
     public function setFilter(DatasetFilter $filter) : void
@@ -78,6 +86,22 @@ class ClassifiedDirectoryDataset implements Countable,IteratorAggregate,Dataset
             return $this->filenames;
         }
         $filenames = $this->crawler->glob($this->path,$this->pattern);
+        $rawfilenames = $filenames;
+        $filenames = [];
+        $prefixLength = strlen($this->path.DIRECTORY_SEPARATOR);
+        foreach ($rawfilenames as $filename) {
+            $sepfilename = explode(DIRECTORY_SEPARATOR,substr($filename,$prefixLength));
+            $label = $sepfilename[0];
+            if(count($sepfilename)<2) {
+                continue;
+            }
+            if($this->restrictedByClass &&
+                !array_key_exists($label,$this->restrictedByClass)) {
+                continue;
+            }
+            $filenames[] = $filename;
+        }
+
         $size = count($filenames);
         if($this->shuffle && $size>0) {
             $choice = $this->mo->la()->randomSequence($size);
@@ -86,6 +110,9 @@ class ClassifiedDirectoryDataset implements Countable,IteratorAggregate,Dataset
                 $newFilenames[] = $filenames[$idx];
             }
             $filenames = $newFilenames;
+        }
+        if($this->limit) {
+            $filenames = array_slice($filenames,0,$this->limit);
         }
         $this->filenames = $filenames;
         return $this->filenames;
@@ -182,5 +209,35 @@ class ClassifiedDirectoryDataset implements Countable,IteratorAggregate,Dataset
             $steps++;
             $this->maxSteps = max($this->maxSteps,$steps);
         }
+    }
+
+    protected function console($message)
+    {
+
+    }
+
+    protected function progressBar($done,$total,$startTime,$maxDot)
+    {
+        if($done==0) {
+            $this->console("\r${done}/${total} ");
+            return;
+        }
+        $elapsed = time() - $startTime;
+        if($total) {
+            $completion = $done/$total;
+            $estimated = $elapsed / $completion;
+            $remaining = $estimated - $elapsed;
+            $dot = (int)ceil($maxDot*$completion);
+            $sec = $remaining % 60;
+            $min = (int)floor($remaining/60) % 60;
+            $hour = (int)floor($remaining/3600);
+            $rem_string = ($hour?$hour.':':'').sprintf('%02d:%02d',$min,$sec);
+        } else {
+            $dot = 1;
+            $rem_string = '????';
+            $this->console($maxDot."\n");
+        }
+        $this->console("\r${done}/${total} [".str_repeat('.',$dot).str_repeat(' ',$maxDot-$dot).
+            "] ${elapsed} sec. remaining:${rem_string}  ");
     }
 }

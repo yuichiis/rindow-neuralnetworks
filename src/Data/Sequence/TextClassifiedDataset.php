@@ -64,9 +64,13 @@ class TextClassifiedDataset extends ClassifiedDirectoryDataset
             $tests = new ArrayObject();
             $nn=0;
             $this->console('Indexing ...');
+            $filenames = $this->getFilenames();
+            $totalSize = count($filenames);
+            $this->console(" Done. Total=$totalSize\n");
+            $this->console("Loding ...\n");
             $dataset = $this->getIterator();
-            $this->console(" Done.\n");
-            $this->console('Loding ');
+            $startTime = time();
+            $count = 0;
             foreach($dataset as $data) {
                 $inputs->append($data[0]);
                 $label = $data[1];
@@ -75,17 +79,19 @@ class TextClassifiedDataset extends ClassifiedDirectoryDataset
                     $labels[$label] = $labelNum;
                     $labelNum++;
                 }
-                if($nn>1000) {
-                    $this->console('.');
+                $count++;
+                $nn++;
+                if($nn>=1000) {
+                    $this->progressBar($count,$totalSize,$startTime,25);
                     $nn=0;
                 }
-                $nn++;
             }
+            $this->progressBar($count,$totalSize,$startTime,25);
             $filter->setLabels($labels);
         } else {
             $inputs = $this->getIterator();
         }
-        $this->console(" Done.\n");
+        $this->console("\nDone.\n");
         if(!$noFit) {
             $this->console("Fitting ...");
             $tokenizer->fitOnTexts($inputs);

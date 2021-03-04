@@ -87,7 +87,7 @@ class ImageClassifiedDataset extends ClassifiedDirectoryDataset
             [$height, $width, $channels], $this->dtype);
         $imHeight = imagesy($image);
         $imWidth  = imagesx($image);
-        if($this->fit) {
+        if($this->fit && ($height!=$imHeight||$width!=$imWidth)) {
             $aspectRatio = $width/$height;
             $imAspectRatio = $imWidth/$imHeight;
             if($imAspectRatio>$aspectRatio) {
@@ -170,21 +170,28 @@ class ImageClassifiedDataset extends ClassifiedDirectoryDataset
         $this->console("Generating filename list ...");
         $filenames = $this->getFilenames();
         $totalSize = count($filenames);
-        $this->console(" Done.\n");
+        $this->console(" Done. Total=$totalSize\n");
         $inputs = $la->alloc(
             [$totalSize,$this->height,$this->width,$this->channels],
             $this->dtype);
         $tests = $la->alloc([$totalSize],$this->dtypeClassId);
-        $this->console("Loading ...");
+        $this->console("Loading ...\n");
         $dataset = $this->getIterator();
+        $nn=0;
+        $startTime = time();
         foreach ($dataset as $key => $value) {
             [$batchInputs,$batchTests] = $value;
             $idx = $key*$this->batchSize;
             $batchSize = count($batchInputs);
             $la->copy($batchInputs,$inputs[[$idx,$idx+$batchSize-1]]);
             $la->copy($batchTests,$tests[[$idx,$idx+$batchSize-1]]);
+            $nn++;
+            if($nn>10) {
+                $nn=0;
+                $this->progressBar($idx+$batchSize,$totalSize,$startTime,25);
+            }
         }
-        $this->console(" Done.\n");
+        $this->console("\nDone.\n");
         return [$inputs,$tests];
     }
 }
