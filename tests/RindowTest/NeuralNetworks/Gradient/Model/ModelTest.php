@@ -716,7 +716,7 @@ class Test extends TestCase
         [$totalLoss,$totalAccuracy] = $model->evaluate($val_inputs,$val_tests);
 
         $this->assertGreaterThanOrEqual(0.9,$totalAccuracy);
-        $this->assertLessThanOrEqual(0.4,$totalLoss);
+        $this->assertLessThanOrEqual(0.5,$totalLoss);
         //$model->summary();
     }
 
