@@ -828,7 +828,7 @@ class Test extends TestCase
         $t = $mo->array([0, 0, 0, 1, 1, 1]);
 
         $model->compile([
-            'loss' => 'sparse_categorical_crossentropy',
+            'loss' => $lossfunc,
             'optimizer' => 'adam',
         ]);
         $model->loadWeights($savedWeights);
