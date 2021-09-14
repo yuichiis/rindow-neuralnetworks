@@ -372,8 +372,8 @@ class TestVariableMini1 extends DynamicModel
         $K = $this->backend;
         $g = $this->builder->gradient();
         $activation = $this->activation;
-        $outputs = $g->Matmul($inputs,$this->linearWeight);
-        $outputs = $g->Add($outputs,$this->linearBias);
+        $outputs = $g->matmul($inputs,$this->linearWeight);
+        $outputs = $g->add($outputs,$this->linearBias);
         $outputs = $activation($outputs,true);
         return $outputs;
     }
@@ -404,8 +404,8 @@ class TestVariableMini2 extends DynamicModel
     {
         $K = $this->backend;
         $g = $this->builder->gradient();
-        $outputs = $g->Matmul($inputs,$this->linearWeight);
-        $outputs = $g->Add($outputs,$this->linearBias);
+        $outputs = $g->matmul($inputs,$this->linearWeight);
+        $outputs = $g->add($outputs,$this->linearBias);
         return $outputs;
     }
 }
@@ -438,7 +438,7 @@ class TestVariableMain extends DynamicModel
 
 class Test extends TestCase
 {
-    protected $plot = false;
+    protected $plot = true;
 
     public function newMatrixOperator()
     {
