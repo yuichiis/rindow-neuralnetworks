@@ -11,11 +11,12 @@ class ExpandDims extends AbstractLayer implements Layer
     protected $backend;
     protected $axis;
 
-    public function __construct($backend,int $axis,array $options=null)
+    public function __construct(object $backend,int $axis,array $options=null)
     {
         extract($this->extractArgs([
             'input_shape'=>null,
         ],$options));
+        $this->backend = $backend;
         $this->axis = $axis;
         $this->inputShape = $input_shape;
     }

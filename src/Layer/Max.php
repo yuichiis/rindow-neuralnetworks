@@ -11,7 +11,7 @@ class Max extends AbstractLayer implements Layer
     protected $backend;
     protected $axis;
 
-    public function __construct($backend,array $options=null)
+    public function __construct(object $backend,array $options=null)
     {
         extract($this->extractArgs([
             'axis'=>-1,
@@ -76,15 +76,17 @@ class Max extends AbstractLayer implements Layer
     protected function call(NDArray $inputs, bool $training) : NDArray
     {
         $K = $this->backend;
+        $container = $this->container();
         $outputs = $K->max($inputs,$this->realAxis);
-        $this->inputs = $inputs;
+        $container->inputs = $inputs;
         return $outputs;
     }
 
     protected function differentiate(NDArray $dOutputs) : NDArray
     {
         $K = $this->backend;
-        $argMax = $K->argMax($this->inputs,$this->realAxis);
+        $container = $this->container();
+        $argMax = $K->argMax($container->inputs,$this->realAxis);
         $dInputs = $K->scatter(
             $argMax,
             $dOutputs,

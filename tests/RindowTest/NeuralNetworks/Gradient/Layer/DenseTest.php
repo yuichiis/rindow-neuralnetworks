@@ -46,5 +46,10 @@ class Test extends TestCase
         $this->assertEquals([5],$gradients[1]->shape());
         $this->assertEquals("[[7,7,7,7,7]]",$mo->toString($gradients[0]));
         $this->assertEquals("[2,2,2,2,2]",$mo->toString($gradients[1]));
+
+        var_dump($K->toString($outputs->value()));
+        //var_dump(array_map(function($x)use($K){return $K->toString($x);},$layer->getParams()));
+        //var_dump(array_map(function($x)use($K){return $K->toString($x);},$layer->getGrads()));
     }
+
 }

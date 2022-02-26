@@ -9,7 +9,7 @@ use Interop\Polite\Math\Matrix\NDArray;
 
 class Sequential extends AbstractModel
 {
-    public function __construct($backend,$builder,$hda,array $layers=null)
+    public function __construct(object $backend,object $builder,$hda,array $layers=null)
     {
         parent::__construct($backend,$builder,$hda);
         if($layers!==null) {

@@ -8,14 +8,14 @@ use DomainException;
 class MeanSquaredError extends AbstractGradient implements Loss
 {
     protected $backend;
-    protected $trues;
-    protected $predicts;
+    //protected $trues;
+    //protected $predicts;
 
-    public function __construct($backend,array $options=null)
+    public function __construct(object $backend,array $options=null)
     {
         //extract($this->extractArgs([
         //],$options));
-        $this->backend = $K = $backend;
+        $this->backend = $backend;
     }
 
     public function getConfig() : array
@@ -27,22 +27,24 @@ class MeanSquaredError extends AbstractGradient implements Loss
     public function forward(NDArray $trues, NDArray $predicts) : float
     {
         $K = $this->backend;
+        $container = $this->container();
         //$this->assertOutputShape($predicts);
         //if($trues->ndim()!=2) {
         //    throw new InvalidArgumentException('categorical\'s "trues" must be shape of [batchsize,1].');
         //}
         if($trues->shape()!=$predicts->shape())
             throw new InvalidArgumentException('unmatch shape of trues and predicts results');
-        $this->trues = $trues;
-        $this->predicts = $predicts;
-        $this->loss = $K->meanSquaredError($trues, $predicts);
-        return $this->loss;
+        $container->trues = $trues;
+        $container->predicts = $predicts;
+        $loss = $K->meanSquaredError($trues, $predicts);
+        return $loss;
     }
 
-    public function backward(array $dOutputs) : array
+    public function backward(array $dOutputs, array &$grads=null, array $oidsToCollect=null) : array
     {
         $K = $this->backend;
-        $dInputs = $K->dMeanSquaredError($this->trues, $this->predicts);
+        $container = $this->container();
+        $dInputs = $K->dMeanSquaredError($container->trues, $container->predicts);
         return [$dInputs];
     }
 

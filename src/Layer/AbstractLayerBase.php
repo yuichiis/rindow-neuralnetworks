@@ -15,7 +15,6 @@ use Rindow\NeuralNetworks\Layer\Embedding;
  */
 abstract class AbstractLayerBase implements LayerBase
 {
-    protected $layers = [];
     protected $inputShape;
     protected $outputShape;
     protected $statesShapes;
@@ -193,23 +192,6 @@ abstract class AbstractLayerBase implements LayerBase
         return $this->statesShapes;
     }
 
-    protected function addWeights($weights,$grads=null)
-    {
-        if($weights instanceof LayerBase){
-            $this->params = array_merge($this->params,$weights->getParams());
-            $this->grads  = array_merge($this->grads, $weights->getGrads());
-            return;
-        }elseif($weights instanceof NDArray){
-            if($grads==null){
-                throw new InvalidArgumentException('need grads to add weights');
-            }
-            $this->params[]=$weights;
-            $this->grads[]=$grads;
-        }else{
-            throw new InvalidArgumentException('invalid type to add weights');
-        }
-    }
-
     public function getParams() : array
     {
         return $this->params;
@@ -238,9 +220,6 @@ abstract class AbstractLayerBase implements LayerBase
     public function setShapeInspection(bool $enable)
     {
         $this->shapeInspection = $enable;
-        foreach ($this->layers as $layer) {
-            $layer->setShapeInspection($enable);
-        }
     }
 
     protected function shapeToString($shape)
@@ -271,7 +250,8 @@ abstract class AbstractLayerBase implements LayerBase
         if($shape!=$this->inputShape) {
             $shape = $this->shapeToString($shape);
             $inputShape = $this->shapeToString($this->inputShape);
-            throw new InvalidArgumentException('unmatch input shape: '.$shape.', must be '.$inputShape.' in '.$this->name.':'.$direction);
+            $name = $this->name ?? $this->basename($this);
+            throw new InvalidArgumentException('unmatch input shape: '.$shape.', must be '.$inputShape.' in '.$name.':'.$direction);
         }
     }
 
@@ -287,7 +267,8 @@ abstract class AbstractLayerBase implements LayerBase
         if($shape!=$this->outputShape) {
             $shape = $this->shapeToString($shape);
             $outputShape = $this->shapeToString($this->outputShape);
-            throw new InvalidArgumentException('unmatch output shape: '.$shape.', must be '.$outputShape.' in '.$this->name.':'.$direction);
+            $name = $this->name ?? $this->basename($this);
+            throw new InvalidArgumentException('unmatch output shape: '.$shape.', must be '.$outputShape.' in '.$name.':'.$direction);
         }
     }
 
@@ -310,19 +291,10 @@ abstract class AbstractLayerBase implements LayerBase
             if($shape!=$stateShape) {
                 $shape = $this->shapeToString($shape);
                 $stateShape = $this->shapeToString($stateShape);
-                throw new InvalidArgumentException('unmatch shape of state: '.$shape.', must be '.$stateShape.' in '.$this->name.':'.$direction);
+                $name = $this->name ?? $this->basename($this);
+                throw new InvalidArgumentException('Shape of state'.$idx.' must be '.$stateShape.', '.$shape.' given in '.$name.':'.$direction);
             }
         }
-    }
-
-    protected function registerLayer(LayerBase $layer,array $inputShape=null) : array
-    {
-        $this->layers[] = $layer;
-        $outputShape = $layer->build($inputShape);
-        $name = $this->basename($layer);
-        $layer->setName($name);
-        $this->addWeights($layer);
-        return $outputShape;
     }
 
     /*
@@ -363,15 +335,51 @@ abstract class AbstractLayerBase implements LayerBase
             return $this->weights;
         }
         $variables = [];
-        foreach (array_map(null,$this->getParams(),$this->getGrads()) as $values) {
-            [$param, $grads] = $values;
-            $variable = new Variable($this->backend,$param);
-            $variable->setGrad($grads);
+        foreach($this->getParams() as $param) {
+            $variable = new Variable($this->backend,$param,['reference'=>true]);
             $variable->setName('weights:'.$this->basename($this));
             $variables[] = $variable;
         }
         $this->weights = $variables;
         return $variables;
+    }
+
+    public function variables() : array
+    {
+        return $this->weights();
+    }
+
+    public function trainableVariables() : array
+    {
+        return $this->weights();
+    }
+
+    public function submodules() : array
+    {
+        return [];
+    }
+
+    protected function collectGradients(array &$grads=null, array $oidsToCollect=null) : void
+    {
+        if($oidsToCollect===null) {
+            return;
+        } elseif(count($oidsToCollect)==0) {
+            return;
+        }
+        $K = $this->backend;
+        foreach (array_map(null,$this->weights(),$this->getGrads()) as [$w,$g]) {
+            $oid = spl_object_id($w);
+            if(in_array($oid,$oidsToCollect)) {
+                if(isset($grads[$oid])) {
+                    $grads[$oid] = $K->add($grads[$oid],$g);
+                    echo "add ".$K->toString($g)."\n";
+                } else {
+                    $grads[$oid] = $g;
+                    echo "new ".$K->toString($g)."\n";
+                }
+                echo "collect grad in layerbase:".$oid.$K->toString($grads[$oid])."\n";
+            }
+        }
     }
 
     protected function basename($object) : string

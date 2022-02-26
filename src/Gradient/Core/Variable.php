@@ -1,12 +1,14 @@
 <?php
+declare(strict_types=1);
 namespace Rindow\NeuralNetworks\Gradient\Core;
 
 use InvalidArgumentException;
 use LogicException;
 use Interop\Polite\Math\Matrix\NDArray;
 use Rindow\NeuralNetworks\Support\GenericUtils;
+use Rindow\NeuralNetworks\Gradient\Variable as VariableInterface;
 
-class Variable
+class Variable implements VariableInterface
 {
     use GenericUtils;
     protected $backend;
@@ -16,13 +18,32 @@ class Variable
     protected $generation=0;
     protected $name;
 
-    public function __construct($backend, NDArray $value, $options=null)
+    public function __construct(object $backend, $value, $options=null)
     {
         extract($this->extractArgs([
             'name'=>null,
+            'dtype'=>null,
+            'reference'=>null,
         ],$options));
         $this->backend = $backend;
-        $this->value = $value;
+        if($value instanceof VariableInterface) {
+            $value = $value->value();
+        }
+        if($value instanceof NDArray) {
+            if($reference) {
+                $this->value = $value;
+            } else {
+                $this->value = $backend->copy($value);
+            }
+        } elseif(is_bool($value)) {
+            $this->value = $value;
+        } elseif($value===null) {
+            $this->value = null;
+        } elseif(is_array($value)||is_numeric($value)) {
+            $this->value = $backend->array($value);
+        } else {
+            throw InvalidArgumentException('Invalid vaule type:'.gettype($value));
+        }
         $this->name = $name;
     }
 
@@ -31,14 +52,24 @@ class Variable
         return $this->value;
     }
 
-    public function grad()
+    public function assign($value) : void
     {
-        return $this->grad;
-    }
-
-    public function setGrad(NDArray $grad)
-    {
-        $this->grad = $grad;
+        $backend = $this->backend;
+        if($value instanceof VariableInterface) {
+            $value = $value->value();
+        }
+        if($value instanceof NDArray) {
+            $backend->copy($value,$this->value);
+        } elseif(is_bool($value)) {
+            if(!is_bool($this->value)) {
+                throw InvalidArgumentException('vaule types must be equal:'.gettype($value));
+            }
+            $this->value = $value;
+        } elseif(is_array($value)||is_numeric($value)) {
+            $backend->copy($backend->array($value),$this->value);
+        } else {
+            throw InvalidArgumentException('Invalid vaule type:'.gettype($value));
+        }
     }
 
     public function name()
@@ -121,5 +152,10 @@ class Variable
     public function reference()
     {
         return new VariableReference($this);
+    }
+
+    public function _clearValue()
+    {
+        $this->value = null;
     }
 }

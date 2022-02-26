@@ -55,7 +55,7 @@ abstract class AbstractMultiInputLayer extends AbstractLayerBase
         return $outputs;
     }
 
-    public function backward(array $dOutputs) : array
+    public function backward(array $dOutputs,array &$grads=null,array $oidsToCollect=null) : array
     {
         if(count($dOutputs)!=1) {
             throw new InvalidArgumentException('dOutputs must be list containing one NDArray');
@@ -67,6 +67,7 @@ abstract class AbstractMultiInputLayer extends AbstractLayerBase
         $this->assertOutputShape($dOutputs,'backward');
         $dInputs = $this->differentiate($dOutputs);
         $this->assertInputShapes($dInputs,'backward');
+        $this->collectGradients($grads,$oidsToCollect);
         return $dInputs;
     }
 
@@ -90,10 +91,18 @@ abstract class AbstractMultiInputLayer extends AbstractLayerBase
             }
             return $outputs;
         }
-        $rawInputs = array_map(function($value){return $value->value();},$inputs);
-        $outputs = $this->forward($rawInputs,$training);
-        $outputs = $this->postGradientProcess(
-            $this->backend, $inputs, [$outputs]);
+        $session = $this->preGradientProcessOnSession($inputs);
+        $session->begin();
+        try {
+            $rawInputs = array_map(function($value){return $value->value();},$inputs);
+            $outputs = $this->forward($rawInputs,$training);
+        } catch(Throwable $e) {
+            $session->end();
+            throw $e;
+        }
+        $session->end();
+        $outputs = $this->postGradientProcessOnSession(
+            $this->backend, $session, $inputs, [$outputs]);
         return $outputs[0];
     }
 }

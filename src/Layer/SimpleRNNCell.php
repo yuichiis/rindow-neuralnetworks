@@ -23,7 +23,7 @@ class SimpleRNNCell extends AbstractRNNCell
     protected $dBias;
     protected $inputs;
 
-    public function __construct($backend,int $units, array $options=null)
+    public function __construct(object $backend,int $units, array $options=null)
     {
         extract($this->extractArgs([
             'input_shape'=>null,

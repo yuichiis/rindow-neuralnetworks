@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 namespace Rindow\NeuralNetworks\Gradient\Core;
 
 use InvalidArgumentException;
@@ -10,16 +11,19 @@ use Rindow\NeuralNetworks\Gradient\Core\Undetermined;
 
 class GradientTape implements Context
 {
-    static public $autoBackProp = false;
+    use GraphUtils;
+
+    static public $autoBackProp = null;
     static public $debugBackward = null;
     static public $debug = false;
 
     protected $backend;
     protected $persistent;
     protected $backup;
-    protected $grads = [];
+    protected $persistentGrads = [];
+    protected $lockingObjects = [];
 
-    public function __construct($backend,$persistent=null)
+    public function __construct(object $backend,bool $persistent=null)
     {
         $this->backend = $backend;
         $this->persistent = $persistent;
@@ -27,14 +31,25 @@ class GradientTape implements Context
 
     public function enter() : void
     {
+        echo "GradientTape enter\n";
         $this->backup = self::$autoBackProp;
-        self::$autoBackProp = true;
+        self::$autoBackProp = $this;
     }
 
     public function exit(Throwable $e=null) : bool
     {
         self::$autoBackProp = $this->backup;
+        if(self::$autoBackProp) {
+            self::$autoBackProp->lockObjects($this->lockingObjects);
+        }
+        echo "GradientTape exit\n";
         return false;
+    }
+
+    public function lockObjects(array $variables) : void
+    {
+        echo "lock ".implode(',',array_map('spl_object_id',$variables))."\n";
+        $this->lockingObjects = array_merge($this->lockingObjects,$variables);
     }
 
     public function gradient($target,$sources)
@@ -52,9 +67,9 @@ class GradientTape implements Context
         }
         $gradients = [];
 
-        $targetId = spl_object_hash($target);
-        if($this->persistent && array_key_exists($targetId,$this->grads)) {
-            $grads = $this->grads[$targetId];
+        $targetId = spl_object_id($target);
+        if($this->persistent && array_key_exists($targetId,$this->persistentGrads)) {
+            $grads = $this->persistentGrads[$targetId];
         } else {
             $grads = [];
             foreach($target->creator()->outputs() as $o) {
@@ -63,18 +78,21 @@ class GradientTape implements Context
             //$grads[$targetId] = $K->onesLike($target->value());
         }
 
-        if(!$this->persistent || !array_key_exists($targetId,$this->grads)) {
-            $this->calcGradient($grads,$target);
+        $sourceIds = $this->getObjectIds($sources);
+        if(!$this->persistent || !array_key_exists($targetId,$this->persistentGrads)) {
+            $this->calcGradient($grads,$target,$sourceIds);
         }
-        foreach ($sources as $key => $source) {
-            $sourceId = spl_object_hash($source);
+        echo "select grads:";
+        foreach ($sourceIds as $sourceId) {
             if(!array_key_exists($sourceId,$grads)) {
-                throw new InvalidArgumentException("Invalid source variable");
+                throw new InvalidArgumentException("No applicable gradient found for source");
             }
             $gradients[] = $grads[$sourceId];
+            echo $sourceId.":".$this->backend->toString($grads[$sourceId]).",";
         }
+        echo "\n";
         if($this->persistent) {
-            $this->grads[$targetId] = $grads;
+            $this->persistentGrads[$targetId] = $grads;
         }
 
         if($singleValue) {
@@ -83,56 +101,18 @@ class GradientTape implements Context
         return $gradients;
     }
 
-    protected function calcGradient(&$grads,$target) : void
+    protected function calcGradient(&$grads,$target,$sourceIds) : void
     {
-        $K = $this->backend;
-        $funcs = [spl_object_hash($target->creator())=>$target->creator()];
-        while(count($funcs)) {
-            $func = array_pop($funcs);
-            $dOutputs = [];
-            foreach($func->outputs() as $o) {
-                $oid = $o->oid();
-                if(array_key_exists($oid,$grads)) {
-                    $dOutputs[] = $grads[$oid];
-                    // *** CAUTION ***
-                    // Outputs are released as soon as the func object is
-                    // released after being used in backwards.
-                    // Index inconsistencies in grads occur because OIDs
-                    // can be reused. Grads must be released to prevent
-                    // this problem.
-                    unset($grads[$oid]);
-                } else {
-                    $dOutputs[] = $K->zeros($o->shape(),$o->dtype());
-                }
-            }
-            // with Config as tape:
-            $tmpdInputs = $func->backward($dOutputs);
-            unset($dOutputs);
-
-            $dDatas = array_map(null,$func->inputs(),$tmpdInputs);
-            unset($tmpdInputs);
-
-            if($func instanceof LayerBase) {
-                $dDatas = array_merge($dDatas,array_map(null,$func->weights(),$func->getGrads()));
-            }
-
-            foreach($dDatas as $dData) {
-                [$inputs,$dInputs] = $dData;
-                $sourceId = spl_object_hash($inputs);
-                if(!array_key_exists($sourceId,$grads)) {
-                    $grads[$sourceId] = $dInputs;
-                } else {
-                    $grads[$sourceId] = $K->add($grads[$sourceId],$dInputs);
-                }
-
-                $creator = $inputs->creator();
-                if($creator) {
-                    if(!array_key_exists(spl_object_hash($creator),$funcs)) {
-                        $funcs[spl_object_hash($creator)] = $creator;
-                        uasort($funcs,function($a,$b){return $a->generation()-$b->generation();});
-                    }
-                }
-            }
+        echo "locked objects: ".implode(',',array_map('spl_object_id',$this->lockingObjects))."\n";
+        echo "====== start calcGradient =======\n";
+        $graphOutputs = [$target];
+        [$pipeline,$constants] = $this->buildPipeline($graphOutputs);
+        $this->backwardPipeline($this->backend,$pipeline,$grads,$sourceIds);
+        echo "result grads: ";
+        foreach($grads as $oid => $g) {
+            echo $oid.":".$this->backend->toString($g).",";
         }
+        echo "\n";
+        echo "====== end calcGradient =======\n";
     }
 }

@@ -9,7 +9,7 @@ class SGD implements Optimizer
     protected $backend;
     protected $lr;
 
-    public function __construct($backend, array $options=null)
+    public function __construct(object $backend, array $options=null)
     {
         extract($this->extractArgs([
             'lr'=>0.01,

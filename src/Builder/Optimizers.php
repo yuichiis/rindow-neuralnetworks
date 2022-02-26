@@ -9,7 +9,7 @@ class Optimizers
 {
     protected $backend;
 
-    public function __construct($backend)
+    public function __construct(object $backend)
     {
         $this->backend = $backend;
     }

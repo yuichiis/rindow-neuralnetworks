@@ -17,8 +17,7 @@ class TestModel1 extends DynamicModel
         )
     {
         parent::__construct($backend,$builder);
-        $this->dense = $this->add(
-            $builder->layers->Dense($units=5,['input_shape'=>[1]]));
+        $this->dense = $builder->layers->Dense($units=5,['input_shape'=>[1]]);
     }
 
     protected function call($inputs,$training)
@@ -37,14 +36,10 @@ class TestModel2 extends DynamicModel
         )
     {
         parent::__construct($backend,$builder);
-        $this->dense1 = $this->add(
-            $builder->layers->Dense($units=128,
+        $this->dense1 = $builder->layers->Dense($units=128,
                 ['input_shape'=>[2],'activation'=>'sigmoid']
-            )
-        );
-        $this->dense2 = $this->add(
-            $builder->layers->Dense($units=2)
-        );
+            );
+        $this->dense2 = $builder->layers->Dense($units=2);
     }
 
     protected function call($inputs,$training)
@@ -65,11 +60,9 @@ class Test3Mini1 extends DynamicModel
         )
     {
         parent::__construct($backend,$builder);
-        $this->dense1 = $this->add(
-            $builder->layers->Dense($units=128,
+        $this->dense1 = $builder->layers->Dense($units=128,
                 ['input_shape'=>[2],'activation'=>'sigmoid']
-            )
-        );
+            );
     }
     protected function call($inputs,$training)
     {
@@ -87,9 +80,7 @@ class Test3Mini2 extends DynamicModel
         )
     {
         parent::__construct($backend,$builder);
-        $this->dense2 = $this->add(
-            $builder->layers->Dense($units=2)
-        );
+        $this->dense2 = $builder->layers->Dense($units=2);
     }
     protected function call($inputs,$training)
     {
@@ -107,12 +98,8 @@ class Test3Main extends DynamicModel
         )
     {
         parent::__construct($backend,$builder);
-        $this->model1 = $this->add(
-            new Test3Mini1($backend,$builder)
-        );
-        $this->model2 = $this->add(
-            new Test3Mini2($backend,$builder)
-        );
+        $this->model1 = new Test3Mini1($backend,$builder);
+        $this->model2 = new Test3Mini2($backend,$builder);
     }
 
     protected function call($inputs,$training)
@@ -133,17 +120,13 @@ class TestRNNEncoder extends DynamicModel
         )
     {
         parent::__construct($backend,$builder);
-        $this->embed = $this->add(
-            $builder->layers->Embedding($inputDim=5, $outputDim=4,
+        $this->embed = $builder->layers->Embedding($inputDim=5, $outputDim=4,
                 ['input_length'=>3]
-            )
-        );
-        $this->rnn = $this->add(
-            $builder->layers->LSTM($units=32,
+            );
+        $this->rnn = $builder->layers->LSTM($units=32,
                 ['return_state'=>true,'return_sequences'=>true,
                  'recurrent_initializer'=>'glorot_uniform']
-            )
-        );
+            );
     }
 
     protected function call($inputs,$training,$initial_states)
@@ -151,8 +134,8 @@ class TestRNNEncoder extends DynamicModel
         $embed = $this->embed;
         $rnn = $this->rnn;
 
-        $x = $embed($inputs,true);
-        [$outputs,$states] = $rnn($x,true,$initial_states);
+        $x = $embed($inputs,$training);
+        [$outputs,$states] = $rnn($x,$training,$initial_states);
         return [$outputs, $states];
     }
 }
@@ -165,37 +148,25 @@ class TestRNNDecoder extends DynamicModel
         )
     {
         parent::__construct($backend,$builder);
-        $this->embed = $this->add(
-            $builder->layers->Embedding($inputDim=5, $outputDim=4,
+        $this->embed = $builder->layers->Embedding($inputDim=5, $outputDim=4,
                 ['input_length'=>3]
-            )
-        );
-        $this->rnn = $this->add(
-            $builder->layers->LSTM($units=32,
+            );
+        $this->rnn = $builder->layers->LSTM($units=32,
                 ['return_state'=>true,'return_sequences'=>true,
                  'recurrent_initializer'=>'glorot_uniform']
-            )
-        );
-        $this->attention = $this->add(
-            $builder->layers->Attention()
-        );
-        $this->concat = $this->add(
-            $builder->layers->Concatenate()
-        );
-        $this->dense = $this->add(
-            $builder->layers->Dense($units=8)
-        );
+            );
+        $this->attention = $builder->layers->Attention();
+        $this->concat = $builder->layers->Concatenate();
+        $this->dense = $builder->layers->Dense($units=8);
     }
 
-    protected function call($inputs,$training,$encStates,$options)
+    protected function call($inputs,$encOutputs,$training,$encStates,$options)
     {
         $embed = $this->embed;
         $rnn = $this->rnn;
         $attention = $this->attention;
         $concat = $this->concat;
         $dense = $this->dense;
-
-        $encOutputs=$options['enc_outputs'];
 
         $x = $embed($inputs,$training);
         [$rnnSequence,$states] = $rnn($x,$training,$encStates);
@@ -225,15 +196,9 @@ class TestRNNMain extends DynamicModel
     {
         parent::__construct($backend,$builder);
         $this->mo = $mo;
-        $this->encoder = $this->add(
-            new TestRNNEncoder($backend,$builder)
-        );
-        $this->decoder = $this->add(
-            new TestRNNDecoder($backend,$builder)
-        );
-        $this->out = $this->add(
-            $builder->layers->Activation('softmax')
-        );
+        $this->encoder = new TestRNNEncoder($backend,$builder);
+        $this->decoder = new TestRNNDecoder($backend,$builder);
+        $this->out = $builder->layers->Activation('softmax');
     }
 
     protected function call($inputs,$training,$trues)
@@ -244,8 +209,7 @@ class TestRNNMain extends DynamicModel
         //$trues =$this->builder->gradient->Variable($trues);
 
         [$encOutputs,$states] = $encoder($inputs,$training,null);
-        $options = ['enc_outputs'=>$encOutputs];
-        [$outputs,$dmyStatus] = $decoder($trues,$training,$states,$options);
+        [$outputs,$dmyStatus] = $decoder($trues,$encOutputs,$training,$states,$options=null);
         $outputs = $out($outputs,$training);
         return $outputs;
     }
@@ -318,8 +282,8 @@ class TestRNNMain extends DynamicModel
         $this->setShapeInspection(false);
         for($t=0;$t<3;$t++) {
             [$predictions, $status] = $decoder(
-                $decInputs, $training=false, $status,
-                ['enc_outputs'=>$encOutputs,'return_attention_scores'=>true]);
+                $decInputs, $encOutputs, $training=false, $status,
+                ['return_attention_scores'=>true]);
 
             # storing the attention weights to plot later on
             $scores = $decoder->getAttentionScores();
@@ -356,15 +320,9 @@ class TestVariableMini1 extends DynamicModel
         $units = 128;
         $kernelInitializer = $backend->getInitializer('glorot_uniform');
         $weights = $kernelInitializer([$inputDim,$units],[$inputDim,$units]);
-        $this->linearWeight = $this->add(
-            $g->Variable($weights,['name'=>'W1'])
-        );
-        $this->linearBias = $this->add(
-            $g->Variable($backend->zeros([$units]),['name'=>'B1'])
-        );
-        $this->activation = $this->add(
-            $builder->layers->Activation('sigmoid',['input_shape'=>[128]])
-        );
+        $this->linearWeight = $g->Variable($weights,['name'=>'W1']);
+        $this->linearBias = $g->Variable($backend->zeros([$units]),['name'=>'B1']);
+        $this->activation = $builder->layers->Activation('sigmoid',['input_shape'=>[128]]);
     }
 
     protected function call($inputs)
@@ -392,12 +350,8 @@ class TestVariableMini2 extends DynamicModel
         $units = 2;
         $kernelInitializer = $backend->getInitializer('glorot_uniform');
         $weights = $kernelInitializer([$inputDim,$units],[$inputDim,$units]);
-        $this->linearWeight = $this->add(
-            $g->Variable($weights,['name'=>'W2'])
-        );
-        $this->linearBias = $this->add(
-            $g->Variable($backend->zeros([$units]),['name'=>'B2'])
-        );
+        $this->linearWeight = $g->Variable($weights,['name'=>'W2']);
+        $this->linearBias = $g->Variable($backend->zeros([$units]),['name'=>'B2']);
     }
 
     protected function call($inputs)
@@ -418,13 +372,9 @@ class TestVariableMain extends DynamicModel
         )
     {
         parent::__construct($backend,$builder);
-        $this->model1 = $this->add(
-            new TestVariableMini1($backend,$builder)
-        );
-        $this->model2 = $this->add(
-            new TestVariableMini2($backend,$builder)
-        );
-        }
+        $this->model1 = new TestVariableMini1($backend,$builder);
+        $this->model2 = new TestVariableMini2($backend,$builder);
+    }
 
     protected function call($inputs)
     {
@@ -433,6 +383,42 @@ class TestVariableMain extends DynamicModel
         $x = $model1($inputs);
         $outputs = $model2($x);
         return $outputs;
+    }
+}
+
+class TestGraphMode extends DynamicModel
+{
+    protected $log = [];
+
+    public function __construct(
+        $backend,
+        $builder
+        )
+    {
+        parent::__construct($backend,$builder);
+        $nn = $builder;
+        $this->in = $nn->layers->Input(['shape'=>[2]]);
+        $this->fc = $nn->layers->Dense(3);
+    }
+
+    protected function call($inputs,$training)
+    {
+        $this->log('call');
+        $in = $this->in;
+        $fc = $this->fc;
+        $x = $in($inputs,$training);
+        $outputs = $fc($x,$training);
+        return $outputs;
+    }
+
+    public function log($message)
+    {
+        $this->log[] = $message;
+    }
+
+    public function getLog()
+    {
+        return $this->log;
     }
 }
 
@@ -507,25 +493,64 @@ class Test extends TestCase
             'shuffle'=>false,
         ]);
         $history = [];
+        $lasttotalLoss = 0;
+        $lastparamsum = 0;
+        $lastsumgrad = 0;
+        $lastloss = 0;
+        $lastpredicts = 0;
         for($epoch=0;$epoch<100;$epoch++) {
             $totalLoss = 0;
-            foreach($dataset as $batchIndex => $data) {
-                [$inputs,$trues] = $data;
+            $paramsum = 0;
+            foreach($dataset as $batchIndex => [$inputs,$trues]) {
                 $inputs = $K->array($inputs);
                 $trues = $K->array($trues);
                 $x = $g->Variable($inputs);
                 $t = $g->Variable($trues);
-                $loss = $nn->with($tape=$g->GradientTape(),
+                [$loss,$predicts] = $nn->with($tape=$g->GradientTape(),
                     function() use ($epoch,$K,$model,$lossfunc,$x,$t,$trues) {
                         $predicts = $model($x,true,$t);
-                        return $lossfunc($trues,$predicts);
+                        return [$lossfunc($trues,$predicts),$predicts];
                     }
                 );
                 $params = $model->trainableVariables();
                 $gradients = $tape->gradient($loss, $params);
+
+                echo "predicts:".($lastpredicts - $K->asum($predicts->value()))."\n";
+                $lastpredicts = $K->asum($predicts->value());
+                echo "loss:".($lastloss - $K->scalar($loss->value()))."\n";
+                $lastloss = $K->scalar($loss->value());
+                echo "g:";
+                $sumgrad = 0;
+                foreach($gradients as $grad) {
+                    $sumgrad += $K->asum($grad);
+                }
+                echo "sumgrad:".($lastsumgrad-$sumgrad)."\n";
+                $lastsumgrad = $sumgrad;
+                $sum = 0;
+                foreach($params as $tmpi => $prm) {
+                    $sum += $K->asum($prm->value());
+                }
+                echo "sumparamsoid1:".implode(',',[spl_object_id($params[0]->value()),spl_object_id($params[1]->value())])."\n";
+                echo "sumparamsoid2:".implode(',',[spl_object_id($params[2]->value()),spl_object_id($params[3]->value())])."\n";
+                echo "sumparamsoidcount:".count($params)."\n";
                 $optimizer->update($params,$gradients);
+                $sum2 = 0;
+                foreach($params as $prm) {
+                    $sum2 += $K->asum($prm->value());
+                }
+                $dense1prmoid = [];
+                foreach($model->dense1->getParams() as $prm) {
+                    $dense1prmoid[] = spl_object_id($prm);
+                }
+                echo "sumdense1prmoid:".implode(',',$dense1prmoid)."\n";
+                echo "sumdense1prmoidcount".count($model->dense1->getParams())."\n";
                 $totalLoss += $K->scalar($loss->value());
+                $paramsum += ($sum2-$sum);
             }
+            echo "totalLoss:".($lasttotalLoss-$totalLoss)."\n";
+            echo "paramsum:".($lastparamsum-$paramsum)."\n";
+            $lasttotalLoss = $totalLoss;
+            $lastparamsum = $paramsum;
             $history[] = $totalLoss;
         }
         if($this->plot) {
@@ -557,7 +582,7 @@ class Test extends TestCase
 
         $history = $model->fit(
             $train_inputs, $train_tests,
-            ['batch_size'=>2,'epochs'=>100,'shuffle'=>true,'verbose'=>0]);
+            ['batch_size'=>2,'epochs'=>1/*00*/,'shuffle'=>true,'verbose'=>0]);
 
         if($this->plot) {
             $plt->plot($mo->array($history['loss']),null,null,'loss');
@@ -844,5 +869,81 @@ class Test extends TestCase
         //    [$orig,$loaded] = $d;
         //    $this->assertTrue($mo->la()->isclose($orig->value(),$loaded->value()));
         //}
+    }
+
+    public function testGraphInModel()
+    {
+        $mo = $this->newMatrixOperator();
+        $nn = $this->newNeuralNetworks($mo);
+        $K = $this->newBackend($nn);
+        $g = $nn->gradient();
+        $plt = new Plot($this->getPlotConfig(),$mo);
+
+        $model = new TestGraphMode($K,$nn);
+        $lossfunc = $nn->losses->SparseCategoricalCrossentropy(['from_logits'=>true]);
+        //$train_inputs = $mo->array([[1, 3], [1, 4], [2, 4], [3, 1], [4, 1], [4, 2]]);
+        //$train_tests = $mo->array([0, 0, 0, 1, 1, 1]);
+        $train_inputs = $mo->array([[1, 3]]);
+        $train_tests = $mo->array([0]);
+        $model->compile([
+            'loss' => $lossfunc,
+            'optimizer' => 'adam',
+        ]);
+        $model->log('fit0');
+        $history = $model->fit(
+            $train_inputs, $train_tests,
+            ['batch_size'=>2,'epochs'=>1,'shuffle'=>true,'verbose'=>0]);
+        $model->log('fit1');
+            $history = $model->fit(
+            $train_inputs, $train_tests,
+            ['batch_size'=>2,'epochs'=>1,'shuffle'=>true,'verbose'=>0]);
+        $model->log('predict');
+        $predicts = $model->predict($train_inputs);
+        $model->log('invoke');
+        $predicts = $model($g->Variable($train_inputs),true); // without graph
+
+        $this->assertEquals([
+            'fit0',
+            'call',
+            'fit1',
+            'predict',
+            'invoke',
+            'call',
+        ],$model->getLog());
+    }
+
+    public function testModelInGraph()
+    {
+        $mo = $this->newMatrixOperator();
+        $nn = $this->newNeuralNetworks($mo);
+        $K = $this->newBackend($nn);
+        $g = $nn->gradient();
+        $plt = new Plot($this->getPlotConfig(),$mo);
+
+        $model = new TestGraphMode($K,$nn);
+        $lossfunc = $nn->losses->SparseCategoricalCrossentropy(['from_logits'=>true]);
+        $train_inputs = $mo->array([[1, 3], [1, 4], [2, 4], [3, 1], [4, 1], [4, 2]]);
+        $train_tests = $mo->array([0, 0, 0, 1, 1, 1]);
+        $model->compile([
+            'loss' => $lossfunc,
+            'optimizer' => 'adam',
+        ]);
+        $model->log('fit0');
+        $history = $model->fit(
+            $train_inputs, $train_tests,
+            ['batch_size'=>2,'epochs'=>1,'shuffle'=>true,'verbose'=>0]);
+        $model->log('fit1');
+            $history = $model->fit(
+            $train_inputs, $train_tests,
+            ['batch_size'=>2,'epochs'=>1,'shuffle'=>true,'verbose'=>0]);
+        $model->log('predict');
+        $predicts = $model->predict($train_inputs);
+
+        $this->assertEquals([
+            'fit0',
+            'call',
+            'fit1',
+            'predict',
+        ],$model->getLog());
     }
 }

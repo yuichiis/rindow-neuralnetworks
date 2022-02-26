@@ -7,7 +7,7 @@ class ModelLoader
     protected $builder;
     protected $hda;
 
-    public function __construct($backend,$builder,$hdaFactory=null)
+    public function __construct(object $backend,object $builder,$hdaFactory=null)
     {
         $this->backend = $backend;
         $this->builder = $builder;

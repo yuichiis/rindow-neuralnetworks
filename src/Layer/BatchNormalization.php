@@ -29,15 +29,15 @@ class BatchNormalization extends AbstractLayer implements Layer
     protected $dBeta;
     protected $dGamma;
     protected $movingMean;
-    protected $xc;
-    protected $xn;
-    protected $std;
+    //protected $xc;
+    //protected $xn;
+    //protected $std;
     protected $transformShapePhase1Pre;
     protected $transformShapePhase1Post;
     protected $transformShapePhase2Pre;
     protected $transformShapePhase2Post;
 
-    public function __construct($backend,array $options=null)
+    public function __construct(object $backend,array $options=null)
     {
         extract($this->extractArgs([
             'axis'=>-1,
@@ -192,6 +192,7 @@ class BatchNormalization extends AbstractLayer implements Layer
     protected function call(NDArray $inputs, bool $training) : NDArray
     {
         $K = $this->backend;
+        $container = $this->container();
         $inputs = $this->transformShape($inputs);
 
         // normalization
@@ -202,9 +203,10 @@ class BatchNormalization extends AbstractLayer implements Layer
             $std = $K->sqrt($K->increment($v, $this->epsilon));
             $xn = $K->div($xc, $std);
 
-            $this->xc = $xc;
-            $this->xn = $xn;
-            $this->std = $std;
+            $container->xc = $xc;
+            $container->xn = $xn;
+            $container->std = $std;
+            // stateful variable
             $this->movingMean =     $K->add($K->scale($this->momentum,   $this->movingMean),
                                             $K->scale(1-$this->momentum, $mu));
             $this->movingVariance = $K->add($K->scale($this->momentum,   $this->movingVariance),
@@ -212,6 +214,7 @@ class BatchNormalization extends AbstractLayer implements Layer
         } else {
             $xc = $K->sub($inputs, $this->movingMean);
             $xn = $K->div($xc, ($K->sqrt($K->increment($this->movingVariance, $this->epsilon))));
+            $container->std = null;
         }
 
         if($this->gamma) {
@@ -230,6 +233,7 @@ class BatchNormalization extends AbstractLayer implements Layer
     protected function differentiate(NDArray $dOutputs) : NDArray
     {
         $K = $this->backend;
+        $container = $this->container();
         $dOutputs = $this->transformShape($dOutputs);
         $numItems = $dOutputs->shape()[0];
 
@@ -238,21 +242,21 @@ class BatchNormalization extends AbstractLayer implements Layer
             //$K->copy($dbeta,$this->dBeta);
         }
         if($this->dGamma) {
-            $dgamma = $K->sum($K->mul($this->xn, $dOutputs), $axis=0,$this->dGamma);
+            $dgamma = $K->sum($K->mul($container->xn, $dOutputs), $axis=0,$this->dGamma);
             //$K->copy($dgamma,$this->dGamma);
             $dxn = $K->mul($this->gamma, $dOutputs);
         } else {
             $dxn = $dOutputs;
         }
-        if($this->std===null)
+        if($container->std===null)
             throw new LogicException('not initialized for training');
-        $dxc = $K->div($dxn, $this->std);
+        $dxc = $K->div($dxn, $container->std);
         $dstd = $K->scale(-1.0, $K->sum(
-            $K->div($K->mul($dxn, $this->xc), $K->mul($this->std, $this->std)),
+            $K->div($K->mul($dxn, $container->xc), $K->mul($container->std, $container->std)),
             $axis=0));
-        $dvar = $K->div($K->scale(0.5, $dstd), $this->std);
+        $dvar = $K->div($K->scale(0.5, $dstd), $container->std);
         $K->update_add($dxc,
-            $K->scale(2.0/$numItems, $K->mul($this->xc, $dvar)));
+            $K->scale(2.0/$numItems, $K->mul($container->xc, $dvar)));
         $dmu = $K->sum($dxc, $axis=0);
         $dInputs = $K->sub($dxc, $K->scale(1/$numItems,$dmu));
 

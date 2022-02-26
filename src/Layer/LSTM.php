@@ -24,11 +24,7 @@ class LSTM extends AbstractRNNLayer
     protected $timesteps;
     protected $feature;
 
-    protected $calcStates;
-    protected $initialStates;
-    protected $origInputsShape;
-
-    public function __construct($backend,int $units, array $options=null)
+    public function __construct(object $backend,int $units, array $options=null)
     {
         extract($this->extractArgs([
             'input_shape'=>null,
@@ -145,16 +141,6 @@ class LSTM extends AbstractRNNLayer
                 'stateful'=>$this->stateful,
             ]
         ];
-    }
-
-    protected function call(NDArray $inputs, bool $training, array $initialStates=null, array $options=null)
-    {
-        return $this->callCell($inputs,$training,$initialStates,$options);
-    }
-
-    protected function differentiate(NDArray $dOutputs, array $dStates=null)
-    {
-        return $this->differentiateCell($dOutputs,$dStates);
     }
 
     protected function numOfOutputStates($options)

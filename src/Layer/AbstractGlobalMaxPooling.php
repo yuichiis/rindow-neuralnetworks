@@ -12,7 +12,7 @@ class AbstractGlobalMaxPooling extends AbstractImage implements Layer
     protected $pool_mode = 'max';
     protected $channels_first = false;
 
-    public function __construct($backend, array $options=null)
+    public function __construct(object $backend, array $options=null)
     {
         extract($this->extractArgs([
             'data_format'=>null,
@@ -77,6 +77,7 @@ class AbstractGlobalMaxPooling extends AbstractImage implements Layer
     protected function call(NDArray $inputs, bool $training) : NDArray
     {
         $K = $this->backend;
+        $container = $this->container();
         $batches = $inputs->shape()[0];
         // channels_last:  shape == [batches, imageshape, channels]
         // channels_first: shape == [batches, channels, imageshape]
@@ -88,14 +89,15 @@ class AbstractGlobalMaxPooling extends AbstractImage implements Layer
             $axis = 1;
         }
         $outputs = $K->max($reshapedInputs, $axis);
-        $this->reshapedInputs = $reshapedInputs;
-        $this->origInputsShape = $inputs->shape();
+        $container->reshapedInputs = $reshapedInputs;
+        $container->origInputsShape = $inputs->shape();
         return $outputs;
     }
 
     protected function differentiate(NDArray $dOutputs) : NDArray
     {
         $K = $this->backend;
+        $container = $this->container();
         // input.shape == [batches,outshape,channels]
         // d max
         //dx = dy * onehot(argMax(x))
@@ -106,7 +108,7 @@ class AbstractGlobalMaxPooling extends AbstractImage implements Layer
         } else {
             $axis=1;
         }
-        $argMax = $K->argMax($this->reshapedInputs,$axis);
+        $argMax = $K->argMax($container->reshapedInputs,$axis);
         $dInputs = $K->scatter(
             $argMax,
             $dOutputs,
@@ -116,6 +118,6 @@ class AbstractGlobalMaxPooling extends AbstractImage implements Layer
         // channels_last:  dInputs.shape == [batches, outshape, channels]
         // channels_first: dInputs.shape == [batches, channels, outshape]
 
-        return $dInputs->reshape($this->origInputsShape);
+        return $dInputs->reshape($container->origInputsShape);
     }
 }

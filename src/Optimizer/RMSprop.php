@@ -14,7 +14,7 @@ class RMSprop implements Optimizer
     protected $a;
     protected $epsilon;
 
-    public function __construct($backend, array $options=null)
+    public function __construct(object $backend, array $options=null)
     {
         extract($this->extractArgs([
             'lr'=>0.001,

@@ -43,7 +43,7 @@ abstract class AbstractModel implements Model
     protected $inputsVariables;
     protected $outputsVariables;
 
-    public function __construct($backend,$builder,$hda=null)
+    public function __construct(object $backend,object $builder,$hda=null)
     {
         $this->backend = $backend;
         $this->builder = $builder;
@@ -643,7 +643,7 @@ abstract class AbstractModel implements Model
             foreach($func->inputs() as $input) {
                 $creator = $input->creator();
                 if($creator!=null) {
-                    $oid = spl_object_hash($creator);
+                    $oid = spl_object_id($creator);
                     if(!array_key_exists($oid,$used)) {
                         $used[$oid] = true;
                         $funcs[] = $creator;
@@ -654,12 +654,12 @@ abstract class AbstractModel implements Model
         }
         $this->pipeline = [];
         foreach($pipeline as $func) {
-            $oid = spl_object_hash($func);
+            $oid = spl_object_id($func);
             $this->pipeline[$oid] = $func;
         }
         $this->layers = [];
         foreach ($ctx->getList() as $layer) {
-            $oid = spl_object_hash($layer);
+            $oid = spl_object_id($layer);
             if(array_key_exists($oid,$this->pipeline)) {
                 $this->layers[] = $layer;
             }
@@ -717,7 +717,7 @@ abstract class AbstractModel implements Model
 
             foreach ($dDatas as $dData) {
                 [$dInputs,$dx] = $dData;
-                $oid = spl_object_hash($dInputs);
+                $oid = spl_object_id($dInputs);
                 if(array_key_exists($oid,$grads)) {
                     $K->update_add($grads[$oid],$dx);
                 } else {
@@ -812,8 +812,7 @@ abstract class AbstractModel implements Model
     public function saveWeights(&$modelWeights,$portable=null) : void
     {
         $K = $this->backend;
-        if(!isset($modelWeights['layers']))
-            $modelWeights['layers'] = [];
+        $modelWeights['layers'] = $modelWeights['layers'] ?? [];
         foreach($this->params() as $idx => $param) {
             $param=$K->ndarray($param);
             if($portable)
@@ -821,8 +820,7 @@ abstract class AbstractModel implements Model
             $modelWeights['layers'][$idx] = serialize($param);
         }
         $optimizer = $this->optimizer();
-        if(!isset($modelWeights['optimizer']))
-            $modelWeights['optimizer'] = [];
+        $modelWeights['optimizer'] = $modelWeights['optimizer'] ?? [];
         foreach ($optimizer->getWeights() as $idx => $weights) {
             $weights=$K->ndarray($weights);
             $modelWeights['optimizer'][$idx] = serialize($weights);

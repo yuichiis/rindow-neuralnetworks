@@ -27,7 +27,7 @@ class NeuralNetworks
     protected $utils;
     protected $gradient;
 
-    public function __construct($matrixOperator=null,$backend=null)
+    public function __construct(object $matrixOperator=null, object $backend=null)
     {
         if($backend==null) {
             if($matrixOperator==null) {

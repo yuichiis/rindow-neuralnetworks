@@ -27,10 +27,10 @@ abstract class AbstractConv extends AbstractImage implements Layer
     protected $bias;
     protected $dKernel;
     protected $dBias;
-    protected $status;
+    //protected $status;
 
 
-    public function __construct($backend,int $filters, $kernel_size, array $options=null)
+    public function __construct(object $backend,int $filters, $kernel_size, array $options=null)
     {
         extract($this->extractArgs([
             'strides'=>1,

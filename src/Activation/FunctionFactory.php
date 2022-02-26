@@ -11,7 +11,7 @@ class FunctionFactory
         'relu' => ReLU::class,
         'tanh' => Tanh::class,
     ];
-    static public function factory($backend, string $name) : Activation
+    static public function factory(object $backend, string $name) : Activation
     {
         if(isset(self::$functions[$name])) {
             $class = self::$functions[$name];

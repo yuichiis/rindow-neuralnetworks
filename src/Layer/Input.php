@@ -10,11 +10,12 @@ class Input extends AbstractLayer implements Layer
     use GenericUtils;
     protected $backend;
 
-    public function __construct($backend,array $options=null)
+    public function __construct(object $backend,array $options=null)
     {
         extract($this->extractArgs([
             'shape'=>null,
         ],$options));
+        $this->backend = $backend;
         $this->inputShape = $shape;
     }
 

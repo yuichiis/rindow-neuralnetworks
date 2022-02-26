@@ -14,8 +14,8 @@ class Backend
         'random_uniform'    => 'random_uniform',
         'random_normal'     => 'random_normal',
         'orthogonal'        => 'orthogonal',
-        'zeros'             => 'zeros',
-        'ones'              => 'ones',
+        'zeros'             => 'kernel_zeros',
+        'ones'              => 'kernel_ones',
     ];
     protected $epsilon = 1e-7;
     protected $equalEpsilon = 1e-06;
@@ -60,6 +60,11 @@ class Backend
     public function setEpsilon($epsilon) : void
     {
         $this->epsilon = $epsilon;
+    }
+
+    public function shapeToString(array $shape) : string
+    {
+        return "[".implode(',',$shape)."]";
     }
 
     public function dtypeToString($dtype) : string
@@ -229,6 +234,16 @@ class Backend
         $limit = sqrt(3*$scale);
         $kernel = $this->la->randomUniform($shape,-$limit,$limit);
         return $kernel;
+    }
+
+    public function kernel_zeros(array $shape,$nodeNum=null)
+    {
+        return $this->zeros($shape);
+    }
+
+    public function kernel_ones(array $shape,$nodeNum=null)
+    {
+        return $this->ones($shape);
     }
 
     public function zeros(array $shape,$dtype=null)

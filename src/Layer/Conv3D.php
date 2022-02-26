@@ -10,9 +10,10 @@ class Conv3D extends AbstractConv implements Layer
     protected function call(NDArray $inputs, bool $training) : NDArray
     {
         $K = $this->backend;
-        $this->status = new \stdClass();
+        $container = $this->container();
+        $container->status = new \stdClass();
         $outputs = $K->conv3d(
-                $this->status,
+                $container->status,
                 $inputs,
                 $this->kernel,
                 $this->bias,
@@ -29,15 +30,16 @@ class Conv3D extends AbstractConv implements Layer
     protected function differentiate(NDArray $dOutputs) : NDArray
     {
         $K = $this->backend;
+        $container = $this->container();
         if($this->activation)
             $dOutputs = $this->activation->backward($dOutputs);
         $dInputs = $K->dConv3d(
-            $this->status,
+            $container->status,
             $dOutputs,
             $this->dKernel,
             $this->dBias
         );
-        $this->status = null;
+        $container->status = null;
         return $dInputs;
     }
 }

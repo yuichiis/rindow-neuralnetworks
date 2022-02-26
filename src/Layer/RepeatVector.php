@@ -12,7 +12,7 @@ class RepeatVector extends AbstractLayer implements Layer
     protected $repeats;
 
     public function __construct(
-        $backend,
+        object $backend,
         int $repeats,
         array $options=null)
     {

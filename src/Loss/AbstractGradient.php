@@ -70,15 +70,23 @@ abstract class AbstractGradient //implements Loss
         //}
         //return $outputs;
 
+        $session = $this->preGradientProcessOnSession([$inputs]);
         if($inputs instanceof Undetermined) {
             $outputs = null;
         } else {
-            $inputValues = $inputs->value();
-            $outputs = $this->forward($trues,$inputValues);
-            $outputs = $K->array($outputs,$inputValues->dtype());
+            $session->begin();
+            try {
+                $inputValues = $inputs->value();
+                $outputs = $this->forward($trues,$inputValues);
+                $outputs = $K->array($outputs,$inputValues->dtype());
+            } catch(Throwable $e) {
+                $session->end();
+                throw $e;
+            }
+            $session->end();
         }
-        $outputs = $this->postGradientProcess(
-            $this->backend, [$inputs], [$outputs]);
+        $outputs = $this->postGradientProcessOnSession(
+            $this->backend, $session, [$inputs], [$outputs]);
         return $outputs[0];
     }
 }

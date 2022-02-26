@@ -6,6 +6,7 @@ use Rindow\NeuralNetworks\Gradient\Core\Variable;
 use Rindow\NeuralNetworks\Gradient\Core\Undetermined;
 use Rindow\NeuralNetworks\Gradient\Core\UndeterminedNDArray;
 use Rindow\NeuralNetworks\Gradient\Core\GradientTape;
+use Rindow\NeuralNetworks\Gradient\Core\GraphFunction;
 use Rindow\NeuralNetworks\Gradient\Func\Square;
 use Rindow\NeuralNetworks\Gradient\Func\Sqrt;
 use Rindow\NeuralNetworks\Gradient\Func\Exp;
@@ -20,19 +21,39 @@ class Gradient
 {
     protected $backend;
 
-    public function __construct($backend)
+    public function __construct(object $backend)
     {
         $this->backend = $backend;
     }
 
-    public function Variable(NDArray $variable,array $options=null)
+    public function Variable($variable,array $options=null)
     {
+        if(GraphFunction::$mode==GraphFunction::EXECUTING) {
+            return $variable;
+        }
         return new Variable($this->backend,$variable,$options);
+    }
+
+    public function toVariables(array $values,array $options=null) : array
+    {
+        if(GraphFunction::$mode==GraphFunction::EXECUTING) {
+            return $values;
+        }
+        $variables = [];
+        foreach($values as $value) {
+            $variables[] = new Variable($this->backend,$value,$options);
+        }
+        return $variables;
     }
 
     public function GradientTape($persistent=null)
     {
         return new GradientTape($this->backend,$persistent);
+    }
+
+    public function Function(callable $func, array $options=null)
+    {
+        return new GraphFunction($this->backend,$func,$options);
     }
 
     public function isUndetermined($variable) : bool

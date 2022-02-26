@@ -13,7 +13,7 @@ class Concatenate extends AbstractMultiInputLayer
     protected $shapes;
 
     public function __construct(
-        $backend,
+        object $backend,
         array $options=null)
     {
         extract($this->extractArgs([
@@ -96,10 +96,11 @@ class Concatenate extends AbstractMultiInputLayer
     protected function call(array $inputs, bool $training) : NDArray
     {
         $K = $this->backend;
+        $container = $this->container();
         $outputs = $K->concat($inputs,$this->axis);
-        $this->shapes = [];
+        $container->shapes = [];
         foreach ($inputs as $v) {
-            $this->shapes[] = $v->shape();
+            $container->shapes[] = $v->shape();
         }
         return $outputs;
     }
@@ -107,15 +108,29 @@ class Concatenate extends AbstractMultiInputLayer
     protected function differentiate(NDArray $dOutputs) : array
     {
         $K = $this->backend;
+        $container = $this->container();
         if($this->axis<0) {
-            $axis = count($this->shapes[0])+$this->axis;
+            $axis = count($container->shapes[0])+$this->axis;
         } else {
             $axis = $this->axis;
         }
-        foreach ($this->shapes as $shape) {
+        foreach ($container->shapes as $shape) {
             $sizeSplits[] = $shape[$axis];
         }
         $dInputs = $K->split($dOutputs,$sizeSplits,$axis);
         return $dInputs;
+    }
+
+    /**
+     * Call from SessionFunc in compiled graph
+     */
+    public function _rawCall(array $inputs,array $options)
+    {
+        $training = $options['training'] ?? false;
+        $outputs = $this->call($inputs, $training);
+        if(!is_array($outputs)) {
+            $outputs = [$outputs];
+        }
+        return $outputs;
     }
 }

@@ -1,15 +1,19 @@
 <?php
 namespace Rindow\NeuralNetworks\Gradient\Core;
 
+use WeakReference;
+
 class VariableReference
 {
-    protected $oid;
+    //protected $oid;
+    protected $ref;
     protected $shape;
     protected $dtype;
 
     public function __construct(Variable $variable)
     {
-        $this->oid = spl_object_hash($variable);
+        //$this->oid = spl_object_id($variable);
+        $this->ref = WeakReference::create($variable);
         $value = $variable->value();
         if($value!==null &&
            !($value instanceof UndeterminedNDArray &&
@@ -19,9 +23,18 @@ class VariableReference
         }
     }
 
-    public function oid()
+    //public function oid()
+    //{
+    //    return $this->oid;
+    //}
+
+    public function ref()
     {
-        return $this->oid;
+        return $this->ref;
+    }
+    public function get()
+    {
+        return $this->ref->get();
     }
 
     public function shape()

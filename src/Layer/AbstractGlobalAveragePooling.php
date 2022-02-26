@@ -12,7 +12,7 @@ class AbstractGlobalAveragePooling extends AbstractImage implements Layer
     protected $pool_mode = 'avg';
     protected $channels_first = false;
 
-    public function __construct($backend, array $options=null)
+    public function __construct(object $backend, array $options=null)
     {
         extract($this->extractArgs([
             'data_format'=>null,
@@ -77,6 +77,7 @@ class AbstractGlobalAveragePooling extends AbstractImage implements Layer
     protected function call(NDArray $inputs, bool $training) : NDArray
     {
         $K = $this->backend;
+        $container = $this->container();
         $batches = $inputs->shape()[0];
         if($this->channels_first) {
             $inputsTmp = $inputs->reshape(
@@ -88,13 +89,14 @@ class AbstractGlobalAveragePooling extends AbstractImage implements Layer
             $axis = 1;
         }
         $outputs = $K->mean($inputsTmp, $axis);
-        $this->origInputsShape = $inputs->shape();
+        $container->origInputsShape = $inputs->shape();
         return $outputs;
     }
 
     protected function differentiate(NDArray $dOutputs) : NDArray
     {
         $K = $this->backend;
+        $container = $this->container();
         $dOutputs = $K->scale(1/$this->reduceShape,$dOutputs);
         if($this->channels_first) {
             $axis = -1; // [b,c] => [b,c,w]
@@ -103,6 +105,6 @@ class AbstractGlobalAveragePooling extends AbstractImage implements Layer
         }
         $dInputs = $K->repeat($dOutputs,$this->reduceShape,$axis);
 
-        return $dInputs->reshape($this->origInputsShape);
+        return $dInputs->reshape($container->origInputsShape);
     }
 }

@@ -14,7 +14,7 @@ class Data
 {
     protected $matrixOperator;
 
-    public function __construct($matrixOperator)
+    public function __construct(object $matrixOperator)
     {
         $this->matrixOperator = $matrixOperator;
     }

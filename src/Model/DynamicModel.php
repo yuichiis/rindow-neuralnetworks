@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 namespace Rindow\NeuralNetworks\Model;
 
 use InvalidArgumentException;
@@ -9,14 +10,19 @@ use Rindow\NeuralNetworks\Layer\LayerBase;
 use Rindow\NeuralNetworks\Gradient\Core\Variable;
 use Rindow\NeuralNetworks\Gradient\Core\Undetermined;
 use Rindow\NeuralNetworks\Gradient\Core\UndeterminedNDArray;
+use Rindow\NeuralNetworks\Gradient\Core\GradientTape;
+use Rindow\NeuralNetworks\Gradient\Module;
 
-abstract class DynamicModel extends AbstractModel
+abstract class DynamicModel extends AbstractModel implements Module
 {
     protected $weightVariables = [];
     protected $trainableVariables;
     protected $generation;
     protected $inputsVariables;
     protected $outputsVariables;
+    protected $graph = [];
+    protected $weights;
+    protected $grads;
 
     /**
     *  @return int
@@ -44,59 +50,6 @@ abstract class DynamicModel extends AbstractModel
     /*
     *  dinamic step interfaces
     */
-    /**
-    *  @param LayerBase|Variable  $weights
-    *       inputs
-    *  @return LayerBase|Variable
-    *       outputs
-    */
-    public function add($weights)
-    {
-        if($weights instanceof LayerBase||
-            $weights instanceof DynamicModel) {
-            $this->layers[] = $weights;
-            $this->weightVariables[] = $weights;
-        } elseif($weights instanceof Variable) {
-            $this->weightVariables[] = $weights;
-        } else {
-            throw new InvalidArgumentException('weights must be Variable or Layer');
-        }
-        return $weights;
-    }
-
-    public function trainableVariables()
-    {
-        return $this->weights();
-    }
-
-    public function weights()
-    {
-        if($this->trainableVariables) {
-            return $this->trainableVariables;
-        }
-        $this->trainableVariables = [];
-        foreach($this->weightVariables as $weights) {
-            if(($weights instanceof LayerBase)||($weights instanceof DynamicModel)) {
-                $this->trainableVariables = array_merge($this->trainableVariables,$weights->weights());
-            } else {
-                $this->trainableVariables = array_merge($this->trainableVariables,[$weights]);
-            }
-        }
-        return $this->trainableVariables;
-    }
-
-    public function parameterVariables() : array
-    {
-        $weightVariables = $this->trainableVariables();
-        $params = [];
-        foreach ($weightVariables as $weights) {
-            if($weights instanceof Variable) {
-                $params[] = $weights;
-            }
-        }
-        return $params;
-    }
-
 
     /**
     *  @param array<Variable>  $inputs
@@ -130,6 +83,76 @@ abstract class DynamicModel extends AbstractModel
     //    $model($x,true)
     }
 
+    protected function getModelGraph()
+    {
+        if(!isset($this->graph['model'])) {
+            $model = $this;
+            $func = function($x,$t) use ($model) {
+                $training = (GradientTape::$autoBackProp)? true: false;
+                return $model($x,$training,$t);
+            };
+            $options = ['alternateCreator'=>$this];
+            //[$weights,$grads] = $this->initWeights();
+            //if(count($weights)) {
+            //    $options['weights'] = $weights;
+            //    $options['grads'] = $grads;
+            //}
+            $this->graph['model'] = $this->builder->gradient->function($func,$options);
+        }
+        return $this->graph['model'];
+    }
+
+    public function _rawCall($inputs)
+    {
+        return $this->graph['model']->_rawCall($inputs);
+    }
+
+    public function setShapeInspection(bool $enable)
+    {
+        if($this->shapeInspection==$enable)
+            return;
+        foreach ($this->submodules() as $module) {
+            $module->setShapeInspection($enable);
+        }
+        $this->shapeInspection = $enable;
+    }
+
+    public function submodules() : array
+    {
+        $modules = [];
+        foreach (get_object_vars($this) as $func) {
+            if($func instanceof Module) {
+                $modules[] = $func;
+            }
+        }
+        return $modules;
+    }
+
+    public function variables() : array
+    {
+        $variables = [];
+        foreach ($this->submodules() as $module) {
+            $variables = array_merge($variables,$module->variables());
+        }
+        foreach(get_object_vars($this) as $var) {
+            if($var instanceof Variable) {
+                $variables[] = $var;
+            }
+        }
+
+        return $variables;
+    }
+
+    public function trainableVariables() : array
+    {
+        return $this->variables();
+    }
+
+    public function backward(array $dOutputs, array &$grads=null, array $oidsToCollect=null) : array
+    {
+        return $this->graph['model']->backward($dOutputs, $grads, $oidsToCollect);
+    }
+
     protected function trainStep($inputs, $trues)
     {
         $K = $this->backend;
@@ -138,11 +161,11 @@ abstract class DynamicModel extends AbstractModel
         $x = $g->Variable($inputs);
         $t = $g->Variable($trues);
         $trues = $this->trueValuesFilter($trues);
-        $model = $this;
+        $model = $this->getModelGraph();
         $lossfunc = $this->lossFunction;
         [$loss,$preds] = $nn->with($tape=$g->GradientTape(),
             function() use ($K,$model,$lossfunc,$x,$t,$trues) {
-                $predicts = $model($x,true,$t);
+                $predicts = $model($x,$t);
                 return [$lossfunc($trues,$predicts),$predicts];
             }
         );
@@ -171,9 +194,9 @@ abstract class DynamicModel extends AbstractModel
         $x = $g->Variable($inputs);
         $t = $g->Variable($trues);
         $trues = $this->trueValuesFilter($trues);
-        $model = $this;
+        $model = $this->getModelGraph();
         $lossfunc = $this->lossFunction;
-        $predicts = $model($x,false,$t);
+        $predicts = $model($x,$t);
         $loss = $lossfunc($trues,$predicts);
         $loss = $K->scalar($loss->value());
         $accuracy = $this->lossFunction->accuracy($trues,$predicts->value());
@@ -185,16 +208,16 @@ abstract class DynamicModel extends AbstractModel
         $nn = $this->builder;
         $g = $nn->gradient();
         $x = $g->Variable($inputs);
-        $model = $this;
-        $predicts = $model($x,false,null);
+        $t = null;
+        $model = $this->getModelGraph();
+        $predicts = $model($x,$t);
         return $predicts->value();
     }
 
     public function saveWeights(&$modelWeights,$portable=null) : void
     {
         $K = $this->backend;
-        if(!isset($modelWeights['weights']))
-            $modelWeights['weights'] = [];
+        $modelWeights['weights'] = $modelWeights['weights'] ?? [];
         foreach($this->trainableVariables() as $idx => $weights) {
             $param = $weights->value();
             $param=$K->ndarray($param);
@@ -203,8 +226,7 @@ abstract class DynamicModel extends AbstractModel
             $modelWeights['weights'][$idx] = serialize($param);
         }
         $optimizer = $this->optimizer();
-        if(!isset($modelWeights['optimizer']))
-            $modelWeights['optimizer'] = [];
+        $modelWeights['optimizer'] = $modelWeights['optimizer'] ?? [];
         foreach ($optimizer->getWeights() as $idx => $weights) {
             $weights=$K->ndarray($weights);
             $modelWeights['optimizer'][$idx] = serialize($weights);

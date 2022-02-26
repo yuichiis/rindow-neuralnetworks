@@ -17,9 +17,10 @@ abstract class AbstractPooling extends AbstractImage implements Layer
     protected $padding;
     protected $data_format;
     protected $dilation_rate;
-    protected $status;
 
-    public function __construct($backend,array $options=null)
+    //protected $status;
+
+    public function __construct(object $backend,array $options=null)
     {
         extract($this->extractArgs([
             'pool_size'=>2,

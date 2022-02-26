@@ -7,9 +7,9 @@ class Dropout extends AbstractLayer implements Layer
 {
     protected $backend;
     protected $rate;
-    protected $mask;
+    //protected $mask;
 
-    public function __construct($backend,float $rate,array $options=null)
+    public function __construct(object $backend,float $rate,array $options=null)
     {
         //extract($this->extractArgs([
         //],$options));
@@ -27,9 +27,10 @@ class Dropout extends AbstractLayer implements Layer
     protected function call(NDArray $inputs, bool $training) : NDArray
     {
         $K = $this->backend;
+        $container = $this->container();
         if($training) {
-            $this->mask = $K->greater($K->randomUniformVariables($inputs->shape(),0.0,1.0), $this->rate);
-            $outputs = $K->mul($inputs,$this->mask);
+            $container->mask = $K->greater($K->randomUniformVariables($inputs->shape(),0.0,1.0), $this->rate);
+            $outputs = $K->mul($inputs,$container->mask);
             return $outputs;
         } else {
             $outputs = $K->scale((1.0 - $this->rate), $inputs);
@@ -40,7 +41,8 @@ class Dropout extends AbstractLayer implements Layer
     protected function differentiate(NDArray $dOutputs) : NDArray
     {
         $K = $this->backend;
-        $dInputs = $K->mul($dOutputs, $this->mask);
+        $container = $this->container();
+        $dInputs = $K->mul($dOutputs, $container->mask);
         return $dInputs;
     }
 

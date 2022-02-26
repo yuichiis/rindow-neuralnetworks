@@ -2,11 +2,12 @@
 namespace Rindow\NeuralNetworks\Layer;
 
 use Interop\Polite\Math\Matrix\NDArray;
+use Rindow\NeuralNetworks\Gradient\Module;
 
 /**
  *
  */
-interface LayerBase
+interface LayerBase extends Module
 {
     public function build($variable=null,array $options=null);
     public function outputShape() : array;

@@ -11,7 +11,7 @@ class Gather extends AbstractMultiInputLayer
     protected $backend;
     protected $axis;
 
-    public function __construct($backend,array $options=null)
+    public function __construct(object $backend,array $options=null)
     {
         extract($this->extractArgs([
             'axis'=>-1,
@@ -91,22 +91,24 @@ class Gather extends AbstractMultiInputLayer
     protected function call(array $inputs, bool $training) : NDArray
     {
         $K = $this->backend;
+        $container = $this->container();
         [$source,$indexes] = $inputs;
         $outputs = $K->gather($source,$indexes,$this->realAxis);
-        $this->indexes = $indexes;
+        $container->indexes = $indexes;
         return $outputs;
     }
 
     protected function differentiate(NDArray $dOutputs) : array
     {
         $K = $this->backend;
+        $container = $this->container();
         $dSource = $K->scatter(
-            $this->indexes,
+            $container->indexes,
             $dOutputs,
             $this->reduceNumClass,
             $this->realAxis
         );
-        $dIndex = $K->zerosLike($this->indexes);
+        $dIndex = $K->zerosLike($container->indexes);
         return [$dSource,$dIndex];
     }
 }

@@ -37,7 +37,7 @@ abstract class AbstractLayer extends AbstractLayerBase
     *  @param  array<NDArray> $dOutputs
     *  @return array<NDArray>
     */
-    final public function backward(array $dOutputs) : array
+    final public function backward(array $dOutputs, array &$grads=null, array $oidsToCollect=null) : array
     {
         if(count($dOutputs)!=1) {
             throw new InvalidArgumentException('dOutputs must be list containing one NDArray');
@@ -49,6 +49,7 @@ abstract class AbstractLayer extends AbstractLayerBase
         $this->assertOutputShape($dOutputs,'backward');
         $dInputs = $this->differentiate($dOutputs);
         $this->assertInputShape($dInputs,'backward');
+        $this->collectGradients($grads,$oidsToCollect);
         return [$dInputs];
     }
 
@@ -58,7 +59,7 @@ abstract class AbstractLayer extends AbstractLayerBase
     *  @return array<Variable>
     *       outputs
     */
-    public function __invoke($inputs, bool $training)
+    public function __invoke($inputs, $training)
     {
         $outputs = null;
         if($this->outputShape==null) {
@@ -75,10 +76,30 @@ abstract class AbstractLayer extends AbstractLayerBase
             }
             return $outputs;
         }
-        $outputs = $this->forward($inputs->value(),$training);
-        $outputs = $this->postGradientProcess(
-            $this->backend, [$inputs], [$outputs]);
+        $inputs = $this->packVariable($this->backend, $inputs);
+        $training = $this->packVariable($this->backend, $training);
+
+        $session = $this->preGradientProcessOnSession([$inputs],['training'=>$training]);
+        $session->begin();
+        try {
+            $outputs = $this->forward($inputs->value(),$training->value());
+        } catch(Throwable $e) {
+            $session->end();
+            throw $e;
+        }
+        $session->end();
+        $outputs = $this->postGradientProcessOnSession(
+            $this->backend, $session, [$inputs], [$outputs]);
         return $outputs[0];
     }
 
+    /**
+     * Call from SessionFunc in compiled graph
+     */
+    public function _rawCall(array $inputs,array $options)
+    {
+        $training = $options['training'] ?? false;
+        $outputs = $this->call($inputs[0],$training);
+        return [$outputs];
+    }
 }

@@ -16,11 +16,11 @@ class Embedding extends AbstractLayer implements Layer
 
     protected $kernel;
     protected $dKernel;
-    protected $inputs;
-    protected $originalShape;
-    protected $flattenOutputsShape;
+    //protected $inputs;
+    //protected $originalShape;
+    //protected $flattenOutputsShape;
 
-    public function __construct($backend,int $inputDim,int $outputDim, array $options=null)
+    public function __construct(object $backend,int $inputDim,int $outputDim, array $options=null)
     {
         extract($this->extractArgs([
             'input_length'=>null,
@@ -88,12 +88,13 @@ class Embedding extends AbstractLayer implements Layer
     protected function call(NDArray $inputs, bool $training) : NDArray
     {
         $K = $this->backend;
-        $this->originalShape = $inputs->shape();
-        $this->inputs = $inputs->reshape(
+        $container = $this->container();
+        $container->originalShape = $inputs->shape();
+        $container->inputs = $inputs->reshape(
             [$inputs->size()]);
-        $outputs = $K->gather($this->kernel,$this->inputs);
-        $this->flattenOutputsShape = $outputs->shape();
-        $shape = $this->originalShape;
+        $outputs = $K->gather($this->kernel,$container->inputs);
+        $container->flattenOutputsShape = $outputs->shape();
+        $shape = $container->originalShape;
         array_push($shape,$this->outputDim);
         return $outputs->reshape($shape);
     }
@@ -101,9 +102,10 @@ class Embedding extends AbstractLayer implements Layer
     protected function differentiate(NDArray $dOutputs) : NDArray
     {
         $K = $this->backend;
-        $dOutputs = $dOutputs->reshape($this->flattenOutputsShape);
+        $container = $this->container();
+        $dOutputs = $dOutputs->reshape($container->flattenOutputsShape);
         $K->clear($this->dKernel);
-        $K->scatterAdd($this->dKernel,$this->inputs, $dOutputs);
-        return $this->inputs->reshape($this->originalShape);//dummy
+        $K->scatterAdd($this->dKernel,$container->inputs, $dOutputs);
+        return $container->inputs->reshape($container->originalShape);//dummy
     }
 }
