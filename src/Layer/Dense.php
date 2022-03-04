@@ -44,6 +44,7 @@ class Dense extends AbstractLayer implements Layer
         if($use_bias===null || $use_bias) {
             $this->useBias = true;
         }
+        $this->allocateWeights($this->useBias?2:1);
         $this->setActivation($activation);
     }
 
@@ -63,15 +64,17 @@ class Dense extends AbstractLayer implements Layer
         //}
         $shape = $inputShape;
         $this->inputDim=array_pop($shape);
-        if($sampleWeights) {
-            $this->kernel = $sampleWeights[0];
-            $this->bias = $sampleWeights[1];
-        } else {
-            $this->kernel = $kernelInitializer(
-                [$this->inputDim,$this->units],
-                [$this->inputDim,$this->units]);
-            if($this->useBias) {
-                $this->bias = $biasInitializer([$this->units]);
+        if($this->kernel===null) {
+            if($sampleWeights) {
+                $this->kernel = $sampleWeights[0];
+                $this->bias = $sampleWeights[1];
+            } else {
+                $this->kernel = $kernelInitializer(
+                    [$this->inputDim,$this->units],
+                    [$this->inputDim,$this->units]);
+                if($this->useBias) {
+                    $this->bias = $biasInitializer([$this->units]);
+                }
             }
         }
 
@@ -81,6 +84,7 @@ class Dense extends AbstractLayer implements Layer
         }
         array_push($shape,$this->units);
         $this->outputShape = $shape;
+        $this->syncWeightVariables();
         return $this->createOutputDefinition([$this->outputShape]);
     }
 
@@ -99,6 +103,16 @@ class Dense extends AbstractLayer implements Layer
             return [$this->dKernel,$this->dBias];
         } else {
             return [$this->dKernel];
+        }
+    }
+
+    public function reverseSyncWeightVariables() : void
+    {
+        if($this->useBias) {
+            $this->kernel = $this->weights[0]->value();
+            $this->bias = $this->weights[1]->value();
+        } else {
+            $this->kernel = $this->weights[0]->value();
         }
     }
 

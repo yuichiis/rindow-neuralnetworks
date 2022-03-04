@@ -73,6 +73,7 @@ abstract class AbstractConv extends AbstractImage implements Layer
         if($use_bias===null || $use_bias) {
             $this->useBias = true;
         }
+        $this->allocateWeights($this->useBias?2:1);
         $this->setActivation($activation);
     }
 
@@ -99,21 +100,21 @@ abstract class AbstractConv extends AbstractImage implements Layer
         array_push($outputShape,$this->filters);
 
         $channels = $this->getChannels();
-        array_push($kernel_size,
-            $channels);
-        array_push($kernel_size,
-            $this->filters);
-        if($sampleWeights) {
-            $this->kernel = $sampleWeights[0];
-            $this->bias = $sampleWeights[1];
-        } else {
-            $tmpSize = array_product($this->kernel_size);
-            $this->kernel = $kernelInitializer(
-                $kernel_size,
-                [$tmpSize*$channels,$tmpSize*$this->filters]
-            );
-            if($this->useBias) {
-                $this->bias = $biasInitializer([$this->filters]);
+        array_push($kernel_size,$channels);
+        array_push($kernel_size,$this->filters);
+        if($this->kernel===null) {
+            if($sampleWeights) {
+                $this->kernel = $sampleWeights[0];
+                $this->bias = $sampleWeights[1];
+            } else {
+                $tmpSize = array_product($this->kernel_size);
+                $this->kernel = $kernelInitializer(
+                    $kernel_size,
+                    [$tmpSize*$channels,$tmpSize*$this->filters]
+                );
+                if($this->useBias) {
+                    $this->bias = $biasInitializer([$this->filters]);
+                }
             }
         }
         $this->dKernel = $K->zerosLike($this->kernel);
@@ -139,6 +140,16 @@ abstract class AbstractConv extends AbstractImage implements Layer
             return [$this->dKernel,$this->dBias];
         } else {
             return [$this->dKernel];
+        }
+    }
+
+    public function reverseSyncWeightVariables() : void
+    {
+        if($this->useBias) {
+            $this->kernel = $this->weights[0]->value();
+            $this->bias = $this->weights[1]->value();
+        } else {
+            $this->kernel = $this->weights[0]->value();
         }
     }
 

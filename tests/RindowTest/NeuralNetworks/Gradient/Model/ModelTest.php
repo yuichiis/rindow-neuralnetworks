@@ -9,6 +9,8 @@ use Rindow\NeuralNetworks\Builder\NeuralNetworks;
 use Rindow\NeuralNetworks\Model\DynamicModel;
 use Rindow\Math\Plot\Plot;
 
+use Rindow\NeuralNetworks\Gradient\Core\GradientTape;
+
 class TestModel1 extends DynamicModel
 {
     public function __construct(
@@ -493,11 +495,6 @@ class Test extends TestCase
             'shuffle'=>false,
         ]);
         $history = [];
-        $lasttotalLoss = 0;
-        $lastparamsum = 0;
-        $lastsumgrad = 0;
-        $lastloss = 0;
-        $lastpredicts = 0;
         for($epoch=0;$epoch<100;$epoch++) {
             $totalLoss = 0;
             $paramsum = 0;
@@ -515,42 +512,9 @@ class Test extends TestCase
                 $params = $model->trainableVariables();
                 $gradients = $tape->gradient($loss, $params);
 
-                echo "predicts:".($lastpredicts - $K->asum($predicts->value()))."\n";
-                $lastpredicts = $K->asum($predicts->value());
-                echo "loss:".($lastloss - $K->scalar($loss->value()))."\n";
-                $lastloss = $K->scalar($loss->value());
-                echo "g:";
-                $sumgrad = 0;
-                foreach($gradients as $grad) {
-                    $sumgrad += $K->asum($grad);
-                }
-                echo "sumgrad:".($lastsumgrad-$sumgrad)."\n";
-                $lastsumgrad = $sumgrad;
-                $sum = 0;
-                foreach($params as $tmpi => $prm) {
-                    $sum += $K->asum($prm->value());
-                }
-                echo "sumparamsoid1:".implode(',',[spl_object_id($params[0]->value()),spl_object_id($params[1]->value())])."\n";
-                echo "sumparamsoid2:".implode(',',[spl_object_id($params[2]->value()),spl_object_id($params[3]->value())])."\n";
-                echo "sumparamsoidcount:".count($params)."\n";
                 $optimizer->update($params,$gradients);
-                $sum2 = 0;
-                foreach($params as $prm) {
-                    $sum2 += $K->asum($prm->value());
-                }
-                $dense1prmoid = [];
-                foreach($model->dense1->getParams() as $prm) {
-                    $dense1prmoid[] = spl_object_id($prm);
-                }
-                echo "sumdense1prmoid:".implode(',',$dense1prmoid)."\n";
-                echo "sumdense1prmoidcount".count($model->dense1->getParams())."\n";
                 $totalLoss += $K->scalar($loss->value());
-                $paramsum += ($sum2-$sum);
             }
-            echo "totalLoss:".($lasttotalLoss-$totalLoss)."\n";
-            echo "paramsum:".($lastparamsum-$paramsum)."\n";
-            $lasttotalLoss = $totalLoss;
-            $lastparamsum = $paramsum;
             $history[] = $totalLoss;
         }
         if($this->plot) {
@@ -773,6 +737,7 @@ class Test extends TestCase
 
         $savedWeights = [];
         $model->saveWeights($savedWeights);
+        $weightShapes = array_map(fn($x)=>$x->shape(),$model->trainableVariables());
 
         // =================================================================
         $mo = $this->newMatrixOperator();
@@ -795,7 +760,10 @@ class Test extends TestCase
             'loss' => 'sparse_categorical_crossentropy',
             'optimizer' => 'adam',
         ]);
+
         $model->loadWeights($savedWeights);
+        $loadedShapes = array_map(fn($x)=>$x->shape(),$model->trainableVariables());
+        $this->assertEquals($weightShapes,$loadedShapes);
 
         $seq = $mo->array([[1, 3, 4]],NDArray::int32);
         $attentionPlot = $mo->zeros([3, 3]);

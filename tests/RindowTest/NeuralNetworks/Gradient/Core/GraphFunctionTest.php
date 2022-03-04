@@ -45,7 +45,9 @@ class TestClass
             assert(Variable::class==get_class($x),'value class:'.get_class($x));
             assert(Variable::class==get_class($b),'value class:'.get_class($b));
         }
+
         $c = $g->add($g->mul($a,$x),$b);
+
         if(GraphFunction::$mode==GraphFunction::EXECUTING) {
             assert($c instanceof NDArray,'value class:'.get_class($c));
         } else {
@@ -295,9 +297,6 @@ class Test extends TestCase
         $grads = $tape->gradient($y,[$b,$c]);
         $this->assertCount(2,$grads);
         $this->assertEquals(18,$grads[0]->toArray()); // db
-        echo "y_id:"; var_dump(spl_object_id($y));
-        echo "c_id:"; var_dump(spl_object_id($c));
-        echo "dc_id:"; var_dump(spl_object_id($grads[1]));
         $this->assertEquals(28,$grads[1]->toArray()); // dc
  
         // built graph
@@ -406,7 +405,6 @@ class Test extends TestCase
         );
         $this->assertEquals([2,3],$y->value()->shape());
         $grads = $tape->gradient($y,array_merge([$a,$b],$layer0->weights()));
-        var_dump(array_map(fn($x)=>$K->toString($x),$layer0->getParams()));
         $this->assertCount(4,$grads);
         $this->assertEquals([2,1],$grads[0]->shape());
         $this->assertEquals([2,1],$grads[1]->shape());
@@ -462,8 +460,6 @@ class Test extends TestCase
         $outputs = $nn->with($tape=$g->GradientTape(),
             function() use ($K,$func0,$loss0,$t,$x,$z) {
                 $x = $func0($x,$z);
-                echo "x=".$K->shapeToString($x->shape())."\n";
-                echo "t=".$K->shapeToString($t->shape())."\n";
                 $outputs = $loss0($t,$x);
                 return $outputs;
             }

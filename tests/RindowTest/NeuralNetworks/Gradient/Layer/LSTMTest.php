@@ -149,4 +149,33 @@ class Test extends TestCase
         $this->assertEquals([3,12],$gradients[1]->shape());
         $this->assertEquals([12],$gradients[2]->shape());
     }
+
+    public function testNoGradient()
+    {
+        $mo = $this->newMatrixOperator();
+        $nn = $this->newNeuralNetworks($mo);
+        $K = $this->newBackend($nn);
+        $g = $nn->gradient();
+
+        $x = $K->array([
+            [0,1,2],
+            [0,1,2],
+        ]);
+        $x = $g->Variable($x,['name'=>'raw-x']);
+        $embed1 = $nn->layers->Embedding($inputDim=3, $outputDim=4, ['input_length'=>3]);
+        $layer = $nn->layers->LSTM($units=3,[
+            'return_sequences'=>true,
+            'return_state'=>true,
+        ]);
+
+        $x1 = $embed1($x,true); // x1.shape=[2,3,4]
+        $x1->setName('x');
+        [$outputs,$states] = $layer($x1,true);
+        $outputs->setName('lstm_out');
+
+        $this->assertEquals([2,3,3],$outputs->value()->shape());
+        $this->assertCount(2,$states);
+        $this->assertEquals([2,3],$states[0]->value()->shape());
+        $this->assertEquals([2,3],$states[1]->value()->shape());
+    }
 }

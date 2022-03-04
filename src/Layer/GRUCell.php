@@ -78,45 +78,47 @@ class GRUCell extends AbstractRNNCell
         //}
         $shape = $inputShape;
         $inputDim = array_pop($shape);
-        if($sampleWeights) {
-            $this->kernel = $sampleWeights[0];
-            $this->recurrentKernel = $sampleWeights[1];
-            if($this->useBias) {
-                $this->bias = $sampleWeights[2];
-                if($this->resetAfter) {
-                    $this->inputBias = $this->bias[0];
-                    $this->recurrentBias = $this->bias[1];
-                } else {
-                    $this->inputBias = $this->bias;
+        if($this->kernel===null) {
+            if($sampleWeights) {
+                $this->kernel = $sampleWeights[0];
+                $this->recurrentKernel = $sampleWeights[1];
+                if($this->useBias) {
+                    $this->bias = $sampleWeights[2];
+                    if($this->resetAfter) {
+                        $this->inputBias = $this->bias[0];
+                        $this->recurrentBias = $this->bias[1];
+                    } else {
+                        $this->inputBias = $this->bias;
+                    }
                 }
-            }
-        } else {
-            $this->kernel = $kernelInitializer(
-                [$inputDim,$this->units*3],
-                [$inputDim,$this->units*3]);
-            if($this->resetAfter) {
-                $this->recurrentKernel = $recurrentInitializer(
-                    [$this->units,$this->units*3],
-                    [$this->units,$this->units*3]);
             } else {
-                $this->recurrentKernel = $recurrentInitializer(
-                    [$this->units*3,$this->units],
-                    [$this->units*3,$this->units]);
-            }
-            if($this->useBias) {
+                $this->kernel = $kernelInitializer(
+                    [$inputDim,$this->units*3],
+                    [$inputDim,$this->units*3]);
                 if($this->resetAfter) {
-                    $this->bias = $biasInitializer([2,$this->units*3]);
-                    $this->inputBias = $this->bias[0];
-                    $this->recurrentBias = $this->bias[1];
+                    $this->recurrentKernel = $recurrentInitializer(
+                        [$this->units,$this->units*3],
+                        [$this->units,$this->units*3]);
                 } else {
-                    $this->bias = $biasInitializer([$this->units*3]);
-                    $this->inputBias = $this->bias;
+                    $this->recurrentKernel = $recurrentInitializer(
+                        [$this->units*3,$this->units],
+                        [$this->units*3,$this->units]);
+                }
+                if($this->useBias) {
+                    if($this->resetAfter) {
+                        $this->bias = $biasInitializer([2,$this->units*3]);
+                        $this->inputBias = $this->bias[0];
+                        $this->recurrentBias = $this->bias[1];
+                    } else {
+                        $this->bias = $biasInitializer([$this->units*3]);
+                        $this->inputBias = $this->bias;
+                    }
                 }
             }
         }
         $this->dKernel = $K->zerosLike($this->kernel);
         $this->dRecurrentKernel = $K->zerosLike($this->recurrentKernel);
-        if($this->bias) {
+        if($this->useBias) {
             $this->dBias = $K->zerosLike($this->bias);
             if($this->resetAfter) {
                 $this->dInputBias = $this->dBias[0];
@@ -136,24 +138,6 @@ class GRUCell extends AbstractRNNCell
         array_push($shape,$this->units);
         $this->outputShape = $shape;
         return $this->outputShape;
-    }
-
-    public function getParams() : array
-    {
-        if($this->bias) {
-            return [$this->kernel,$this->recurrentKernel,$this->bias];
-        } else {
-            return [$this->kernel,$this->recurrentKernel];
-        }
-    }
-
-    public function getGrads() : array
-    {
-        if($this->bias) {
-            return [$this->dKernel,$this->dRecurrentKernel,$this->dBias];
-        } else {
-            return [$this->dKernel,$this->dRecurrentKernel];
-        }
     }
 
     public function getConfig() : array
@@ -178,7 +162,7 @@ class GRUCell extends AbstractRNNCell
         $prev_h = $states[0];
 
         // matrix_x = x dot w + b
-        if($this->bias){
+        if($this->useBias){
             $matrix_x = $K->batch_gemm($inputs, $this->kernel,
                 1.0,1.0,$this->inputBias);
         } else {
@@ -195,7 +179,7 @@ class GRUCell extends AbstractRNNCell
 
         if($this->resetAfter) {
             // matrix_inner = prev_h dot hw + hb
-            if($this->bias) {
+            if($this->useBias) {
                 $matrix_inner = $K->batch_gemm($prev_h, $this->recurrentKernel,
                     1.0,1.0, $this->recurrentBias);
             } else {

@@ -12,64 +12,61 @@ class Variable implements VariableInterface
 {
     use GenericUtils;
     protected $backend;
+    protected $undetermined;
+    protected $reference;
+    protected $name;
     protected $value;
-    protected $grad;
     protected $creator;
     protected $generation=0;
-    protected $name;
 
     public function __construct(object $backend, $value, $options=null)
     {
         extract($this->extractArgs([
             'name'=>null,
-            'dtype'=>null,
             'reference'=>null,
+            'undetermined'=>null,
         ],$options));
         $this->backend = $backend;
-        if($value instanceof VariableInterface) {
-            $value = $value->value();
-        }
-        if($value instanceof NDArray) {
-            if($reference) {
-                $this->value = $value;
-            } else {
-                $this->value = $backend->copy($value);
-            }
-        } elseif(is_bool($value)) {
-            $this->value = $value;
-        } elseif($value===null) {
-            $this->value = null;
-        } elseif(is_array($value)||is_numeric($value)) {
-            $this->value = $backend->array($value);
-        } else {
-            throw InvalidArgumentException('Invalid vaule type:'.gettype($value));
-        }
+        $this->undetermined = $undetermined;
         $this->name = $name;
-    }
-
-    public function value()
-    {
-        return $this->value;
+        $this->reference = $reference;
+        if(!$undetermined) {
+            $this->assign($value);
+        }
     }
 
     public function assign($value) : void
     {
-        $backend = $this->backend;
         if($value instanceof VariableInterface) {
             $value = $value->value();
         }
         if($value instanceof NDArray) {
-            $backend->copy($value,$this->value);
-        } elseif(is_bool($value)) {
-            if(!is_bool($this->value)) {
-                throw InvalidArgumentException('vaule types must be equal:'.gettype($value));
+            if($this->reference) {
+                $this->value = $value;
+            } else {
+                $this->value = $this->backend->copy($value);
             }
+        } elseif(is_bool($value)) {
             $this->value = $value;
         } elseif(is_array($value)||is_numeric($value)) {
-            $backend->copy($backend->array($value),$this->value);
+            $this->value = $this->backend->array($value);
         } else {
             throw InvalidArgumentException('Invalid vaule type:'.gettype($value));
         }
+        $this->undetermined = false;
+    }
+
+    public function isUndetermined() : bool
+    {
+        return $this->undetermined;
+    }
+
+    public function value()
+    {
+        if($this->undetermined) {
+            throw new LogicException("Undetermined variable");
+        }
+        return $this->value;
     }
 
     public function name()
@@ -84,34 +81,53 @@ class Variable implements VariableInterface
 
     public function dtype()
     {
-        if($this->value===null) {
+        $value = $this->value;
+        if($value===null) {
             throw new LogicException('Variable has no value');
         }
-        return $this->value->dtype();
+        if($value instanceof NDArray) {
+            return $value->dtype();
+        }
+        if(is_bool($value)) {
+            return NDArray::bool;
+        }
+        throw new RuntimeException('invalid type:'.(is_object($value)?get_class($value):gettype($value)));
     }
 
     public function shape()
     {
-        if($this->value===null) {
+        $value = $this->value;
+        if($value===null) {
             throw new LogicException('Variable has no value');
         }
-        return $this->value->shape();
+        if(is_bool($value)) {
+            return [];
+        }
+        return $value->shape();
     }
 
     public function ndim()
     {
-        if($this->value===null) {
+        $value = $this->value;
+        if($value===null) {
             throw new LogicException('Variable has no value');
         }
-        return $this->value->ndim();
+        if(is_bool($value)) {
+            return 0;
+        }
+        return $value->ndim();
     }
 
     public function size()
     {
-        if($this->value===null) {
+        $value = $this->value;
+        if($value===null) {
             throw new LogicException('Variable has no value');
         }
-        return $this->value->size();
+        if(is_bool($value)) {
+            return 0;
+        }
+        return $value->size();
     }
 
     /**

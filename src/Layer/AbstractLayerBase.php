@@ -1,8 +1,10 @@
 <?php
 namespace Rindow\NeuralNetworks\Layer;
 
-use Interop\Polite\Math\Matrix\NDArray;
 use InvalidArgumentException;
+use LogicException;
+use ArrayAccess;
+use Interop\Polite\Math\Matrix\NDArray;
 use Rindow\NeuralNetworks\Activation\FunctionFactory;
 use Rindow\NeuralNetworks\Activation\Activation as ActivationInterface;
 use Rindow\NeuralNetworks\Gradient\Core\Variable;
@@ -28,7 +30,8 @@ abstract class AbstractLayerBase implements LayerBase
     protected $inputsVariables;
     protected $outputsVariables;
     protected $generation;
-    protected $weights;
+    protected $weights=[];
+    protected $assignedWeights = false;
 
     public function getActivation()
     {
@@ -110,6 +113,7 @@ abstract class AbstractLayerBase implements LayerBase
         $this->inputsVariables = $variables;
         $this->generation = array_reduce(
             $variables,function($max,$x){return max($max,$x->generation());},-1);
+
         return $this->fixInputShape($inputShape);
     }
 
@@ -123,9 +127,10 @@ abstract class AbstractLayerBase implements LayerBase
 
     protected function fixInputShape($inputShape) : array
     {
-        if($this->inputShape===null)
+        if($this->inputShape===null) {
             $this->inputShape = $inputShape;
-        if($this->inputShape!==$inputShape) {
+        }
+        if($this->inputShape!==$inputShape && $this->shapeInspection) {
             if(is_array($this->inputShape)&&is_int($this->inputShape[0])) {
                 $msg = 'Input shape is inconsistent: ['.implode(',',$this->inputShape).
                 '] and ['.implode(',',$inputShape).']';
@@ -133,10 +138,10 @@ abstract class AbstractLayerBase implements LayerBase
                 $msg = 'Input shape is inconsistent';
             }
             throw new InvalidArgumentException($msg);
-        } elseif($inputShape===null) {
+        } elseif($this->inputShape===null && $inputShape===null) {
             throw new InvalidArgumentException('Input shape is not defined');
         }
-        $this->inputShape = $inputShape;
+        //$this->inputShape = $inputShape;
         return $inputShape;
     }
 
@@ -200,6 +205,10 @@ abstract class AbstractLayerBase implements LayerBase
     public function getGrads() : array
     {
         return $this->grads;
+    }
+
+    public function reverseSyncWeightVariables() : void
+    {
     }
 
     public function getConfig() : array
@@ -325,23 +334,34 @@ abstract class AbstractLayerBase implements LayerBase
         return $this->generation;
     }
 
-    /**
-    *  @return array<Variable>
-    *       outputs
-    */
-    public function weights()
+    protected function allocateWeights($num) : void
     {
-        if($this->weights) {
-            return $this->weights;
-        }
         $variables = [];
-        foreach($this->getParams() as $param) {
-            $variable = new Variable($this->backend,$param,['reference'=>true]);
-            $variable->setName('weights:'.$this->basename($this));
-            $variables[] = $variable;
+        for($i=0;$i<$num;$i++) {
+            $variables[] = new Variable($this->backend,null,['reference'=>true,'undetermined'=>true]);
         }
         $this->weights = $variables;
-        return $variables;
+    }
+
+    /**
+    *  @return array<Variable>
+    */
+    public function weights() : array
+    {
+        return $this->weights;
+    }
+
+    public function syncWeightVariables() : void
+    {
+        $params = $this->getParams();
+        if(count($this->weights)!==count($params)) {
+            throw new LogicException('Weights are not allocated: '.$this->basename($this));
+        }
+        foreach(array_map(null,$this->weights,$params) as [$variable,$param]) {
+            $variable->assign($param);
+            $variable->setName('weights:'.$this->basename($this));
+        }
+        $this->assignedWeights = true;
     }
 
     public function variables() : array
@@ -357,29 +377,6 @@ abstract class AbstractLayerBase implements LayerBase
     public function submodules() : array
     {
         return [];
-    }
-
-    protected function collectGradients(array &$grads=null, array $oidsToCollect=null) : void
-    {
-        if($oidsToCollect===null) {
-            return;
-        } elseif(count($oidsToCollect)==0) {
-            return;
-        }
-        $K = $this->backend;
-        foreach (array_map(null,$this->weights(),$this->getGrads()) as [$w,$g]) {
-            $oid = spl_object_id($w);
-            if(in_array($oid,$oidsToCollect)) {
-                if(isset($grads[$oid])) {
-                    $grads[$oid] = $K->add($grads[$oid],$g);
-                    echo "add ".$K->toString($g)."\n";
-                } else {
-                    $grads[$oid] = $g;
-                    echo "new ".$K->toString($g)."\n";
-                }
-                echo "collect grad in layerbase:".$oid.$K->toString($grads[$oid])."\n";
-            }
-        }
     }
 
     protected function basename($object) : string

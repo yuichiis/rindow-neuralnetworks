@@ -68,47 +68,31 @@ class SimpleRNNCell extends AbstractRNNCell
         //}
         $shape = $inputShape;
         $inputDim = array_pop($shape);
-        if($sampleWeights) {
-            $this->kernel = $sampleWeights[0];
-            $this->recurrentKernel = $sampleWeights[1];
-            $this->bias = $sampleWeights[2];
-        } else {
-            $this->kernel = $kernelInitializer(
-                [$inputDim,$this->units],
-                [$inputDim,$this->units]);
-            $this->recurrentKernel = $recurrentInitializer(
-                [$this->units,$this->units],
-                [$this->units,$this->units]);
-            if($this->useBias) {
-                $this->bias = $biasInitializer([$this->units]);
+        if($this->kernel===null) {
+            if($sampleWeights) {
+                $this->kernel = $sampleWeights[0];
+                $this->recurrentKernel = $sampleWeights[1];
+                $this->bias = $sampleWeights[2];
+            } else {
+                $this->kernel = $kernelInitializer(
+                    [$inputDim,$this->units],
+                    [$inputDim,$this->units]);
+                $this->recurrentKernel = $recurrentInitializer(
+                    [$this->units,$this->units],
+                    [$this->units,$this->units]);
+                if($this->useBias) {
+                    $this->bias = $biasInitializer([$this->units]);
+                }
             }
         }
         $this->dKernel = $K->zerosLike($this->kernel);
         $this->dRecurrentKernel = $K->zerosLike($this->recurrentKernel);
-        if($this->bias) {
+        if($this->useBias) {
             $this->dBias = $K->zerosLike($this->bias);
         }
         array_push($shape,$this->units);
         $this->outputShape = $shape;
         return $this->outputShape;
-    }
-
-    public function getParams() : array
-    {
-        if($this->bias) {
-            return [$this->kernel,$this->recurrentKernel,$this->bias];
-        } else {
-            return [$this->kernel,$this->recurrentKernel];
-        }
-    }
-
-    public function getGrads() : array
-    {
-        if($this->bias) {
-            return [$this->dKernel,$this->dRecurrentKernel,$this->dBias];
-        } else {
-            return [$this->dKernel,$this->dRecurrentKernel];
-        }
     }
 
     public function getConfig() : array

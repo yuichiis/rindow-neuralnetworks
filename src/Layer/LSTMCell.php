@@ -75,47 +75,31 @@ class LSTMCell extends AbstractRNNCell
         //}
         $shape = $inputShape;
         $inputDim = array_pop($shape);
-        if($sampleWeights) {
-            $this->kernel = $sampleWeights[0];
-            $this->recurrentKernel = $sampleWeights[1];
-            $this->bias = $sampleWeights[2];
-        } else {
-            $this->kernel = $kernelInitializer([
-                $inputDim,$this->units*4],
-                [$inputDim,$this->units]);
-            $this->recurrentKernel = $recurrentInitializer(
-                [$this->units,$this->units*4],
-                [$this->units,$this->units]);
-            if($this->useBias) {
-                $this->bias = $biasInitializer([$this->units*4]);
+        if($this->kernel===null) {
+            if($sampleWeights) {
+                $this->kernel = $sampleWeights[0];
+                $this->recurrentKernel = $sampleWeights[1];
+                $this->bias = $sampleWeights[2];
+            } else {
+                $this->kernel = $kernelInitializer([
+                    $inputDim,$this->units*4],
+                    [$inputDim,$this->units]);
+                $this->recurrentKernel = $recurrentInitializer(
+                    [$this->units,$this->units*4],
+                    [$this->units,$this->units]);
+                if($this->useBias) {
+                    $this->bias = $biasInitializer([$this->units*4]);
+                }
             }
         }
         $this->dKernel = $K->zerosLike($this->kernel);
         $this->dRecurrentKernel = $K->zerosLike($this->recurrentKernel);
-        if($this->bias) {
+        if($this->useBias) {
             $this->dBias = $K->zerosLike($this->bias);
         }
         array_push($shape,$this->units);
         $this->outputShape = $shape;
         return $this->outputShape;
-    }
-
-    public function getParams() : array
-    {
-        if($this->bias) {
-            return [$this->kernel,$this->recurrentKernel,$this->bias];
-        } else {
-            return [$this->kernel,$this->recurrentKernel];
-        }
-    }
-
-    public function getGrads() : array
-    {
-        if($this->bias) {
-            return [$this->dKernel,$this->dRecurrentKernel,$this->dBias];
-        } else {
-            return [$this->dKernel,$this->dRecurrentKernel];
-        }
     }
 
     public function getConfig() : array
@@ -140,7 +124,7 @@ class LSTMCell extends AbstractRNNCell
         $prev_h = $states[0];
         $prev_c = $states[1];
 
-        if($this->bias){
+        if($this->useBias){
             $outputs = $K->batch_gemm($inputs, $this->kernel,1.0,1.0,$this->bias);
         } else {
             $outputs = $K->gemm($inputs, $this->kernel);
@@ -236,7 +220,7 @@ class LSTMCell extends AbstractRNNCell
             $this->dRecurrentKernel,true,false);
         $K->gemm($calcState->inputs, $dOutputs,1.0,1.0,
             $this->dKernel,true,false);
-        if($this->dBias) {
+        if($this->useBias) {
             $K->update_add($this->dBias,$K->sum($dOutputs, $axis=0));
         }
 

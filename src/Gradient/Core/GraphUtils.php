@@ -4,6 +4,8 @@ namespace Rindow\NeuralNetworks\Gradient\Core;
 
 use InvalidArgumentException;
 use Rindow\NeuralNetworks\Gradient\Module;
+use WeakMap;
+use ArrayAccess;
 
 trait GraphUtils
 {
@@ -13,62 +15,45 @@ trait GraphUtils
         usort($funcs,function($a,$b){return $a->generation()-$b->generation();});
         $pipeline = [];
         $constants = [];
-        $used = [];
+        $used = new WeakMap();
         foreach($funcs as $func) {
-            $used[spl_object_id($func)] = true;
+            $used[$func] = true;
         }
+        
         while(count($funcs)>0) {
             $func = array_pop($funcs);
             $pipeline[] = $func;
             foreach($func->inputs() as $input) {
                 $creator = $input->creator();
                 if($creator!=null) {
-                    $oid = spl_object_id($creator);
-                    if(!array_key_exists($oid,$used)) {
-                        $used[$oid] = true;
+                    //$oid = spl_object_id($creator);
+                    if(!isset($used[$creator])) {
+                        $used[$creator] = true;
                         $funcs[] = $creator;
                         usort($funcs,function($a,$b){return $a->generation()-$b->generation();});
                     }
                 } else {
-                    $constants[spl_object_id($input)] = $input->value(); 
+                    if($input===null) {
+                        throw new Exception("Error Processing Request", 1);
+                    }
+                    $constants[] = $input;
                 }
             }
         }
-        //echo "=====built pipeline=====\n";
-        //foreach (array_reverse($pipeline) as $func) {
-        //    echo "  ".basename($func->className())."(";
-        //    foreach ($func->inputs() as $value) {
-        //        echo spl_object_id($value).",";
-        //    }
-        //    echo ")=";
-        //    foreach ($func->outputs() as $value) {
-        //        echo $value->oid().",";
-        //    }
-        //    echo "\n";
-        //}
-        //echo "====================\n";
         return [$pipeline,$constants];
     }
 
     public function backwardPipeline(
         object $backend,
-        array $pipeline, array &$grads=null, array $oidsToCollect=null) : void
+        array $pipeline, ArrayAccess $grads=null, array $oidsToCollect=null) : void
     {
-        echo "==start backward pipeline==\n";
-        //echo "initial grads:\n";
-        //foreach($grads as $oid => $g) {
-        //    echo "  oid:".$oid." [".implode(',',$g->shape())."]\n";
-        //}
-
         $K = $backend;
         foreach($pipeline as $func) {
-            echo "Start func:".basename($func->className())."(".basename(get_class($func)).")\n";
             $dOutputs = [];
             foreach($func->outputs() as $o) {
-                $oid = $o->oid();
-                if(isset($grads[$oid])) {
+                $oid = $o->get();
+                if($oid!==null && isset($grads[$oid])) {
                     $dOutputs[] = $grads[$oid];
-                    //echo "fetch oid ".$oid." :".$K->toString($grads[$oid])."\n";
                     // *** CAUTION ***
                     // Outputs are released as soon as the func object is
                     // released after being used in backwards.
@@ -77,7 +62,6 @@ trait GraphUtils
                     // this problem.
                     if(!is_array($oidsToCollect)) {
                         unset($grads[$oid]);
-                        echo "unset oid".$oid."\n";
                     }
                 } else {
                     //$shape = $o->valueShape();
@@ -85,40 +69,18 @@ trait GraphUtils
                     //array_unshift($shape,$batchSize);
                     //$dOutputs[] = $K->zeros($shape(),$dtype());
                     $dOutputs[] = $K->zeros($o->shape(),$o->dtype());
-                    echo "allocate oid ".$oid." zero\n";
                 }
             }
-            //echo "backward pipeline dOutputs:";
-            //foreach ($dOutputs as $value) {
-            //    echo "[".implode(',',$value->shape())."],";
-            //}
-            //echo "\n";
     
-            echo "call ".basename($func->className())."::backward()\n";
             $tmpdInputs = $func->backward($dOutputs,$grads,$oidsToCollect);
-            echo "return ".basename($func->className())."::backward()\n";
-            echo "watch grads: ";
-            foreach($grads as $oid => $g) {
-                echo $oid.":".$K->toString($g).",";
-            }
-            echo "\n";
     
             unset($dOutputs);
-            //echo "backward pipeline dInputs:";
-            //foreach ($tmpdInputs as $value) {
-            //    if($value===null) {
-            //        echo "NULL,";
-            //    } else {
-            //        echo "[".implode(',',$value->shape())."],";
-            //    }
-            //}
-            //echo "\n";
 
             $dDatas = array_map(null,$func->inputs(),$tmpdInputs);
             unset($tmpdInputs);
 
             foreach ($dDatas as [$input,$dx]) {
-                $oid = spl_object_id($input);
+                $oid = $input;
                 if(isset($grads[$oid])) {
                     // **** CAUTION ****
                     // Must create new Instance of NDArray
@@ -126,21 +88,11 @@ trait GraphUtils
                     // Because sometime grad and dx are same instace.
                     // Using update_add causes problems when branching function output more than once.
                     $grads[$oid] = $K->add($grads[$oid],$dx);
-                    echo "update oid ".$oid." :".$K->toString($grads[$oid])."\n";
                 } else {
                     $grads[$oid] = $dx;
-                    echo "attach oid ".$oid." :";
-                    if($dx===null) {
-                        echo "NULL";
-                    } else {
-                        echo $K->toString($dx);
-                    }
-                    echo "\n";
                 }
             }
-            echo "End func:".basename($func->className())."(".basename(get_class($func)).")\n";
         }
-        echo "==end backward pipeline==\n";
     }
 
     protected function packVariables(object $backend,array $values) : array

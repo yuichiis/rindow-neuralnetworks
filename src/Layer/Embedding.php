@@ -35,6 +35,7 @@ class Embedding extends AbstractLayer implements Layer
         $this->outputDim = $outputDim;
         $this->kernelInitializer = $K->getInitializer($kernel_initializer);
         $this->kernelInitializerName = $kernel_initializer;
+        $this->allocateWeights(1);
     }
 
     public function build($variable=null, array $options=null)
@@ -50,16 +51,19 @@ class Embedding extends AbstractLayer implements Layer
             throw new InvalidArgumentException(
                 'Unsuppored input shape: ['.implode(',',$inputShape).']');
         }
-        if($sampleWeights) {
-            $this->kernel = $sampleWeights[0];
-        } else {
-            $this->kernel = $kernelInitializer(
-                [$this->inputDim,$this->outputDim],
-                [$this->inputDim,$this->outputDim]
-            );
+        if($this->kernel===null) {
+            if($sampleWeights) {
+                $this->kernel = $sampleWeights[0];
+            } else {
+                $this->kernel = $kernelInitializer(
+                    [$this->inputDim,$this->outputDim],
+                    [$this->inputDim,$this->outputDim]
+                );
+            }
         }
         $this->dKernel = $K->zerosLike($this->kernel);
         $this->outputShape = array_merge($inputShape,[$this->outputDim]);
+        $this->syncWeightVariables();
         return $this->createOutputDefinition([$this->outputShape]);
     }
 
@@ -71,6 +75,11 @@ class Embedding extends AbstractLayer implements Layer
     public function getGrads() : array
     {
         return [$this->dKernel];
+    }
+
+    public function reverseSyncWeightVariables() : void
+    {
+        $this->kernel = $this->weights[0]->value();
     }
 
     public function getConfig() : array

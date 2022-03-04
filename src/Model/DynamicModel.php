@@ -5,6 +5,7 @@ namespace Rindow\NeuralNetworks\Model;
 use InvalidArgumentException;
 use UnexpectedValueException;
 use LogicException;
+use ArrayAccess;
 use Interop\Polite\Math\Matrix\NDArray;
 use Rindow\NeuralNetworks\Layer\LayerBase;
 use Rindow\NeuralNetworks\Gradient\Core\Variable;
@@ -148,7 +149,11 @@ abstract class DynamicModel extends AbstractModel implements Module
         return $this->variables();
     }
 
-    public function backward(array $dOutputs, array &$grads=null, array $oidsToCollect=null) : array
+    public function reverseSyncWeightVariables() : void
+    {
+    }
+
+    public function backward(array $dOutputs, ArrayAccess $grads=null, array $oidsToCollect=null) : array
     {
         return $this->graph['model']->backward($dOutputs, $grads, $oidsToCollect);
     }
@@ -242,18 +247,29 @@ abstract class DynamicModel extends AbstractModel implements Module
         $t = new Undetermined();
         $model = $this;
         $lossfunc = $this->lossFunction;
-        [$loss,$preds] = $nn->with($tape=$g->GradientTape(),
-            function() use ($K,$model,$lossfunc,$x,$t) {
-                $predicts = $model($x,true,$t);
-                return [$lossfunc($t,$predicts),$predicts];
-            }
-        );
-
+        //[$loss,$preds] = $nn->with($tape=$g->GradientTape(),
+        //    function() use ($K,$model,$lossfunc,$x,$t) {
+        //        $predicts = $model($x,true,$t);
+        //        return [$lossfunc($t,$predicts),$predicts];
+        //    }
+        //);
+        //foreach($this->trainableVariables() as $idx => $weights) {
+        //    $param = $weights->value();
+        //    $data = unserialize($modelWeights['weights'][$idx]);
+        //    $data = $K->array($data);
+        //    $K->copy($data,$param);
+        //}
         foreach($this->trainableVariables() as $idx => $weights) {
-            $param = $weights->value();
             $data = unserialize($modelWeights['weights'][$idx]);
             $data = $K->array($data);
-            $K->copy($data,$param);
+            $weights->assign($K->copy($data));
+        }
+        $stack = [$this];
+        while($module=array_pop($stack)) {
+            $module->reverseSyncWeightVariables();
+            foreach($module->submodules() as $m) {
+                array_push($stack,$m);
+            }
         }
         $optimizer = $this->optimizer();
         $optimizer->build($this->params());

@@ -1,8 +1,9 @@
 <?php
 namespace Rindow\NeuralNetworks\Layer;
 
-use Interop\Polite\Math\Matrix\NDArray;
 use InvalidArgumentException;
+use ArrayAccess;
+use Interop\Polite\Math\Matrix\NDArray;
 use Rindow\NeuralNetworks\Gradient\Core\Variable;
 use Rindow\NeuralNetworks\Gradient\Core\Undetermined;
 use Rindow\NeuralNetworks\Gradient\Core\UndeterminedNDArray;
@@ -22,6 +23,27 @@ abstract class AbstractRNNLayer extends AbstractLayerBase implements RNNLayer
     //protected $calcStates;
     //protected $origInputsShape;
     //protected $enableInitialStates;
+
+    public function setShapeInspection(bool $enable)
+    {
+        parent::setShapeInspection($enable);
+        $this->cell->setShapeInspection($enable);
+    }
+
+    public function getParams() : array
+    {
+        return $this->cell->getParams();
+    }
+
+    public function getGrads() : array
+    {
+        return $this->cell->getGrads();
+    }
+
+    public function reverseSyncWeightVariables() : void
+    {
+        $this->cell->reverseSyncCellWeightVariables($this->weights);
+    }
 
     final public function forward(object $inputs, bool $training, array $initialStates=null,array $options=null)
     {
@@ -58,7 +80,7 @@ abstract class AbstractRNNLayer extends AbstractLayerBase implements RNNLayer
     *  @param  array<NDArray> $dOutputs
     *  @return array<NDArray>
     */
-    final public function backward(array $dOutputs,array &$grads=null,array $oidsToCollect=null) : array
+    final public function backward(array $dOutputs,ArrayAccess $grads=null,array $oidsToCollect=null) : array
     {
         if(!$this->shapeInspection) {
             $tmpdStates = $dOutputs;
@@ -81,7 +103,8 @@ abstract class AbstractRNNLayer extends AbstractLayerBase implements RNNLayer
             }
             $this->assertInputShape($tmpdInputs,'backward');
         }
-        $this->collectGradients($grads,$oidsToCollect);
+        $this->collectGradients($this->backend,array_map(null,$this->weights(),$this->getGrads()),
+            $grads,$oidsToCollect);
 
         return $dInputs;
     }
@@ -184,26 +207,8 @@ abstract class AbstractRNNLayer extends AbstractLayerBase implements RNNLayer
     */
     public function __invoke($inputs, $training, array $initialStates=null, array $options=null)
     {
-        $outputs = null;
         if($this->outputShape==null) {
-            $inputShape = null;
-            $creator = $inputs->creator();
-            if($creator) {
-                $inputShape = [$inputs];
-            }
-            $outputs = $this->build($inputShape);
-        }
-        if($inputs instanceof Undetermined) {
-            if($outputs===null) {
-                throw new InvalidArgumentException('Undetermined is found in second calling.');
-            }
-            if(is_array($outputs)) {
-                $states = $outputs;
-                $outputs = array_shift($states);
-                return [$outputs,$states];
-            } else {
-                return $outputs;
-            }
+            $this->build([$inputs]);
         }
 
         $inputsVariables = [$inputs];

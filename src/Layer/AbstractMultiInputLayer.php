@@ -2,6 +2,7 @@
 namespace Rindow\NeuralNetworks\Layer;
 
 use InvalidArgumentException;
+use ArrayAccess;
 use Interop\Polite\Math\Matrix\NDArray;
 use Rindow\NeuralNetworks\Gradient\Core\GradientUtils;
 use Rindow\NeuralNetworks\Gradient\Core\Undetermined;
@@ -55,7 +56,7 @@ abstract class AbstractMultiInputLayer extends AbstractLayerBase
         return $outputs;
     }
 
-    public function backward(array $dOutputs,array &$grads=null,array $oidsToCollect=null) : array
+    public function backward(array $dOutputs, ArrayAccess $grads=null,array $oidsToCollect=null) : array
     {
         if(count($dOutputs)!=1) {
             throw new InvalidArgumentException('dOutputs must be list containing one NDArray');
@@ -67,7 +68,8 @@ abstract class AbstractMultiInputLayer extends AbstractLayerBase
         $this->assertOutputShape($dOutputs,'backward');
         $dInputs = $this->differentiate($dOutputs);
         $this->assertInputShapes($dInputs,'backward');
-        $this->collectGradients($grads,$oidsToCollect);
+        $this->collectGradients($this->backend,array_map(null,$this->weights(),$this->getGrads()),
+            $grads,$oidsToCollect);
         return $dInputs;
     }
 
@@ -81,15 +83,8 @@ abstract class AbstractMultiInputLayer extends AbstractLayerBase
         if(!is_array($inputs)) {
             throw new InvalidArgumentException('inputs must be list of Variable');
         }
-        $outputs = null;
         if($this->outputShape==null) {
-            $outputs = $this->build($inputs);
-        }
-        if($inputs[0] instanceof Undetermined) {
-            if($outputs===null) {
-                throw new InvalidArgumentException('Undetermined is found in second calling.');
-            }
-            return $outputs;
+            $this->build($inputs);
         }
         $session = $this->preGradientProcessOnSession($inputs);
         $session->begin();

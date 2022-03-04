@@ -64,6 +64,7 @@ class BatchNormalization extends AbstractLayer implements Layer
         $this->gammaInitializer = $K->getInitializer($gamma_initializer);
         $this->movingMeanInitializer  = $K->getInitializer($moving_mean_initializer);
         $this->movingVarianceInitializer = $K->getInitializer($moving_variance_initializer);
+        $this->allocateWeights(2);
     }
 
     public function build($variable=null, array $options=null)
@@ -90,19 +91,21 @@ class BatchNormalization extends AbstractLayer implements Layer
         }
         $featureSize = $inputShape[$axis-1];
         $kernelShape = [$featureSize];
-        if($sampleWeights) {
-            if($this->center) {
-                $this->beta = $sampleWeights[0];
-            }
-            if($this->scale) {
-                $this->gamma = $sampleWeights[1];
-            }
-        } else {
-            if($this->center) {
-                $this->beta  = $betaInitializer($kernelShape);
-            }
-            if($this->scale) {
-                $this->gamma = $gammaInitializer($kernelShape);
+        if($this->beta===null) {
+            if($sampleWeights) {
+                if($this->center) {
+                    $this->beta = $sampleWeights[0];
+                }
+                if($this->scale) {
+                    $this->gamma = $sampleWeights[1];
+                }
+            } else {
+                if($this->center) {
+                    $this->beta  = $betaInitializer($kernelShape);
+                }
+                if($this->scale) {
+                    $this->gamma = $gammaInitializer($kernelShape);
+                }
             }
         }
         if($this->center) {
@@ -138,6 +141,12 @@ class BatchNormalization extends AbstractLayer implements Layer
     {
         return [$this->dBeta,$this->dGamma];
     }
+
+    public function reverseSyncWeightVariables() : void
+    {
+        $this->beta = $this->weights[0]->value();
+        $this->gamma = $this->weights[1]->value();
+}
 
     public function getConfig() : array
     {

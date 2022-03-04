@@ -4,6 +4,7 @@ namespace Rindow\NeuralNetworks\Gradient\Core;
 
 use InvalidArgumentException;
 use stdClass;
+use ArrayAccess;
 use Interop\Polite\Math\Matrix\NDArray;
 use Rindow\NeuralNetworks\Gradient\Module;
 
@@ -147,7 +148,7 @@ class GraphSession
     *  @return array<NDArray> dInputs
     *       function
     */
-    public function backward(array $dOutputs, array &$grads=null, array $oidsToCollect=null) : array
+    public function backward(array $dOutputs, ArrayAccess $grads=null, array $oidsToCollect=null) : array
     {
         $this->begin();
         try {

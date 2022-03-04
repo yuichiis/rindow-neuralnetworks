@@ -4,6 +4,7 @@ namespace Rindow\NeuralNetworks\Gradient\Core;
 
 use InvalidArgumentException;
 use stdClass;
+use ArrayAccess;
 
 trait GradientUtils
 {
@@ -14,11 +15,11 @@ trait GradientUtils
     {
         $outputsVariables = [];
         foreach ($outputs as $v) {
+            $opts = [];
             if($v === null) {
-                $outputsVariables[] = new Undetermined();
-            } else {
-                $outputsVariables[] = new Variable($backend,$v);
+                $opts['undetermined'] = true;
             }
+            $outputsVariables[] = new Variable($backend,$v,$opts);
         }
         if(GradientTape::$autoBackProp) {
             $this->inputsVariables = $inputsVariables;
@@ -27,7 +28,6 @@ trait GradientUtils
                 $o->setCreator($this);
             }
             $this->outputsVariables = $this->referenceVariables($outputsVariables);
-            $this->lockVariableObjects($outputsVariables);
         }
         return $outputsVariables;
     }
@@ -44,16 +44,15 @@ trait GradientUtils
     {
         $outputsVariables = [];
         foreach ($outputs as $v) {
+            $opts = [];
             if($v === null) {
-                $outputsVariables[] = new Undetermined();
-            } else {
-                $outputsVariables[] = new Variable($backend,$v);
+                $opts['undetermined'] = true;
             }
+            $outputsVariables[] = new Variable($backend,$v,$opts);
         }
         if(GradientTape::$autoBackProp) {
             $this->setCreatorToVariables($session,$outputsVariables);
             $session->_setOutputsVariables($this->referenceVariables($outputsVariables));
-            $this->lockVariableObjects($outputsVariables);
         }
         return $outputsVariables;
     }
@@ -68,6 +67,26 @@ trait GradientUtils
             return $this->container;
         }
         return $session->localContainer($this);
+    }
+
+    protected function collectGradients(object $backend, array $mapping, ArrayAccess $grads=null, array $oidsToCollect=null) : void
+    {
+        if($oidsToCollect===null) {
+            return;
+        } elseif(count($oidsToCollect)==0) {
+            return;
+        }
+        $K = $backend;
+        foreach($mapping as [$w,$g]) {
+            $oid = $w;
+            if(in_array($oid,$oidsToCollect,true)) {
+                if(isset($grads[$oid])) {
+                    $grads[$oid] = $K->add($grads[$oid],$g);
+                } else {
+                    $grads[$oid] = $g;
+                }
+            }
+        }
     }
 
     protected function packVariable(object $backend, $value)
@@ -104,13 +123,6 @@ trait GradientUtils
             if($variable!==null) {
                 $variable->setCreator($creator);
             }
-        }
-    }
-
-    protected function lockVariableObjects(array $variables) : void
-    {
-        if(GradientTape::$autoBackProp) {
-            GradientTape::$autoBackProp->lockObjects($variables);
         }
     }
 }

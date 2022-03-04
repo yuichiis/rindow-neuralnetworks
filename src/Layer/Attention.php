@@ -2,6 +2,7 @@
 namespace Rindow\NeuralNetworks\Layer;
 
 use InvalidArgumentException;
+use ArrayAccess;
 use Interop\Polite\Math\Matrix\NDArray;
 use Rindow\NeuralNetworks\Support\GenericUtils;
 use Rindow\NeuralNetworks\Gradient\Core\Variable;
@@ -154,7 +155,7 @@ class Attention extends AbstractLayerBase
         return $outputs;
     }
 
-    public function backward(array $dOutputs,array &$grads=null,array $oidsToCollect=null) : array
+    public function backward(array $dOutputs,ArrayAccess $grads=null,array $oidsToCollect=null) : array
     {
         if(count($dOutputs)!=1) {
             throw new InvalidArgumentException('dOutputs must be list containing one NDArray');
@@ -166,7 +167,8 @@ class Attention extends AbstractLayerBase
         $this->assertOutputShape($dOutputs,'backward');
         $dInputs = $this->differentiate($dOutputs);
         $this->assertInputShapes($dInputs,'backward');
-        $this->collectGradients($grads,$oidsToCollect);
+        $this->collectGradients($this->backend,array_map(null,$this->weights(),$this->getGrads()),
+            $grads,$oidsToCollect);
         return $dInputs;
     }
 
@@ -240,25 +242,26 @@ class Attention extends AbstractLayerBase
     */
     public function __invoke($inputs, bool $training, array $options=null)
     {
-        $outputs = null;
+        //$outputs = null;
         if(!is_array($inputs)) {
             throw new InvalidArgumentException('inputs must be list of Variable');
         }
         if($this->outputShape==null) {
-            $outputs = $this->build($inputs);
+            //$outputs = $this->build($inputs);
+            $this->build($inputs);
         }
         $numOfOutputs = $this->numOfOutputs($options);
-        if($inputs[0] instanceof Undetermined) {
-            if($outputs===null) {
-                throw new InvalidArgumentException('Undetermined is found in second calling.');
-            }
-            if($numOfOutputs>1) {
-                $scoresShape = $this->scoresShape;
-                array_unshift($scoresShape,1);
-                $outputs = [$outputs, new UndeterminedNDArray($scoresShape)];
-            }
-            return $outputs;
-        }
+        //if($inputs[0] instanceof Undetermined) {
+        //    if($outputs===null) {
+        //        throw new InvalidArgumentException('Undetermined is found in second calling.');
+        //    }
+        //    if($numOfOutputs>1) {
+        //        $scoresShape = $this->scoresShape;
+        //        array_unshift($scoresShape,1);
+        //        $outputs = [$outputs, new UndeterminedNDArray($scoresShape)];
+        //    }
+        //    return $outputs;
+        //}
         $session = $this->preGradientProcessOnSession($inputs);
         $session->begin();
         try {

@@ -5,6 +5,8 @@ namespace Rindow\NeuralNetworks\Gradient\Core;
 use InvalidArgumentException;
 use RuntimeException;
 use Throwable;
+use ArrayAccess;
+use WeakMap;
 use Interop\Polite\Math\Matrix\NDArray;
 use Rindow\NeuralNetworks\Support\Control\Execute;
 use Rindow\NeuralNetworks\Gradient\Module;
@@ -134,25 +136,30 @@ class GraphFunction
 
     public function _rawCall(array $inputs,array $options) : array
     {
-        $vars = $this->constants;
-        foreach(array_map(null,$this->startInputOids,$inputs) as $d) {
-            [$oid,$inp] = $d;
+        $K = $this->backend;
+        $vars = new WeakMap();
+        foreach($this->constants as $inp) {
+            $vars[$inp] = $inp->value();
+        }
+        foreach(array_map(null,$this->startInputOids,$inputs) as [$oid,$inp]) {
             $vars[$oid] = $inp;
         }
+        
         $funcs = $this->pipeline;
 
         foreach($funcs as $func) {
-            $oids = $this->getObjectIds($func->inputs());
+            $oids = $func->inputs();
             $inps = array_map(function($oid) use ($vars) {return $vars[$oid];}, $oids);
             $opts = [];
             foreach ($func->options() as $key => $variable) {
-                $oid = spl_object_id($variable);
-                $opts[$key] = $vars[$oid] ?? null;
+                $opts[$key] = $vars[$variable] ?? null;
             }
             $outs = $func->_rawCall($inps,$opts);
-            foreach(array_map(null,$func->outputs(),$outs) as $d) {
-                [$o,$out] = $d;
-                $vars[$o->oid()] = $out;
+            foreach(array_map(null,$func->outputs(),$outs) as [$o,$out]) {
+                $oid = $o->get();
+                if($oid!==null) {
+                    $vars[$oid] = $out;
+                }
             }
         }
         
@@ -166,47 +173,41 @@ class GraphFunction
     protected function build(array $inputs)
     {
         $K = $this->backend;
-        echo "==BUILD START==\n";
         $creator = $this->alternateCreator ?? $this;
         $sessionFunc = new GraphSession($creator,$inputs);
         $sessionFunc->_setGeneration($this->maxGeneration($inputs));
-        echo "input oids=[".implode(',',array_map(function($x){return spl_object_id($x);},$inputs))."]\n";
         $inputs = $this->repackVariables($this->backend,$inputs);
-        echo "repack input oids=[".implode(',',array_map(function($x){return spl_object_id($x);},$inputs))."]\n";
-        $this->startInputOids = $this->getObjectIds($inputs);
-        echo "input values=[".implode(',',array_map(function($x) use ($K) {return $K->toString($x->value());},$inputs))."]\n";
+        $this->startInputOids = $inputs;
 
         // build graph
         $this->numOfInputs = count($inputs);
-        if($inputs[0] instanceof Undetermined) {
-            for($i=0;$i<$this->numOfOutputs;$i++) {
-                $graphOutputs[] = new Undetermined();
-            }
-        } else {
-            $func = $this->func;
-            $graphOutputs = Execute::with(new GradientTape($this->backend),function() use ($sessionFunc,$func,$inputs) {
-                return $this->executeOnMode($sessionFunc,self::UNDER_CONSTRUCTION,function() use ($func,$inputs) {
-                    return $func(...$inputs);
-                });
+        $func = $this->func;
+        $graphOutputs = Execute::with(new GradientTape($this->backend),function() use ($sessionFunc,$func,$inputs) {
+            return $this->executeOnMode($sessionFunc,self::UNDER_CONSTRUCTION,function() use ($func,$inputs) {
+                return $func(...$inputs);
             });
-            if(!is_array($graphOutputs)) {
-                $graphOutputs = [$graphOutputs];
-            }
+        });
+        if(!is_array($graphOutputs)) {
+            $graphOutputs = [$graphOutputs];
         }
 
-        echo "graphOutputs oids=[".implode(',',array_map(function($x){return spl_object_id($x);},$graphOutputs))."]\n";
-        echo "output values=[".implode(',',array_map(function($x) use ($K) {return $K->toString($x->value());},$graphOutputs))."]\n";
-        $this->endOutputOids = $this->getObjectIds($graphOutputs);
+        $this->endOutputOids = $graphOutputs;
 
-        [$pipeline,$constants] = $this->buildPipeline($graphOutputs);
-
+        [$pipeline,$tmpconsts] = $this->buildPipeline($graphOutputs);
+        $constants = [];
+        foreach($tmpconsts as $c) {
+            if(!in_array($c,$this->startInputOids,true)) {
+                $constants[] = $c;
+            }
+        }
+        unset($tmpconsts);
         $this->constants = $constants; // NDArray
         $this->pipeline = array_reverse($pipeline); // Func
         $this->built = true;
         $outputs = $this->repackVariables($this->backend,$graphOutputs);
         foreach($pipeline as $func) {
             foreach($func->inputs() as $o) {
-                if(!($o->creator()==null && !in_array(spl_object_id($o),$this->startInputOids))) {
+                if($o->creator()!==null || in_array($o,$this->startInputOids,true)) {
                     // Clearing variables without constants and weights.
                     // Because It wants to save the math buffer.
                     $o->_clearValue();
@@ -215,7 +216,6 @@ class GraphFunction
         }
         $this->setCreatorToVariables($sessionFunc,$outputs);
         $sessionFunc->_setOutputsVariables($this->referenceVariables($outputs));
-        echo "==BUILD END==\n";
         if(count($outputs)==1) {
             return $outputs[0];
         }
@@ -228,15 +228,15 @@ class GraphFunction
     *  @return array<NDArray>
     *       outputs
     */
-    public function backward(array $dOutputs, array &$grads=null, array $oidsToCollect=null) : array
+    public function backward(array $dOutputs, ArrayAccess $grads=null, array $oidsToCollect=null) : array
     {
         if(!$this->built) {
             throw new RuntimeException('Not yet built');
         }
         $K = $this->backend;
-        $backupGradOids = array_keys($grads);
+        //$backupGradOids = array_keys($grads);
         foreach(array_map(null,$this->endOutputOids,$dOutputs) as $oset) {
-            [$oid,$dOut] = $oset; 
+            [$oid,$dOut] = $oset;
             $grads[$oid] = $dOut;
         }
         unset($output);
@@ -255,15 +255,16 @@ class GraphFunction
             }
             $dInputs[] = $grads[$oid];
         }
-        $unsets = [];
-        foreach ($grads as $oid => $value) {
-            if(!in_array($oid,$oidsToCollect) && !in_array($oid,$backupGradOids)) {
-                $unsets[] = $oid;
-            }
-        }
-        foreach ($unsets as $oid) {
-            unset($grads[$oid]);
-        }
+        // Like WeakMap
+        //$unsets = [];
+        //foreach ($grads as $oid => $value) {
+        //    if(!in_array($oid,$oidsToCollect,true) && !in_array($oid,$backupGradOids,true)) {
+        //        $unsets[] = $oid;
+        //    }
+        //}
+        //foreach ($unsets as $oid) {
+        //    unset($grads[$oid]);
+        //}
         return $dInputs;
     }
 

@@ -52,6 +52,7 @@ class GRU extends AbstractRNNLayer
         if($use_bias) {
             $this->useBias = $use_bias;
         }
+        $this->allocateWeights($this->useBias?3:2);
         $this->kernelInitializerName = $kernel_initializer;
         $this->recurrentInitializerName = $recurrent_initializer;
         $this->biasInitializerName = $bias_initializer;
@@ -104,6 +105,7 @@ class GRU extends AbstractRNNLayer
             $this->outputShape = [$this->units];
         }
         $this->normalizeInitialStatesShape($variables,$this->statesShapes);
+        $this->syncWeightVariables();
         if($this->returnState) {
             return $this->createOutputDefinition(array_merge([$this->outputShape],$this->statesShapes));
         } else {
@@ -111,21 +113,6 @@ class GRU extends AbstractRNNLayer
         }
     }
 
-    public function setShapeInspection(bool $enable)
-    {
-        parent::setShapeInspection($enable);
-        $this->cell->setShapeInspection($enable);
-    }
-
-    public function getParams() : array
-    {
-        return $this->cell->getParams();
-    }
-
-    public function getGrads() : array
-    {
-        return $this->cell->getGrads();
-    }
 
     public function getConfig() : array
     {

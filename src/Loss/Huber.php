@@ -5,6 +5,7 @@ use Interop\Polite\Math\Matrix\NDArray;
 use Rindow\NeuralNetworks\Support\GenericUtils;
 use InvalidArgumentException;
 use DomainException;
+use ArrayAccess;
 
 class Huber extends AbstractGradient implements Loss
 {
@@ -59,7 +60,7 @@ class Huber extends AbstractGradient implements Loss
         return $K->scalar($K->sum($loss))/$N;
     }
 
-    public function backward(array $dOutputs, array &$grads=null, array $oidsToCollect=null) : array
+    public function backward(array $dOutputs, ArrayAccess $grads=null, array $oidsToCollect=null) : array
     {
         $K = $this->backend;
         $container = $this->container();

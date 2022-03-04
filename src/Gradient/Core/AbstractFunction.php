@@ -129,14 +129,8 @@ abstract class AbstractFunction
         if(GradientTape::$autoBackProp) {
             $this->inputsVariables = $inputs;
         }
-        if($inputs[0] instanceof Undetermined) {
-            for($i=0;$i<$this->numOfOutputs;$i++) {
-                $outValues[] = null;
-            }
-        } else {
-            $values = array_map(function($input){return $input->value();},$inputs);
-            $outValues = $this->call($values);
-        }
+        $values = array_map(function($input){return $input->value();},$inputs);
+        $outValues = $this->call($values);
         $outputs = $this->postGradientProcess($this->backend,$inputs,$outValues);
 
         if(count($outputs)==1) {

@@ -122,7 +122,6 @@ class TextFilter implements DatasetFilter
             'truncating'=>$this->truncating,
             'value'=>$this->value,
         ]);
-        //var_dump($inputsArray->toArray());
 
         $testsCount = count($tests);
         $testsArray = $this->mo->la()->alloc([$testsCount],$this->dtype);

@@ -134,4 +134,24 @@ foreach($parameters as $parameter) {
     }
     echo "\n";
 }
+
+echo "==== object in_array====\n";
+$a = new stdClass();
+$b = new stdClass();
+$c = (object)['C'];
+$d = new stdClass();
+$array = [$a,$b,$c];
+var_dump(in_array($a,$array));
+var_dump(in_array($c,$array));
+var_dump(in_array($d,$array));
+var_dump(in_array($a,$array,true));
+var_dump(in_array($d,$array,true));
+
+//[$a, ...$b] = [1,2,3]; // Error
+//var_dump($a);
+//var_dump($b);
+$a = 1;
+$b = [2,3];
+$c = [$a, ...$b];
+var_dump($c);
 exit();

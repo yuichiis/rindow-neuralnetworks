@@ -4,6 +4,7 @@ namespace Rindow\NeuralNetworks\Loss;
 use Interop\Polite\Math\Matrix\NDArray;
 use InvalidArgumentException;
 use DomainException;
+use ArrayAccess;
 
 class MeanSquaredError extends AbstractGradient implements Loss
 {
@@ -40,7 +41,7 @@ class MeanSquaredError extends AbstractGradient implements Loss
         return $loss;
     }
 
-    public function backward(array $dOutputs, array &$grads=null, array $oidsToCollect=null) : array
+    public function backward(array $dOutputs, ArrayAccess $grads=null, array $oidsToCollect=null) : array
     {
         $K = $this->backend;
         $container = $this->container();

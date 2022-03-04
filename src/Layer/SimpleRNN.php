@@ -50,6 +50,7 @@ class SimpleRNN extends AbstractRNNLayer
         if($use_bias) {
             $this->useBias = $use_bias;
         }
+        $this->allocateWeights($this->useBias?3:2);
         $this->setActivation($activation);
         $activation = $this->activation;
         $this->activation = null;
@@ -100,27 +101,12 @@ class SimpleRNN extends AbstractRNNLayer
             $this->outputShape = [$this->units];
         }
         $this->normalizeInitialStatesShape($variables,$this->statesShapes);
+        $this->syncWeightVariables();
         if($this->returnState) {
             return $this->createOutputDefinition(array_merge([$this->outputShape],$this->statesShapes));
         } else {
             return $this->createOutputDefinition([$this->outputShape]);
         }
-    }
-
-    public function setShapeInspection(bool $enable)
-    {
-        parent::setShapeInspection($enable);
-        $this->cell->setShapeInspection($enable);
-    }
-
-    public function getParams() : array
-    {
-        return $this->cell->getParams();
-    }
-
-    public function getGrads() : array
-    {
-        return $this->cell->getGrads();
     }
 
     public function getConfig() : array

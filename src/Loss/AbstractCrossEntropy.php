@@ -8,6 +8,7 @@ use Rindow\NeuralNetworks\Gradient\Core\GradientTape;
 use Rindow\NeuralNetworks\Support\GenericUtils;
 use InvalidArgumentException;
 use DomainException;
+use ArrayAccess;
 
 abstract class AbstractCrossEntropy extends AbstractGradient implements Loss//,Activation
 {
@@ -77,7 +78,7 @@ abstract class AbstractCrossEntropy extends AbstractGradient implements Loss//,A
     }
 
     //public function differentiateLoss() : NDArray
-    public function backward(array $dOutputs, array &$grads=null, array $oidsToCollect=null) : array
+    public function backward(array $dOutputs, ArrayAccess $grads=null, array $oidsToCollect=null) : array
     {
         $container = $this->container();
         $dInputs = $this->diffLossFunction(
