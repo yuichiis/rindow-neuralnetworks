@@ -40,6 +40,7 @@ class GRU extends AbstractRNNLayer
             'go_backwards'=>false,
             'stateful'=>false,
             'reset_after'=>true,
+            'name'=>null,
             //'kernel_regularizer'=>null, 'bias_regularizer'=>null,
             //'activity_regularizer'=null,
             //'kernel_constraint'=null, 'bias_constraint'=null,
@@ -61,6 +62,7 @@ class GRU extends AbstractRNNLayer
         $this->goBackwards = $go_backwards;
         $this->stateful = $stateful;
         $this->resetAfter = $reset_after;
+        $this->initName($name,'gru');
         $this->cell = new GRUCell(
             $this->backend,
             $this->units,
@@ -104,13 +106,7 @@ class GRU extends AbstractRNNLayer
         }else{
             $this->outputShape = [$this->units];
         }
-        $this->normalizeInitialStatesShape($variables,$this->statesShapes);
         $this->syncWeightVariables();
-        if($this->returnState) {
-            return $this->createOutputDefinition(array_merge([$this->outputShape],$this->statesShapes));
-        } else {
-            return $this->createOutputDefinition([$this->outputShape]);
-        }
     }
 
 

@@ -14,11 +14,6 @@ abstract class AbstractActivation implements Activation
         $this->backend = $backend;
     }
 
-    public function getStates() : object
-    {
-        return $this->states;
-    }
-
     public function setStates($states) : void
     {
         $this->states = $states;
@@ -26,12 +21,20 @@ abstract class AbstractActivation implements Activation
 
     public function forward(NDArray $inputs, bool $training) : NDArray
     {
-        $this->states = new \stdClass();
-        return $this->call($inputs,$training);
+        if($this->states===null) {
+            $this->states = new \stdClass();
+        }
+        $outputs = $this->call($inputs,$training);
+        return $outputs;
     }
 
     public function backward(NDArray $dOutputs) : NDArray
     {
-        return $this->differentiate($dOutputs);
+        try {
+            $dInputs = $this->differentiate($dOutputs);
+        } finally {
+            $this->states = null;
+        }
+        return $dInputs;
     }
 }

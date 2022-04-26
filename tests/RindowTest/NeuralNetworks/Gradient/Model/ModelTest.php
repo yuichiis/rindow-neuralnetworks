@@ -6,12 +6,12 @@ use PHPUnit\Framework\TestCase;
 use Interop\Polite\Math\Matrix\NDArray;
 use Rindow\Math\Matrix\MatrixOperator;
 use Rindow\NeuralNetworks\Builder\NeuralNetworks;
-use Rindow\NeuralNetworks\Model\DynamicModel;
+use Rindow\NeuralNetworks\Model\AbstractModel;
 use Rindow\Math\Plot\Plot;
 
 use Rindow\NeuralNetworks\Gradient\Core\GradientTape;
 
-class TestModel1 extends DynamicModel
+class TestModel1 extends AbstractModel
 {
     public function __construct(
         $backend,
@@ -30,7 +30,7 @@ class TestModel1 extends DynamicModel
     }
 }
 
-class TestModel2 extends DynamicModel
+class TestModel2 extends AbstractModel
 {
     public function __construct(
         $backend,
@@ -54,7 +54,7 @@ class TestModel2 extends DynamicModel
     }
 }
 
-class Test3Mini1 extends DynamicModel
+class Test3Mini1 extends AbstractModel
 {
     public function __construct(
         $backend,
@@ -74,7 +74,7 @@ class Test3Mini1 extends DynamicModel
     }
 }
 
-class Test3Mini2 extends DynamicModel
+class Test3Mini2 extends AbstractModel
 {
     public function __construct(
         $backend,
@@ -92,7 +92,7 @@ class Test3Mini2 extends DynamicModel
     }
 }
 
-class Test3Main extends DynamicModel
+class Test3Main extends AbstractModel
 {
     public function __construct(
         $backend,
@@ -114,7 +114,7 @@ class Test3Main extends DynamicModel
     }
 }
 
-class TestRNNEncoder extends DynamicModel
+class TestRNNEncoder extends AbstractModel
 {
     public function __construct(
         $backend,
@@ -142,7 +142,7 @@ class TestRNNEncoder extends DynamicModel
     }
 }
 
-class TestRNNDecoder extends DynamicModel
+class TestRNNDecoder extends AbstractModel
 {
     public function __construct(
         $backend,
@@ -188,7 +188,7 @@ class TestRNNDecoder extends DynamicModel
     }
 }
 
-class TestRNNMain extends DynamicModel
+class TestRNNMain extends AbstractModel
 {
     public function __construct(
         $mo,
@@ -215,21 +215,6 @@ class TestRNNMain extends DynamicModel
         $outputs = $out($outputs,$training);
         return $outputs;
     }
-
-    //public function shiftRight(NDArray $sequences)
-    //{
-    //    $K = $this->backend;
-    //    $g = $this->builder->gradient();
-    //    if($g->isUndetermined($sequences)) {
-    //        return $g->Undetermined();
-    //    }
-    //    $shape = $sequences->shape();
-    //    $batchs = $shape[0];
-    //    $zeroPad = $K->zeros([$batchs,1],$sequences->dtype());
-    //    $seq = $K->slice($sequences,[0,0],[-1,-2]);
-    //    $result = $K->concat([$zeroPad,$seq],$axis=1);
-    //    return $g->Variable($result);
-    //}
 
     public function shiftLeftSentence(
         NDArray $sentence
@@ -309,7 +294,7 @@ class TestRNNMain extends DynamicModel
     }
 }
 
-class TestVariableMini1 extends DynamicModel
+class TestVariableMini1 extends AbstractModel
 {
     public function __construct(
         $backend,
@@ -339,7 +324,7 @@ class TestVariableMini1 extends DynamicModel
     }
 }
 
-class TestVariableMini2 extends DynamicModel
+class TestVariableMini2 extends AbstractModel
 {
     public function __construct(
         $backend,
@@ -366,7 +351,7 @@ class TestVariableMini2 extends DynamicModel
     }
 }
 
-class TestVariableMain extends DynamicModel
+class TestVariableMain extends AbstractModel
 {
     public function __construct(
         $backend,
@@ -388,7 +373,7 @@ class TestVariableMain extends DynamicModel
     }
 }
 
-class TestGraphMode extends DynamicModel
+class TestGraphMode extends AbstractModel
 {
     protected $log = [];
 

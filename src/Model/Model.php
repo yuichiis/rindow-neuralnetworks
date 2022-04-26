@@ -2,8 +2,9 @@
 namespace Rindow\NeuralNetworks\Model;
 
 use Interop\Polite\Math\Matrix\NDArray;
+use Rindow\NeuralNetworks\Gradient\Module;
 
-interface Model
+interface Model extends Module
 {
     public function compile(array $options=null) : void;
     public function fit($inputs, NDArray $tests, array $options=null) : array;

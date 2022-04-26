@@ -199,17 +199,20 @@ class GRUCell extends AbstractRNNCell
             $K->update_add($x_z,$internal_z);
             $K->update_add($x_r,$internal_r);
             if($this->recurrentActivation){
+                $calcState->ac_z = new \stdClass();
+                $this->recurrentActivation->setStates($calcState->ac_z);
                 $x_z = $this->recurrentActivation->forward($x_z,$training);
-                $calcState->ac_z = $this->recurrentActivation->getStates();
+                $calcState->ac_r = new \stdClass();
+                $this->recurrentActivation->setStates($calcState->ac_r);
                 $x_r = $this->recurrentActivation->forward($x_r,$training);
-                $calcState->ac_r = $this->recurrentActivation->getStates();
             }
             // hh = t(hh + (r * internal_hh))
             $internal_hh = $K->mul($x_r,$internal_hh);
             $K->update_add($x_hh,$internal_hh);
             if($this->activation){
+                $calcState->ac_hh = new \stdClass();
+                $this->activation->setStates($calcState->ac_hh);
                 $x_hh = $this->activation->forward($x_hh,$training);
-                $calcState->ac_hh = $this->activation->getStates();
             }
         } else { // if(reset_after==false)
             // z = s(prev_h dot hwz + hbz)
@@ -217,17 +220,20 @@ class GRUCell extends AbstractRNNCell
             $x_z = $K->gemm($prev_h, $this->r_kernel_z,1.0,1.0,$x_z);
             $x_r = $K->gemm($prev_h, $this->r_kernel_r,1.0,1.0,$x_r);
             if($this->recurrentActivation){
+                $calcState->ac_z = new \stdClass();
+                $this->recurrentActivation->setStates($calcState->ac_z);
                 $x_z = $this->recurrentActivation->forward($x_z,$training);
-                $calcState->ac_z = $this->recurrentActivation->getStates();
+                $calcState->ac_r = new \stdClass();
+                $this->recurrentActivation->setStates($calcState->ac_r);
                 $x_r = $this->recurrentActivation->forward($x_r,$training);
-                $calcState->ac_r = $this->recurrentActivation->getStates();
             }
             // hh = t((r * prev_h) dot hwhh + hh)
             $x_r_prev_r = $K->mul($x_r,$prev_h);
             $x_hh = $K->gemm($x_r_prev_r, $this->r_kernel_hh,1.0,1.0,$x_hh);
             if($this->activation){
+                $calcState->ac_hh = new \stdClass();
+                $this->activation->setStates($calcState->ac_hh);
                 $x_hh = $this->activation->forward($x_hh,$training);
-                $calcState->ac_hh = $this->activation->getStates();
             }
         }
         // next_h = z * prev_h +  (1-z) * hh

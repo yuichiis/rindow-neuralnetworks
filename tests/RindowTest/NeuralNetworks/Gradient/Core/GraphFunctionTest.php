@@ -489,4 +489,151 @@ class Test extends TestCase
             $K->ndarray($gradients)));
     }
 
+    public function testBackwardDiscardedVariableInBatchBoundary1()
+    {
+        $mo = $this->newMatrixOperator();
+        $nn = $this->newNeuralNetworks($mo);
+        $K = $this->newBackend($nn);
+        $g = $nn->gradient();
+        $rnn = $nn->layers()->GRU(2,[
+            'return_state'=>true,'return_sequences'=>true,
+            'recurrent_initializer'=>'glorot_uniform'
+        ]);
+
+        $func0 = $g->Function(function($x,$state) use ($K,$g,$rnn) {
+            [$y,$dmyStates] = $rnn->forward($x,true,[$state]);
+            return $y;
+        });
+
+        $x = $g->Variable($K->ones([10,4,2]));
+        $state = $g->Variable($K->zeros([10,2]));
+
+        // building
+        $outputs = $nn->with($tape=$g->GradientTape(),
+            function() use ($K,$func0,$x,$state) {
+                $outputs = $func0($x,$state);
+                return $outputs;
+            }
+        );
+        $params = $rnn->trainableVariables();
+        $gradients = $tape->gradient($outputs, array_merge([$x],$params));
+        $this->assertEquals([10,4,2],$outputs->shape());
+        $this->assertCount(4,$gradients);
+        $this->assertEquals([10,4,2],$gradients[0]->shape()); // dx
+
+        // built graph
+        $x = $g->Variable($K->ones([2,4,2]));
+        $state = $g->Variable($K->zeros([2,2]));
+
+        $outputs = $nn->with($tape=$g->GradientTape(),
+            function() use ($K,$func0,$x,$state) {
+                $outputs = $func0($x,$state);
+                return $outputs;
+            }
+        );
+        $params = $rnn->trainableVariables();
+        $gradients = $tape->gradient($outputs, array_merge([$x],$params));
+        $this->assertEquals([2,4,2],$outputs->shape());
+        $this->assertCount(4,$gradients);
+        $this->assertEquals([2,4,2],$gradients[0]->shape());
+    }
+
+    public function testBackwardDiscardedVariableInBatchBoundary2()
+    {
+        $mo = $this->newMatrixOperator();
+        $nn = $this->newNeuralNetworks($mo);
+        $K = $this->newBackend($nn);
+        $g = $nn->gradient();
+
+        $func0 = $g->Function(function($x1,$x2) use ($K,$g) {
+            $y1 = $g->add($x1,$x2);
+            $y2 = $g->add($y1,$x1);
+            $y3 = $g->add($y1,$y2);
+            return $y2;
+        });
+
+        // building
+        $x1 = $g->Variable($K->ones([10,2]));
+        $x2 = $g->Variable($K->ones([10,2]));
+
+        $outputs = $nn->with($tape=$g->GradientTape(),
+            function() use ($K,$func0,$x1,$x2) {
+                $outputs = $func0($x1,$x2);
+                return $outputs;
+            }
+        );
+        $gradients = $tape->gradient($outputs, [$x1,$x2]);
+        $this->assertEquals([10,2],$outputs->shape());
+        $this->assertCount(2,$gradients);
+        $this->assertEquals([10,2],$gradients[0]->shape()); // dx
+        $this->assertEquals([10,2],$gradients[1]->shape()); // dx
+
+        // built graph
+        $x1 = $g->Variable($K->ones([2,2]));
+        $x2 = $g->Variable($K->ones([2,2]));
+
+        $outputs = $nn->with($tape=$g->GradientTape(),
+            function() use ($K,$func0,$x1,$x2) {
+                $outputs = $func0($x1,$x2);
+                return $outputs;
+            }
+        );
+        $gradients = $tape->gradient($outputs, [$x1,$x2]);
+        $this->assertEquals([2,2],$outputs->shape());
+        $this->assertCount(2,$gradients);
+        $this->assertEquals([2,2],$gradients[0]->shape()); // dx
+        $this->assertEquals([2,2],$gradients[1]->shape()); // dx
+    }
+
+    public function testBackwardDiscardedVariableInBatchBoundary3()
+    {
+        $mo = $this->newMatrixOperator();
+        $nn = $this->newNeuralNetworks($mo);
+        $K = $this->newBackend($nn);
+        $g = $nn->gradient();
+
+        $func1 = $g->Function(function($x1,$x2) use ($K,$g) {
+            $y1 = $g->add($x1,$x2);
+            $y2 = $g->add($y1,$x1);
+            $y3 = $g->add($y1,$y2);
+            return [$y2,$y3];
+        });
+
+        $func0 = $g->Function(function($x1,$x2) use ($K,$g,$func1) {
+            [$y,$dmy] = $func1($x1,$x2);
+            return $y;
+        });
+
+        // building
+        $x1 = $g->Variable($K->ones([10,2]));
+        $x2 = $g->Variable($K->ones([10,2]));
+
+        $outputs = $nn->with($tape=$g->GradientTape(),
+            function() use ($K,$func0,$x1,$x2) {
+                $outputs = $func0($x1,$x2);
+                return $outputs;
+            }
+        );
+        $gradients = $tape->gradient($outputs, [$x1,$x2]);
+        $this->assertEquals([10,2],$outputs->shape());
+        $this->assertCount(2,$gradients);
+        $this->assertEquals([10,2],$gradients[0]->shape()); // dx
+        $this->assertEquals([10,2],$gradients[1]->shape()); // dx
+
+        // built graph
+        $x1 = $g->Variable($K->ones([2,2]));
+        $x2 = $g->Variable($K->ones([2,2]));
+
+        $outputs = $nn->with($tape=$g->GradientTape(),
+            function() use ($K,$func0,$x1,$x2) {
+                $outputs = $func0($x1,$x2);
+                return $outputs;
+            }
+        );
+        $gradients = $tape->gradient($outputs, [$x1,$x2]);
+        $this->assertEquals([2,2],$outputs->shape());
+        $this->assertCount(2,$gradients);
+        $this->assertEquals([2,2],$gradients[0]->shape()); // dx
+        $this->assertEquals([2,2],$gradients[1]->shape()); // dx
+    }
 }

@@ -5,7 +5,7 @@ use InvalidArgumentException;
 use Interop\Polite\Math\Matrix\NDArray;
 use Rindow\NeuralNetworks\Support\GenericUtils;
 
-class Max extends AbstractLayer implements Layer
+class Max extends AbstractLayer
 {
     use GenericUtils;
     protected $backend;
@@ -16,10 +16,12 @@ class Max extends AbstractLayer implements Layer
         extract($this->extractArgs([
             'axis'=>-1,
             'input_shape'=>null,
+            'name'=>null,
         ],$options));
         $this->backend = $backend;
         $this->axis = $axis;
         $this->inputShape = $input_shape;
+        $this->initName($name,'max');
     }
 
     public function build($variable=null, array $options=null)
@@ -50,7 +52,6 @@ class Max extends AbstractLayer implements Layer
         $this->realAxis = $axis+1;
 
         $this->outputShape = $outputShape;
-        return $this->createOutputDefinition([$this->outputShape]);
     }
 
     public function getParams() : array

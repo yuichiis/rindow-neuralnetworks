@@ -1,5 +1,9 @@
 <?php
 namespace Rindow\NeuralNetworks\Gradient;
 
-interface Variable
+use Countable;
+use IteratorAggregate;
+use Interop\Polite\Math\Matrix\NDArray;
+
+interface Variable extends NDArray, Countable, IteratorAggregate
 {}

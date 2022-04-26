@@ -5,6 +5,7 @@ use Rindow\NeuralNetworks\Support\GenericUtils;
 use Interop\Polite\Math\Matrix\NDArray;
 use Rindow\NeuralNetworks\Layer\AbstractRNNLayer;
 use Rindow\NeuralNetworks\Model\AbstractModel;
+use Rindow\NeuralNetworks\Gradient\Variable;
 use Rindow\Math\Matrix\MatrixOperator;
 use Rindow\Math\Plot\Plot;
 use Rindow\NeuralNetworks\Backend\RindowBlas\Backend;
@@ -181,7 +182,7 @@ class Encoder extends AbstractModel
 
     protected function call(
         object $inputs,
-        bool $training,
+        Variable|bool $training,
         array $initial_state=null,
         array $options=null
         ) : array
@@ -239,7 +240,7 @@ class Decoder extends AbstractModel
 
     protected function call(
         object $inputs,
-        bool $training,
+        Variable|bool $training,
         array $initial_state=null,
         array $options=null
         ) : array
@@ -344,7 +345,7 @@ class Seq2seq extends AbstractModel
         return $this->shiftLeftSentence($trues);
     }
 
-    public function predict(NDArray $inputs, array $options=null) : NDArray
+    public function predict($inputs, array $options=null) : NDArray
     {
         $K = $this->backend;
         $attentionPlot = $options['attention_plot'];
@@ -483,6 +484,7 @@ $seq2seq->compile([
     'optimizer'=>'adam',
     'metrics'=>['accuracy','loss'],
 ]);
+$seq2seq->build([1,$inputLength], true, [1,$outputLength]); // just for summary
 $seq2seq->summary();
 
 $modelFilePath = __DIR__."/neural-machine-translation-with-attention.model";

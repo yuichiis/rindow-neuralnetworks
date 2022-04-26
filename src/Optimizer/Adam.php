@@ -2,7 +2,7 @@
 namespace Rindow\NeuralNetworks\Optimizer;
 
 use Rindow\NeuralNetworks\Support\GenericUtils;
-use Rindow\NeuralNetworks\Gradient\Core\Variable;
+use Rindow\NeuralNetworks\Gradient\Variable;
 use UnexpectedValueException;
 
 class Adam implements Optimizer
@@ -40,8 +40,19 @@ class Adam implements Optimizer
         if($this->m === null) {
             return [];
         }
-
         return array_merge([$this->iter],$this->m,$this->v);
+    }
+
+    public function loadWeights(array $params) : void
+    {
+        $this->iter = array_shift($params);
+        $count = (int)intval(count($params)/2);
+        $m = [];
+        for($i=0;$i<$count;$i++) {
+            $m[] = array_shift($params);
+        }
+        $this->m = $m;
+        $this->v = $params;
     }
 
     public function getConfig() : array
@@ -94,11 +105,11 @@ class Adam implements Optimizer
         $lr_t = $this->lr * sqrt(1.0 - ($this->beta2**$iter)) /
                                 (1.0 - ($this->beta1**$iter)) ;
 
-        foreach (array_keys($params) as $key) {
-            $p = $params[$key];
-            $g = $grads[$key];
-            $m = $this->m[$key];
-            $v = $this->v[$key];
+        foreach(array_map(null,$params,$grads,$this->m,$this->v) as [$p,$g,$m,$v]) {
+            //$p = $params[$key];
+            //$g = $grads[$key];
+            //$m = $this->m[$key];
+            //$v = $this->v[$key];
 
             // m = ( beta_1 * m ) + ( 1 - beta_1 ) * g
             // v = ( beta_2 * v ) + ( 1 - beta_2 ) * g**2

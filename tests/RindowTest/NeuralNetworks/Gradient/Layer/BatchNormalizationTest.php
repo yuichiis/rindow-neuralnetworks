@@ -45,9 +45,10 @@ class Test extends TestCase
                 return $outputs;
             }
         );
-        $gradients = $tape->gradient($outputs, $layer->weights());
+        $gradients = $tape->gradient($outputs, $layer->trainableVariables());
 
-        $this->assertCount(2,$layer->weights());
+        $this->assertCount(4,$layer->variables());
+        $this->assertCount(2,$layer->trainableVariables());
         $this->assertCount(2,$gradients);
         $this->assertEquals([2,3],$outputs->value()->shape());
         $this->assertEquals([3],$gradients[0]->shape());

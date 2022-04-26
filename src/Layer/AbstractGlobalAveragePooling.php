@@ -5,7 +5,7 @@ use InvalidArgumentException;
 use Interop\Polite\Math\Matrix\NDArray;
 use Rindow\NeuralNetworks\Support\GenericUtils;
 
-class AbstractGlobalAveragePooling extends AbstractImage implements Layer
+class AbstractGlobalAveragePooling extends AbstractImage
 {
     use GenericUtils;
     protected $backend;
@@ -51,7 +51,6 @@ class AbstractGlobalAveragePooling extends AbstractImage implements Layer
         }
         $this->reduceShape = (int)array_product($inputShape);
         $this->outputShape = [$channels];
-        return $this->createOutputDefinition([$this->outputShape]);
     }
 
     public function getParams() : array

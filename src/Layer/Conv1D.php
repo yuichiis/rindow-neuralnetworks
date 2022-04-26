@@ -3,9 +3,19 @@ namespace Rindow\NeuralNetworks\Layer;
 
 use Interop\Polite\Math\Matrix\NDArray;
 
-class Conv1D extends AbstractConv implements Layer
+class Conv1D extends AbstractConv
 {
     protected $rank = 1;
+
+    public function __construct(object $backend,int $filters, $kernel_size, array $options=null)
+    {
+        $leftargs = [];
+        extract($this->extractArgs([
+            'name'=>null,
+        ],$options,$leftargs));
+        $this->initName($name,'conv1d');
+        parent::__construct($backend, $filters, $kernel_size, $leftargs);
+    }
 
     protected function call(NDArray $inputs, bool $training) : NDArray
     {
@@ -22,8 +32,11 @@ class Conv1D extends AbstractConv implements Layer
                 $this->data_format,
                 $this->dilation_rate
         );
-        if($this->activation)
+        if($this->activation) {
+            $container->activation = new \stdClass();
+            $this->activation->setStates($container->activation);
             $outputs = $this->activation->forward($outputs,$training);
+        }
         return $outputs;
     }
 
@@ -31,8 +44,10 @@ class Conv1D extends AbstractConv implements Layer
     {
         $K = $this->backend;
         $container = $this->container();
-        if($this->activation)
+        if($this->activation) {
+            $this->activation->setStates($container->activation);
             $dOutputs = $this->activation->backward($dOutputs);
+        }
         $dInputs = $K->dConv1d(
             $container->status,
             $dOutputs,

@@ -82,6 +82,16 @@ function formatingImage($mo,$train_img,$inputShape) {
     return $mo->scale(1.0/255.0,$mo->astype($train_img,NDArray::float32));
 }
 
+//echo "slice images ...\n";
+//$samples = 1000;
+//$testSamples = (int)min(ceil($samples/10),count($test_img));
+//$train_img = $train_img[[0,$samples-1]];
+//$train_label = $train_label[[0,$samples-1]];
+//$test_img = $test_img[[0,$testSamples-1]];
+//$test_label = $test_label[[0,$testSamples-1]];
+//echo "Truncated train=[".implode(',',$train_img->shape())."]\n";
+//echo "Truncated test=[".implode(',',$test_img->shape())."]\n";
+
 echo "formating train images ...\n";
 $train_img = formatingImage($mo,$train_img,$inputShape);
 $train_label = $mo->la()->astype($train_label,NDArray::int32);
@@ -161,6 +171,7 @@ if(file_exists($modelFilePath)) {
     $plt->legend();
     $plt->title($dataset);
 }
+
 $images = $test_img[[0,7]];
 $labels = $test_label[[0,7]];
 $predicts = $model->predict($images);
@@ -179,4 +190,5 @@ foreach ($predicts as $i => $predict) {
     $axes[$i*2]->setTitle($class_names[$label]."($label)");
     $axes[$i*2+1]->bar($mo->arange(10),$predict);
 }
+
 $plt->show();

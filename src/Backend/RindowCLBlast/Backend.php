@@ -4,6 +4,7 @@ namespace Rindow\NeuralNetworks\Backend\RindowCLBlast;
 use Interop\Polite\Math\Matrix\NDArray;
 use Interop\Polite\Math\Matrix\OpenCL;
 use Rindow\Math\Matrix\NDArrayCL;
+use Rindow\NeuralNetworks\Gradient\Variable;
 use InvalidArgumentException;
 
 class Backend
@@ -16,8 +17,8 @@ class Backend
         'random_uniform'    => 'random_uniform',
         'random_normal'     => 'random_normal',
         'orthogonal'        => 'orthogonal',
-        'zeros'             => 'zeros',
-        'ones'              => 'ones',
+        'zeros'             => 'kernel_zeros',
+        'ones'              => 'kernel_ones',
     ];
     protected $epsilon = 1e-7;
     protected $equalEpsilon = 1e-06;
@@ -85,6 +86,12 @@ class Backend
         return $mo->dtypeToString($dtype);
     }
 
+    public function toString(NDArray $array,string $format=null,$indent=null) : string
+    {
+        $mo = $this->matrixOperator;
+        return $mo->toString($this->array($array),$format,$indent);
+    }
+
     public function alloc(array $shape,$dtype=null)
     {
         $array = $this->la->alloc($shape,$dtype);
@@ -121,6 +128,9 @@ class Backend
 
     public function ndarray(NDArray $ndarray)
     {
+        if($ndarray instanceof Variable) {
+            $ndarray = $ndarray->value();
+        }
         if($ndarray instanceof NDArrayCL)
             return $ndarray->toNDArray();
         return $ndarray;
@@ -247,6 +257,16 @@ class Backend
         $kernel = $this->la->randomUniform($shape,-$limit,$limit);
         //$events->wait();
         return $kernel;
+    }
+
+    public function kernel_zeros(array $shape,$nodeNum=null)
+    {
+        return $this->zeros($shape);
+    }
+
+    public function kernel_ones(array $shape,$nodeNum=null)
+    {
+        return $this->ones($shape);
     }
 
     public function zeros(array $shape,$dtype=null)

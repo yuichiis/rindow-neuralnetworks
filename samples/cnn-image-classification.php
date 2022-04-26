@@ -73,10 +73,10 @@ if($shrink||!extension_loaded('rindow_openblas')) {
 }
 
 // flatten images and normalize
-function formatingImage($mo,$train_img) {
+function formatingImage($mo,$train_img,$inputShape) {
     $dataSize = $train_img->shape()[0];
     $imageSize = $train_img[0]->size();
-    $train_img = $train_img->reshape([$dataSize,$imageSize]);
+    $train_img = $train_img->reshape(array_merge([$dataSize],$inputShape));
     return $mo->scale(1.0/255.0,$mo->astype($train_img,NDArray::float32));
 }
 
@@ -92,13 +92,13 @@ function formatingImage($mo,$train_img) {
 
 
 echo "formating train images ...\n";
-$train_img = formatingImage($mo,$train_img);
+$train_img = formatingImage($mo,$train_img,$inputShape);
 $train_label = $mo->la()->astype($train_label,NDArray::int32);
 echo "formating test images ...\n";
-$test_img  = formatingImage($mo,$test_img);
+$test_img  = formatingImage($mo,$test_img,$inputShape);
 $test_label = $mo->la()->astype($test_label,NDArray::int32);
 
-$modelFilePath = __DIR__."/basic-image-classification-${dataset}.model";
+$modelFilePath = __DIR__."/cnn-image-classification-${dataset}.model";
 
 if(file_exists($modelFilePath)) {
     echo "loading model ...\n";
@@ -107,11 +107,26 @@ if(file_exists($modelFilePath)) {
 } else {
     echo "creating model ...\n";
     $model = $nn->models()->Sequential([
+        $nn->layers()->Conv2D(
+            $filters=32,
+            $kernel_size=3,
+            ['input_shape'=>$inputShape,
+            'kernel_initializer'=>'he_normal',]),
+        $nn->layers()->MaxPooling2D(),
+        $nn->layers()->Conv2D(
+            $filters=64,
+            $kernel_size=3,
+            ['kernel_initializer'=>'he_normal',]),
+        $nn->layers()->MaxPooling2D(),
+        $nn->layers()->Conv2D(
+            $filters=128,
+            $kernel_size=3,
+            ['kernel_initializer'=>'he_normal',]),
+        $nn->layers()->GlobalMaxPooling2D(),
         $nn->layers()->Dense($units=128,
-            ['input_shape'=>[(int)array_product($inputShape)],
-            'kernel_initializer'=>'he_normal',
-            'activation'=>'relu',
-            ]),
+        ['kernel_initializer'=>'he_normal',
+        'activation'=>'relu',
+        ]),
         $nn->layers()->Dense($units=10
             /*,['activation'=>'softmax']*/),
     ]);

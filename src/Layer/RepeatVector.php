@@ -5,7 +5,7 @@ use InvalidArgumentException;
 use Interop\Polite\Math\Matrix\NDArray;
 use Rindow\NeuralNetworks\Support\GenericUtils;
 
-class RepeatVector extends AbstractLayer implements Layer
+class RepeatVector extends AbstractLayer
 {
     use GenericUtils;
     protected $backend;
@@ -18,10 +18,12 @@ class RepeatVector extends AbstractLayer implements Layer
     {
         extract($this->extractArgs([
             'input_shape'=>null,
+            'name'=>null,
         ],$options));
         $this->backend = $backend;
         $this->repeats = $repeats;
         $this->inputShape = $input_shape;
+        $this->initName($name,'repeatvector');
     }
 
     public function build($variable=null, array $options=null)
@@ -33,7 +35,6 @@ class RepeatVector extends AbstractLayer implements Layer
         }
         array_unshift($inputShape,$this->repeats);
         $this->outputShape = $inputShape;
-        return $this->createOutputDefinition([$this->outputShape]);
     }
 
     public function getParams() : array

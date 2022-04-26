@@ -2,19 +2,23 @@
 namespace Rindow\NeuralNetworks\Layer;
 
 use Interop\Polite\Math\Matrix\NDArray;
+use Rindow\NeuralNetworks\Support\GenericUtils;
 
-class Dropout extends AbstractLayer implements Layer
+class Dropout extends AbstractLayer
 {
+    use GenericUtils;
     protected $backend;
     protected $rate;
     //protected $mask;
 
     public function __construct(object $backend,float $rate,array $options=null)
     {
-        //extract($this->extractArgs([
-        //],$options));
+        extract($this->extractArgs([
+            'name'=>null,
+        ],$options));
         $this->backend = $K = $backend;
         $this->rate = min(1.0,max(0.0,$rate));
+        $this->initName($name,'dropout');
     }
 
     public function getConfig() : array

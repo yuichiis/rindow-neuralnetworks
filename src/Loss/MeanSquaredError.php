@@ -6,7 +6,7 @@ use InvalidArgumentException;
 use DomainException;
 use ArrayAccess;
 
-class MeanSquaredError extends AbstractGradient implements Loss
+class MeanSquaredError extends AbstractLoss implements Loss
 {
     protected $backend;
     //protected $trues;
@@ -25,7 +25,7 @@ class MeanSquaredError extends AbstractGradient implements Loss
         ];
     }
 
-    public function forward(NDArray $trues, NDArray $predicts) : float
+    protected function call(NDArray $trues, NDArray $predicts) : float
     {
         $K = $this->backend;
         $container = $this->container();
@@ -41,7 +41,7 @@ class MeanSquaredError extends AbstractGradient implements Loss
         return $loss;
     }
 
-    public function backward(array $dOutputs, ArrayAccess $grads=null, array $oidsToCollect=null) : array
+    protected function differentiate(array $dOutputs, ArrayAccess $grads=null, array $oidsToCollect=null) : array
     {
         $K = $this->backend;
         $container = $this->container();

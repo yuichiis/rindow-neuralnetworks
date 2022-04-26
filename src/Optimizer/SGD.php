@@ -2,6 +2,7 @@
 namespace Rindow\NeuralNetworks\Optimizer;
 
 use Rindow\NeuralNetworks\Support\GenericUtils;
+use Rindow\NeuralNetworks\Gradient\Variable;
 
 class SGD implements Optimizer
 {
@@ -22,6 +23,10 @@ class SGD implements Optimizer
     {
         return [
         ];
+    }
+
+    public function loadWeights(array $params) : void
+    {
     }
 
     public function getConfig() : array
@@ -53,13 +58,10 @@ class SGD implements Optimizer
     {
         $K = $this->backend;
         $params = $this->extractVariable($params);
-        foreach(array_keys($params) as $key) {
-            $p = $params[$key];
-            if($p instanceof Variable) {
-                $p = $p->value();
-            }
+        $grads = $this->extractVariable($grads);
+        foreach(array_map(null,$params,$grads) as [$param,$grad]) {
             // PARAM -=  lr * GRAD
-            $K->update_sub($p,$K->scale($this->lr,$grads[$key]));
+            $K->update_sub($param,$K->scale($this->lr,$grad));
         }
     }
 }

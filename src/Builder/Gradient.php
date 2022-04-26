@@ -2,9 +2,8 @@
 namespace Rindow\NeuralNetworks\Builder;
 
 use Interop\Polite\Math\Matrix\NDArray;
+use Rindow\NeuralNetworks\Gradient\Variable as VariableInterface;
 use Rindow\NeuralNetworks\Gradient\Core\Variable;
-use Rindow\NeuralNetworks\Gradient\Core\Undetermined;
-use Rindow\NeuralNetworks\Gradient\Core\UndeterminedNDArray;
 use Rindow\NeuralNetworks\Gradient\Core\GradientTape;
 use Rindow\NeuralNetworks\Gradient\Core\GraphFunction;
 use Rindow\NeuralNetworks\Gradient\Func\Square;
@@ -58,22 +57,12 @@ class Gradient
 
     public function isUndetermined($variable) : bool
     {
-        if(($variable instanceof Undetermined)||
-            ($variable instanceof UndeterminedNDArray)) {
-            return true;
-        } else {
-            return false;
+        if($variable instanceof VariableInterface) {
+            if($variable->isUndetermined()) {
+                return true;
+            }
         }
-    }
-
-    public function Undetermined()
-    {
-        return new Undetermined();
-    }
-
-    public function UndeterminedNDArray()
-    {
-        return new UndeterminedNDArray();
+        return false;
     }
 
     public function square($x)

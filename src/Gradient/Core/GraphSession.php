@@ -164,11 +164,7 @@ class GraphSession
         return $dInputs;
     }
 
-    /**
-    *  @return GraphFunction func
-    *       function
-    */
-    public function func() : GraphFunction
+    public function func() : object
     {
         return $this->func;
     }

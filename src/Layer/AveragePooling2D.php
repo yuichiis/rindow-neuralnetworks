@@ -3,10 +3,20 @@ namespace Rindow\NeuralNetworks\Layer;
 
 use Interop\Polite\Math\Matrix\NDArray;
 
-class AveragePooling2D extends AbstractPooling implements Layer
+class AveragePooling2D extends AbstractPooling
 {
     protected $rank = 2;
     protected $pool_mode = 'avg';
+
+    public function __construct(object $backend,array $options=null)
+    {
+        $leftargs = [];
+        extract($this->extractArgs([
+            'name'=>null,
+        ],$options,$leftargs));
+        $this->initName($name,'averagepooling2d');
+        parent::__construct($backend, $leftargs);
+    }
 
     protected function call(NDArray $inputs, bool $training) : NDArray
     {

@@ -94,6 +94,7 @@ $model->compile([
     'loss'=>$nn->losses()->SparseCategoricalCrossentropy(['from_logits'=>true]),
     'optimizer'=>'adam',
 ]);
+$model->build([1,(int)(28*28*1)],true); // This is only needed for summary
 $model->summary();
 
 $modelFilePath = __DIR__."/basic-image-classification-custom-${dataset}.model";

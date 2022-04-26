@@ -121,8 +121,9 @@ class SimpleRNNCell extends AbstractRNNCell
         }
         $outputs = $K->gemm($prev_h, $this->recurrentKernel,1.0,1.0,$outputs);
         if($this->activation) {
+            $calcState->activation = new \stdClass();
+            $this->activation->setStates($calcState->activation);
             $outputs = $this->activation->forward($outputs,$training);
-            $calcState->activation = $this->activation->getStates();
         }
 
         $calcState->inputs = $inputs;

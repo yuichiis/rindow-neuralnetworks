@@ -29,6 +29,155 @@ class Test extends TestCase
         return new BackendCL($mo);
     }
 
+    public function testDenseWeightsImmediate()
+    {
+        $mo = new MatrixOperator();
+        $backend = $this->newBackend($mo);
+        $nn = new NeuralNetworks($mo,$backend);
+        $g = $nn->gradient();
+        $backendCL = $this->newBackendCL($mo);
+        $nncl = new NeuralNetworks($mo,$backendCL);
+        $gcl = $nncl->gradient();
+
+        $dense = $nn->layers()->Dense($units=2);
+        $densecl = $nncl->layers()->Dense($units=2);
+        $lossfunc = $nn->losses->SparseCategoricalCrossEntropy(['from_logits' => true]);
+        $lossfunccl = $nncl->losses->SparseCategoricalCrossEntropy(['from_logits' => true]);
+        $optimizer = $nn->optimizers->Adam();
+        $optimizercl = $nncl->optimizers->Adam();
+        $outputs = $dense->forward($g->Variable($backend->zeros([1,2])),true);
+        $outputscl = $densecl->forward($gcl->Variable($backendCL->zeros([1,2])),true);
+
+        $weights = $dense->trainableVariables();
+        $weightsCL = $densecl->trainableVariables();
+        
+        foreach (array_map(null,$weights,$weightsCL) as [$w,$wcl]) {
+            $backendCL->copy($backendCL->array($w->value()),$wcl->value());
+        }
+        foreach (array_map(null,$weights,$weightsCL) as [$w,$wcl]) {
+            $this->assertEquals($w->toArray(),$wcl->toArray());
+        }
+
+        $inputs = $g->Variable($backend->array([[1, 3],]));
+        $inputscl = $gcl->Variable($backendCL->array([[1, 3],]));
+        $trues = $g->Variable($backend->array([0,]));
+        $truescl = $gcl->Variable($backendCL->array([0,]));
+
+        $outputs = $dense->forward($inputs,true);
+        $outputscl = $densecl->forward($inputscl,true);
+        foreach (array_map(null,$weights,$weightsCL) as [$w,$wcl]) {
+            $this->assertEquals($w->toArray(),$wcl->toArray());
+        }
+
+        $this->assertEquals($outputs->toArray(),$outputscl->toArray());
+
+        $loss = $nn->with($tape=$g->GradientTape(),function() use ($dense,$lossfunc,$inputs,$trues) {
+            $outputs = $dense->forward($inputs,true);
+            $loss = $lossfunc->forward($trues,$outputs);
+            return $loss;
+        });
+        $params = $dense->trainableVariables();
+        $grads = $tape->gradient($loss,$params);
+
+        $losscl = $nncl->with($tapecl=$gcl->GradientTape(),function() use ($densecl,$lossfunccl,$inputscl,$truescl) {
+            $outputs = $densecl->forward($inputscl,true);
+            $loss = $lossfunccl->forward($truescl,$outputs);
+            return $loss;
+        });
+        $paramscl = $densecl->trainableVariables();
+        $gradscl = $tapecl->gradient($losscl,$paramscl);
+
+        foreach (array_map(null,$grads,$gradscl) as [$grad,$gradcl]) {
+            $diff = $backend->sub($grad,$backendCL->ndarray($gradcl));
+            $this->assertLessThan(1e-6,$backend->scalar($backend->amax($diff)));
+        }
+
+        $optimizer->update($params,$grads);
+        $optimizercl->update($paramscl,$gradscl);
+
+        foreach (array_map(null,$weights,$weightsCL) as [$w,$wcl]) {
+            $diff = $backend->sub($w,$backendCL->ndarray($wcl));
+            $this->assertLessThan(1e-6,$backend->scalar($backend->amax($diff)));
+        }
+    }
+
+    public function testDenseWeightsGraphFunc()
+    {
+        $mo = new MatrixOperator();
+        $backend = $this->newBackend($mo);
+        $nn = new NeuralNetworks($mo,$backend);
+        $g = $nn->gradient();
+        $backendCL = $this->newBackendCL($mo);
+        $nncl = new NeuralNetworks($mo,$backendCL);
+        $gcl = $nncl->gradient();
+
+        $dense = $nn->layers()->Dense($units=2);
+        $densecl = $nncl->layers()->Dense($units=2);
+        $lossfunc = $nn->losses->SparseCategoricalCrossEntropy(['from_logits' => true]);
+        $lossfunccl = $nncl->losses->SparseCategoricalCrossEntropy(['from_logits' => true]);
+        $optimizer = $nn->optimizers->Adam();
+        $optimizercl = $nncl->optimizers->Adam();
+        $func = $nn->gradient->Function(function($inputs,$trues) use ($dense) {
+            $outputs = $dense->forward($inputs,true);
+            return $outputs;
+        });
+        $funccl = $nncl->gradient->Function(function($inputs,$trues) use ($densecl) {
+            $outputs = $densecl->forward($inputs,true);
+            return $outputs;
+        });
+
+        $inputs = $g->Variable($backend->array([[1, 3],]));
+        $inputscl = $gcl->Variable($backendCL->array([[1, 3],]));
+        $trues = $g->Variable($backend->array([0,]));
+        $truescl = $gcl->Variable($backendCL->array([0,]));
+
+        $outputs = $func($inputs,$trues);
+        $outputscl = $funccl($inputscl,$truescl);
+
+        $weights = $dense->trainableVariables();
+        $weightsCL = $densecl->trainableVariables();
+        
+        foreach (array_map(null,$weights,$weightsCL) as [$w,$wcl]) {
+            $backendCL->copy($backendCL->array($w->value()),$wcl->value());
+        }
+        foreach (array_map(null,$weights,$weightsCL) as [$w,$wcl]) {
+            $this->assertEquals($w->toArray(),$wcl->toArray());
+        }
+
+        $outputs = $func($inputs,$trues);
+        $outputscl = $funccl($inputscl,$trues);
+        $this->assertEquals($outputs->toArray(),$outputscl->toArray());
+
+        $loss = $nn->with($tape=$g->GradientTape(),function() use ($func,$lossfunc,$inputs,$trues) {
+            $outputs = $func($inputs,$trues);
+            $loss = $lossfunc->forward($trues,$outputs);
+            return $loss;
+        });
+        $params = $dense->trainableVariables();
+        $grads = $tape->gradient($loss,$params);
+
+        $losscl = $nncl->with($tapecl=$gcl->GradientTape(),function() use ($funccl,$lossfunccl,$inputscl,$truescl) {
+            $outputs = $funccl($inputscl,$truescl);
+            $loss = $lossfunccl->forward($truescl,$outputs);
+            return $loss;
+        });
+        $paramscl = $densecl->trainableVariables();
+        $gradscl = $tapecl->gradient($losscl,$paramscl);
+
+        foreach (array_map(null,$grads,$gradscl) as [$grad,$gradcl]) {
+            $diff = $backend->sub($grad,$backendCL->ndarray($gradcl));
+            $this->assertLessThan(1e-6,$backend->scalar($backend->amax($diff)));
+        }
+
+        $optimizer->update($params,$grads);
+        $optimizercl->update($paramscl,$gradscl);
+
+        foreach (array_map(null,$weights,$weightsCL) as [$w,$wcl]) {
+            $diff = $backend->sub($w,$backendCL->ndarray($wcl));
+            $this->assertLessThan(1e-6,$backend->scalar($backend->amax($diff)));
+        }
+    }
+
     public function testFitDense()
     {
         $mo = new MatrixOperator();
@@ -40,8 +189,9 @@ class Test extends TestCase
                 'activation'=>'sigmoid']),
             $nn->layers()->Dense($units=2,
             ['activation'=>'softmax']),
+            //$nn->layers()->Dense($units=2),
         ]);
-        $model->compile();
+        $model->compile(['loss'=>$nn->losses->SparseCategoricalCrossEntropy(['from_logits' => true])]);
 
         $backendCL = $this->newBackendCL($mo);
         $nncl = new NeuralNetworks($mo,$backendCL);
@@ -51,46 +201,55 @@ class Test extends TestCase
                 'activation'=>'sigmoid']),
             $nncl->layers()->Dense($units=2,
             ['activation'=>'softmax']),
+            //$nncl->layers()->Dense($units=2),
         ]);
-        $modelcl->compile();
+        $modelcl->compile(['loss'=>$nncl->losses->SparseCategoricalCrossEntropy(['from_logits' => true])]);
 
-        $weights = $model->params();
-        $weightsCL = $modelcl->params();
-        foreach ($weights as $key => $w) {
-            $wcl = $weightsCL[$key];
-            $backendCL->copy($backendCL->array($w),$wcl);
+        $g = $nn->gradient();
+        $gcl = $nncl->gradient();
+        $model->forward($g->Variable($backend->zeros([1,2])));
+        $modelcl->forward($gcl->Variable($backendCL->zeros([1,2])));
+
+        $weights = $model->trainableVariables();
+        $weightsCL = $modelcl->trainableVariables();
+        
+        foreach (array_map(null,$weights,$weightsCL) as [$w,$wcl]) {
+            $backendCL->copy($backendCL->array($w->value()),$wcl->value());
         }
+        foreach (array_map(null,$weights,$weightsCL) as [$w,$wcl]) {
+            $this->assertEquals($w->toArray(),$wcl->toArray());
+        }
+
         $optimizer = $model->optimizer();
         $optimizer->build($weights);
         $oweights = $optimizer->getWeights();
         $optimizerCL = $modelcl->optimizer();
         $optimizerCL->build($weightsCL);
         $oweightsCL = $optimizerCL->getWeights();
-        foreach ($oweights as $key => $w) {
-            $wcl = $oweightsCL[$key];
+        foreach (array_map(null,$oweights,$oweightsCL) as [$w,$wcl]) {
             $backendCL->copy($backendCL->array($w),$wcl);
         }
-
-        foreach ($weights as $key => $w) {
-            $wcl = $weightsCL[$key];
+        foreach (array_map(null,$oweights,$oweightsCL) as [$w,$wcl]) {
             $this->assertEquals($w->toArray(),$wcl->toArray());
         }
+
         // training greater or less
         $x = $mo->array([[1, 3],]);
         $t = $mo->array([0,]);
         $history = $model->fit($x,$t,['epochs'=>1,'verbose'=>0]);
         $history = $modelcl->fit($x,$t,['epochs'=>1,'verbose'=>0]);
 
-        foreach ($weights as $key => $w) {
-            $wcl = $weightsCL[$key];
-            $diff = $backend->sub($w,$backendCL->ndarray($wcl));
+        $weights = $model->trainableVariables();
+        $weightsCL = $modelcl->trainableVariables();
+        foreach (array_map(null,$weights,$weightsCL) as [$w,$wcl]) {
+            $diff = $backend->sub($w->value(),$backendCL->ndarray($wcl));
             //echo "[".implode(',',$w->shape())."]";
             //echo $mo->toString($diff,'%5.3e')."\n";
             //if($w->toArray()!=$wcl->toArray()) {
             //    echo "w=".$mo->toString($w,'%5.3e')."\n";
             //    echo "wcl=".$mo->toString($backendCL->ndarray($wcl),'%5.3e')."\n";
             //}
-            $this->assertLessThan(1e-7,$backend->scalar($backend->amax($diff)));
+            $this->assertLessThan(1e-6,$backend->scalar($backend->amax($diff)));
         }
     }
 
@@ -171,12 +330,20 @@ class Test extends TestCase
         ]);
         $modelcl->compile();
 
-        $weights = $model->params();
-        $weightsCL = $modelcl->params();
-        foreach ($weights as $key => $w) {
-            $wcl = $weightsCL[$key];
-            $backendCL->copy($backendCL->array($w),$wcl);
+        $g = $nn->gradient();
+        $gcl = $nncl->gradient();
+        $model->forward($g->Variable($backend->zeros(array_merge([1],$inputShape))));
+        $modelcl->forward($gcl->Variable($backendCL->zeros(array_merge([1],$inputShape))));
+
+        $weights = $model->trainableVariables();
+        $weightsCL = $modelcl->trainableVariables();
+        foreach (array_map(null,$weights,$weightsCL) as [$w,$wcl]) {
+            $backendCL->copy($backendCL->array($w->value()),$wcl->value());
         }
+        foreach (array_map(null,$weights,$weightsCL) as [$w,$wcl]) {
+            $this->assertEquals($w->toArray(),$wcl->toArray());
+        }
+
         $optimizer = $model->optimizer();
         $optimizer->build($weights);
         $oweights = $optimizer->getWeights();
@@ -208,7 +375,7 @@ class Test extends TestCase
             //    echo "w=".$mo->toString($w,'%5.3e')."\n";
             //    echo "wcl=".$mo->toString($backendCL->ndarray($wcl),'%5.3e')."\n";
             //}
-            $this->assertLessThan(1e-6,$backend->scalar($backend->amax($diff)));
+            $this->assertLessThan(1e-5,$backend->scalar($backend->amax($diff)));
         }
     }
 

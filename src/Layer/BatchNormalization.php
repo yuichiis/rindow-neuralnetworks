@@ -5,7 +5,7 @@ use InvalidArgumentException;
 use Interop\Polite\Math\Matrix\NDArray;
 use Rindow\NeuralNetworks\Support\GenericUtils;
 
-class BatchNormalization extends AbstractLayer implements Layer
+class BatchNormalization extends AbstractLayer
 {
     use GenericUtils;
     protected $backend;
@@ -29,6 +29,7 @@ class BatchNormalization extends AbstractLayer implements Layer
     protected $dBeta;
     protected $dGamma;
     protected $movingMean;
+    protected $movingVariance;
     //protected $xc;
     //protected $xn;
     //protected $std;
@@ -49,6 +50,7 @@ class BatchNormalization extends AbstractLayer implements Layer
             'gamma_initializer'=>'ones',
             'moving_mean_initializer'=>'zeros',
             'moving_variance_initializer'=>'ones',
+            'name'=>null,
         ],$options));
         $this->backend = $K = $backend;
         $this->axis = $axis;
@@ -64,7 +66,8 @@ class BatchNormalization extends AbstractLayer implements Layer
         $this->gammaInitializer = $K->getInitializer($gamma_initializer);
         $this->movingMeanInitializer  = $K->getInitializer($moving_mean_initializer);
         $this->movingVarianceInitializer = $K->getInitializer($moving_variance_initializer);
-        $this->allocateWeights(2);
+        $this->initName($name,'batchnormalization');
+        $this->allocateWeights(2,$nonTrainables=2);
     }
 
     public function build($variable=null, array $options=null)
@@ -108,6 +111,10 @@ class BatchNormalization extends AbstractLayer implements Layer
                 }
             }
         }
+        if($this->movingMean==null) {
+            $this->movingMean = $movingMeanInitializer($kernelShape);
+            $this->movingVariance = $movingVarianceInitializer($kernelShape);
+        }
         if($this->center) {
             $this->dBeta = $K->zerosLike($this->beta);
         }
@@ -115,8 +122,6 @@ class BatchNormalization extends AbstractLayer implements Layer
             $this->dGamma = $K->zerosLike($this->gamma);
         }
 
-        $this->movingMean = $movingMeanInitializer($kernelShape);
-        $this->movingVariance = $movingVarianceInitializer($kernelShape);
         $this->calcAxis = $axis;
         if($ndim>$axis) {
             $nnn = array_slice($inputShape,0,$axis);
@@ -129,12 +134,12 @@ class BatchNormalization extends AbstractLayer implements Layer
         }
         $this->inputShape = $inputShape;
         $this->outputShape = $inputShape;
-        return $this->createOutputDefinition([$this->outputShape]);
+        $this->syncWeightVariables();
     }
 
     public function getParams() : array
     {
-        return [$this->beta,$this->gamma];
+        return [$this->beta,$this->gamma,$this->movingMean,$this->movingVariance];
     }
 
     public function getGrads() : array
@@ -146,7 +151,9 @@ class BatchNormalization extends AbstractLayer implements Layer
     {
         $this->beta = $this->weights[0]->value();
         $this->gamma = $this->weights[1]->value();
-}
+        $this->movingMean = $this->weights[2]->value();
+        $this->movingVariance = $this->weights[3]->value();
+    }
 
     public function getConfig() : array
     {
@@ -216,10 +223,17 @@ class BatchNormalization extends AbstractLayer implements Layer
             $container->xn = $xn;
             $container->std = $std;
             // stateful variable
-            $this->movingMean =     $K->add($K->scale($this->momentum,   $this->movingMean),
-                                            $K->scale(1-$this->momentum, $mu));
-            $this->movingVariance = $K->add($K->scale($this->momentum,   $this->movingVariance),
-                                            $K->scale(1-$this->momentum, $v));
+            // movingMean = movingMean*momentum + mu*(1-momentum)
+            $K->update_scale($this->movingMean,$this->momentum);
+            $K->update_add($this->movingMean,$K->scale(1-$this->momentum, $mu));
+            // movingVariance = movingVariance*momentum + v*(1-momentum)
+            $K->update_scale($this->movingVariance,$this->momentum);
+            $K->update_add($this->movingVariance,$K->scale(1-$this->momentum, $v));
+
+            //$this->movingMean =     $K->add($K->scale($this->momentum,   $this->movingMean),
+            //                                $K->scale(1-$this->momentum, $mu));
+            //$this->movingVariance = $K->add($K->scale($this->momentum,   $this->movingVariance),
+            //                                $K->scale(1-$this->momentum, $v));
         } else {
             $xc = $K->sub($inputs, $this->movingMean);
             $xn = $K->div($xc, ($K->sqrt($K->increment($this->movingVariance, $this->epsilon))));
@@ -271,5 +285,31 @@ class BatchNormalization extends AbstractLayer implements Layer
 
         $dInputs = $this->untransformShape($dInputs);
         return $dInputs;
+    }
+
+    public function __clone()
+    {
+        if(isset($this->gamma)) {
+            $this->gamma = clone $this->gamma;
+        }
+        if(isset($this->beta)) {
+            $this->beta = clone $this->beta;
+        }
+        if(isset($this->movingMean)) {
+            $this->movingMean = clone $this->movingMean;
+        }
+        if(isset($this->movingVariance)) {
+            $this->movingVariance = clone $this->movingVariance;
+        }
+
+        if(isset($this->dGamma)) {
+            $this->dGamma = clone $this->dGamma;
+        }
+        if(isset($this->dBeta)) {
+            $this->dBeta = clone $this->dBeta;
+        }
+
+        $this->allocateWeights(2,$nonTrainables=2);
+        $this->syncWeightVariables();
     }
 }

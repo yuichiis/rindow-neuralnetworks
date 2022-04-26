@@ -8,14 +8,11 @@ use Interop\Polite\Math\Matrix\NDArray;
 use Rindow\NeuralNetworks\Activation\FunctionFactory;
 use Rindow\NeuralNetworks\Activation\Activation as ActivationInterface;
 use Rindow\NeuralNetworks\Gradient\Core\Variable;
-use Rindow\NeuralNetworks\Gradient\Core\Undetermined;
-use Rindow\NeuralNetworks\Gradient\Core\UndeterminedNDArray;
-use Rindow\NeuralNetworks\Model\BuildContext;
 use Rindow\NeuralNetworks\Layer\Embedding;
 /**
  *
  */
-abstract class AbstractLayerBase implements LayerBase
+abstract class AbstractLayerBase implements Layer
 {
     protected $inputShape;
     protected $outputShape;
@@ -27,11 +24,12 @@ abstract class AbstractLayerBase implements LayerBase
     protected $shapeInspection = true;
     protected $name;
     // dynamic step interfaces
-    protected $inputsVariables;
-    protected $outputsVariables;
-    protected $generation;
+    //protected $inputsVariables;
+    //protected $outputsVariables;
+    //protected $generation;
     protected $weights=[];
     protected $assignedWeights = false;
+    protected $built = false;
 
     public function getActivation()
     {
@@ -75,45 +73,32 @@ abstract class AbstractLayerBase implements LayerBase
         if($inputShape!==null)
             $this->inputShape = $inputShape;
         $this->outputShape = $inputShape;
-        return $this->createOutputDefinition([$this->outputShape]);
     }
 
     protected function normalizeInputShape($variables=null) : array
     {
-        //if($variables instanceof UndeterminedNDArray) {
-        //    if($variables->isNull()) {
-        //        $variables = null;
-        //    } else {
-        //        $variables = new Undetermined($variables);
-        //    }
-        //}
         if($variables===null) {
             $inputShape = $this->inputShape;
-            $variables = [new Undetermined()];
         } elseif($variables instanceof Variable) {
             $inputShape = $variables->valueShape();
             if($inputShape===null) {
                 $inputShape = $this->inputShape;
             }
-            $variables = [$variables];
         } elseif(is_array($variables)) {
             $inputShape = [];
             foreach($variables as $idx => $v) {
-                //if($v instanceof UndeterminedNDArray) {
-                //    $v = new Undetermined($v);
-                //}
                 if(!($v instanceof Variable)) {
                     throw new InvalidArgumentException('variable list must contain Variables: "'.$this->typename($v).'" included in #'.$idx.'.');
                 }
                 $inputShape[] = $v->valueShape();
             }
         } else {
-            throw new InvalidArgumentException('variable must be Variable type or null. "'.$this->typename($v).'" given.');
+            throw new InvalidArgumentException('variable must be Variable type or null. "'.$this->typename($variables).'" given.');
         }
-        $this->inputsVariables = $variables;
-        $this->generation = array_reduce(
-            $variables,function($max,$x){return max($max,$x->generation());},-1);
 
+        if($inputShape===null) {
+            throw new InvalidArgumentException("inputShape must be spacified");
+        }
         return $this->fixInputShape($inputShape);
     }
 
@@ -130,10 +115,10 @@ abstract class AbstractLayerBase implements LayerBase
         if($this->inputShape===null) {
             $this->inputShape = $inputShape;
         }
-        if($this->inputShape!==$inputShape && $this->shapeInspection) {
-            if(is_array($this->inputShape)&&is_int($this->inputShape[0])) {
-                $msg = 'Input shape is inconsistent: ['.implode(',',$this->inputShape).
-                '] and ['.implode(',',$inputShape).']';
+        if($this->shapeInspection && $this->inputShape!==$inputShape) {
+            if(is_array($this->inputShape)) {
+                $msg = 'Input shape is inconsistent: defined as '.$this->shapeToString($this->inputShape).
+                ' but '.$this->shapeToString($inputShape).' given in '.$this->basename($this);
             } else {
                 $msg = 'Input shape is inconsistent';
             }
@@ -145,46 +130,9 @@ abstract class AbstractLayerBase implements LayerBase
         return $inputShape;
     }
 
-    protected function normalizeInitialStatesShape(array $variables=null,$statesShapes=null) : void
+    public function inputShape() : array
     {
-        if($variables===null) {
-            return;
-        }
-        $this->inputsVariables = $variables;
-        $this->generation = array_reduce(
-            $variables,function($max,$x){return max($max,$x->generation());},-1);
-        array_shift($variables);
-        foreach($variables as $k => $v) {
-            if($v instanceof Undetermined) {
-                $nd = $v->value();
-                $shape = $statesShapes[$k];
-                array_unshift($shape,1);
-                if($nd!=null) {
-                    $nd->setShape($shape);
-                } else {
-                    $v->setValue(new UndeterminedNDArray($shape));
-                }
-            }
-        }
-    }
-
-    protected function createOutputDefinition(array $outputShapes)
-    {
-        $defines = [];
-        foreach ($outputShapes as $outputShape) {
-            array_unshift($outputShape,1);
-            $define = new Undetermined(new UndeterminedNDArray($outputShape));
-            $define->setCreator($this);
-            $defines[] = $define;
-        }
-        $this->outputsVariables = array_map(function($o){return $o->reference();},$defines);
-        if(BuildContext::$build) {
-            BuildContext::add($this);
-        }
-        if(count($defines)==1) {
-            return $defines[0];
-        }
-        return $defines;
+        return $this->inputShape;
     }
 
     public function outputShape() : array
@@ -306,39 +254,17 @@ abstract class AbstractLayerBase implements LayerBase
         }
     }
 
-    /*
-    *  dynamic step interfaces
-    */
-
-    /**
-    *   @return array<Variable>
-    */
-    public function inputs()
-    {
-        return $this->inputsVariables;
-    }
-
-    /**
-    *   @return array<Variable>
-    */
-    public function outputs()
-    {
-        return $this->outputsVariables;
-    }
-
-    /**
-    *  @return int
-    */
-    public function generation() : int
-    {
-        return $this->generation;
-    }
-
-    protected function allocateWeights($num) : void
+    protected function allocateWeights($num,int $nonTrainables=null) : void
     {
         $variables = [];
         for($i=0;$i<$num;$i++) {
-            $variables[] = new Variable($this->backend,null,['reference'=>true,'undetermined'=>true]);
+            $variables[] = new Variable($this->backend,null,['undetermined'=>true]);
+        }
+        if($nonTrainables) {
+            for($i=0;$i<$nonTrainables;$i++) {
+                $variables[] = new Variable(
+                    $this->backend,null,['undetermined'=>true,'trainable'=>false]);
+            }
         }
         $this->weights = $variables;
     }
@@ -358,8 +284,10 @@ abstract class AbstractLayerBase implements LayerBase
             throw new LogicException('Weights are not allocated: '.$this->basename($this));
         }
         foreach(array_map(null,$this->weights,$params) as [$variable,$param]) {
-            $variable->assign($param);
-            $variable->setName('weights:'.$this->basename($this));
+            if($param!==null) {
+                $variable->assign($param,['reference'=>true]);
+                $variable->setName('weights:'.$this->basename($this));
+            }
         }
         $this->assignedWeights = true;
     }
@@ -371,7 +299,7 @@ abstract class AbstractLayerBase implements LayerBase
 
     public function trainableVariables() : array
     {
-        return $this->weights();
+        return array_filter($this->weights(),fn($v)=>$v->isTrainable());
     }
 
     public function submodules() : array

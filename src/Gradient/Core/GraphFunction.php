@@ -71,6 +71,11 @@ class GraphFunction
         $this->alternateCreator = $options['alternateCreator'] ?? null;
     }
 
+    public function backend()
+    {
+        return $this->backend;
+    }
+
     protected function executeOnMode($sessionFunc,int $mode,callable $func)
     {
         array_push($this->backupMode,self::$mode);
@@ -98,26 +103,26 @@ class GraphFunction
     *  @return array<Variable>
     *       outputs
     */
-    public function __invoke(...$args)
+    public function __invoke(...$inputs)
     {
         if(!$this->built) {
-            return $this->build($args);
+            return $this->build($inputs);
         }
         $creator = $this->alternateCreator ?? $this;
-        $sessionFunc = new GraphSession($creator,$args);
-        if(count($args)!=$this->numOfInputs) {
+        $sessionFunc = new GraphSession($creator,$inputs);
+        if(count($inputs)!=$this->numOfInputs) {
             throw new InvalidArgumentException($this->numOfInputs.' arguments are required.');
         }
         if(self::$mode!=self::EXECUTING) {
             if(GradientTape::$autoBackProp) {
-                $sessionFunc->_setGeneration($this->maxGeneration($args));
+                $sessionFunc->_setGeneration($this->maxGeneration($inputs));
             }
-            $args = $this->unpackVariables($args);
+            $inputs = $this->unpackVariables($inputs);
         }
 
         // execute graph 
-        $outValues = $this->executeOnMode($sessionFunc,self::EXECUTING,function() use ($args) {
-            return $this->_rawCall($args,[]);
+        $outValues = $this->executeOnMode($sessionFunc,self::EXECUTING,function() use ($inputs) {
+            return $this->_rawCall($inputs,[]);
         });
 
         // finalize outputs
@@ -160,9 +165,10 @@ class GraphFunction
                 if($oid!==null) {
                     $vars[$oid] = $out;
                 }
+                $o->_setShape($out->shape());
             }
         }
-        
+
         $outValues = [];
         foreach ($this->endOutputOids as $oid) {
             $outValues[] = $vars[$oid];

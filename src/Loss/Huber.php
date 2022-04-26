@@ -7,7 +7,7 @@ use InvalidArgumentException;
 use DomainException;
 use ArrayAccess;
 
-class Huber extends AbstractGradient implements Loss
+class Huber extends AbstractLoss implements Loss
 {
     use GenericUtils;
     protected $backend;
@@ -28,7 +28,7 @@ class Huber extends AbstractGradient implements Loss
         ];
     }
 
-    public function forward(NDArray $trues, NDArray $predicts) : float
+    protected function call(NDArray $trues, NDArray $predicts) : float
     {
         $K = $this->backend;
         $container = $this->container();
@@ -47,7 +47,7 @@ class Huber extends AbstractGradient implements Loss
         $x = $K->sub($trues,$predicts);
         $absx = $K->abs($x);
         $lessThenDelta = $K->lessEqual($absx, $this->delta);
-        $greaterThenDelta = $K->greater($absx, $this->delta);
+        $greaterThenDelta = $K->increment($K->copy($lessThenDelta),1.0,-1.0);
         $squaredLoss = $K->scale(0.5, $K->square($x));
         $linearLoss = $K->scale($this->delta, $K->increment($absx, -0.5*$this->delta));
         $loss = $K->add(
@@ -60,7 +60,7 @@ class Huber extends AbstractGradient implements Loss
         return $K->scalar($K->sum($loss))/$N;
     }
 
-    public function backward(array $dOutputs, ArrayAccess $grads=null, array $oidsToCollect=null) : array
+    protected function differentiate(array $dOutputs, ArrayAccess $grads=null, array $oidsToCollect=null) : array
     {
         $K = $this->backend;
         $container = $this->container();

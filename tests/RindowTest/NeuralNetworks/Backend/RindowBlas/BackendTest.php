@@ -66,7 +66,7 @@ class Test extends TestCase
             $backendClassName,
             $initializer[0]
         );
-        $this->assertEquals('zeros',$initializer[1]);
+        $this->assertEquals('kernel_zeros',$initializer[1]);
         $this->assertTrue(is_callable($initializer));
         $kernel = $initializer([2]);
         $this->assertInstanceof('Interop\Polite\Math\Matrix\NDArray',$kernel);
@@ -78,7 +78,7 @@ class Test extends TestCase
             $backendClassName,
             $initializer[0]
         );
-        $this->assertEquals('ones',$initializer[1]);
+        $this->assertEquals('kernel_ones',$initializer[1]);
         $this->assertTrue(is_callable($initializer));
         $kernel = $initializer([2]);
         $this->assertInstanceof('Interop\Polite\Math\Matrix\NDArray',$kernel);

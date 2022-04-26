@@ -19,6 +19,7 @@ class Concatenate extends AbstractMultiInputLayer
         extract($this->extractArgs([
             'axis'=>-1,
             'input_shapes'=>null,
+            'name'=>null,
         ],$options));
         $this->backend = $backend;
         if(!is_int($axis)) {
@@ -26,6 +27,7 @@ class Concatenate extends AbstractMultiInputLayer
         }
         $this->axis = $axis;
         $this->inputShape = $input_shapes;
+        $this->initName($name,'concatenate');
     }
 
     public function build($variables=null, array $options=null)
@@ -70,7 +72,6 @@ class Concatenate extends AbstractMultiInputLayer
         array_unshift($shape,$m);
         $shape = array_merge($shapestack,$shape);
         $this->outputShape = $shape;
-        return $this->createOutputDefinition([$this->outputShape]);
     }
 
     public function getParams() : array

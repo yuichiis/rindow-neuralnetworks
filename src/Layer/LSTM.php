@@ -38,6 +38,7 @@ class LSTM extends AbstractRNNLayer
             'return_state'=>false,
             'go_backwards'=>false,
             'stateful'=>false,
+            'name'=>null,
             //'kernel_regularizer'=>null, 'bias_regularizer'=>null,
             //'activity_regularizer'=null,
             //'kernel_constraint'=null, 'bias_constraint'=null,
@@ -58,6 +59,7 @@ class LSTM extends AbstractRNNLayer
         $this->returnState = $return_state;
         $this->goBackwards = $go_backwards;
         $this->stateful = $stateful;
+        $this->initName($name,'lstm');
         $this->cell = new LSTMCell(
             $this->backend,
             $this->units,
@@ -100,13 +102,7 @@ class LSTM extends AbstractRNNLayer
         }else{
             $this->outputShape = [$this->units];
         }
-        $this->normalizeInitialStatesShape($variables,$this->statesShapes);
         $this->syncWeightVariables();
-        if($this->returnState) {
-            return $this->createOutputDefinition(array_merge([$this->outputShape],$this->statesShapes));
-        } else {
-            return $this->createOutputDefinition([$this->outputShape]);
-        }
     }
 
     public function getConfig() : array

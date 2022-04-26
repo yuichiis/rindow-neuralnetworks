@@ -2,6 +2,7 @@
 namespace Rindow\NeuralNetworks\Backend\RindowBlas;
 
 use Interop\Polite\Math\Matrix\NDArray;
+use Rindow\NeuralNetworks\Gradient\Variable;
 use InvalidArgumentException;
 
 class Backend
@@ -100,6 +101,9 @@ class Backend
 
     public function ndarray(NDArray $ndarray)
     {
+        if($ndarray instanceof Variable) {
+            $ndarray = $ndarray->value();
+        }
         return $ndarray;
     }
 

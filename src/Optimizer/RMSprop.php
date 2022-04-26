@@ -2,6 +2,7 @@
 namespace Rindow\NeuralNetworks\Optimizer;
 
 use Rindow\NeuralNetworks\Support\GenericUtils;
+use Rindow\NeuralNetworks\Gradient\Variable;
 
 class RMSprop implements Optimizer
 {
@@ -39,6 +40,12 @@ class RMSprop implements Optimizer
         }
 
         return array_merge([$this->iter],$this->a);
+    }
+
+    public function loadWeights(array $params) : void
+    {
+        $this->iter = array_shift($params);
+        $this->a = $params;
     }
 
     public function getConfig() : array
@@ -87,8 +94,7 @@ class RMSprop implements Optimizer
             $lr = $lr * (1 / (1 + $this->decay * $iter));
         }
 
-        foreach(array_map(null, $params, $grads, $this->a) as $data) {
-            [$p, $g, $a] = $data;
+        foreach(array_map(null, $params, $grads, $this->a) as [$p, $g, $a]) {
             # update accumulator
 
             // new_a = rho*a + (1-rho)*(g^2)

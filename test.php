@@ -154,4 +154,39 @@ $a = 1;
 $b = [2,3];
 $c = [$a, ...$b];
 var_dump($c);
-exit();
+
+echo "====== array_map(fn,a,b) ======\n";
+var_dump(array_map(fn($x,$y)=>[$x,$y],[1,2,3],[10,11,12]));
+
+echo "====== catch finally ======\n";
+try {
+    try {
+        echo "inside\n";
+        throw new Exception("Error Processing Request", 1);
+    } finally {
+        echo "inside finally\n";
+    }
+    echo "outside try end\n";
+} catch(Exception $e) {
+    echo "Catch\n";
+} finally {
+    echo "Outside finally\n";
+}
+echo "====== array operator ======\n";
+$a = ['A','B'];
+$b = ['C','D'];
+$c = $a+$b;
+var_dump($c);
+$a = [1=>'A', 2=>'B'];
+$b = [3=>'C', 4=>'D'];
+$c = $a+$b;
+var_dump($c);
+
+
+$args = [1,2,3,'d'=>4];
+function opttest($a,$b,$c=null,$d=null) {
+    var_dump($a);
+    var_dump($b);
+    var_dump($d);
+}
+opttest(...$args);

@@ -10,7 +10,7 @@ use InvalidArgumentException;
 use DomainException;
 use ArrayAccess;
 
-abstract class AbstractCrossEntropy extends AbstractGradient implements Loss//,Activation
+abstract class AbstractCrossEntropy extends AbstractLoss implements Loss//,Activation
 {
     use GenericUtils;
     protected $backend;
@@ -47,25 +47,8 @@ abstract class AbstractCrossEntropy extends AbstractGradient implements Loss//,A
         return [
         ];
     }
-/*
-    public function forward(NDArray $inputs, bool $training) : NDArray
-    {
-        $K = $this->backend;
-        $this->outputs = $this->activationFunction($inputs);
-        return $this->outputs;
-    }
 
-    public function backward(NDArray $dOutputs) : NDArray
-    {
-        $K = $this->backend;
-        if($this->fromLogits) {
-            return $dOutputs;
-        }
-        return $this->diffActivationFunction($dOutputs, $this->outputs);
-    }
-*/
-    //public function loss(NDArray $trues, NDArray $predicts) : float
-    public function forward(NDArray $trues, NDArray $predicts) : float
+    protected function call(NDArray $trues, NDArray $predicts) : float
     {
         $container = $this->container();
         $container->trues = $trues;
@@ -77,8 +60,7 @@ abstract class AbstractCrossEntropy extends AbstractGradient implements Loss//,A
             $container->trues, $predicts, $this->fromLogits);
     }
 
-    //public function differentiateLoss() : NDArray
-    public function backward(array $dOutputs, ArrayAccess $grads=null, array $oidsToCollect=null) : array
+    protected function differentiate(array $dOutputs, ArrayAccess $grads=null, array $oidsToCollect=null) : array
     {
         $container = $this->container();
         $dInputs = $this->diffLossFunction(

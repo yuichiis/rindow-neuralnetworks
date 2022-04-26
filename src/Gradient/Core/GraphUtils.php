@@ -23,7 +23,8 @@ trait GraphUtils
         while(count($funcs)>0) {
             $func = array_pop($funcs);
             $pipeline[] = $func;
-            foreach($func->inputs() as $input) {
+            $args = array_merge($func->inputs(),array_values($func->options()));
+            foreach($args as $input) {
                 $creator = $input->creator();
                 if($creator!=null) {
                     //$oid = spl_object_id($creator);
@@ -34,7 +35,7 @@ trait GraphUtils
                     }
                 } else {
                     if($input===null) {
-                        throw new Exception("Error Processing Request", 1);
+                        throw new InvalidArgumentException("Invalid Argument for constant on ".$func->name().". gived NULL");
                     }
                     $constants[] = $input;
                 }

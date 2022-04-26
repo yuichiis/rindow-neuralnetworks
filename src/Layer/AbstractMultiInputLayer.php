@@ -5,8 +5,7 @@ use InvalidArgumentException;
 use ArrayAccess;
 use Interop\Polite\Math\Matrix\NDArray;
 use Rindow\NeuralNetworks\Gradient\Core\GradientUtils;
-use Rindow\NeuralNetworks\Gradient\Core\Undetermined;
-use Rindow\NeuralNetworks\Model\BuildContext;
+use Rindow\NeuralNetworks\Gradient\Variable;
 
 abstract class AbstractMultiInputLayer extends AbstractLayerBase
 {
@@ -42,20 +41,6 @@ abstract class AbstractMultiInputLayer extends AbstractLayerBase
         }
     }
 
-    public function forward(array $inputs, bool $training)
-    {
-        if(BuildContext::$build) {
-            return $this->build($inputs);
-        }
-        if(count($inputs)<2) {
-            throw new InvalidArgumentException('Must have arguments greater than 2 or equal');
-        }
-        $this->assertInputShapes($inputs,'forward');
-        $outputs = $this->call($inputs,$training);
-        $this->assertOutputShape($outputs,'forward');
-        return $outputs;
-    }
-
     public function backward(array $dOutputs, ArrayAccess $grads=null,array $oidsToCollect=null) : array
     {
         if(count($dOutputs)!=1) {
@@ -68,36 +53,46 @@ abstract class AbstractMultiInputLayer extends AbstractLayerBase
         $this->assertOutputShape($dOutputs,'backward');
         $dInputs = $this->differentiate($dOutputs);
         $this->assertInputShapes($dInputs,'backward');
-        $this->collectGradients($this->backend,array_map(null,$this->weights(),$this->getGrads()),
+        $this->collectGradients($this->backend,array_map(null,$this->trainableVariables(),$this->getGrads()),
             $grads,$oidsToCollect);
         return $dInputs;
     }
 
+    public function __invoke($inputs, $training)
+    {
+        $outputs = $this->forward($inputs, $training);
+        return $outputs;
+    }
 
     /**
     *  @param array<Variable>  $inputs
     *  @return array<Variable>
     */
-    public function __invoke($inputs, bool $training)
+    public function forward(array $inputs, Variable|bool $training)
     {
         if(!is_array($inputs)) {
             throw new InvalidArgumentException('inputs must be list of Variable');
         }
-        if($this->outputShape==null) {
+        if(count($inputs)<2) {
+            throw new InvalidArgumentException('Must have arguments greater than 2 or equal');
+        }
+        [$inputs,$rawInputs]     = $this->packAndUnpackVariables($this->backend,$inputs);
+        [$training,$rawTraining] = $this->packAndUnpackVariable($this->backend,$training);
+        if(!$this->built) {
             $this->build($inputs);
+            $this->built = true;
         }
         $session = $this->preGradientProcessOnSession($inputs);
         $session->begin();
         try {
-            $rawInputs = array_map(function($value){return $value->value();},$inputs);
-            $outputs = $this->forward($rawInputs,$training);
-        } catch(Throwable $e) {
+            $this->assertInputShapes($inputs,'forward');
+            $rawOutputs = $this->call($rawInputs,$rawTraining);
+            $this->assertOutputShape($rawOutputs,'forward');
+        } finally {
             $session->end();
-            throw $e;
         }
-        $session->end();
         $outputs = $this->postGradientProcessOnSession(
-            $this->backend, $session, $inputs, [$outputs]);
+            $this->backend, $session, $inputs, [$rawOutputs]);
         return $outputs[0];
     }
 }

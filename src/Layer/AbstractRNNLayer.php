@@ -4,12 +4,9 @@ namespace Rindow\NeuralNetworks\Layer;
 use InvalidArgumentException;
 use ArrayAccess;
 use Interop\Polite\Math\Matrix\NDArray;
-use Rindow\NeuralNetworks\Gradient\Core\Variable;
-use Rindow\NeuralNetworks\Gradient\Core\Undetermined;
-use Rindow\NeuralNetworks\Gradient\Core\UndeterminedNDArray;
 use Rindow\NeuralNetworks\Gradient\Core\GradientTape;
 use Rindow\NeuralNetworks\Gradient\Core\GradientUtils;
-use Rindow\NeuralNetworks\Model\BuildContext;
+use Rindow\NeuralNetworks\Gradient\Variable;
 
 /**
  *
@@ -45,37 +42,6 @@ abstract class AbstractRNNLayer extends AbstractLayerBase implements RNNLayer
         $this->cell->reverseSyncCellWeightVariables($this->weights);
     }
 
-    final public function forward(object $inputs, bool $training, array $initialStates=null,array $options=null)
-    {
-        $variables = [$inputs];
-        if($initialStates!==null) {
-            $variables = array_merge($variables,$initialStates);
-        }
-
-        if(BuildContext::$build) {
-            $results = $this->build($variables,$options);
-            if(is_array($results)) {
-                $outputs = array_shift($results);
-                return [$outputs,$results];
-            } else {
-                return $outputs;
-            }
-        }
-        $this->assertInputShape($inputs,'forward');
-        $this->assertStatesShape($initialStates,'forward');
-        $results = $this->call($variables,$training);
-        $states = $results;
-        $outputs = array_shift($states);
-        if(count($states)>0) {
-            $this->assertStatesShape($states,'forward');
-        }
-        $this->assertOutputShape($outputs,'forward');
-        if(count($states)>0) {
-            return [$outputs,$states];
-        }
-        return $outputs;
-    }
-
     /**
     *  @param  array<NDArray> $dOutputs
     *  @return array<NDArray>
@@ -103,7 +69,7 @@ abstract class AbstractRNNLayer extends AbstractLayerBase implements RNNLayer
             }
             $this->assertInputShape($tmpdInputs,'backward');
         }
-        $this->collectGradients($this->backend,array_map(null,$this->weights(),$this->getGrads()),
+        $this->collectGradients($this->backend,array_map(null,$this->trainableVariables(),$this->getGrads()),
             $grads,$oidsToCollect);
 
         return $dInputs;
@@ -197,6 +163,11 @@ abstract class AbstractRNNLayer extends AbstractLayerBase implements RNNLayer
         }
     }
 
+    public function __invoke(...$args)
+    {
+        return $this->forward(...$args);
+    }
+
     /**
     *  @param Variable  $inputs
     *  @param bool      $training
@@ -205,47 +176,53 @@ abstract class AbstractRNNLayer extends AbstractLayerBase implements RNNLayer
     *  @return array<Variable>
     *       outputs
     */
-    public function __invoke($inputs, $training, array $initialStates=null, array $options=null)
+    final public function forward(object $inputs, Variable|bool $training, array $initialStates=null,array $options=null)
     {
-        if($this->outputShape==null) {
-            $this->build([$inputs]);
+        $inputs = [$inputs];
+        if($initialStates!==null) {
+            $inputs = array_merge($inputs,$initialStates);
+        }
+        [$inputs,$rawInputs]     = $this->packAndUnpackVariables($this->backend,$inputs);
+        [$training,$rawTraining] = $this->packAndUnpackVariable($this->backend,$training);
+
+        if(!$this->built) {
+            $this->build($inputs);
+            $this->built = true;
         }
 
-        $inputsVariables = [$inputs];
-        if($initialStates!==null) {
-            $rawStatus = array_map(function($stat){return $stat->value();},$initialStates);
-            $inputsVariables = array_merge($inputsVariables,$initialStates);
-        } else {
-            $rawStatus = null;
-        }
-        $session = $this->preGradientProcessOnSession($inputsVariables,['training'=>$training]);
-        $inputs = $inputs->value();
-        if(!is_bool($training)) {
-            $training = $training->value();
-        }
+        $session = $this->preGradientProcessOnSession($inputs,['training'=>$training]);
         $session->begin();
         try {
-            $outputs = $this->forward($inputs,$training,$rawStatus,$options);
-        } catch(Throwable $e) {
+            $rawInitialStates = $rawInputs;
+            $tmpRawInputs = array_shift($rawInitialStates);
+            $this->assertInputShape($tmpRawInputs,'forward');
+            if(count($rawInitialStates)>0) {
+                $this->assertStatesShape($rawInitialStates,'forward');
+            }
+            unset($tmpRawInputs);
+            unset($rawInitialStates);
+            $rawOutputs = $this->call($rawInputs,$rawTraining);
+            $rawStates = $rawOutputs;
+            $tmpRawOutputs = array_shift($rawStates);
+            if(count($rawStates)>0) {
+                $this->assertStatesShape($rawStates,'forward');
+            }
+            $this->assertOutputShape($tmpRawOutputs,'forward');
+            unset($tmpRawOutputs);
+            unset($rawStates);
+        } finally {
             $session->end();
-            throw $e;
         }
-        $session->end();
 
-        if(is_array($outputs)) {
-            [$o, $outputs] = $outputs;
-            array_unshift($outputs, $o);
-        } else {
-            $outputs = [$outputs];
-        }
-        $outputsVariables = $this->postGradientProcessOnSession(
-            $this->backend, $session, $inputsVariables, $outputs);
+        $outputs = $this->postGradientProcessOnSession(
+            $this->backend, $session, $inputs, $rawOutputs);
         
-        if(count($outputsVariables)>1) {
-            $outputs = array_shift($outputsVariables);
-            return [$outputs,$outputsVariables];
+        if(count($outputs)>1) {
+            $states = $outputs;
+            $outputs = array_shift($states);
+            return [$outputs,$states];
         } else {
-            return $outputsVariables[0];
+            return $outputs[0];
         }
     }
 
@@ -264,5 +241,7 @@ abstract class AbstractRNNLayer extends AbstractLayerBase implements RNNLayer
         if(isset($this->cell)) {
             $this->cell = clone $this->cell;
         }
+        $this->allocateWeights(count($this->weights));
+        $this->syncWeightVariables();
     }
 }

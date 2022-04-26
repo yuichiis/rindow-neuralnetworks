@@ -5,7 +5,7 @@ use InvalidArgumentException;
 use Interop\Polite\Math\Matrix\NDArray;
 use Rindow\NeuralNetworks\Support\GenericUtils;
 
-class Dense extends AbstractLayer implements Layer
+class Dense extends AbstractLayer
 {
     use GenericUtils;
     protected $backend;
@@ -30,6 +30,7 @@ class Dense extends AbstractLayer implements Layer
             'use_bias'=>true,
             'kernel_initializer'=>'glorot_uniform',
             'bias_initializer'=>'zeros',
+            'name'=>null,
             //'kernel_regularizer'=>null, 'bias_regularizer'=>null,
             //'activity_regularizer'=null,
             //'kernel_constraint'=null, 'bias_constraint'=null,
@@ -44,6 +45,7 @@ class Dense extends AbstractLayer implements Layer
         if($use_bias===null || $use_bias) {
             $this->useBias = true;
         }
+        $this->initName($name,'dense');
         $this->allocateWeights($this->useBias?2:1);
         $this->setActivation($activation);
     }
@@ -63,15 +65,15 @@ class Dense extends AbstractLayer implements Layer
         ///        'Unsuppored input shape: ['.implode(',',$inputShape).']');
         //}
         $shape = $inputShape;
-        $this->inputDim=array_pop($shape);
+        $inputDim=array_pop($shape);
         if($this->kernel===null) {
             if($sampleWeights) {
                 $this->kernel = $sampleWeights[0];
                 $this->bias = $sampleWeights[1];
             } else {
                 $this->kernel = $kernelInitializer(
-                    [$this->inputDim,$this->units],
-                    [$this->inputDim,$this->units]);
+                    [$inputDim,$this->units],
+                    [$inputDim,$this->units]);
                 if($this->useBias) {
                     $this->bias = $biasInitializer([$this->units]);
                 }
@@ -85,7 +87,6 @@ class Dense extends AbstractLayer implements Layer
         array_push($shape,$this->units);
         $this->outputShape = $shape;
         $this->syncWeightVariables();
-        return $this->createOutputDefinition([$this->outputShape]);
     }
 
     public function getParams() : array
@@ -147,8 +148,11 @@ class Dense extends AbstractLayer implements Layer
         $container->flattenOutputsShape = $outputs->shape();
         array_push($shape,$this->units);
         $outputs = $outputs->reshape($shape);
-        if($this->activation)
+        if($this->activation) {
+            $container->activation = new \stdClass();
+            $this->activation->setStates($container->activation);
             $outputs = $this->activation->forward($outputs,$training);
+        }
         return $outputs;
     }
 
@@ -156,8 +160,10 @@ class Dense extends AbstractLayer implements Layer
     {
         $K = $this->backend;
         $container = $this->container();
-        if($this->activation)
+        if($this->activation) {
+            $this->activation->setStates($container->activation);
             $dOutputs = $this->activation->backward($dOutputs);
+        }
         $dInputs = $K->zerosLike($container->inputs);
         $dOutputs=$dOutputs->reshape($container->flattenOutputsShape);
         $K->gemm($dOutputs, $this->kernel,1.0,0.0,$dInputs,false,true);

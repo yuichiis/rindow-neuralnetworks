@@ -5,7 +5,7 @@ use InvalidArgumentException;
 use Interop\Polite\Math\Matrix\NDArray;
 use Rindow\NeuralNetworks\Support\GenericUtils;
 
-abstract class AbstractConv extends AbstractImage implements Layer
+abstract class AbstractConv extends AbstractImage
 {
     abstract protected function call(NDArray $inputs, bool $training) : NDArray;
     abstract protected function differentiate(NDArray $dOutputs) : NDArray;
@@ -122,7 +122,7 @@ abstract class AbstractConv extends AbstractImage implements Layer
             $this->dBias = $K->zerosLike($this->bias);
         }
         $this->outputShape = $outputShape;
-        return $this->createOutputDefinition([$this->outputShape]);
+        $this->syncWeightVariables();
     }
 
     public function getParams() : array

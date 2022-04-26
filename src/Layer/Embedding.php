@@ -5,7 +5,7 @@ use InvalidArgumentException;
 use Interop\Polite\Math\Matrix\NDArray;
 use Rindow\NeuralNetworks\Support\GenericUtils;
 
-class Embedding extends AbstractLayer implements Layer
+class Embedding extends AbstractLayer
 {
     use GenericUtils;
     protected $backend;
@@ -25,6 +25,7 @@ class Embedding extends AbstractLayer implements Layer
         extract($this->extractArgs([
             'input_length'=>null,
             'kernel_initializer'=>'random_uniform',
+            'name'=>null,
         ],$options));
         $this->backend = $K = $backend;
         if($input_length!=null){
@@ -35,6 +36,7 @@ class Embedding extends AbstractLayer implements Layer
         $this->outputDim = $outputDim;
         $this->kernelInitializer = $K->getInitializer($kernel_initializer);
         $this->kernelInitializerName = $kernel_initializer;
+        $this->initName($name,'embedding');
         $this->allocateWeights(1);
     }
 
@@ -64,7 +66,6 @@ class Embedding extends AbstractLayer implements Layer
         $this->dKernel = $K->zerosLike($this->kernel);
         $this->outputShape = array_merge($inputShape,[$this->outputDim]);
         $this->syncWeightVariables();
-        return $this->createOutputDefinition([$this->outputShape]);
     }
 
     public function getParams() : array

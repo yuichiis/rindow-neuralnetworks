@@ -5,32 +5,18 @@ use InvalidArgumentException;
 use LogicException;
 use ArrayAccess;
 use Interop\Polite\Math\Matrix\NDArray;
-use Rindow\NeuralNetworks\Gradient\Core\Variable;
+use Rindow\NeuralNetworks\Gradient\Variable;
 use Rindow\NeuralNetworks\Gradient\Core\GradientTape;
 use Rindow\NeuralNetworks\Gradient\Core\GradientUtils;
-use Rindow\NeuralNetworks\Model\BuildContext;
 
 /**
  *
  */
-abstract class AbstractLayer extends AbstractLayerBase
+abstract class AbstractLayer extends AbstractLayerBase implements SequentialLayer
 {
     use GradientUtils;
     abstract protected function call(NDArray $inputs, bool $training) : NDArray;
     abstract protected function differentiate(NDArray $dOutputs) : NDArray;
-
-    final public function forward(object $inputs, bool $training)
-    {
-        if(BuildContext::$build) {
-            return $this->build($inputs);
-        }
-        $this->assertInputShape($inputs,'forward');
-
-        $outputs = $this->call($inputs, $training);
-
-        $this->assertOutputShape($outputs,'forward');
-        return $outputs;
-    }
 
     /**
     *  @param  array<NDArray> $dOutputs
@@ -48,36 +34,44 @@ abstract class AbstractLayer extends AbstractLayerBase
         $this->assertOutputShape($dOutputs,'backward');
         $dInputs = $this->differentiate($dOutputs);
         $this->assertInputShape($dInputs,'backward');
-        $this->collectGradients($this->backend,array_map(null,$this->weights(),$this->getGrads()),
+        $this->collectGradients($this->backend,array_map(null,$this->trainableVariables(),$this->getGrads()),
             $grads,$oidsToCollect);
         return [$dInputs];
     }
 
+
+    final public function __invoke(...$args)
+    {
+        return $this->forward(...$args);
+    }
+    
     /**
     *  @param Variable  $inputs
     *       inputs
     *  @return array<Variable>
     *       outputs
     */
-    public function __invoke($inputs, $training)
+    public function forward(NDArray $inputs, Variable|bool $training) : Variable
     {
-        if($this->outputShape==null) {
+        [$inputs,$rawInputs]     = $this->packAndUnpackVariable($this->backend,$inputs);
+        [$training,$rawTraining] = $this->packAndUnpackVariable($this->backend,$training);
+        if(!$this->built) {
             $this->build($inputs);
+            $this->built = true;
         }
-        $inputs = $this->packVariable($this->backend, $inputs);
-        $training = $this->packVariable($this->backend, $training);
 
         $session = $this->preGradientProcessOnSession([$inputs],['training'=>$training]);
         $session->begin();
         try {
-            $outputs = $this->forward($inputs->value(),$training->value());
-        } catch(Throwable $e) {
+            $this->assertInputShape($rawInputs,'forward');
+            $rawOutputs = $this->call($rawInputs, $rawTraining);
+            $this->assertOutputShape($rawOutputs,'forward');
+        } finally {
             $session->end();
-            throw $e;
         }
-        $session->end();
+
         $outputs = $this->postGradientProcessOnSession(
-            $this->backend, $session, [$inputs], [$outputs]);
+            $this->backend, $session, [$inputs], [$rawOutputs]);
         return $outputs[0];
     }
 
@@ -89,5 +83,23 @@ abstract class AbstractLayer extends AbstractLayerBase
         $training = $options['training'] ?? false;
         $outputs = $this->call($inputs[0],$training);
         return [$outputs];
+    }
+
+    public function __clone()
+    {
+        if(isset($this->kernel)) {
+            $this->kernel = clone $this->kernel;
+        }
+        if(isset($this->bias)) {
+            $this->bias = clone $this->bias;
+        }
+        if(isset($this->dKernel)) {
+            $this->dKernel = clone $this->dKernel;
+        }
+        if(isset($this->dBias)) {
+            $this->dBias = clone $this->dBias;
+        }
+        $this->allocateWeights(count($this->weights));
+        $this->syncWeightVariables();
     }
 }

@@ -48,7 +48,7 @@ class AbstractTestFunction extends AbstractFunction
         return $outputs;
     }
 
-    public function testGetValueType($v)
+    public function checkGetValueType($v)
     {
         $K = $this->backend;
         if($v instanceof Undetermined) {
@@ -73,7 +73,7 @@ class AbstractTestFunction extends AbstractFunction
                 return array_merge(
                     $c,
                     (property_exists($v,'_debug_name')?[$v->_debug_name]:[
-                        $this->testGetValueType($v)
+                        $this->checkGetValueType($v)
                     ]));
             },[]);
         $this->logger->log('diff '.$this->name.'('.implode(',',$args).') gen='.$this->generation);

@@ -16,10 +16,12 @@ class Gather extends AbstractMultiInputLayer
         extract($this->extractArgs([
             'axis'=>-1,
             'input_shapes'=>null,
+            'name'=>null,
         ],$options));
         $this->backend = $backend;
         $this->axis = $axis;
         $this->inputShape = $input_shapes;
+        $this->initName($name,'gather');
     }
 
     public function build($variables=null, array $options=null)
@@ -65,7 +67,6 @@ class Gather extends AbstractMultiInputLayer
         $this->realAxis = $axis+1;
 
         $this->outputShape = $outputShape;
-        return $this->createOutputDefinition([$this->outputShape]);
     }
 
     public function getParams() : array

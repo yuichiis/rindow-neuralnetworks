@@ -5,7 +5,7 @@ use InvalidArgumentException;
 use Interop\Polite\Math\Matrix\NDArray;
 use Rindow\NeuralNetworks\Support\GenericUtils;
 
-class Activation extends AbstractLayer implements Layer
+class Activation extends AbstractLayer
 {
     use GenericUtils;
     protected $backend;
@@ -14,9 +14,11 @@ class Activation extends AbstractLayer implements Layer
     {
         extract($this->extractArgs([
             'input_shape'=>null,
+            'name'=>null,
         ],$options));
         $this->backend = $K = $backend;
         $this->inputShape = $input_shape;
+        $this->initName($name,'activation');
         $this->setActivation($activation);
     }
 
@@ -33,15 +35,20 @@ class Activation extends AbstractLayer implements Layer
     protected function call(NDArray $inputs, bool $training) : NDArray
     {
         $outputs = $inputs;
-        if($this->activation)
+        if($this->activation) {
+            $this->activation->setStates($this->container());
             $outputs = $this->activation->forward($outputs,$training);
+        }
         return $outputs;
     }
 
     protected function differentiate(NDArray $dOutputs) : NDArray
     {
-        if($this->activation)
-            $dOutputs = $this->activation->backward($dOutputs);
-        return $dOutputs;
+        $dInputs = $dOutputs;
+        if($this->activation) {
+            $this->activation->setStates($this->container());
+            $dInputs = $this->activation->backward($dOutputs);
+        }
+        return $dInputs;
     }
 }

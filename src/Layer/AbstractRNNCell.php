@@ -14,7 +14,7 @@ abstract class AbstractRNNCell extends AbstractLayerBase implements RNNCell
 
     public function getParams() : array
     {
-        if($this->bias) {
+        if($this->useBias) {
             return [$this->kernel,$this->recurrentKernel,$this->bias];
         } else {
             return [$this->kernel,$this->recurrentKernel];
@@ -23,7 +23,7 @@ abstract class AbstractRNNCell extends AbstractLayerBase implements RNNCell
 
     public function getGrads() : array
     {
-        if($this->bias) {
+        if($this->useBias) {
             return [$this->dKernel,$this->dRecurrentKernel,$this->dBias];
         } else {
             return [$this->dKernel,$this->dRecurrentKernel];
@@ -60,5 +60,27 @@ abstract class AbstractRNNCell extends AbstractLayerBase implements RNNCell
 
         $this->assertInputShape($dInputs,'backward');
         return [$dInputs,$dStates];
+    }
+
+    public function __clone()
+    {
+        if(isset($this->kernel)) {
+            $this->kernel = clone $this->kernel;
+        }
+        if(isset($this->recurrentKernel)) {
+            $this->recurrentKernel = clone $this->recurrentKernel;
+        }
+        if(isset($this->bias)) {
+            $this->bias = clone $this->bias;
+        }
+        if(isset($this->dKernel)) {
+            $this->dKernel = clone $this->dKernel;
+        }
+        if(isset($this->dRecurrentKernel)) {
+            $this->dRecurrentKernel = clone $this->dRecurrentKernel;
+        }
+        if(isset($this->dBias)) {
+            $this->dBias = clone $this->dBias;
+        }
     }
 }

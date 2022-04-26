@@ -34,7 +34,7 @@ trait GradientUtils
 
     protected function preGradientProcessOnSession($inputsVariables,$optionsVariables=null) : object
     {
-        $session = new GraphSession($this,$inputsVariables,$optionsVariables=null);
+        $session = new GraphSession($this,$inputsVariables,$optionsVariables);
         $session->_setGeneration($this->maxGeneration($inputsVariables));
         return $session;
     }
@@ -102,6 +102,33 @@ trait GradientUtils
         return array_map(function($value) use ($backend) {
             return ($value!==null)?new Variable($backend,$value):null;
         },$values);
+    }
+
+    public function packAndUnpackVariable(object $backend, $value) : array
+    {
+        if($value instanceof Variable) {
+            $rawValue = $value->value();
+        } else {
+            $rawValue = $value;
+            $value = new Variable($backend,$rawValue);
+        }
+        return [$value,$rawValue];
+    }
+
+    public function packAndUnpackVariables(object $backend, array $values) : array
+    {
+        $variables = [];
+        $rawValues = [];
+        foreach($values as $value) {
+            if($value instanceof Variable) {
+                $variables[] = $value;
+                $rawValues[] = $value->value();
+            } else {
+                $variables[] = new Variable($backend,$value);
+                $rawValues[] = $value;
+            }
+        }
+        return [$variables,$rawValues];
     }
 
     protected function referenceVariables(array $variables) : array
