@@ -64,11 +64,11 @@ class GraphFunction
 
     protected $alternateCreator;
 
-    public function __construct(object $backend, callable $func, array $options=null)
+    public function __construct(object $backend, callable $func, object $alternateCreator=null)
     {
         $this->backend = $backend;
         $this->func = $func;
-        $this->alternateCreator = $options['alternateCreator'] ?? null;
+        $this->alternateCreator = $alternateCreator;
     }
 
     public function backend()

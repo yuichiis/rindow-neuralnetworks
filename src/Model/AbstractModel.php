@@ -99,14 +99,17 @@ abstract class AbstractModel implements Model
         return substr($classname,strrpos($classname,'\\')+1);
     }
 
-    public function compile(array $options=null) : void
+    public function compile(
+        string|object $optimizer=null,
+        string|object $loss=null,
+        array $metrics=null,
+        int $numInputs=null,
+    ) : void
     {
-        extract($this->extractArgs([
-            'optimizer'=>'SGD',
-            'loss'=>'SparseCategoricalCrossEntropy',
-            'metrics'=>['loss','accuracy'],
-            'numInputs'=>1,
-        ],$options));
+        $optimizer = $optimizer ?? 'SGD';
+        $loss = $loss ?? 'SparseCategoricalCrossEntropy';
+        $metrics = $metrics ?? ['loss','accuracy'];
+        $numInputs = $numInputs ?? 1;
 
         // resolve optimizer
         if(is_string($optimizer)) {
@@ -155,36 +158,19 @@ abstract class AbstractModel implements Model
         }
         $this->metrics = $metrics;
 
-        //$layers = $this->layers();
-        //$layerNames = [];
-        //foreach ($layers as $layer) {
-        //    $name = $this->basename($layer);
-        //    if(isset($layerNames[$name])) {
-        //        $i = 1;
-        //        $base = $name;
-        //        while(true) {
-        //            if(!isset($layerNames[$base.'_'.$i])) {
-        //                $name = $base.'_'.$i;
-        //                break;
-        //            }
-        //            $i++;
-        //        }
-        //$layers = [];
-        //$modules = $this->submodules();
-        //while($mdl = array_shift($modules)) {
-        //    if($mdl instanceof Layer) {
-        //        $layers[] = $mdl;
-        //    } else {
-        //        $modules = array_merge($mdl->submodules(),$modules);
-        //    }
-        //}
-        //    }
-        //    $layerNames[$name] = true;
-        //    $layer->setName($name);
-        //}
     }
 
-    public function fit($inputs, NDArray $tests=null, array $options=null) : array
+    public function fit(
+        $inputs,
+        NDArray $tests=null,
+        int $batch_size=null,
+        int $epochs=null,
+        int $verbose=null,
+        array|Dataset $validation_data=null,
+        array $callbacks=null,
+        bool $shuffle=null,
+        object $filter=null,
+    ) : array
     {
         if($this->optimizer==null || $this->lossFunction==null) {
             throw new LogicException('Not yet compile');
@@ -192,25 +178,25 @@ abstract class AbstractModel implements Model
         $K = $this->backend;
         $mo = $K->localMatrixOperator();
         $localLA = $K->localLA();
-        extract($this->extractArgs([
-            'batch_size'=>32,
-            'epochs'=>1,
-            'verbose'=>1,
-            'validation_data'=>null,
-            'callbacks'=>null,
-            'shuffle'=>true,
-            'filter'=>null,
-        ],$options,$leftargs));
+
+        // defaults
+        $batch_size = $batch_size ?? 32;
+        $epochs = $epochs ?? 1;
+        $verbose = $verbose ?? 1;
+        $validation_data = $validation_data ?? null;
+        $callbacks = $callbacks ?? null;
+        $shuffle = $shuffle ?? true;
+        $filter = $filter ?? null;
+
         if($inputs instanceof NDArray||is_array($inputs)) {
-            $options = [
-                'batch_size'=>$batch_size,
-                'shuffle'=>$shuffle,
-                'filter'=>$filter,
-            ];
-            if($tests!==null) {
-                $options['tests'] = $tests;
-            }
-            $dataset = new NDArrayDataset($K->localMatrixOperator(),$inputs,$options);
+            $dataset = new NDArrayDataset(
+                $K->localMatrixOperator(),
+                $inputs,
+                batch_size: $batch_size,
+                shuffle: $shuffle,
+                filter: $filter,
+                tests: $tests,
+            );
             $inputCount = $dataset->datasetSize();
         } elseif($inputs instanceof Dataset) {
             if($tests!=null) {
@@ -277,7 +263,7 @@ abstract class AbstractModel implements Model
             $logs = ['loss'=>$totalLoss,'accuracy'=>$totalAccuracy];
             if($val_inputs) {
                 [$loss, $accuracy] = $this->evaluate($val_inputs, $val_test,
-                    ['batch_size'=>$batch_size,'verbose'=>0,'callbacks'=>$callbacks]);
+                    batch_size:$batch_size, verbose:0, callbacks:$callbacks);
                 $history['val_loss'][] = $loss;
                 $history['val_accuracy'][] = $accuracy;
                 $logs = ['val_loss'=>$loss,'val_accuracy'=>$accuracy];
@@ -400,14 +386,23 @@ abstract class AbstractModel implements Model
         return $this->lossFunction->accuracy($trues,$preds);
     }
 
-    public function evaluate($x, NDArray $t=null, array $options=null) : array
+    public function evaluate(
+        $inputs,
+        NDArray $trues=null,
+        int $batch_size=null,
+        int $verbose=null,
+        object|array $callbacks=null,
+    ) : array
     {
+        // defaults
+        $batch_size = $batch_size ?? 32;
+        $verbose = $verbose ?? 0;
+        $callbacks = $callbacks ?? null;
+
+        $x = $inputs; unset($inputs);
+        $t = $trues; unset($trues);
+
         $K = $this->backend;
-        extract($this->extractArgs([
-            'batch_size'=>32,
-            'verbose'=>0,
-            'callbacks'=>null,
-        ],$options));
         $totalLoss = 0.0;
         $totalAccuracy = 0.0;
         if(!($callbacks instanceof CallbackList)) {
@@ -417,8 +412,8 @@ abstract class AbstractModel implements Model
             $startTime = time();
         }
         if($x instanceof NDArray||is_array($x)) {
-            $options = ['tests'=>$t,'batch_size'=>$batch_size];
-            $dataset = new NDArrayDataset($K->localMatrixOperator(),$x,$options);
+            $dataset = new NDArrayDataset(
+                $K->localMatrixOperator(),$x, tests: $t, batch_size: $batch_size);
         } elseif($x instanceof Dataset) {
             if($t!=null) {
                 throw new InvalidArgumentException('The tests must be specified in the Dataset.');
@@ -469,14 +464,16 @@ abstract class AbstractModel implements Model
         return [$totalLoss,$totalAccuracy];
     }
 
-    public function predict($inputs, array $options=null) : NDArray
+    public function predict(
+        $inputs,
+        array|object $callbacks=null,
+        ...$options
+    ) : NDArray
     {
         //if(!$this->built) {
         //    throw new LogicException('Not yet built');
         //}
-        extract($this->extractArgs([
-            'callbacks'=>null,
-        ],$options));
+        $callbacks = $callbacks ?? null;
 
         if(!($callbacks instanceof CallbackList)) {
             $callbacks = new CallbackList($this,$callbacks);
@@ -530,13 +527,14 @@ abstract class AbstractModel implements Model
         $func = function($x,$training,$t) use ($model) {
             return $model->forward($x,$training,$t);
         };
-        $options = ['alternateCreator'=>$this];
+        //$options = ['alternateCreator'=>$this];
         //[$weights,$grads] = $this->initWeights();
         //if(count($weights)) {
         //    $options['weights'] = $weights;
         //    $options['grads'] = $grads;
         //}
-        $this->graph['model'] = $this->builder->gradient->function($func,$options);
+        $this->graph['model'] = $this->builder->gradient->function(
+            $func,alternateCreator:$this);
         return $this->graph['model'];
     }
 

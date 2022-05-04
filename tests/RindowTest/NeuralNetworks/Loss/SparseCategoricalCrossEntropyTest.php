@@ -42,7 +42,7 @@ class Test extends TestCase
         );
         $outputs = $K->scalar($outputsVariable);
         $dInputs = $outputsVariable->creator()->backward([$K->array(1.0)]);
-        $dInputs = $dInputs[0];
+        $dInputs = $dInputs[1];
         $dInputs = $K->ndarray($dInputs);
 //echo "\n";
 //echo "grads=".$mo->toString($grads[0],'%5.3f',true)."\n\n";
@@ -120,7 +120,7 @@ class Test extends TestCase
         $this->assertEquals($copyx->toArray(),$tx->toArray());
         $this->assertEquals($copyt->toArray(),$tt->toArray());
         $dx = $outputsVariable->creator()->backward([$K->array(1.0)]);
-        $dx = $dx[0];
+        $dx = $dx[1];
         $dx = $K->ndarray($dx);
         //$this->assertLessThan(0.00001,abs($mo->sum($dx)));
         //$this->assertLessThan(0.001,abs(1-$dx[0][0])/6);
@@ -128,6 +128,7 @@ class Test extends TestCase
         $this->assertEquals($copyt->toArray(),$tt->toArray());
 
         $accuracy = $func->accuracy($t,$x);
+        $accuracy = $K->scalar($accuracy);
 
         $x = $mo->array([
             [0.00001, 0.00001 , 0.99998],
@@ -145,7 +146,7 @@ class Test extends TestCase
         $loss = $K->scalar($outputsVariable);
         $this->assertGreaterThan(10,abs($loss));
         $dx = $outputsVariable->creator()->backward([$K->array(1.0)]);
-        $dx = $dx[0];
+        $dx = $dx[1];
         $dx = $K->ndarray($dx);
 
         $x = $mo->array([
@@ -190,7 +191,7 @@ class Test extends TestCase
         $this->assertEquals($copyt->toArray(),$tt->toArray());
 
         $dx = $outputsVariable->creator()->backward([$K->array(1.0)]);
-        $dx =  $dx[0];
+        $dx =  $dx[1];
         $tt = $K->ndarray($t);
         $tx = $K->ndarray($x);
         #$this->assertLessThan(0.00001,abs($mo->sum($dx)));
@@ -198,6 +199,7 @@ class Test extends TestCase
         $this->assertEquals($copyt->toArray(),$tt->toArray());
 
         $accuracy = $func->accuracy($t,$x);
+        $accuracy = $K->scalar($accuracy);
 
         $x = $mo->array([
             [-10.0, -10.0 , 10.0],
@@ -216,7 +218,7 @@ class Test extends TestCase
         $this->assertGreaterThan(10.0,abs($loss));
 
         $dx = $outputsVariable->creator()->backward([$K->array(1.0)]);
-        $dx = $dx[0];
+        $dx = $dx[1];
         $dx = $K->ndarray($dx);
         $this->assertLessThan(0.00001,abs($mo->sum($dx)));
 

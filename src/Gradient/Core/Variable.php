@@ -21,40 +21,42 @@ class Variable implements VariableInterface
     protected $creator;
     protected $generation=0;
 
-    public function __construct(object $backend, $value, array $options=null)
+    public function __construct(
+        object $backend,
+        $value,
+        string $name=null,
+        bool $reference=null,
+        bool $trainable=null,
+        bool $undetermined=null,
+    )
     {
-        extract($this->extractArgs([
-            'name'=>null,
-            'reference'=>null,
-            'trainable'=>null,
-            'undetermined'=>null,
-        ],$options));
         $this->backend = $backend;
         $this->undetermined = $undetermined;
         $this->name = $name;
         $this->trainable = $trainable ?? true;
-        $undetermined = $options['undetermined'] ?? false;
+        $undetermined = $undetermined ?? false;
         if(!$undetermined) {
-            $this->assign($value,['reference'=>$reference]);
+            $this->assign($value, reference:$reference);
         }
     }
 
-    public function assign($value,array $options=null) : void
+    public function assign($value, bool $reference=null) : void
     {
-        $reference = $options['reference'] ?? false;
+        $K = $this->backend;
+        $reference = $reference ?? false;
         if($value instanceof VariableInterface) {
             $value = $value->value();
         }
         if($value instanceof NDArray) {
             if($reference) {
                 $this->value = $value;
-            } else {
-                $this->value = $this->backend->copy($value);
-            }
+            } else {                                        // Copying NDArray before
+                $this->value = $K->copy($K->array($value)); // translate from NDArray to NDArrayCL
+            }                                               // if Backend is OpenCL.
         } elseif(is_bool($value)) {
             $this->value = $value;
         } elseif(is_array($value)||is_numeric($value)) {
-            $this->value = $this->backend->array($value);
+            $this->value = $K->array($value);
         } else {
             throw new InvalidArgumentException('Invalid vaule type:'.gettype($value));
         }
@@ -105,7 +107,9 @@ class Variable implements VariableInterface
     */
     public function setCreator($creator) : void
     {
-        $this->creator = $creator;
+        if($this->trainable) {
+            $this->creator = $creator;
+        }
         $this->generation = $creator->generation() + 1;
     }
 
@@ -218,7 +222,7 @@ class Variable implements VariableInterface
         if(is_bool($value)) {
             throw new LogicException('unsupported operation on boolean type');
         }
-        return new self($this->backend,$value->reshape($shape),['reference'=>true]);
+        return new self($this->backend,$value->reshape($shape), reference:true);
     }
 
     public function toArray()

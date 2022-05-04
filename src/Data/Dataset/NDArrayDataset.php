@@ -21,16 +21,18 @@ class NDArrayDataset implements Countable,IteratorAggregate,Dataset
     public function __construct(
         $mo,
         $inputs,
-        array $options=null,
-        array &$leftargs=null
-        )
+        NDArray $tests=null,
+        int $batch_size=null,
+        $shuffle=null,
+        DatasetFilter $filter=null,
+    )
     {
-        extract($this->extractArgs([
-            'tests'=>null,
-            'batch_size'=>32,
-            'shuffle'=>true,
-            'filter'=>null,
-        ],$options,$leftargs));
+        // defaults
+        $tests = $tests ?? null;
+        $batch_size = $batch_size ?? 32;
+        $shuffle = $shuffle ?? true;
+        $filter = $filter ?? null;
+
         $this->mo = $mo;
         if(is_array($inputs)) {
             $this->multiInputs = true;

@@ -19,7 +19,7 @@ class TestModel1 extends AbstractModel
         )
     {
         parent::__construct($backend,$builder);
-        $this->dense = $builder->layers->Dense($units=5,['input_shape'=>[1]]);
+        $this->dense = $builder->layers->Dense($units=5,input_shape:[1]);
     }
 
     protected function call($inputs,$training)
@@ -39,7 +39,7 @@ class TestModel2 extends AbstractModel
     {
         parent::__construct($backend,$builder);
         $this->dense1 = $builder->layers->Dense($units=128,
-                ['input_shape'=>[2],'activation'=>'sigmoid']
+                input_shape:[2], activation:'sigmoid'
             );
         $this->dense2 = $builder->layers->Dense($units=2);
     }
@@ -63,7 +63,7 @@ class Test3Mini1 extends AbstractModel
     {
         parent::__construct($backend,$builder);
         $this->dense1 = $builder->layers->Dense($units=128,
-                ['input_shape'=>[2],'activation'=>'sigmoid']
+                input_shape:[2], activation:'sigmoid'
             );
     }
     protected function call($inputs,$training)
@@ -123,11 +123,11 @@ class TestRNNEncoder extends AbstractModel
     {
         parent::__construct($backend,$builder);
         $this->embed = $builder->layers->Embedding($inputDim=5, $outputDim=4,
-                ['input_length'=>3]
+                input_length:3
             );
         $this->rnn = $builder->layers->LSTM($units=32,
-                ['return_state'=>true,'return_sequences'=>true,
-                 'recurrent_initializer'=>'glorot_uniform']
+                return_state:true,return_sequences:true,
+                recurrent_initializer:'glorot_uniform'
             );
     }
 
@@ -151,11 +151,11 @@ class TestRNNDecoder extends AbstractModel
     {
         parent::__construct($backend,$builder);
         $this->embed = $builder->layers->Embedding($inputDim=5, $outputDim=4,
-                ['input_length'=>3]
+                input_length:3
             );
         $this->rnn = $builder->layers->LSTM($units=32,
-                ['return_state'=>true,'return_sequences'=>true,
-                 'recurrent_initializer'=>'glorot_uniform']
+                return_state:true,return_sequences:true,
+                recurrent_initializer:'glorot_uniform'
             );
         $this->attention = $builder->layers->Attention();
         $this->concat = $builder->layers->Concatenate();
@@ -241,7 +241,11 @@ class TestRNNMain extends AbstractModel
         return parent::accuracy($trues,$preds);
     }
 
-    public function predict($inputs, array $options=null) : NDArray
+    public function predict(
+        $inputs, 
+        array|object $callbacks=null, 
+        ...$options
+    ) : NDArray
     {
         $K = $this->backend;
         $g = $this->builder->gradient();
@@ -307,9 +311,9 @@ class TestVariableMini1 extends AbstractModel
         $units = 128;
         $kernelInitializer = $backend->getInitializer('glorot_uniform');
         $weights = $kernelInitializer([$inputDim,$units],[$inputDim,$units]);
-        $this->linearWeight = $g->Variable($weights,['name'=>'W1']);
-        $this->linearBias = $g->Variable($backend->zeros([$units]),['name'=>'B1']);
-        $this->activation = $builder->layers->Activation('sigmoid',['input_shape'=>[128]]);
+        $this->linearWeight = $g->Variable($weights,name:'W1');
+        $this->linearBias = $g->Variable($backend->zeros([$units]),name:'B1');
+        $this->activation = $builder->layers->Activation('sigmoid', input_shape:[128]);
     }
 
     protected function call($inputs)
@@ -337,8 +341,8 @@ class TestVariableMini2 extends AbstractModel
         $units = 2;
         $kernelInitializer = $backend->getInitializer('glorot_uniform');
         $weights = $kernelInitializer([$inputDim,$units],[$inputDim,$units]);
-        $this->linearWeight = $g->Variable($weights,['name'=>'W2']);
-        $this->linearBias = $g->Variable($backend->zeros([$units]),['name'=>'B2']);
+        $this->linearWeight = $g->Variable($weights,name:'W2');
+        $this->linearBias = $g->Variable($backend->zeros([$units]),name:'B2');
     }
 
     protected function call($inputs)
@@ -384,7 +388,7 @@ class TestGraphMode extends AbstractModel
     {
         parent::__construct($backend,$builder);
         $nn = $builder;
-        $this->in = $nn->layers->Input(['shape'=>[2]]);
+        $this->in = $nn->layers->Input(shape:[2]);
         $this->fc = $nn->layers->Dense(3);
     }
 
@@ -470,15 +474,15 @@ class Test extends TestCase
         $plt = new Plot($this->getPlotConfig(),$mo);
 
         $model = new TestModel2($K,$nn);
-        $lossfunc = $nn->losses->SparseCategoricalCrossentropy(['from_logits'=>true]);
+        $lossfunc = $nn->losses->SparseCategoricalCrossentropy(from_logits:true);
         $optimizer = $nn->optimizers->Adam();
         $train_inputs = $K->array([[1, 3], [1, 4], [2, 4], [3, 1], [4, 1], [4, 2]]);
         $train_tests = $K->array([0, 0, 0, 1, 1, 1]);
-        $dataset = $nn->data->NDArrayDataset($train_inputs,[
-            'tests'=>$train_tests,
-            'batch_size'=>64,
-            'shuffle'=>false,
-        ]);
+        $dataset = $nn->data->NDArrayDataset($train_inputs,
+            tests:$train_tests,
+            batch_size:64,
+            shuffle:false,
+        );
         $history = [];
         for($epoch=0;$epoch<100;$epoch++) {
             $totalLoss = 0;
@@ -521,17 +525,17 @@ class Test extends TestCase
         $plt = new Plot($this->getPlotConfig(),$mo);
 
         $model = new TestModel2($K,$nn);
-        $lossfunc = $nn->losses->SparseCategoricalCrossentropy(['from_logits'=>true]);
+        $lossfunc = $nn->losses->SparseCategoricalCrossentropy(from_logits:true);
         $train_inputs = $mo->array([[1, 3], [1, 4], [2, 4], [3, 1], [4, 1], [4, 2]]);
         $train_tests = $mo->array([0, 0, 0, 1, 1, 1]);
-        $model->compile([
-            'loss' => $lossfunc,
-            'optimizer' => 'adam',
-        ]);
+        $model->compile(
+            loss: $lossfunc,
+            optimizer: 'adam',
+        );
 
         $history = $model->fit(
             $train_inputs, $train_tests,
-            ['batch_size'=>2,'epochs'=>1/*00*/,'shuffle'=>true,'verbose'=>0]);
+            batch_size:2, epochs: 1/*00*/, shuffle:true, verbose:0);
 
         if($this->plot) {
             $plt->plot($mo->array($history['loss']),null,null,'loss');
@@ -554,16 +558,16 @@ class Test extends TestCase
 
         $model = new TestModel2($K,$nn);
 
-        $lossfunc = $nn->losses->SparseCategoricalCrossentropy(['from_logits'=>true]);
-        $model->compile([
-            'loss' => $lossfunc,
-            'optimizer' => 'adam',
-        ]);
+        $lossfunc = $nn->losses->SparseCategoricalCrossentropy(from_logits:true);
+        $model->compile(
+            loss:$lossfunc,
+            optimizer:'adam',
+        );
 
         // training greater or less
         $x = $mo->array([[1, 3], [1, 4], [2, 4], [3, 1], [4, 1], [4, 2]]);
         $t = $mo->array([0, 0, 0, 1, 1, 1]);
-        $history = $model->fit($x,$t,['epochs'=>100,'verbose'=>0]);
+        $history = $model->fit($x,$t,epochs:100, verbose:0);
 
         [$loss,$accuracy] = $model->evaluate($x,$t);
         $this->assertLessThan(1.0,$loss);
@@ -584,15 +588,15 @@ class Test extends TestCase
         $val_inputs = $mo->array([[1, 2], [3, 2],]);
         $val_tests = $mo->array([0, 1,]);
 
-        $model->compile([
-            'loss' => $nn->losses->SparseCategoricalCrossentropy(['from_logits'=>true]),
-            'optimizer' => 'adam',
-        ]);
+        $model->compile(
+            loss:$nn->losses->SparseCategoricalCrossentropy(from_logits:true),
+            optimizer:'adam',
+        );
 
         $history = $model->fit(
             $train_inputs, $train_tests,
-            ['batch_size'=>2,'epochs'=>100,'shuffle'=>true,'verbose'=>0,
-                'validation_data'=>[$val_inputs,$val_tests]]);
+            batch_size:2,epochs:100,shuffle:true,verbose:0,
+            validation_data:[$val_inputs,$val_tests]);
 
         if($this->plot) {
             $plt->plot($mo->array($history['loss']),null,null,'loss');
@@ -620,15 +624,15 @@ class Test extends TestCase
         $val_inputs = $mo->array([[1, 2], [3, 2],]);
         $val_tests = $mo->array([0, 1,]);
 
-        $model->compile([
-            'loss' => $nn->losses->SparseCategoricalCrossentropy(['from_logits'=>true]),
-            'optimizer' => 'adam',
-        ]);
+        $model->compile(
+            loss: $nn->losses->SparseCategoricalCrossentropy(from_logits:true),
+            optimizer: 'adam',
+        );
 
         $history = $model->fit(
             $train_inputs, $train_tests,
-            ['batch_size'=>2,'epochs'=>100,'shuffle'=>true,'verbose'=>0,
-                'validation_data'=>[$val_inputs,$val_tests]]);
+            batch_size:2,epochs:100,shuffle:true,verbose:0,
+            validation_data:[$val_inputs,$val_tests]);
 
         if($this->plot) {
             $plt->plot($mo->array($history['loss']),null,null,'loss');
@@ -655,15 +659,15 @@ class Test extends TestCase
         $val_inputs = $mo->array([[1, 2], [3, 2],]);
         $val_tests = $mo->array([0, 1,]);
 
-        $model->compile([
-            'loss' => $nn->losses->SparseCategoricalCrossentropy(['from_logits'=>true]),
-            'optimizer' => 'adam',
-        ]);
+        $model->compile(
+            loss: $nn->losses->SparseCategoricalCrossentropy(from_logits:true),
+            optimizer: 'adam',
+        );
 
         $history = $model->fit(
             $train_inputs, $train_tests,
-            ['batch_size'=>2,'epochs'=>100,'shuffle'=>true,'verbose'=>0,
-                'validation_data'=>[$val_inputs,$val_tests]]);
+            batch_size:2,epochs:100,shuffle:true,verbose:0,
+            validation_data:[$val_inputs,$val_tests]);
 
         $savedWeights = [];
         $model->saveWeights($savedWeights);
@@ -681,10 +685,10 @@ class Test extends TestCase
         $val_inputs = $mo->array([[1, 2], [3, 2],]);
         $val_tests = $mo->array([0, 1,]);
 
-        $model->compile([
-            'loss' => $nn->losses->SparseCategoricalCrossentropy(['from_logits'=>true]),
-            'optimizer' => 'adam',
-        ]);
+        $model->compile(
+            loss: $nn->losses->SparseCategoricalCrossentropy(from_logits:true),
+            optimizer: 'adam',
+        );
         $model->loadWeights($savedWeights);
 
         [$totalLoss,$totalAccuracy] = $model->evaluate($val_inputs,$val_tests);
@@ -711,14 +715,14 @@ class Test extends TestCase
             NDArray::int32
         );
 
-        $model->compile([
-            'loss' => 'sparse_categorical_crossentropy',
-            'optimizer' => 'adam',
-        ]);
+        $model->compile(
+            loss: 'sparse_categorical_crossentropy',
+            optimizer: 'adam',
+        );
 
         $history = $model->fit(
             $inputs, $targets,
-            ['batch_size'=>2,'epochs'=>1,'shuffle'=>true,'verbose'=>0,]);
+            batch_size:2,epochs:1,shuffle:true,verbose:0);
 
         $savedWeights = [];
         $model->saveWeights($savedWeights);
@@ -741,10 +745,10 @@ class Test extends TestCase
             NDArray::int32
         );
 
-        $model->compile([
-            'loss' => 'sparse_categorical_crossentropy',
-            'optimizer' => 'adam',
-        ]);
+        $model->compile(
+            loss: 'sparse_categorical_crossentropy',
+            optimizer: 'adam',
+        );
 
         $model->loadWeights($savedWeights);
         $loadedShapes = array_map(fn($x)=>$x->shape(),$model->trainableVariables());
@@ -752,7 +756,7 @@ class Test extends TestCase
 
         $seq = $mo->array([[1, 3, 4]],NDArray::int32);
         $attentionPlot = $mo->zeros([3, 3]);
-        $results = $model->predict($seq,['attention_plot'=>$attentionPlot]);
+        $results = $model->predict($seq,attention_plot:$attentionPlot);
 
         //$this->assertGreaterThanOrEqual(0.9,$totalAccuracy);
         //$this->assertLessThanOrEqual(0.4,$totalLoss);
@@ -769,17 +773,17 @@ class Test extends TestCase
         $plt = new Plot($this->getPlotConfig(),$mo);
 
         $model = new TestVariableMain($K,$nn);
-        $lossfunc = $nn->losses->SparseCategoricalCrossentropy(['from_logits'=>true]);
+        $lossfunc = $nn->losses->SparseCategoricalCrossentropy(from_logits:true);
         $train_inputs = $mo->array([[1, 3], [1, 4], [2, 4], [3, 1], [4, 1], [4, 2]]);
         $train_tests = $mo->array([0, 0, 0, 1, 1, 1]);
-        $model->compile([
-            'loss' => $lossfunc,
-            'optimizer' => 'adam',
-        ]);
+        $model->compile(
+            loss: $lossfunc,
+            optimizer: 'adam',
+        );
 
         $history = $model->fit(
             $train_inputs, $train_tests,
-            ['batch_size'=>2,'epochs'=>100,'shuffle'=>true,'verbose'=>0]);
+            batch_size:2,epochs:100,shuffle:true,verbose:0);
 
         if($this->plot) {
             $plt->plot($mo->array($history['loss']),null,null,'loss');
@@ -801,14 +805,14 @@ class Test extends TestCase
         $plt = new Plot($this->getPlotConfig(),$mo);
 
         $model = new TestVariableMain($K,$nn);
-        $lossfunc = $nn->losses->SparseCategoricalCrossentropy(['from_logits'=>true]);
+        $lossfunc = $nn->losses->SparseCategoricalCrossentropy(from_logits:true);
         $x = $mo->array([[1, 3], [1, 4], [2, 4], [3, 1], [4, 1], [4, 2]]);
         $t = $mo->array([0, 0, 0, 1, 1, 1]);
 
-        $model->compile([
-            'loss' => $lossfunc,
-            'optimizer' => 'adam',
-        ]);
+        $model->compile(
+            loss: $lossfunc,
+            optimizer: 'adam',
+        );
         $model->loadWeights($savedWeights);
 
         [$loss,$accuracy] = $model->evaluate($x,$t);
@@ -833,23 +837,23 @@ class Test extends TestCase
         $plt = new Plot($this->getPlotConfig(),$mo);
 
         $model = new TestGraphMode($K,$nn);
-        $lossfunc = $nn->losses->SparseCategoricalCrossentropy(['from_logits'=>true]);
+        $lossfunc = $nn->losses->SparseCategoricalCrossentropy(from_logits:true);
         //$train_inputs = $mo->array([[1, 3], [1, 4], [2, 4], [3, 1], [4, 1], [4, 2]]);
         //$train_tests = $mo->array([0, 0, 0, 1, 1, 1]);
         $train_inputs = $mo->array([[1, 3]]);
         $train_tests = $mo->array([0]);
-        $model->compile([
-            'loss' => $lossfunc,
-            'optimizer' => 'adam',
-        ]);
+        $model->compile(
+            loss: $lossfunc,
+            optimizer: 'adam',
+        );
         $model->log('fit0');
         $history = $model->fit(
             $train_inputs, $train_tests,
-            ['batch_size'=>2,'epochs'=>1,'shuffle'=>true,'verbose'=>0]);
+            batch_size:2,epochs:1,shuffle:true,verbose:0);
         $model->log('fit1');
             $history = $model->fit(
             $train_inputs, $train_tests,
-            ['batch_size'=>2,'epochs'=>1,'shuffle'=>true,'verbose'=>0]);
+            batch_size:2,epochs:1,shuffle:true,verbose:0);
         $model->log('predict');
         $predicts = $model->predict($train_inputs);
         $model->log('invoke');
@@ -874,21 +878,21 @@ class Test extends TestCase
         $plt = new Plot($this->getPlotConfig(),$mo);
 
         $model = new TestGraphMode($K,$nn);
-        $lossfunc = $nn->losses->SparseCategoricalCrossentropy(['from_logits'=>true]);
+        $lossfunc = $nn->losses->SparseCategoricalCrossentropy(from_logits:true);
         $train_inputs = $mo->array([[1, 3], [1, 4], [2, 4], [3, 1], [4, 1], [4, 2]]);
         $train_tests = $mo->array([0, 0, 0, 1, 1, 1]);
-        $model->compile([
-            'loss' => $lossfunc,
-            'optimizer' => 'adam',
-        ]);
+        $model->compile(
+            loss: $lossfunc,
+            optimizer: 'adam',
+        );
         $model->log('fit0');
         $history = $model->fit(
             $train_inputs, $train_tests,
-            ['batch_size'=>2,'epochs'=>1,'shuffle'=>true,'verbose'=>0]);
+            batch_size:2,epochs:1,shuffle:true,verbose:0);
         $model->log('fit1');
             $history = $model->fit(
             $train_inputs, $train_tests,
-            ['batch_size'=>2,'epochs'=>1,'shuffle'=>true,'verbose'=>0]);
+            batch_size:2,epochs:1,shuffle:true,verbose:0);
         $model->log('predict');
         $predicts = $model->predict($train_inputs);
 

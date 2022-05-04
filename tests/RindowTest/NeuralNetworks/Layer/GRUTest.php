@@ -55,9 +55,8 @@ class Test extends TestCase
         $layer = new GRU(
             $K,
             $units=4,
-            [
-                'input_shape'=>[5,3],
-            ]);
+            input_shape:[5,3],
+            );
         $inputs = [$g->Variable($K->zeros([1,5,3]))];
         $layer->build($inputs);
         $params = $layer->getParams();
@@ -88,10 +87,9 @@ class Test extends TestCase
         $layer = new GRU(
             $K,
             $units=4,
-            [
-                'input_shape'=>[5,3],
-                'reset_after'=>false,
-            ]);
+            input_shape:[5,3],
+            reset_after:false,
+            );
 
         $inputs = [$g->Variable($K->zeros([1,5,3]))];
         $layer->build($inputs);
@@ -123,8 +121,7 @@ class Test extends TestCase
         $layer = new GRU(
             $K,
             $units=4,
-            [
-            ]);
+            );
         $inputs = [$g->Variable($K->zeros([1,5,3]))];
         $layer->build($inputs);
 
@@ -141,9 +138,8 @@ class Test extends TestCase
         $layer = new GRU(
             $K,
             $units=4,
-            [
-                'input_shape'=>[5,3],
-            ]);
+            input_shape:[5,3],
+            );
 
         $inputs = [$g->Variable($K->zeros([1,5,4]))];
         $this->expectException(InvalidArgumentException::class);
@@ -160,8 +156,7 @@ class Test extends TestCase
         $layer = new GRU(
             $K,
             $units=4,
-            [
-            ]);
+            );
         $inputs = $g->Variable($K->zeros([1,5,3]));
         $layer->build($inputs);
 
@@ -178,11 +173,10 @@ class Test extends TestCase
         $layer = new GRU(
             $K,
             $units=4,
-            [
-                'input_shape'=>[5,3],
-                'return_sequences'=>true,
-                'return_state'=>true,
-            ]);
+            input_shape:[5,3],
+            return_sequences:true,
+            return_state:true,
+            );
         $inputs = [$g->Variable($K->zeros([1,5,3]))];
         $layer->build($inputs);
 
@@ -201,9 +195,8 @@ class Test extends TestCase
         $layer = new GRU(
             $K,
             $units=4,
-            [
-                'input_shape'=>[5,3],
-            ]);
+            input_shape:[5,3],
+            );
 
         //$layer->build();
         //$grads = $layer->getGrads();
@@ -272,9 +265,8 @@ class Test extends TestCase
         $layer = new GRU(
             $K,
             $units=4,
-            [
-                'input_shape'=>[5,3],
-            ]);
+            input_shape:[5,3],
+            );
 
         //$layer->build();
         //$grads = $layer->getGrads();
@@ -338,11 +330,10 @@ class Test extends TestCase
         $layer = new GRU(
             $K,
             $units=4,
-            [
-                'input_shape'=>[5,3],
-                'return_sequences'=>true,
-                'return_state'=>true,
-            ]);
+            input_shape:[5,3],
+            return_sequences:true,
+            return_state:true,
+            );
 
         //$layer->build();
         //$grads = $layer->getGrads();
@@ -419,11 +410,10 @@ class Test extends TestCase
         $layer = new GRU(
             $K,
             $units=4,
-            [
-                'input_shape'=>[5,3],
-                'return_sequences'=>true,
-                'return_state'=>true,
-            ]);
+            input_shape:[5,3],
+            return_sequences:true,
+            return_state:true,
+            );
 
         //$layer->build();
         //$grads = $layer->getGrads();
@@ -498,13 +488,12 @@ class Test extends TestCase
         $layer = new GRU(
             $K,
             $units=4,
-            [
-                'input_shape'=>[3,5],
-                'return_sequences'=>true,
-                'return_state'=>true,
-                'activation'=>null,
-                'recurrent_activation'=>null,
-            ]);
+            input_shape:[3,5],
+            return_sequences:true,
+            return_state:true,
+            activation:'linear',
+            recurrent_activation:'linear',
+            );
 
 
         //  2 batch
@@ -517,7 +506,7 @@ class Test extends TestCase
         $bias = $K->ones([2,4*3]);
         $layer->build(
             array_merge([$g->Variable($inputs)],array_map(fn($x)=>$g->Variable($x),$initialStates)),
-            ['sampleWeights'=>[$kernel,$recurrent,$bias]]
+            sampleWeights:[$kernel,$recurrent,$bias]
         );
         //
         // forward
@@ -581,12 +570,11 @@ class Test extends TestCase
         $layer = new GRU(
             $K,
             $units=3,
-            [
-                'input_shape'=>[4,10],
-                'return_sequences'=>true,
-                #'return_state'=>true,
-                #'activation'=>null,
-            ]);
+            input_shape:[4,10],
+            return_sequences:true,
+            #return_state:true,
+            #activation:'linear',
+            );
         //$layer->build();
         $weights = $layer->getParams();
 
@@ -616,13 +604,12 @@ class Test extends TestCase
         $layer = new GRU(
             $K,
             $units=3,
-            [
-                'input_shape'=>[4,10],
-                'return_sequences'=>true,
-                #'return_state'=>true,
-                #'activation'=>null,
-                'reset_after'=>false,
-            ]);
+            input_shape:[4,10],
+            return_sequences:true,
+            #return_state:true,
+            #activation:'linear',
+            reset_after:false,
+            );
         $layer->build();
         $weights = $layer->getParams();
 
@@ -650,9 +637,8 @@ class Test extends TestCase
         $origLayer = new GRU(
             $K,
             $units=4,
-            [
-                'input_shape'=>[5,3],
-            ]);
+            input_shape:[5,3],
+            );
 
         $inputs = $g->Variable($K->zeros([1,5,3]));
         $inputs2 = $g->Variable($K->zeros([1,5,3]));
@@ -686,21 +672,20 @@ class Test extends TestCase
         $layer = new GRU(
             $backend,
             $units=10,
-            [
-                'input_shape'=>[4,10],
-                'return_sequences'=>true,
-                #'return_state'=>true,
-                'activation'=>null,
-                #'recurrent_activation'=>null,
-            ]);
+            input_shape:[4,10],
+            return_sequences:true,
+            #return_state:true,
+            activation:'linear',
+            #recurrent_activation:'linear',
+            );
         $kernel = $mo->ones([10,30]);
         $recurrent_kernel = $mo->ones([10,30]);
         $bias = $mo->zeros([2,30]);
-        $layer->build(null,[
-            'sampleWeights'=>[
+        $layer->build(null,
+            sampleWeights:[
                 $kernel,$recurrent_kernel,$bias,
             ]
-        ]);
+        );
         $weights = $layer->getParams();
         //var_dump($weights[0]->shape());
         //var_dump($weights[1]->shape());
@@ -730,24 +715,23 @@ class Test extends TestCase
         $layer = new GRU(
             $backend,
             $units=10,
-            [
-                'input_shape'=>[1,10],
-                'return_sequences'=>true,
-                #'return_state'=>true,
-                'activation'=>null,
-                'recurrent_activation'=>null,
-                #'reset_after'=>false,
-            ]);
+                input_shape:[1,10],
+                return_sequences:true,
+                #return_state:true,
+                activation:'linear',
+                recurrent_activation:'linear',
+                #reset_after:false,
+            );
         $kernel = $mo->ones([10,30]);
         $recurrent_kernel = $mo->ones([10,30]);
         $bias = $mo->zeros([2,30]);
         #$recurrent_kernel = $mo->ones([30,10]);
         #$bias = $mo->zeros([30]);
-        $layer->build(null,[
-            'sampleWeights'=>[
+        $layer->build(null,
+            sampleWeights:[
                 $kernel,$recurrent_kernel,$bias,
             ]
-        ]);
+        );
         $weights = $layer->getParams();
         //var_dump($weights[0]->shape());
         //var_dump($weights[1]->shape());

@@ -20,13 +20,20 @@ class Embedding extends AbstractLayer
     //protected $originalShape;
     //protected $flattenOutputsShape;
 
-    public function __construct(object $backend,int $inputDim,int $outputDim, array $options=null)
+    public function __construct(
+        object $backend,
+        int $inputDim,
+        int $outputDim,
+        int $input_length=null,
+        string $kernel_initializer=null,
+        string $name=null,
+    )
     {
-        extract($this->extractArgs([
-            'input_length'=>null,
-            'kernel_initializer'=>'random_uniform',
-            'name'=>null,
-        ],$options));
+        // defaults
+        $input_length = $input_length ?? null;
+        $kernel_initializer = $kernel_initializer ?? 'random_uniform';
+        $name = $name ?? null;
+        
         $this->backend = $K = $backend;
         if($input_length!=null){
             $this->inputShape = [$input_length];
@@ -40,11 +47,8 @@ class Embedding extends AbstractLayer
         $this->allocateWeights(1);
     }
 
-    public function build($variable=null, array $options=null)
+    public function build($variable=null, array $sampleWeights=null)
     {
-        extract($this->extractArgs([
-            'sampleWeights'=>null,
-        ],$options));
         $K = $this->backend;
         $kernelInitializer = $this->kernelInitializer;
 

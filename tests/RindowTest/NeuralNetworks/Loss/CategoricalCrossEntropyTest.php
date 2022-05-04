@@ -92,7 +92,7 @@ class Test extends TestCase
         $this->assertLessThan(0.01,abs(0.9868951-$loss));
 
         $dx = $outputsVariable->creator()->backward([$K->array(1.0)]);
-        $dx = $K->dSoftmax($dx[0],$x);
+        $dx = $K->dSoftmax($dx[1],$x);
         #$this->assertLessThan(0.001,$K->scalar($K->asum($K->sub($K->sub($x,$dx),$t))));
         $this->assertTrue($mo->la()->isclose(
             $mo->array([[ 0.11335728, -0.22118606,  0.10782879],
@@ -151,7 +151,7 @@ class Test extends TestCase
         $this->assertLessThan(0.01,abs(0.9868951-$loss));
 
         $dx = $outputsVariable->creator()->backward([$K->array(1.0)]);
-        $dx = $dx[0];
+        $dx = $dx[1];
         #$this->assertLessThan(0.0001,$K->scalar($K->asum($K->sub($K->sub($y,$dx),$t))));
         $this->assertTrue($mo->la()->isclose(
             $mo->array([[ 0.11335728, -0.22118606,  0.10782879],

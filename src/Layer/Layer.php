@@ -9,7 +9,7 @@ use Rindow\NeuralNetworks\Gradient\Module;
  */
 interface Layer extends Module
 {
-    public function build($variable=null,array $options=null);
+    public function build($variable=null,array $sampleWeights=null);
     public function outputShape() : array;
     public function getParams() : array;
     public function getGrads() : array;

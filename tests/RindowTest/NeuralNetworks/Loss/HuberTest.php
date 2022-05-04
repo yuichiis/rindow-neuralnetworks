@@ -41,7 +41,7 @@ class Test extends TestCase
             }
         );
         $dInputs = $outputsVariable->creator()->backward([$K->array(1.0)]);
-        $dInputs = $K->ndarray($dInputs[0]);
+        $dInputs = $K->ndarray($dInputs[1]);
 #echo "\n";
 #echo "grads=".$mo->toString($grads[0],'%5.3f',true)."\n\n";
 #echo "dInputs=".$mo->toString($dInputs,'%5.3f',true)."\n\n";
@@ -95,7 +95,7 @@ class Test extends TestCase
         $K = $nn->backend();
         $g = $nn->gradient();
         $func = new Huber($K);
-        $func2 = new Huber($K,['delta'=>2.0]);
+        $func2 = new Huber($K, delta:2.0);
 
         //
         //  Squared Loss with delta=1.0
@@ -120,7 +120,7 @@ class Test extends TestCase
         $this->assertEquals($copyx->toArray(),$x->toArray());
         $this->assertEquals($copyt->toArray(),$t->toArray());
 
-        [$dx] = $outputsVariable->creator()->backward([$K->array(1.0)]);
+        [$dmy,$dx] = $outputsVariable->creator()->backward([$K->array(1.0)]);
         $this->assertEquals($copyx->toArray(),$x->toArray());
         $this->assertEquals($copyt->toArray(),$t->toArray());
         $this->assertLessThan(1e-5, abs(-0.1875-$K->scalar($dx[0][0])));
@@ -129,6 +129,7 @@ class Test extends TestCase
         $this->assertLessThan(1e-5, abs(0-$K->scalar($dx[0][3])));
 
         $accuracy = $func->accuracy($t,$x);
+        $accuracy = $K->scalar($accuracy);
         //$this->assertLessThan(0.0001,abs(1-$accuracy));
         $this->assertEquals($copyx->toArray(),$x->toArray());
         $this->assertEquals($copyt->toArray(),$t->toArray());
@@ -156,7 +157,7 @@ class Test extends TestCase
         $this->assertEquals($copyx->toArray(),$x->toArray());
         $this->assertEquals($copyt->toArray(),$t->toArray());
 
-        [$dx] = $outputsVariable->creator()->backward([$K->array(1.0)]);
+        [$dmy,$dx] = $outputsVariable->creator()->backward([$K->array(1.0)]);
         $this->assertEquals($copyx->toArray(),$x->toArray());
         $this->assertEquals($copyt->toArray(),$t->toArray());
         $this->assertLessThan(1e-5, abs(0.0-$K->scalar($dx[0][0])));
@@ -165,6 +166,7 @@ class Test extends TestCase
         $this->assertLessThan(1e-5, abs(0.3125-$K->scalar($dx[0][3])));
 
         $accuracy = $func->accuracy($t,$x);
+        $accuracy = $K->scalar($accuracy);
         //$this->assertLessThan(0.0001,abs(1-$accuracy));
         $this->assertEquals($copyx->toArray(),$x->toArray());
         $this->assertEquals($copyt->toArray(),$t->toArray());
@@ -192,7 +194,7 @@ class Test extends TestCase
         $this->assertEquals($copyx->toArray(),$x->toArray());
         $this->assertEquals($copyt->toArray(),$t->toArray());
 
-        [$dx] = $outputsVariable->creator()->backward([$K->array(1.0)]);
+        [$dmy,$dx] = $outputsVariable->creator()->backward([$K->array(1.0)]);
         $this->assertEquals($copyx->toArray(),$x->toArray());
         $this->assertEquals($copyt->toArray(),$t->toArray());
         $this->assertLessThan(1e-5, abs(-0.25-$K->scalar($dx[0][0])));
@@ -230,7 +232,7 @@ class Test extends TestCase
         $this->assertEquals($copyx->toArray(),$x->toArray());
         $this->assertEquals($copyt->toArray(),$t->toArray());
 
-        [$dx] = $outputsVariable->creator()->backward([$K->array(1.0)]);
+        [$dmy,$dx] = $outputsVariable->creator()->backward([$K->array(1.0)]);
         $this->assertEquals($copyx->toArray(),$x->toArray());
         $this->assertEquals($copyt->toArray(),$t->toArray());
         $this->assertLessThan(1e-5, abs(-0.5-$K->scalar($dx[0][0])));
@@ -270,7 +272,7 @@ class Test extends TestCase
         $K = $nn->backend();
         $g = $nn->gradient();
         $func = new Huber($K);
-        $func2 = new Huber($K,['delta'=>2.0]);
+        $func2 = new Huber($K, delta:2.0);
 
         $x = $K->array([
             0.001,
@@ -292,7 +294,7 @@ class Test extends TestCase
             }
         );
         $loss = $K->scalar($outputsVariable);
-        [$dx] = $outputsVariable->creator()->backward([$K->array(1.0)]);
+        [$dmy,$dx] = $outputsVariable->creator()->backward([$K->array(1.0)]);
         $this->assertLessThan(1e-5, abs(0.00025-$K->scalar($dx[0])));
         $this->assertLessThan(1e-5, abs(0.24975-$K->scalar($dx[1])));
         $this->assertLessThan(1e-5, abs(0.25-$K->scalar($dx[2])));

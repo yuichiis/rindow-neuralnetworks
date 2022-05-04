@@ -31,7 +31,7 @@ class Test extends TestCase
         $g = $nn->gradient();
 
         $x = $g->Variable($K->array([[3.0], [4.0]]));
-        $layer = $nn->layers->Dense($units=5,['input_shape'=>[1]]);
+        $layer = $nn->layers->Dense($units=5,input_shape:[1]);
 
         $outputs = $nn->with($tape=$g->GradientTape(),
             function() use ($layer,$x) {
@@ -60,7 +60,7 @@ class Test extends TestCase
         $g = $nn->gradient();
 
         $x = $g->Variable($K->array([[3.0], [4.0]]));
-        $layer0 = $nn->layers->Dense($units=5,['input_shape'=>[1]]);
+        $layer0 = $nn->layers->Dense($units=5,input_shape:[1]);
         $layer1 = $nn->layers->Dense($units=5);
 
         $outputs = $nn->with($tape=$g->GradientTape(),
@@ -92,7 +92,7 @@ class Test extends TestCase
         $g = $nn->gradient();
 
         $x = $g->Variable($K->array([[3.0], [4.0]]));
-        $layer0 = $nn->layers->Dense($units=5,['input_shape'=>[1]]);
+        $layer0 = $nn->layers->Dense($units=5,input_shape:[1]);
         $layer1 = $nn->layers->Dense($units=5);
 
         $outputs = $layer0($x,true);

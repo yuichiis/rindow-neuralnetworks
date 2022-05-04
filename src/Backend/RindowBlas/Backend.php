@@ -80,6 +80,11 @@ class Backend
         return $mo->toString($array,$format,$indent);
     }
 
+    public function isInt(NDArray $value)
+    {
+        return $this->la->isInt($value);
+    }
+
     public function alloc(array $shape,$dtype=null)
     {
         return $this->la->alloc($shape,$dtype);
@@ -1427,13 +1432,15 @@ class Backend
     //    return dx
 
     // MSE
-    public function meanSquaredError(NDArray $trues, NDArray $predicts) : float
+    public function meanSquaredError(NDArray $trues, NDArray $predicts) : NDArray
     {
         $la = $this->la;
         //  E = (1/N) * sum((Yk-Tk)**2)
         $N = $predicts->size();
-        return $la->sum($la->square(
+        $loss = $la->sum($la->square(
             $la->axpy($trues,$la->copy($predicts),-1.0))) / $N;
+
+        return $this->array($loss,$predicts->dtype());
     }
 
     public function dMeanSquaredError(NDArray $trues,NDArray $predicts) : NDarray
@@ -1454,7 +1461,7 @@ class Backend
 
     public function sparseCategoricalCrossEntropy(
         NDArray $trues, NDArray $predicts,
-        bool $fromLogits=null)
+        bool $fromLogits=null) : NDArray
     {
         $la = $this->la;
         $ndim = $trues->ndim();
@@ -1485,9 +1492,11 @@ class Backend
             throw new InvalidArgumentException('unmatch shape of dimensions:'.$msg);
         }
         //  E = - 1/N * sum-n(sum-k(t-nk * log(y-nk)))
-        return -1.0 * $la->sum($la->log($la->increment(
+        $loss = -1.0 * $la->sum($la->log($la->increment(
                 $la->gather($predicts,$trues,$axis=1),
                 $this->epsilon))) / $batchSize;
+
+        return $this->array($loss,$predicts->dtype());
     }
 
     public function dSparseCategoricalCrossEntropy(
@@ -1537,7 +1546,7 @@ class Backend
     }
 
     public function categoricalCrossEntropy(
-        NDArray $trues, NDArray $predicts) : float
+        NDArray $trues, NDArray $predicts) : NDArray
     {
         $la = $this->la;
         if($trues->shape()!=$predicts->shape()){
@@ -1547,7 +1556,7 @@ class Backend
         //  E = - 1/N * sum-n(sum-k(t-nk * log(y-nk)))
         $batchSize = $predicts->shape()[0];
         $tmp = $la->log($la->increment($la->copy($predicts),$this->epsilon));
-        return -1.0 * $la->sum($la->multiply($trues,
+        $loss =  -1.0 * $la->sum($la->multiply($trues,
             $tmp)) / $batchSize;
 
         // way for clip
@@ -1555,6 +1564,8 @@ class Backend
         //    $this->la->copy($predicts),1-$this->epsilon),$this->epsilon);
         //return -1.0 * $this->la->sum($this->la->multiply($trues,
         //    $this->la->log($predicts))) / $batchSize;
+
+        return $this->array($loss,$predicts->dtype());
     }
 
     public function dCategoricalCrossEntropy(
@@ -1578,7 +1589,7 @@ class Backend
     }
 
     public function binaryCrossEntropy(
-        NDArray $trues, NDArray $predicts) : float
+        NDArray $trues, NDArray $predicts) : NDArray
     {
         if($trues->shape()!=$predicts->shape()){
             throw new InvalidArgumentException('must be same shape of dimensions');
@@ -1597,12 +1608,13 @@ class Backend
         // E =  t      * -log( p ) +
         //     (1 - t) * -log( 1 - p )
         $batchSize = $predicts->shape()[0];
-        return $la->sum($la->axpy($la->multiply($la->copy($trues),
+        $loss = $la->sum($la->axpy($la->multiply($la->copy($trues),
                                         $la->scal(-1,$la->log($la->copy($predicts)))),
                         $la->multiply($la->increment($la->copy($trues),1,-1),
                                         $la->scal(-1,$la->log(
                                             $la->increment($la->copy($predicts),1,-1))))))
                                             / $batchSize;
+        return $this->array($loss,$predicts->dtype());
     }
 
     public function dBinaryCrossEntropy(

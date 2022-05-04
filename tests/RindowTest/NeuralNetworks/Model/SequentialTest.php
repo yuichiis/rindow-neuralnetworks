@@ -153,11 +153,11 @@ class Test extends TestCase
         $model = $nn->models()->Sequential([
             $nn->layers()->Dense(
                 $units=4,
-                ['input_shape'=>[2],
-                'activation'=>'sigmoid']),
+                input_shape:[2],
+                activation:'sigmoid'),
             $nn->layers()->Dense(
                 $units=3,
-                ['activation'=>'softmax']),
+                activation:'softmax'),
         ]);
 
         $model->compile();
@@ -238,9 +238,9 @@ class Test extends TestCase
         $g = $nn->gradient();
 
         $model = $nn->models()->Sequential([
-            $nn->layers()->Dense($units=128,['input_shape'=>[2],
-                    'activation'=>'sigmoid']),
-            $nn->layers()->Dense($units=2,['activation'=>'softmax']),
+            $nn->layers()->Dense($units=128,input_shape:[2],
+                    activation:'sigmoid'),
+            $nn->layers()->Dense($units=2,activation:'softmax'),
         ]);
 
         //$model->compile();
@@ -267,9 +267,9 @@ class Test extends TestCase
         $plt = new Plot($this->getPlotConfig(),$mo);
 
         $model = $nn->models()->Sequential([
-            $nn->layers()->Dense($units=128,['input_shape'=>[2],
-                    'activation'=>'sigmoid']),
-            $nn->layers()->Dense($units=2,['activation'=>'softmax']),
+            $nn->layers()->Dense($units=128,input_shape:[2],
+                    activation:'sigmoid'),
+            $nn->layers()->Dense($units=2,activation:'softmax'),
         ]);
 
         $model->compile();
@@ -283,7 +283,7 @@ class Test extends TestCase
         // training greater or less
         $x = $mo->array([[1, 3], [1, 4], [2, 4], [3, 1], [4, 1], [4, 2]]);
         $t = $mo->array([0, 0, 0, 1, 1, 1]);
-        $history = $model->fit($x,$t,['epochs'=>100,'verbose'=>0]);
+        $history = $model->fit($x,$t,epochs:100,verbose:0);
 
         $y = $model->predict($x);
         $this->assertEquals($t->toArray(),$mo->argMax($y,$axis=1)->toArray());
@@ -303,9 +303,9 @@ class Test extends TestCase
         $plt = new Plot($this->getPlotConfig(),$mo);
 
         $model = $nn->models()->Sequential([
-            $nn->layers()->Dense($units=128,['input_shape'=>[2],
-                    'activation'=>'sigmoid']),
-            $nn->layers()->Dense($units=2,['activation'=>'softmax']),
+            $nn->layers()->Dense($units=128,input_shape:[2],
+                    activation:'sigmoid'),
+            $nn->layers()->Dense($units=2,activation:'softmax'),
         ]);
 
         $model->compile();
@@ -319,12 +319,12 @@ class Test extends TestCase
         // training greater or less
         $x = $mo->array([[1, 3], [1, 4], [2, 4], [3, 1], [4, 1], [4, 2]]);
         $t = $mo->array([0, 0, 0, 1, 1, 1]);
-        $dataset = $nn->data->NDArrayDataset($x,[
-            'tests'=>$t,
-            'batch_size'=>64,
-            'shuffle'=>true,
-        ]);
-        $history = $model->fit($dataset,null,['epochs'=>100,'verbose'=>0]);
+        $dataset = $nn->data->NDArrayDataset($x,
+            tests:$t,
+            batch_size:64,
+            shuffle:true,
+        );
+        $history = $model->fit($dataset,null,epochs:100,verbose:0);
 
         $y = $model->predict($x);
         $this->assertEquals($t->toArray(),$mo->argMax($y,$axis=1)->toArray());
@@ -344,9 +344,9 @@ class Test extends TestCase
         $plt = new Plot($this->getPlotConfig(),$mo);
 
         $model = $nn->models()->Sequential([
-            $nn->layers()->Dense($units=128,['input_shape'=>[2],
-                    'activation'=>'sigmoid']),
-            $nn->layers()->Dense($units=2,['activation'=>'softmax']),
+            $nn->layers()->Dense($units=128,input_shape:[2],
+                    activation:'sigmoid'),
+            $nn->layers()->Dense($units=2,activation:'softmax'),
         ]);
 
         $model->compile();
@@ -362,14 +362,12 @@ class Test extends TestCase
         //$t = $mo->array([0, 0, 0, 1, 1, 1]);
         $dataset = $nn->data->CSVDataset(
             __DIR__.'/csv',
-            [
-                'pattern'=>'@.*\\.csv@',
-                'batch_size'=>64,
-                'shuffle'=>true,
-                'filter'=>new TestFilter($mo),
-            ]
+            pattern:'@.*\\.csv@',
+            batch_size:64,
+            shuffle:true,
+            filter:new TestFilter($mo),
         );
-        $history = $model->fit($dataset,null,['epochs'=>100,'verbose'=>0]);
+        $history = $model->fit($dataset,null, epochs: 100, verbose: 0);
 
         $x = $mo->array([[1, 3], [1, 4], [2, 4], [3, 1], [4, 1], [4, 2]]);
         $t = $mo->array([0, 0, 0, 1, 1, 1]);
@@ -391,9 +389,9 @@ class Test extends TestCase
         $plt = new Plot($this->getPlotConfig(),$mo);
 
         $model = $nn->models()->Sequential([
-            $nn->layers()->Dense($units=128,['input_shape'=>[2],
-                'activation'=>'sigmoid']),
-            $nn->layers()->Dense($units=2,['activation'=>'softmax']),
+            $nn->layers()->Dense($units=128,input_shape:[2],
+                activation:'sigmoid'),
+            $nn->layers()->Dense($units=2,activation:'softmax'),
         ]);
 
         $model->compile();
@@ -401,7 +399,7 @@ class Test extends TestCase
         // training greater or less
         $x = $mo->array([[1, 3], [1, 4], [2, 4], [3, 1], [4, 1], [4, 2]]);
         $t = $mo->array([0, 0, 0, 1, 1, 1]);
-        $history = $model->fit($x,$t,['epochs'=>100,'verbose'=>0]);
+        $history = $model->fit($x,$t,epochs:100,verbose:0);
 
         [$loss,$accuracy] = $model->evaluate($x,$t);
         $this->assertLessThan(1.0,$loss);
@@ -417,9 +415,9 @@ class Test extends TestCase
         $plt = new Plot($this->getPlotConfig(),$mo);
 
         $model = $nn->models()->Sequential([
-            $nn->layers()->Dense($units=128,['input_shape'=>[2],
-                'activation'=>'sigmoid']),
-            $nn->layers()->Dense($units=2,['activation'=>'softmax']),
+            $nn->layers()->Dense($units=128,input_shape:[2],
+                activation:'sigmoid'),
+            $nn->layers()->Dense($units=2,activation:'softmax'),
         ]);
 
         $model->compile();
@@ -427,13 +425,13 @@ class Test extends TestCase
         // training greater or less
         $x = $mo->array([[1, 3], [1, 4], [2, 4], [3, 1], [4, 1], [4, 2]]);
         $t = $mo->array([0, 0, 0, 1, 1, 1]);
-        $history = $model->fit($x,$t,['epochs'=>100,'verbose'=>0]);
+        $history = $model->fit($x,$t,epochs:100,verbose:0);
 
-        $dataset = $nn->data->NDArrayDataset($x,[
-            'tests'=>$t,
-            'batch_size'=>64,
-            'shuffle'=>true,
-        ]);
+        $dataset = $nn->data->NDArrayDataset($x,
+            tests:$t,
+            batch_size:64,
+            shuffle:true,
+        );
         [$loss,$accuracy] = $model->evaluate($dataset);
         $this->assertLessThan(1.0,$loss);
         $this->assertEquals(1.0,$accuracy);
@@ -448,9 +446,9 @@ class Test extends TestCase
         $plt = new Plot($this->getPlotConfig(),$mo);
 
         $model = $nn->models()->Sequential([
-            $nn->layers()->Dense($units=128,['input_shape'=>[2],
-                'activation'=>'sigmoid']),
-            $nn->layers()->Dense($units=2,['activation'=>'softmax']),
+            $nn->layers()->Dense($units=128,input_shape:[2],
+                activation:'sigmoid'),
+            $nn->layers()->Dense($units=2,activation:'softmax'),
         ]);
 
         $model->compile();
@@ -458,16 +456,14 @@ class Test extends TestCase
         // training greater or less
         $x = $mo->array([[1, 3], [1, 4], [2, 4], [3, 1], [4, 1], [4, 2]]);
         $t = $mo->array([0, 0, 0, 1, 1, 1]);
-        $history = $model->fit($x,$t,['epochs'=>100,'verbose'=>0]);
+        $history = $model->fit($x,$t,epochs:100,verbose:0);
 
         $dataset = $nn->data->CSVDataset(
             __DIR__.'/csv',
-            [
-                'pattern'=>'@.*\\.csv@',
-                'batch_size'=>64,
-                'shuffle'=>true,
-                'filter'=>new TestFilter($mo),
-            ]
+            pattern:'@.*\\.csv@',
+            batch_size:64,
+            shuffle:true,
+            filter:new TestFilter($mo),
         );
         [$loss,$accuracy] = $model->evaluate($dataset);
         $this->assertLessThan(1.0,$loss);
@@ -483,10 +479,10 @@ class Test extends TestCase
         $plt = new Plot($this->getPlotConfig(),$mo);
 
         $model = $nn->models()->Sequential([
-            $nn->layers()->Dense($units=128,['input_shape'=>[2],
-                'activation'=>'sigmoid']),
+            $nn->layers()->Dense($units=128,input_shape:[2],
+                activation:'sigmoid'),
             $nn->layers()->Dense($units=2,
-            ['activation'=>'softmax']),
+                activation:'softmax'),
         ]);
 
         $model->compile();
@@ -496,7 +492,7 @@ class Test extends TestCase
         $t = $mo->array([0, 0, 0, 1, 1, 1]);
         $v_x = $mo->array([[5, 1], [1, 5], [2, 6], [6, 1], [1, 7], [7, 2]]);
         $v_t = $mo->array([1, 0, 0, 1, 0, 1]);
-        $history = $model->fit($x,$t,['epochs'=>100,'validation_data'=>[$v_x,$v_t],'verbose'=>0]);
+        $history = $model->fit($x,$t,epochs:100,validation_data:[$v_x,$v_t],verbose:0);
 
         $this->assertEquals(['loss','accuracy','val_loss','val_accuracy'],array_keys($history));
 
@@ -520,17 +516,17 @@ class Test extends TestCase
         $plt = new Plot($this->getPlotConfig(),$mo);
 
         $model = $nn->models()->Sequential([
-            $nn->layers()->Dense($units=128,[
-                'input_shape'=>[2],
-                'kernel_initializer'=>'he_normal',
-                'activation'=>'relu']),
+            $nn->layers()->Dense($units=128,
+                input_shape:[2],
+                kernel_initializer:'he_normal',
+                activation:'relu'),
             $nn->layers()->Dense($units=2,
-                 ['activation'=>'softmax']),
+                activation:'softmax'),
         ]);
 
-        $model->compile([
-            'optimizer'=>$nn->optimizers()->Adam()
-        ]);
+        $model->compile(
+            optimizer:$nn->optimizers()->Adam()
+        );
         $this->assertInstanceof(
             \Rindow\NeuralNetworks\Activation\Softmax::class,
             $model->layers()[1]->getActivation());
@@ -543,7 +539,7 @@ class Test extends TestCase
         $t = $mo->array([0, 0, 0, 1, 1, 1]);
         $v_x = $mo->array([[5, 1], [1, 5], [2, 6], [6, 1], [1, 7], [7, 2]]);
         $v_t = $mo->array([1, 0, 0, 1, 0, 1]);
-        $history = $model->fit($x,$t,['epochs'=>100,'validation_data'=>[$v_x,$v_t],'verbose'=>0]);
+        $history = $model->fit($x,$t,epochs:100,validation_data:[$v_x,$v_t],verbose:0);
 
         $y = $model->predict($x);
         $this->assertEquals($t->toArray(),$mo->argMax($y,$axis=1)->toArray());
@@ -568,15 +564,15 @@ class Test extends TestCase
         $plt = new Plot($this->getPlotConfig(),$mo);
 
         $model = $nn->models()->Sequential([
-            $nn->layers()->Dense($units=128,['input_shape'=>[2],
-                'activation'=>'sigmoid']),
+            $nn->layers()->Dense($units=128,input_shape:[2],
+                activation:'sigmoid'),
             $nn->layers()->Dense($units=2,
-            ['activation'=>'softmax']),
+                activation:'softmax'),
         ]);
 
-        $model->compile([
-            'loss'=>$nn->losses()->MeanSquaredError()
-        ]);
+        $model->compile(
+            loss:$nn->losses()->MeanSquaredError()
+        );
 
         // training greater or less
 
@@ -585,7 +581,7 @@ class Test extends TestCase
         $t = $mo->array([[1, 0], [1, 0], [1, 0], [0, 1], [0, 1], [0, 1]]);
         $v_x = $mo->array([[5, 1], [1, 5], [2, 6], [6, 1], [1, 7], [7, 2]]);
         $v_t = $mo->array([[0, 1], [1, 0], [1, 0], [0, 1], [1, 0], [0, 1]]);
-        $history = $model->fit($x,$t,['epochs'=>100,'validation_data'=>[$v_x,$v_t],'verbose'=>0]);
+        $history = $model->fit($x,$t,epochs:100,validation_data:[$v_x,$v_t],verbose:0);
 
         $y = $model->predict($x);
         $this->assertEquals($mo->argMax($t,$axis=1)->toArray(),
@@ -613,10 +609,10 @@ class Test extends TestCase
         $plt = new Plot($this->getPlotConfig(),$mo);
 
         $model = $nn->models()->Sequential([
-            $nn->layers()->Dense($units=128,['input_shape'=>[2],
-                'activation'=>'relu']),
+            $nn->layers()->Dense($units=128, input_shape:[2],
+                activation:'relu'),
             $nn->layers()->Dropout($rate=0.15),
-            $nn->layers()->Dense($units=2,['activation'=>'softmax']),
+            $nn->layers()->Dense($units=2, activation:'softmax'),
         ]);
 
         $model->compile();
@@ -626,7 +622,7 @@ class Test extends TestCase
         $t = $mo->array([0, 0, 0, 1, 1, 1]);
         $v_x = $mo->array([[5, 1], [1, 5], [2, 6], [6, 1], [1, 7], [7, 2]]);
         $v_t = $mo->array([1, 0, 0, 1, 0, 1]);
-        $history = $model->fit($x,$t,['epochs'=>100,'validation_data'=>[$v_x,$v_t],'verbose'=>0]);
+        $history = $model->fit($x,$t,epochs:100,validation_data:[$v_x,$v_t],verbose:0);
 
         $this->assertEquals(['loss','accuracy','val_loss','val_accuracy'],array_keys($history));
 
@@ -650,10 +646,10 @@ class Test extends TestCase
         $plt = new Plot($this->getPlotConfig(),$mo);
 
         $model = $nn->models()->Sequential([
-            $nn->layers()->Dense($units=128,['input_shape'=>[2],
-                'activation'=>'relu']),
+            $nn->layers()->Dense($units=128, input_shape:[2],
+                activation:'relu'),
             $nn->layers()->BatchNormalization(),
-            $nn->layers()->Dense($units=2,['activation'=>'softmax']),
+            $nn->layers()->Dense($units=2, activation:'softmax'),
         ]);
 
         $model->compile();
@@ -663,7 +659,7 @@ class Test extends TestCase
         $t = $mo->array([0, 0, 0, 1, 1, 1]);
         $v_x = $mo->array([[5, 1], [1, 5], [2, 6], [6, 1], [1, 7], [7, 2]]);
         $v_t = $mo->array([1, 0, 0, 1, 0, 1]);
-        $history = $model->fit($x,$t,['epochs'=>100,'validation_data'=>[$v_x,$v_t],'verbose'=>0]);
+        $history = $model->fit($x,$t,epochs:100,validation_data:[$v_x,$v_t],verbose:0);
 
         $this->assertEquals(['loss','accuracy','val_loss','val_accuracy'],array_keys($history));
 
@@ -687,11 +683,10 @@ class Test extends TestCase
         $plt = new Plot($this->getPlotConfig(),$mo);
 
         $model = $nn->models()->Sequential([
-            $nn->layers()->Dense($units=128,['input_shape'=>[2]]),
+            $nn->layers()->Dense($units=128, input_shape:[2]),
             $nn->layers()->BatchNormalization(),
             $nn->layers()->Activation('sigmoid'),
-            $nn->layers()->Dense($units=2,
-            ['activation'=>'softmax']),
+            $nn->layers()->Dense($units=2, activation:'softmax'),
         ]);
 
         $model->compile();
@@ -701,7 +696,7 @@ class Test extends TestCase
         $t = $mo->array([0, 0, 0, 1, 1, 1]);
         $v_x = $mo->array([[5, 1], [1, 5], [2, 6], [6, 1], [1, 7], [7, 2]]);
         $v_t = $mo->array([1, 0, 0, 1, 0, 1]);
-        $history = $model->fit($x,$t,['epochs'=>100,'validation_data'=>[$v_x,$v_t],'verbose'=>0]);
+        $history = $model->fit($x,$t,epochs:100,validation_data:[$v_x,$v_t],verbose:0);
 
         $this->assertEquals(['loss','accuracy','val_loss','val_accuracy'],array_keys($history));
 
@@ -725,16 +720,16 @@ class Test extends TestCase
         $plt = new Plot($this->getPlotConfig(),$mo);
 
         $model = $nn->models()->Sequential([
-            $nn->layers()->Dense($units=128,['input_shape'=>[2],
-                'activation'=>'sigmoid']),
+            $nn->layers()->Dense($units=128, input_shape:[2],
+                activation:'sigmoid'),
             $nn->layers()->Dense($units=1,
-            ['activation'=>'sigmoid']),
+                activation:'sigmoid'),
         ]);
 
-        $model->compile([
-            'loss'=>$nn->losses()->BinaryCrossEntropy(),
-            #'optimizer'=>'adam',
-        ]);
+        $model->compile(
+            loss:$nn->losses()->BinaryCrossEntropy(),
+            #optimizer:'adam',
+        );
         //$model->summary();
         $this->assertInstanceof(
             \Rindow\NeuralNetworks\Activation\Sigmoid::class,
@@ -748,7 +743,7 @@ class Test extends TestCase
         $t = $mo->array([0, 0, 0, 1, 1, 1]);
         $v_x = $mo->array([[5, 1], [1, 5], [2, 6], [6, 1], [1, 7], [7, 2]]);
         $v_t = $mo->array([1, 0, 0, 1, 0, 1]);
-        $history = $model->fit($x,$t,['epochs'=>100,'batch_size'=>16,'validation_data'=>[$v_x,$v_t],'verbose'=>0]);
+        $history = $model->fit($x,$t,epochs:100,batch_size:16,validation_data:[$v_x,$v_t],verbose:0);
 
         $this->assertEquals(['loss','accuracy','val_loss','val_accuracy'],array_keys($history));
 
@@ -772,15 +767,15 @@ class Test extends TestCase
         $plt = new Plot($this->getPlotConfig(),$mo);
 
         $model = $nn->models()->Sequential([
-            $nn->layers()->Dense($units=128,['input_shape'=>[2],
-                'activation'=>'sigmoid']),
+            $nn->layers()->Dense($units=128,input_shape:[2],
+                activation:'sigmoid'),
             $nn->layers()->Dense($units=2,
-            ['activation'=>'softmax']),
+                activation:'softmax'),
         ]);
 
-        $model->compile([
-            'loss'=>$nn->losses()->CategoricalCrossEntropy(),
-        ]);
+        $model->compile(
+            loss:$nn->losses()->CategoricalCrossEntropy(),
+        );
         $this->assertInstanceof(
             \Rindow\NeuralNetworks\Activation\Softmax::class,
             $model->layers()[1]->getActivation());
@@ -793,7 +788,7 @@ class Test extends TestCase
         $t = $mo->array([[1, 0], [1, 0], [1, 0], [0, 1], [0, 1], [0, 1]]);
         $v_x = $mo->array([[5, 1], [1, 5], [2, 6], [6, 1], [1, 7], [7, 2]]);
         $v_t = $mo->array([[0, 1], [1, 0], [1, 0], [0, 1], [1, 0], [0, 1]]);
-        $history = $model->fit($x,$t,['epochs'=>100,'validation_data'=>[$v_x,$v_t],'verbose'=>0]);
+        $history = $model->fit($x,$t,epochs:100,validation_data:[$v_x,$v_t],verbose:0);
 
         $this->assertEquals(['loss','accuracy','val_loss','val_accuracy'],array_keys($history));
 
@@ -827,19 +822,19 @@ class Test extends TestCase
             $nn->layers()->Conv1D(
                 $filters=$num_of_filters,#128,
                 $kernel_size=3,
-                ['input_shape'=>[10,1],
-                'kernel_initializer'=>'he_normal',
-                'activation'=>'relu']),
+                input_shape:[10,1],
+                kernel_initializer:'he_normal',
+                activation:'relu'),
             $nn->layers()->MaxPooling1D(),
             $nn->layers()->Conv1D($num_of_filters/*128*/,3),
             $nn->layers()->Flatten(),
             $nn->layers()->Activation('softmax'),
         ]);
 
-        $model->compile([
-            'loss'=>$nn->losses()->SparseCategoricalCrossEntropy(),
-            'optimizer'=>$nn->optimizers()->Adam(),
-        ]);
+        $model->compile(
+            loss:$nn->losses()->SparseCategoricalCrossEntropy(),
+            optimizer:$nn->optimizers()->Adam(),
+        );
 
         // training greater or less
         $x = $mo->array([
@@ -862,7 +857,7 @@ class Test extends TestCase
         );
         $history = $model->fit(
             $x,$t,
-            ['epochs'=>$epoch/*300*/,'validation_data'=>[$v_x,$v_t],'verbose'=>0]);
+            epochs:$epoch/*300*/, validation_data:[$v_x,$v_t],verbose:0);
 
         $this->assertEquals(['loss','accuracy','val_loss','val_accuracy'],array_keys($history));
 
@@ -896,21 +891,21 @@ class Test extends TestCase
             $nn->layers()->Conv2D(
                 $filters=$num_of_filters,#128,
                 $kernel_size=3,
-                ['input_shape'=>[10,10,1],
-                'kernel_initializer'=>'he_normal',
-                'activation'=>'relu',
-                #'activation'=>'softmax',
-                ]),
+                input_shape:[10,10,1],
+                kernel_initializer:'he_normal',
+                activation:'relu',
+                #activation:'softmax',
+                ),
             $nn->layers()->MaxPooling2D(),
             $nn->layers()->Conv2D($num_of_filters/*128*/,3),
             $nn->layers()->Flatten(),
             $nn->layers()->Activation('softmax'),
         ]);
 
-        $model->compile([
-            'loss'=>$nn->losses()->SparseCategoricalCrossEntropy(),
-            'optimizer'=>$nn->optimizers()->Adam(),
-        ]);
+        $model->compile(
+            loss:$nn->losses()->SparseCategoricalCrossEntropy(),
+            optimizer:$nn->optimizers()->Adam(),
+        );
 
         // training greater or less
         $x = $mo->zeros([4,10,10,1]);
@@ -931,7 +926,7 @@ class Test extends TestCase
         );
         $history = $model->fit(
             $x,$t,
-            ['epochs'=>$epoch/*100*/,'validation_data'=>[$v_x,$v_t],'verbose'=>0]);
+            epochs:$epoch/*100*/,validation_data:[$v_x,$v_t],verbose:0);
 
         $this->assertEquals(['loss','accuracy','val_loss','val_accuracy'],array_keys($history));
 
@@ -965,18 +960,18 @@ class Test extends TestCase
             $nn->layers()->Conv3D(
                 $filters=$num_of_filters,#128,
                 $kernel_size=3,
-                ['input_shape'=>[10,10,10,1],
-                'kernel_initializer'=>'he_normal',
-                'activation'=>'relu']),
+                input_shape:[10,10,10,1],
+                kernel_initializer:'he_normal',
+                activation:'relu'),
             $nn->layers()->MaxPooling3D(),
             $nn->layers()->Conv3D($num_of_filters/*128*/,3),
             $nn->layers()->Flatten(),
             $nn->layers()->Activation('softmax'),
         ]);
 
-        $model->compile([
-            'loss'=>$nn->losses()->SparseCategoricalCrossEntropy(),
-        ]);
+        $model->compile(
+            loss:$nn->losses()->SparseCategoricalCrossEntropy(),
+        );
 
         // training greater or less
         $x = $mo->zeros([4,10,10,10,1]);
@@ -995,7 +990,7 @@ class Test extends TestCase
         $v_t = $mo->array(
             [1,0,1,0]
         );
-        $history = $model->fit($x,$t,['epochs'=>$epoch/*100*/,'validation_data'=>[$v_x,$v_t],'verbose'=>0]);
+        $history = $model->fit($x,$t,epochs:$epoch/*100*/,validation_data:[$v_x,$v_t],verbose:0);
 
         $this->assertEquals(['loss','accuracy','val_loss','val_accuracy'],array_keys($history));
 
@@ -1029,19 +1024,19 @@ class Test extends TestCase
             $nn->layers()->Conv1D(
                 $filters=$num_of_filters,#128,
                 $kernel_size=3,
-                ['input_shape'=>[10,1],
-                'kernel_initializer'=>'he_normal',
-                'activation'=>'relu']),
+                input_shape:[10,1],
+                kernel_initializer:'he_normal',
+                activation:'relu'),
             $nn->layers()->AveragePooling1D(),
             $nn->layers()->Conv1D($num_of_filters/*128*/,3),
             $nn->layers()->Flatten(),
             $nn->layers()->Activation('softmax'),
         ]);
 
-        $model->compile([
-            'loss'=>$nn->losses()->SparseCategoricalCrossEntropy(),
-            'optimizer'=>$nn->optimizers()->Adam(),
-        ]);
+        $model->compile(
+            loss:$nn->losses()->SparseCategoricalCrossEntropy(),
+            optimizer:$nn->optimizers()->Adam(),
+        );
 
         // training greater or less
         $x = $mo->array([
@@ -1064,7 +1059,7 @@ class Test extends TestCase
         );
         $history = $model->fit(
             $x,$t,
-            ['epochs'=>$epoch/*300*/,'validation_data'=>[$v_x,$v_t],'verbose'=>0]);
+            epochs:$epoch/*300*/,validation_data:[$v_x,$v_t],verbose:0);
 
         $this->assertEquals(['loss','accuracy','val_loss','val_accuracy'],array_keys($history));
 
@@ -1098,21 +1093,21 @@ class Test extends TestCase
             $nn->layers()->Conv2D(
                 $filters=$num_of_filters,#128,
                 $kernel_size=3,
-                ['input_shape'=>[10,10,1],
-                'kernel_initializer'=>'he_normal',
-                'activation'=>'relu',
-                #'activation'=>'softmax',
-                ]),
+                input_shape:[10,10,1],
+                kernel_initializer:'he_normal',
+                activation:'relu',
+                #activation:'softmax',
+                ),
             $nn->layers()->AveragePooling2D(),
             $nn->layers()->Conv2D($num_of_filters/*128*/,3),
             $nn->layers()->Flatten(),
             $nn->layers()->Activation('softmax'),
         ]);
 
-        $model->compile([
-            'loss'=>$nn->losses()->SparseCategoricalCrossEntropy(),
-            'optimizer'=>$nn->optimizers()->Adam(),
-        ]);
+        $model->compile(
+            loss:$nn->losses()->SparseCategoricalCrossEntropy(),
+            optimizer:$nn->optimizers()->Adam(),
+        );
 
         // training greater or less
         $x = $mo->zeros([4,10,10,1]);
@@ -1133,7 +1128,7 @@ class Test extends TestCase
         );
         $history = $model->fit(
             $x,$t,
-            ['epochs'=>$epoch,'validation_data'=>[$v_x,$v_t],'verbose'=>0]);
+            epochs:$epoch,validation_data:[$v_x,$v_t],verbose:0);
 
         $this->assertEquals(['loss','accuracy','val_loss','val_accuracy'],array_keys($history));
 
@@ -1167,18 +1162,18 @@ class Test extends TestCase
             $nn->layers()->Conv3D(
                 $filters=$num_of_filters,#128,
                 $kernel_size=3,
-                ['input_shape'=>[10,10,10,1],
-                'kernel_initializer'=>'he_normal',
-                'activation'=>'relu']),
+                input_shape:[10,10,10,1],
+                kernel_initializer:'he_normal',
+                activation:'relu'),
             $nn->layers()->AveragePooling3D(),
             $nn->layers()->Conv3D($num_of_filters/*128*/,3),
             $nn->layers()->Flatten(),
             $nn->layers()->Activation('softmax'),
         ]);
 
-        $model->compile([
-            'loss'=>$nn->losses()->SparseCategoricalCrossEntropy(),
-        ]);
+        $model->compile(
+            loss:$nn->losses()->SparseCategoricalCrossEntropy(),
+        );
 
         // training greater or less
         $x = $mo->zeros([4,10,10,10,1]);
@@ -1197,7 +1192,7 @@ class Test extends TestCase
         $v_t = $mo->array(
             [1,0,1,0]
         );
-        $history = $model->fit($x,$t,['epochs'=>$epoch/*100*/,'validation_data'=>[$v_x,$v_t],'verbose'=>0]);
+        $history = $model->fit($x,$t,epochs:$epoch/*100*/,validation_data:[$v_x,$v_t],verbose:0);
 
         $this->assertEquals(['loss','accuracy','val_loss','val_accuracy'],array_keys($history));
 
@@ -1227,17 +1222,16 @@ class Test extends TestCase
 
         $model = $nn->models()->Sequential([
             $nn->layers()->Embedding($inputDim=10,$outputDim=10,
-                [
-                    'input_length'=>4,
+                    input_length:4,
                     #'kernel_initializer'=>'glorot_normal',
-            ]),
+            ),
             $nn->layers()->Activation('softmax'),
         ]);
 
-        $model->compile([
-            'loss'=>$nn->losses()->SparseCategoricalCrossEntropy(),
-            'optimizer'=>'adam',
-        ]);
+        $model->compile(
+            loss:$nn->losses()->SparseCategoricalCrossEntropy(),
+            optimizer:'adam',
+        );
         //$model->summary();
 
         // training sequences
@@ -1266,7 +1260,7 @@ class Test extends TestCase
             [9,3,3,2],
         ]);
 
-        $history = $model->fit($x,$t,['epochs'=>$epoch/*300*/,'batch_size'=>1,'validation_data'=>[$v_x,$v_t],'verbose'=>0]);
+        $history = $model->fit($x,$t,epochs:$epoch/*300*/,batch_size:1,validation_data:[$v_x,$v_t],verbose:0);
 
         $this->assertEquals(['loss','accuracy','val_loss','val_accuracy'],array_keys($history));
 
@@ -1297,20 +1291,19 @@ class Test extends TestCase
         $model = $nn->models()->Sequential([
             $nn->layers()->SimpleRNN(
                 $units=16,
-                [
-                    'input_shape'=>[4,10],
-                    #'input_shape'=>[1,10],
-                    #'kernel_initializer'=>'glorot_normal',
-                    #'recurrent_initializer'=>'glorot_normal',
-                    #'recurrent_initializer'=>'glorot_normal',
-            ]),
+                    input_shape:[4,10],
+                    #input_shape:[1,10],
+                    #kernel_initializer:'glorot_normal',
+                    #recurrent_initializer:'glorot_normal',
+                    #recurrent_initializer:'glorot_normal',
+            ),
             $nn->layers()->Activation('softmax'),
         ]);
 
-        $model->compile([
-            'loss'=>$nn->losses()->SparseCategoricalCrossEntropy(),
-            'optimizer'=>'adam',
-        ]);
+        $model->compile(
+            loss:$nn->losses()->SparseCategoricalCrossEntropy(),
+            optimizer:'adam',
+        );
         #$model->summary();
 
         // training up and down
@@ -1335,7 +1328,7 @@ class Test extends TestCase
         $x = $mo->la()->onehot($x->reshape([16]),$numClass=10)->reshape([4,4,10]);
         $v_x = $mo->la()->onehot($v_x->reshape([16]),$numClass=10)->reshape([4,4,10]);
 
-        $history = $model->fit($x,$t,['epochs'=>$epoch/*300*/,'batch_size'=>1,'validation_data'=>[$v_x,$v_t],'verbose'=>0]);
+        $history = $model->fit($x,$t,epochs:$epoch/*300*/,batch_size:1,validation_data:[$v_x,$v_t],verbose:0);
 
         $this->assertEquals(['loss','accuracy','val_loss','val_accuracy'],array_keys($history));
 
@@ -1366,21 +1359,20 @@ class Test extends TestCase
         $model = $nn->models()->Sequential([
             $nn->layers()->SimpleRNN(
                 $units=10,
-                [
-                    'input_shape'=>[4,10],
-                    #'input_shape'=>[1,10],
-                    #'kernel_initializer'=>'glorot_normal',
-                    #'recurrent_initializer'=>'glorot_normal',
-                    #'recurrent_initializer'=>'glorot_normal',
-                    'return_sequences'=>true,
-            ]),
+                input_shape:[4,10],
+                #input_shape:[1,10],
+                #kernel_initializer:'glorot_normal',
+                #recurrent_initializer:'glorot_normal',
+                #recurrent_initializer:'glorot_normal',
+                return_sequences:true,
+            ),
             $nn->layers()->Activation('softmax'),
         ]);
 
-        $model->compile([
-            'loss'=>$nn->losses()->SparseCategoricalCrossEntropy(),
-            'optimizer'=>'adam',
-        ]);
+        $model->compile(
+            loss:$nn->losses()->SparseCategoricalCrossEntropy(),
+            optimizer:'adam',
+        );
         #$model->summary();
 
         // training sequences
@@ -1412,7 +1404,7 @@ class Test extends TestCase
         $v_x = $mo->la()->onehot($v_x->reshape([16]),$numClass=10)->reshape([4,4,10]);
 
         $callback = new WeightLog($mo);
-        $history = $model->fit($x,$t,['epochs'=>$epoch/*300*/,'batch_size'=>1,'validation_data'=>[$v_x,$v_t],'verbose'=>0,'callbacks'=>[$callback]]);
+        $history = $model->fit($x,$t,epochs:$epoch/*300*/,batch_size:1,validation_data:[$v_x,$v_t],verbose:0,callbacks:[$callback]);
 
         $this->assertEquals(['loss','accuracy','val_loss','val_accuracy'],array_keys($history));
 
@@ -1448,23 +1440,22 @@ class Test extends TestCase
         $model = $nn->models()->Sequential([
             $nn->layers()->Dense(
                 $units=16,
-                [
-                    #'input_shape'=>[4,10],
-                    'input_shape'=>[10],
-                    #'kernel_initializer'=>'glorot_normal',
-                    #'recurrent_initializer'=>'glorot_normal',
-                    #'recurrent_initializer'=>'glorot_normal',
-                    #'activation'=>'sigmoid',
-                    'activation'=>'tanh',
-            ]),
+                #input_shape:[4,10],
+                input_shape:[10],
+                #kernel_initializer:'glorot_normal',
+                #recurrent_initializer:'glorot_normal',
+                #recurrent_initializer:'glorot_normal',
+                #activation:'sigmoid',
+                activation:'tanh',
+            ),
             $nn->layers()->Activation('softmax'),
         ]);
 
-        $model->compile([
-            'loss'=>'sparse_categorical_crossentropy',
-            'optimizer'=>'adam',
-            #'optimizer'=>'sgd',
-        ]);
+        $model->compile(
+            loss:'sparse_categorical_crossentropy',
+            optimizer:'adam',
+            #optimizer'sgd',
+        );
         #$model->summary();
 
         $x = $mo->array([
@@ -1488,7 +1479,7 @@ class Test extends TestCase
         $x = $mo->la()->onehot($x->reshape([4]),$numClass=10)->reshape([4,10]);
         $v_x = $mo->la()->onehot($v_x->reshape([4]),$numClass=10)->reshape([4,10]);
 
-        $history = $model->fit($x,$t,['epochs'=>$epoch/*300*/,'batch_size'=>1,'validation_data'=>[$v_x,$v_t],'verbose'=>0]);
+        $history = $model->fit($x,$t,epochs:$epoch/*300*/,batch_size:1,validation_data:[$v_x,$v_t],verbose:0);
 
         $this->assertEquals(['loss','accuracy','val_loss','val_accuracy'],array_keys($history));
 
@@ -1518,16 +1509,15 @@ class Test extends TestCase
         $model = $nn->models()->Sequential([
             $nn->layers()->LSTM(
                 $units=16,
-                [
-                    'input_shape'=>[4,10],
-                ]),
+                    input_shape:[4,10],
+                ),
                 $nn->layers()->Activation('softmax'),
         ]);
 
-        $model->compile([
-            'loss'=>$nn->losses()->SparseCategoricalCrossEntropy(),
-            'optimizer'=>$nn->optimizers()->Adam(),
-        ]);
+        $model->compile(
+            loss:$nn->losses()->SparseCategoricalCrossEntropy(),
+            optimizer:$nn->optimizers()->Adam(),
+        );
         //$model->summary();
 
         // training up and down
@@ -1551,7 +1541,7 @@ class Test extends TestCase
         );
         $x = $mo->la()->onehot($x->reshape([16]),$numClass=10)->reshape([4,4,10]);
         $v_x = $mo->la()->onehot($v_x->reshape([16]),$numClass=10)->reshape([4,4,10]);
-        $history = $model->fit($x,$t,['epochs'=>$epoch/*300*/,'batch_size'=>1,'validation_data'=>[$v_x,$v_t],'verbose'=>0]);
+        $history = $model->fit($x,$t,epochs:$epoch/*300*/,batch_size:1,validation_data:[$v_x,$v_t],verbose:0);
 
         $this->assertEquals(['loss','accuracy','val_loss','val_accuracy'],array_keys($history));
 
@@ -1582,17 +1572,16 @@ class Test extends TestCase
         $model = $nn->models()->Sequential([
             $nn->layers()->LSTM(
                 $units=16,
-                [
-                    'input_shape'=>[4,10],
-                    'return_sequences'=>true,
-                ]),
+                    input_shape:[4,10],
+                    return_sequences:true,
+                ),
                 $nn->layers()->Activation('softmax'),
         ]);
 
-        $model->compile([
-            'loss'=>$nn->losses()->SparseCategoricalCrossEntropy(),
-            'optimizer'=>$nn->optimizers()->Adam(),
-        ]);
+        $model->compile(
+            loss:$nn->losses()->SparseCategoricalCrossEntropy(),
+            optimizer:$nn->optimizers()->Adam(),
+        );
         //$model->summary();
 
         // training up and down
@@ -1622,7 +1611,7 @@ class Test extends TestCase
         ]);
         $x = $mo->la()->onehot($x->reshape([16]),$numClass=10)->reshape([4,4,10]);
         $v_x = $mo->la()->onehot($v_x->reshape([16]),$numClass=10)->reshape([4,4,10]);
-        $history = $model->fit($x,$t,['epochs'=>$epoch/*300*/,'batch_size'=>1,'validation_data'=>[$v_x,$v_t],'verbose'=>0]);
+        $history = $model->fit($x,$t,epochs:$epoch/*300*/,batch_size:1,validation_data:[$v_x,$v_t],verbose:0);
 
         $this->assertEquals(['loss','accuracy','val_loss','val_accuracy'],array_keys($history));
 
@@ -1653,16 +1642,15 @@ class Test extends TestCase
         $model = $nn->models()->Sequential([
             $nn->layers()->GRU(
                 $units=16,
-                [
-                    'input_shape'=>[4,10],
-                ]),
+                input_shape:[4,10],
+                ),
                 $nn->layers()->Activation('softmax'),
         ]);
 
-        $model->compile([
-            'loss'=>$nn->losses()->SparseCategoricalCrossEntropy(),
-            'optimizer'=>'adam',
-        ]);
+        $model->compile(
+            loss:$nn->losses()->SparseCategoricalCrossEntropy(),
+            optimizer:'adam',
+        );
         #$model->summary();
 
         // training up and down
@@ -1686,7 +1674,7 @@ class Test extends TestCase
         );
         $x = $mo->la()->onehot($x->reshape([16]),$numClass=10)->reshape([4,4,10]);
         $v_x = $mo->la()->onehot($v_x->reshape([16]),$numClass=10)->reshape([4,4,10]);
-        $history = $model->fit($x,$t,['epochs'=>$epoch/*300*/,'batch_size'=>1,'validation_data'=>[$v_x,$v_t],'verbose'=>0]);
+        $history = $model->fit($x,$t,epochs:$epoch/*300*/,batch_size:1,validation_data:[$v_x,$v_t],verbose:0);
 
         $this->assertEquals(['loss','accuracy','val_loss','val_accuracy'],array_keys($history));
 
@@ -1717,17 +1705,16 @@ class Test extends TestCase
         $model = $nn->models()->Sequential([
             $nn->layers()->GRU(
                 $units=16,
-                [
-                    'input_shape'=>[4,10],
-                    'reset_after'=>false,
-                ]),
+                input_shape:[4,10],
+                reset_after:false,
+                ),
                 $nn->layers()->Activation('softmax'),
         ]);
 
-        $model->compile([
-            'loss'=>$nn->losses()->SparseCategoricalCrossEntropy(),
-            'optimizer'=>'adam',
-        ]);
+        $model->compile(
+            loss:$nn->losses()->SparseCategoricalCrossEntropy(),
+            optimizer:'adam',
+        );
         #$model->summary();
 
         // training up and down
@@ -1751,7 +1738,7 @@ class Test extends TestCase
         );
         $x = $mo->la()->onehot($x->reshape([16]),$numClass=10)->reshape([4,4,10]);
         $v_x = $mo->la()->onehot($v_x->reshape([16]),$numClass=10)->reshape([4,4,10]);
-        $history = $model->fit($x,$t,['epochs'=>$epoch/*300*/,'batch_size'=>1,'validation_data'=>[$v_x,$v_t],'verbose'=>0]);
+        $history = $model->fit($x,$t,epochs:$epoch/*300*/,batch_size:1,validation_data:[$v_x,$v_t],verbose:0);
 
         $this->assertEquals(['loss','accuracy','val_loss','val_accuracy'],array_keys($history));
 
@@ -1782,21 +1769,20 @@ class Test extends TestCase
         $model = $nn->models()->Sequential([
             $nn->layers()->GRU(
                 $units=10,
-                [
-                    'input_shape'=>[4,10],
-                    #'input_shape'=>[1,10],
-                    #'kernel_initializer'=>'glorot_normal',
-                    #'recurrent_initializer'=>'glorot_normal',
-                    #'recurrent_initializer'=>'glorot_normal',
-                    'return_sequences'=>true,
-            ]),
+                input_shape:[4,10],
+                #input_shape:[1,10],
+                #kernel_initializer:'glorot_normal',
+                #recurrent_initializer:'glorot_normal',
+                #recurrent_initializer:'glorot_normal',
+                return_sequences:true,
+            ),
             $nn->layers()->Activation('softmax'),
         ]);
 
-        $model->compile([
-            'loss'=>$nn->losses()->SparseCategoricalCrossEntropy(),
-            'optimizer'=>'adam',
-        ]);
+        $model->compile(
+            loss:$nn->losses()->SparseCategoricalCrossEntropy(),
+            optimizer:'adam',
+        );
         #$model->summary();
 
         // training sequences
@@ -1828,7 +1814,7 @@ class Test extends TestCase
         $v_x = $mo->la()->onehot($v_x->reshape([16]),$numClass=10)->reshape([4,4,10]);
 
         $callback = new WeightLog($mo);
-        $history = $model->fit($x,$t,['epochs'=>$epoch/*300*/,'batch_size'=>1,'validation_data'=>[$v_x,$v_t],'verbose'=>0,'callbacks'=>[$callback]]);
+        $history = $model->fit($x,$t,epochs:$epoch/*300*/,batch_size:1,validation_data:[$v_x,$v_t],verbose:0,callbacks:[$callback]);
 
         $this->assertEquals(['loss','accuracy','val_loss','val_accuracy'],array_keys($history));
 
@@ -1864,19 +1850,18 @@ class Test extends TestCase
         $model = $nn->models()->Sequential([
             $nn->layers()->Dense(
                 $units=16,
-                [
-                    'input_shape'=>[4,10],
-                ]),
+                input_shape:[4,10],
+                ),
                 $nn->layers()->Flatten(),
                 $nn->layers()->RepeatVector(3),
                 $nn->layers()->Dense(10),
                 $nn->layers()->Activation('softmax'),
         ]);
 
-        $model->compile([
-            'loss'=>$nn->losses()->SparseCategoricalCrossEntropy(),
-            'optimizer'=>'adam',
-        ]);
+        $model->compile(
+            loss:$nn->losses()->SparseCategoricalCrossEntropy(),
+            optimizer:'adam',
+        );
         #$model->summary();
 
         // training up and down
@@ -1906,7 +1891,7 @@ class Test extends TestCase
         ]);
         $x = $mo->la()->onehot($x->reshape([16]),$numClass=10)->reshape([4,4,10]);
         $v_x = $mo->la()->onehot($v_x->reshape([16]),$numClass=10)->reshape([4,4,10]);
-        $history = $model->fit($x,$t,['epochs'=>$epoch/*300*/,'batch_size'=>1,'validation_data'=>[$v_x,$v_t],'verbose'=>0]);
+        $history = $model->fit($x,$t,epochs:$epoch/*300*/,batch_size:1,validation_data:[$v_x,$v_t],verbose:0);
 
         $this->assertEquals(['loss','accuracy','val_loss','val_accuracy'],array_keys($history));
 
@@ -1928,10 +1913,10 @@ class Test extends TestCase
         $K = $nn->backend();
         $g = $nn->gradient();
         $model = $nn->models()->Sequential([
-            $nn->layers()->Dense($units=128,['input_shape'=>[2]]),
+            $nn->layers()->Dense($units=128,input_shape:[2]),
             $nn->layers()->BatchNormalization(),
             $nn->layers()->Activation('sigmoid'),
-            $nn->layers()->Dense($units=2,['activation'=>'softmax']),
+            $nn->layers()->Dense($units=2,activation:'softmax'),
         ]);
         $model->compile();
         $json = $model->toJson();
@@ -1947,15 +1932,15 @@ class Test extends TestCase
         $loader = new ModelLoader($K,$nn);
 
         $model = $nn->models()->Sequential([
-            $nn->layers()->Dense($units=128,['input_shape'=>[2]]),
+            $nn->layers()->Dense($units=128,input_shape:[2]),
             $nn->layers()->BatchNormalization(),
             $nn->layers()->Activation('sigmoid'),
-            $nn->layers()->Dense($units=2,['activation'=>'softmax']),
+            $nn->layers()->Dense($units=2,activation:'softmax'),
         ]);
         $model->compile();
         $x = $mo->array([[1, 3], [1, 4], [2, 4], [3, 1], [4, 1], [4, 2]]);
         $t = $mo->array([0, 0, 0, 1, 1, 1]);
-        $history = $model->fit($x,$t,['epochs'=>100,'verbose'=>0]);
+        $history = $model->fit($x,$t,epochs:100,verbose:0);
         [$loss,$accuracy] = $model->evaluate($x,$t);
 
         $origY = $model->predict($x);
@@ -2039,16 +2024,16 @@ class Test extends TestCase
         $g = $nn->gradient();
 
         $origModel = $nn->models()->Sequential([
-            $nn->layers()->Dense($units=128,['input_shape'=>[2]]),
+            $nn->layers()->Dense($units=128,input_shape:[2]),
             $nn->layers()->BatchNormalization(),
             $nn->layers()->Activation('sigmoid'),
-            $nn->layers()->Dense($units=2,['activation'=>'softmax']),
+            $nn->layers()->Dense($units=2,activation:'softmax'),
         ]);
 
         $origModel->compile();
         $inputs = $mo->zeros([1,2]);
         $trues = $mo->array([0],NDArray::int32);
-        $origModel->fit($inputs,$trues,['epochs'=>1,'batch_size'=>1,'verbose'=>0]);
+        $origModel->fit($inputs,$trues,epochs:1,batch_size:1,verbose:0);
         $model = clone $origModel;
 
         $this->assertCount(2+4+2,$origModel->variables());
@@ -2074,14 +2059,14 @@ class Test extends TestCase
 
         $seq = $nn->models->Sequential();
         $seq->add($nn->layers->Dense(2,
-            ['input_shape'=>[3],'activation'=>'softmax']));
+            input_shape:[3],activation:'softmax'));
         $model = new TestCustomModel($K,$nn,$seq);
         $model->compile();
         //$model->summary();
         $parms = $model->trainableVariables();
         $this->assertCount(2,$parms);
         $model->fit($mo->zeros([5,3]),$mo->zeros([5],NDArray::int32),
-            ['epochs'=>1,'verbose'=>0]);
+            epochs:1, verbose:0);
         $this->assertEquals([3,2],$parms[0]->shape());
         $this->assertEquals([2],$parms[1]->shape());
         $predicts = $model->predict($mo->zeros([5,3]));

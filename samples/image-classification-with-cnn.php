@@ -111,58 +111,58 @@ if(file_exists($modelFilePath)) {
         $nn->layers()->Conv2D(
             $filters=64,
             $kernel_size=3,
-            ['input_shape'=>$inputShape,
-            'kernel_initializer'=>'he_normal',]),
+            input_shape:$inputShape,
+            kernel_initializer:'he_normal'),
         $nn->layers()->BatchNormalization(),
         $nn->layers()->Activation('relu'),
         $nn->layers()->Conv2D(
             $filters=64,
             $kernel_size=3,
-            ['kernel_initializer'=>'he_normal',]),
+            kernel_initializer:'he_normal'),
         $nn->layers()->MaxPooling2D(),
         $nn->layers()->Conv2D(
             $filters=128,
             $kernel_size=3,
-            ['kernel_initializer'=>'he_normal',]),
+            kernel_initializer:'he_normal'),
         $nn->layers()->BatchNormalization(),
         $nn->layers()->Activation('relu'),
         $nn->layers()->Conv2D(
             $filters=128,
             $kernel_size=3,
-            ['kernel_initializer'=>'he_normal',]),
+            kernel_initializer:'he_normal'),
         $nn->layers()->MaxPooling2D(),
         $nn->layers()->Conv2D(
             $filters=256,
             $kernel_size=3,
-            ['kernel_initializer'=>'he_normal',
-            'activation'=>'relu']),
+            kernel_initializer:'he_normal',
+            activation:'relu'),
         $nn->layers()->GlobalAveragePooling2D(),
         $nn->layers()->Dense($units=512,
-            ['kernel_initializer'=>'he_normal',]),
+            kernel_initializer:'he_normal'),
         $nn->layers()->BatchNormalization(),
         $nn->layers()->Activation('relu'),
         $nn->layers()->Dense($units=10,
-            ['activation'=>'softmax']),
+            activation:'softmax'),
     ]);
 
-    $model->compile([
-        'loss'=>'sparse_categorical_crossentropy',
-        'optimizer'=>'adam',
-    ]);
+    $model->compile(
+        loss:'sparse_categorical_crossentropy',
+        optimizer:'adam',
+    );
     $model->summary();
     echo "training model ...\n";
-    $train_dataset = $nn->data->ImageDataGenerator($train_img,[
-        'tests'=>$train_label,
-        'batch_size'=>$batch_size,
-        'shuffle'=>true,
-        'height_shift'=>2,
-        'width_shift'=>2,
-        'vertical_flip'=>true,
-        'horizontal_flip'=>true
-    ]);
+    $train_dataset = $nn->data->ImageDataGenerator($train_img,
+        tests:$train_label,
+        batch_size:$batch_size,
+        shuffle:true,
+        height_shift:2,
+        width_shift:2,
+        vertical_flip:true,
+        horizontal_flip:true
+    );
     $history = $model->fit($train_dataset,null,
-        ['epochs'=>$epochs,
-            'validation_data'=>[$test_img,$test_label]]);
+        epochs:$epochs,
+            validation_data:[$test_img,$test_label]);
     $model->save($modelFilePath,$portable=true);
     $plt->plot($mo->array($history['accuracy']),null,null,'accuracy');
     $plt->plot($mo->array($history['val_accuracy']),null,null,'val_accuracy');

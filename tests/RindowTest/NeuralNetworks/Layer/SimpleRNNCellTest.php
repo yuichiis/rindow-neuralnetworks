@@ -49,9 +49,8 @@ class Test extends TestCase
         $layer = new SimpleRNNCell(
             $K,
             $units=4,
-            [
-                'input_shape'=>[3]
-            ]);
+            input_shape:[3]
+            );
 
         $layer->build([3]);
         $params = $layer->getParams();
@@ -82,8 +81,7 @@ class Test extends TestCase
         $layer = new SimpleRNNCell(
             $K,
             $units=4,
-            [
-            ]);
+            );
         $layer->build($inputShape=[3]);
 
         //$this->assertEquals([3],$layer->inputShape());
@@ -99,9 +97,8 @@ class Test extends TestCase
         $layer = new SimpleRNNCell(
             $K,
             $units=4,
-            [
-                'input_shape'=>[3],
-            ]);
+            input_shape:[3],
+            );
 
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Input shape is inconsistent: defined as [3] but [4] given in SimpleRNNCell');
@@ -119,9 +116,8 @@ class Test extends TestCase
         $layer = new SimpleRNNCell(
             $K,
             $units=4,
-            [
-                'input_shape'=>[3]
-            ]);
+            input_shape:[3]
+            );
 
         $layer->build([3]);
         $grads = $layer->getGrads();
@@ -186,16 +182,15 @@ class Test extends TestCase
         $layer = new SimpleRNNCell(
             $K,
             $units=4,
-            [
-                'input_shape'=>[3],
-                'activation'=>null,
-            ]);
+            input_shape:[3],
+            activation:'linear',
+            );
 
         $kernel = $K->ones([3,4]);
         $recurrent = $K->ones([4,4]);
         $bias = $K->ones([4]);
         $layer->build([3],
-            ['sampleWeights'=>[$kernel,$recurrent,$bias]]
+            sampleWeights:[$kernel,$recurrent,$bias]
         );
         $this->assertNull($layer->getActivation());
         $grads = $layer->getGrads();
@@ -264,10 +259,9 @@ class Test extends TestCase
         $layer = new SimpleRNNCell(
             $K,
             $units=3,
-            [
-                'input_shape'=>[10],
-                #'activation'=>null,
-            ]);
+            input_shape:[10],
+            #activation:'linear',
+            );
         $layer->build([10]);
         $weights = $layer->getParams();
 

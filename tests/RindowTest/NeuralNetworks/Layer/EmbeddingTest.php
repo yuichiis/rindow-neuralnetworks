@@ -31,9 +31,8 @@ class Test extends TestCase
             $K,
             $inputDim=4,
             $outputDim=5,
-            [
-                'input_length'=>3
-            ]);
+            input_length:3
+            );
 
         $inputs = $g->Variable($K->zeros([1,3]));
         $layer->build($inputs);
@@ -59,8 +58,7 @@ class Test extends TestCase
             $K,
             $inputDim=4,
             $outputDim=5,
-            [
-            ]);
+            );
         $inputs = $g->Variable($K->zeros([1,3]));
         $layer->build($inputs);
 
@@ -78,9 +76,8 @@ class Test extends TestCase
             $K,
             $inputDim=4,
             $outputDim=5,
-            [
-                'input_length'=>3
-            ]);
+            input_length:3
+            );
         $inputs = $g->Variable($K->zeros([1,4]));
 
         $this->expectException(InvalidArgumentException::class);
@@ -99,7 +96,7 @@ class Test extends TestCase
             $K,
             $inputDim=4,
             $outputDim=5,
-            ['input_length'=>3]);
+            input_length:3);
         //  2 batch
         $inputs = $K->array([
             [0,1,2],
@@ -108,7 +105,7 @@ class Test extends TestCase
 
         $kernel = $K->array($mo->arange(4*5,null,null,NDArray::float32)->reshape([4,5]));
         $layer->build($g->Variable($inputs),
-            ['sampleWeights'=>[$kernel]]
+            sampleWeights:[$kernel]
         );
 
 

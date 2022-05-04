@@ -10,7 +10,7 @@ class SimpleRNN extends AbstractRNNLayer
     use GenericUtils;
     protected $backend;
     protected $units;
-    protected $activation;
+    protected $activationName;
     protected $useBias;
     protected $kernelInitializerName;
     protected $recurrentInitializerName;
@@ -27,24 +27,38 @@ class SimpleRNN extends AbstractRNNLayer
     protected $initialStates;
     protected $origInputsShape;
 
-    public function __construct(object $backend,int $units, array $options=null)
+    public function __construct(
+        object $backend,
+        int $units,
+        array $input_shape=null,
+        string|object $activation=null,
+        bool $use_bias=null,
+        string $kernel_initializer=null,
+        string $recurrent_initializer=null,
+        string $bias_initializer=null,
+        bool $return_sequences=null,
+        bool $return_state=null,
+        bool $go_backwards=null,
+        bool $stateful=null,
+        string $name=null,
+    )
     {
-        extract($this->extractArgs([
-            'input_shape'=>null,
-            'activation'=>'tanh',
-            'use_bias'=>true,
-            'kernel_initializer'=>'glorot_uniform',
-            'recurrent_initializer'=>'orthogonal',
-            'bias_initializer'=>'zeros',
-            'return_sequences'=>false,
-            'return_state'=>false,
-            'go_backwards'=>false,
-            'stateful'=>false,
-            'name'=>null,
-            //'kernel_regularizer'=>null, 'bias_regularizer'=>null,
-            //'activity_regularizer'=null,
-            //'kernel_constraint'=null, 'bias_constraint'=null,
-        ],$options));
+        // defaults
+        $input_shape = $input_shape ?? null;
+        $activation = $activation ?? 'tanh';
+        $use_bias = $use_bias ?? true;
+        $kernel_initializer = $kernel_initializer ?? 'glorot_uniform';
+        $recurrent_initializer = $recurrent_initializer ?? 'orthogonal';
+        $bias_initializer = $bias_initializer ?? 'zeros';
+        $return_sequences = $return_sequences ?? false;
+        $return_state = $return_state ?? false;
+        $go_backwards = $go_backwards ?? false;
+        $stateful = $stateful ?? false;
+        $name = $name ?? null;
+        //'kernel_regularizer'=>null, 'bias_regularizer'=>null,
+        //'activity_regularizer'=null,
+        //'kernel_constraint'=null, 'bias_constraint'=null,
+        
         $this->backend = $K = $backend;
         $this->units = $units;
         $this->inputShape = $input_shape;
@@ -52,9 +66,7 @@ class SimpleRNN extends AbstractRNNLayer
             $this->useBias = $use_bias;
         }
         $this->allocateWeights($this->useBias?3:2);
-        $this->setActivation($activation);
-        $activation = $this->activation;
-        $this->activation = null;
+        $this->activationName = $activation;
         $this->kernelInitializerName = $kernel_initializer;
         $this->recurrentInitializerName = $recurrent_initializer;
         $this->biasInitializerName = $bias_initializer;
@@ -66,20 +78,16 @@ class SimpleRNN extends AbstractRNNLayer
         $this->cell = new SimpleRNNCell(
             $this->backend,
             $this->units,
-            [
-            'activation'=>$activation,
-            'use_bias'=>$this->useBias,
-            'kernel_initializer'=>$this->kernelInitializerName,
-            'recurrent_initializer'=>$this->recurrentInitializerName,
-            'bias_initializer'=>$this->biasInitializerName,
-            ]);
+            activation:$activation,
+            use_bias:$this->useBias,
+            kernel_initializer:$this->kernelInitializerName,
+            recurrent_initializer:$this->recurrentInitializerName,
+            bias_initializer:$this->biasInitializerName,
+            );
     }
 
-    public function build($variables=null, array $options=null)
+    public function build($variables=null, array $sampleWeights=null)
     {
-        extract($this->extractArgs([
-            'sampleWeights'=>null,
-        ],$options));
         $K = $this->backend;
 
         if(is_object($variables)) {
@@ -95,7 +103,7 @@ class SimpleRNN extends AbstractRNNLayer
         }
         $this->timesteps = $inputShape[0];
         $this->feature = $inputShape[1];
-        $this->cell->build([$this->feature],$options);
+        $this->cell->build([$this->feature], sampleWeights:$sampleWeights);
         $this->statesShapes = [[$this->units]];
         if($this->returnSequences){
             $this->outputShape = [$this->timesteps,$this->units];

@@ -25,11 +25,11 @@ class TestModel extends AbstractModel
             $backend,
             $builder,
             $builder->utils()->HDA());
-        $this->flatten = $builder->layers()->Flatten(['input_shape'=>[5]]);
+        $this->flatten = $builder->layers()->Flatten(input_shape:[5]);
         $this->custom = new TestSubModel($backend,$builder);
         $this->fc = $builder->layers()->Dense(
             10,
-            ['activation'=>'softmax']
+            activation:'softmax'
         );
         //$this->setLastLayer($this->fc);
     }
@@ -103,17 +103,17 @@ class TestRNNModel extends AbstractModel
             $builder->utils()->HDA());
         $this->embed0 = $builder->layers->Embedding(
             $inputDim=5, $outputDim=4,
-            ['input_length'=>3]);
+            input_length:3);
         $this->rnn0 = $builder->layers->GRU($units=32,
-            ['return_state'=>true,'return_sequences'=>true,
-             'recurrent_initializer'=>'glorot_uniform']
+            return_state:true, return_sequences:true,
+            recurrent_initializer:'glorot_uniform'
         );
         $this->embed1 = $builder->layers->Embedding(
             $inputDim=5, $outputDim=4,
-            ['input_length'=>3]);
+            input_length:3);
         $this->rnn1 = $builder->layers->GRU($units=32,
-            ['return_state'=>true,'return_sequences'=>true,
-             'recurrent_initializer'=>'glorot_uniform']
+            return_state:true,return_sequences:true,
+            recurrent_initializer:'glorot_uniform'
         );
         $this->attention = $builder->layers->Attention();
         $this->concat = $builder->layers->Concatenate();
@@ -170,10 +170,10 @@ class TestMultiInputModel extends AbstractModel
             $backend,
             $builder,
             $builder->utils()->HDA());
-        $this->inp1 = $builder->layers()->Flatten(['input_shape'=>[2]]);
-        $this->inp2 = $builder->layers()->Flatten(['input_shape'=>[2]]);
+        $this->inp1 = $builder->layers()->Flatten(input_shape:[2]);
+        $this->inp2 = $builder->layers()->Flatten(input_shape:[2]);
         $this->concat = $builder->layers()->Concatenate();
-        $this->fc = $builder->layers()->Dense(5,['activation'=>'softmax']);
+        $this->fc = $builder->layers()->Dense(5,activation:'softmax');
     }
 
     protected function call($inp1,$inp2,$training)
@@ -271,7 +271,7 @@ class Test extends TestCase
         //$model->summary();
         $history = $model->fit(
             $train,$label,
-            ['epochs'=>5,'batch_size'=>2,'validation_data'=>[$val_train,$val_label],'verbose'=>0]
+            epochs:5,batch_size:2,validation_data:[$val_train,$val_label],verbose:0
         );
         $this->assertTrue(true);
     }
@@ -292,17 +292,17 @@ class Test extends TestCase
             NDArray::int32
         );
 
-        $model->compile([
-            'loss' => 'sparse_categorical_crossentropy',
-            'optimizer' => 'adam',
-        ]);
+        $model->compile(
+            loss:'sparse_categorical_crossentropy',
+            optimizer:'adam',
+        );
         $layers = $model->layers();
         //$model->summary();
         $this->assertCount(8,$layers);
 
         $history = $model->fit(
             $inputs, $targets,
-            ['batch_size'=>2,'epochs'=>10,'shuffle'=>true,'verbose'=>0,]);
+            batch_size:2,epochs:10,shuffle:true,verbose:0);
 
         $this->assertTrue(true);
     }
@@ -325,7 +325,7 @@ class Test extends TestCase
         $model->compile();
         $history = $model->fit(
             $train,$label,
-            ['epochs'=>5,'batch_size'=>2,'validation_data'=>[$val_train,$val_label],'verbose'=>0]
+            epochs:5,batch_size:2,validation_data:[$val_train,$val_label],verbose:0
         );
         $weightsOriginal = ['layers'=>[],'optimizer'=>[]];
         foreach ($model->trainableVariables() as $key => $var) {
@@ -378,17 +378,18 @@ class Test extends TestCase
             NDArray::int32
         );
 
-        $model->compile([
-            'loss' => 'sparse_categorical_crossentropy',
-            'optimizer' => 'adam',
-        ]);
+        $model->compile(
+            loss: 'sparse_categorical_crossentropy',
+            optimizer: 'adam',
+        );
         $layers = $model->layers();
         //$model->summary();
         $this->assertCount(8,$layers);
 
         $history = $model->fit(
             $inputs, $targets,
-            ['batch_size'=>2,'epochs'=>10,'shuffle'=>true,'verbose'=>0,]);
+            batch_size:2, epochs:10, shuffle: true, verbose: 0
+        );
 
         $weightsOriginal = ['layers'=>[],'optimizer'=>[]];
         foreach ($model->trainableVariables() as $key => $var) {
@@ -415,10 +416,10 @@ class Test extends TestCase
             NDArray::int32
         );
 
-        $model->compile([
-            'loss' => 'sparse_categorical_crossentropy',
-            'optimizer' => 'adam',
-        ]);
+        $model->compile(
+            loss: 'sparse_categorical_crossentropy',
+            optimizer: 'adam',
+        );
         //$model->summary();
 
         $model->loadWeightsFromFile($this->filename);
@@ -459,7 +460,7 @@ class Test extends TestCase
         $val_label = $mo->arange(10);
         $history = $origModel->fit(
             $train,$label,
-            ['epochs'=>5,'batch_size'=>2,'validation_data'=>[$val_train,$val_label],'verbose'=>0]
+            epochs:5,batch_size:2,validation_data:[$val_train,$val_label],verbose:0
         );
         $model = clone $origModel;
 
@@ -492,14 +493,14 @@ class Test extends TestCase
         $origModel = new TestRNNModel($backend,$nn);
 
         $model = clone $origModel;
-        $origModel->compile([
-            'loss' => 'sparse_categorical_crossentropy',
-            'optimizer' => 'adam',
-        ]);
-        $model->compile([
-            'loss' => 'sparse_categorical_crossentropy',
-            'optimizer' => 'adam',
-        ]);
+        $origModel->compile(
+            loss: 'sparse_categorical_crossentropy',
+            optimizer: 'adam',
+        );
+        $model->compile(
+            loss: 'sparse_categorical_crossentropy',
+            optimizer: 'adam',
+        );
 
         // before build
         $origParams = $origModel->trainableVariables();
@@ -520,7 +521,7 @@ class Test extends TestCase
         );
         $history = $origModel->fit(
             $inputs, $targets,
-            ['batch_size'=>2,'epochs'=>10,'shuffle'=>true,'verbose'=>0,]);
+            batch_size: 2, epochs: 10, shuffle: true, verbose: 0);
 
 
         $model = clone $origModel;
@@ -552,12 +553,12 @@ class Test extends TestCase
         $backend = $this->newBackend($nn);
 
         $model = new TestMultiInputModel($backend,$nn);
-        $model->compile(['numInputs'=>2]);
+        $model->compile(numInputs:2);
         //$model->summary();
         $a = $mo->zeros([3,2]);
         $b = $mo->ones([3,2]);
         $t = $mo->zeros([3],NDArray::int32);
-        $model->fit([$a,$b],$t,['epochs'=>1,'verbose'=>0]);
+        $model->fit([$a,$b],$t, epochs:1,verbose:0);
         $out = $model->predict([$a,$b]);
         $this->assertEquals([3,5],$out->shape());
         $model->evaluate([$a,$b],$t);

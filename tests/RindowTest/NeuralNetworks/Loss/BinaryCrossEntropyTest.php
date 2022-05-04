@@ -42,7 +42,7 @@ class Test extends TestCase
             }
         );
         $dInputs = $outputsVariable->creator()->backward([$K->array(1.0)]);
-        $dInputs = $K->ndarray($dInputs[0]);
+        $dInputs = $K->ndarray($dInputs[1]);
 #echo "\n";
 #echo "grads=".$mo->toString($grads[0],'%5.3f',true)."\n\n";
 #echo "dInputs=".$mo->toString($dInputs,'%5.3f',true)."\n\n";
@@ -125,6 +125,7 @@ class Test extends TestCase
         //$this->assertLessThan(0.001,abs(-1-$dx[2][0])/6);
 
         $accuracy = $func->accuracy($t,$x);
+        $accuracy = $K->scalar($accuracy);
         $this->assertLessThan(0.0001,abs(1-$accuracy));
         $this->assertEquals($copyx->toArray(),$x->toArray());
         $this->assertEquals($copyt->toArray(),$t->toArray());
@@ -146,12 +147,14 @@ class Test extends TestCase
         $this->assertGreaterThan(8,abs($loss));
 
         $dx = $outputsVariable->creator()->backward([$K->array(1.0)]);
-        $dx = $K->ndarray($dx[0]);
+        $dx = $K->ndarray($dx[1]);
+
         $this->assertGreaterThan(100,$dx[0][0]);
         $this->assertGreaterThan(100,$dx[1][0]);
         $this->assertLessThan(100,$dx[2][0]);
 
         $accuracy = $func->accuracy($t,$x);
+        $accuracy = $K->scalar($accuracy);
         $this->assertLessThan(0.0001,abs(0-$accuracy));
 
         $x = $K->array([

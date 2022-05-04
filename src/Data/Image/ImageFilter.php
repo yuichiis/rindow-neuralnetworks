@@ -18,18 +18,21 @@ class ImageFilter implements DatasetFilter
     protected $widthShiftInteger;
 
     public function __construct(
-        $mo,
-        array $options=null,
-        array &$leftargs=null
+        object $mo,
+        string $data_format=null,
+        int $height_shift=null,
+        int $width_shift=null,
+        bool $vertical_flip=null,
+        bool $horizontal_flip=null,
         )
     {
-        extract($this->extractArgs([
-            'data_format'=>'channels_last',
-            'height_shift'=>0,
-            'width_shift'=>0,
-            'vertical_flip'=>false,
-            'horizontal_flip'=>false
-        ],$options,$leftargs));
+        // defaults
+        $data_format = $data_format ?? 'channels_last';
+        $height_shift = $height_shift ?? 0;
+        $width_shift = $width_shift ?? 0;
+        $vertical_flip = $vertical_flip ?? false;
+        $horizontal_flip = $horizontal_flip ?? false;
+
         $this->mo = $mo;
         if($data_format=='channels_last') {
             $channels_first = false;

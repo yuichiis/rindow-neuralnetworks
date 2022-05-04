@@ -23,22 +23,32 @@ class SimpleRNNCell extends AbstractRNNCell
     protected $dBias;
     protected $inputs;
 
-    public function __construct(object $backend,int $units, array $options=null)
+    public function __construct(
+        object $backend,
+        int $units,
+        array $input_shape=null,
+        string|object $activation=null,
+        bool $use_bias=null,
+        string $kernel_initializer=null,
+        string $recurrent_initializer=null,
+        string $bias_initializer=null,
+    )
     {
-        extract($this->extractArgs([
-            'input_shape'=>null,
-            'activation'=>'tanh',
-            'use_bias'=>true,
-            'kernel_initializer'=>'glorot_uniform',
-            'recurrent_initializer'=>'orthogonal',
-            'bias_initializer'=>'zeros',
-            //'kernel_regularizer'=>null, 'bias_regularizer'=>null,
-            //'activity_regularizer'=null,
-            //'kernel_constraint'=null, 'bias_constraint'=null,
-        ],$options));
+        // defaults
+        $input_shape = $input_shape ?? null;
+        $activation = $activation ?? 'tanh';
+        $use_bias = $use_bias ?? true;
+        $kernel_initializer = $kernel_initializer ?? 'glorot_uniform';
+        $recurrent_initializer = $recurrent_initializer ?? 'orthogonal';
+        $bias_initializer = $bias_initializer ?? 'zeros';
+        //'kernel_regularizer'=>null, 'bias_regularizer'=>null,
+        //'activity_regularizer'=null,
+        //'kernel_constraint'=null, 'bias_constraint'=null,
+        
         $this->backend = $K = $backend;
         $this->units = $units;
         $this->inputShape = $input_shape;
+
         if($use_bias) {
             $this->useBias = $use_bias;
         }
@@ -51,11 +61,8 @@ class SimpleRNNCell extends AbstractRNNCell
         $this->biasInitializerName = $bias_initializer;
     }
 
-    public function build($inputShape=null, array $options=null)
+    public function build($inputShape=null, array $sampleWeights=null)
     {
-        extract($this->extractArgs([
-            'sampleWeights'=>null,
-        ],$options));
         $K = $this->backend;
         $kernelInitializer = $this->kernelInitializer;
         $recurrentInitializer = $this->recurrentInitializer;

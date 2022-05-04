@@ -29,9 +29,8 @@ class Test extends TestCase
         $layer = new ExpandDims(
             $K,
             $axis=1,
-            [
-                'input_shape'=>[4,4,3]
-            ]);
+            input_shape:[4,4,3]
+            );
 
         $inputs = $g->Variable($K->zeros([1,4,4,3]));
         $layer->build($inputs);
@@ -53,9 +52,8 @@ class Test extends TestCase
         $layer = new ExpandDims(
             $K,
             $axis=3,
-            [
-                'input_shape'=>[4,4,3]
-            ]);
+            input_shape:[4,4,3]
+            );
 
         $inputs = $g->Variable($K->zeros([1,4,4,3]));
         $layer->build($inputs);
@@ -77,9 +75,8 @@ class Test extends TestCase
         $layer = new ExpandDims(
             $K,
             $axis=-1,
-            [
-                'input_shape'=>[4,4,3]
-            ]);
+            input_shape:[4,4,3]
+            );
 
         $inputs = $g->Variable($K->zeros([1,4,4,3]));
         $layer->build($inputs);
@@ -101,9 +98,8 @@ class Test extends TestCase
         $layer = new ExpandDims(
             $K,
             $axis=-2,
-            [
-                'input_shape'=>[4,4,3]
-            ]);
+            input_shape:[4,4,3]
+            );
 
         $inputs = $g->Variable($K->zeros([1,4,4,3]));
         $layer->build($inputs);
@@ -125,9 +121,8 @@ class Test extends TestCase
         $layer = new ExpandDims(
             $K,
             $axis=4,
-            [
-                'input_shape'=>[4,4,3]
-            ]);
+            input_shape:[4,4,3]
+            );
         $inputs = $g->Variable($K->zeros([1,4,4,3]));
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Invalid axis. Dims of the inputshape is 3. axis=4 given');
@@ -143,9 +138,8 @@ class Test extends TestCase
         $layer = new ExpandDims(
             $K,
             $axis=-5,
-            [
-                'input_shape'=>[4,4,3]
-            ]);
+            input_shape:[4,4,3]
+            );
         $inputs = $g->Variable($K->zeros([1,4,4,3]));
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Invalid axis. Dims of the inputshape is 3. axis=-5 given');
@@ -161,8 +155,7 @@ class Test extends TestCase
         $layer = new ExpandDims(
             $K,
             $axis=0,
-            [
-            ]);
+            );
         $inputs = $g->Variable($K->zeros([1,4,4,3]));
         $layer->build($inputs);
 
@@ -178,9 +171,8 @@ class Test extends TestCase
         $layer = new ExpandDims(
             $K,
             $axis=1,
-            [
-                'input_shape'=>[4,4,3]
-            ]);
+            input_shape:[4,4,3]
+            );
         $inputs = $g->Variable($K->zeros([1,4,4,5]));
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Input shape is inconsistent: defined as [4,4,3] but [4,4,5] given in ExpandDims');
@@ -198,7 +190,7 @@ class Test extends TestCase
         $layer = new ExpandDims(
             $K,
             $axis=0,
-            ['input_shape'=>[4,4,3]]);
+            input_shape:[4,4,3]);
 
 
         //$layer->build($g->Variable($inputs));

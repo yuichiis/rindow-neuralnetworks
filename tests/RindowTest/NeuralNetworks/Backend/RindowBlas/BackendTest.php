@@ -565,7 +565,7 @@ class Test extends TestCase
             [0.0, 0.0, 1.0, 0.0, 0.0],
         ]);
         $this->assertTrue($K->equalTest(
-            0.0,$K->categoricalCrossEntropy($t,$y)));
+            0.0,$K->scalar($K->categoricalCrossEntropy($t,$y))));
 
         $y = $K->array([
             [0.0, 0.0, 1.0, 0.0, 0.0],
@@ -574,7 +574,7 @@ class Test extends TestCase
             [0.0, 0.0, 1.0, 0.0, 0.0],
         ]);
         $this->assertTrue($K->equalTest(
-            0.0,$K->categoricalCrossEntropy($t,$y)));
+            0.0,$K->scalar($K->categoricalCrossEntropy($t,$y))));
     }
 
     public function testEqualArray()

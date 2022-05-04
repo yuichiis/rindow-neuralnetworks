@@ -28,9 +28,8 @@ class Test extends TestCase
         $g = $nn->gradient();
         $layer = new Gather(
             $K,
-            [
-                'input_shapes'=>[[3],[]]
-            ]);
+            input_shapes:[[3],[]]
+            );
 
         $inputs = [$g->Variable($K->zeros([1,3])),$g->Variable($K->zeros([1]))];
         $layer->build($inputs);
@@ -51,10 +50,9 @@ class Test extends TestCase
         $g = $nn->gradient();
         $layer = new Gather(
             $K,
-            [
-                'axis'=>0,
-                'input_shapes'=>[[3,2],[2]]
-            ]);
+            axis:0,
+            input_shapes:[[3,2],[2]]
+            );
 
         $inputs = [$g->Variable($K->zeros([1,3,2])),$g->Variable($K->zeros([1,2]))];
         $layer->build($inputs);
@@ -75,14 +73,13 @@ class Test extends TestCase
         $g = $nn->gradient();
         $layer = new Gather(
             $K,
-            [
-                'axis'=>null,
-                'input_shapes'=>[[3,2],[2]]
-            ]);
+            axis:null,
+            input_shapes:[[3,2],[2]]
+            );
 
         $inputs = [$g->Variable($K->zeros([1,3,2])),$g->Variable($K->zeros([1,2]))];
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Null axis is not supported.');
+        $this->expectExceptionMessage('Unmatch source and index Shape and axis:[3,2],[3],-1');
         $layer->build($inputs);
     }
 
@@ -94,8 +91,7 @@ class Test extends TestCase
         $g = $nn->gradient();
         $layer = new Gather(
             $K,
-            [
-            ]);
+            );
 
         $inputs = [$g->Variable($K->zeros([1,3])),$g->Variable($K->zeros([1]))];
         $layer->build($inputs);
@@ -111,9 +107,8 @@ class Test extends TestCase
         $g = $nn->gradient();
         $layer = new Gather(
             $K,
-            [
-                'input_shapes'=>[[3,2],[2]],
-            ]);
+            input_shapes:[[3,2],[2]],
+            );
 
         $inputs = [$g->Variable($K->zeros([1,3,2])),$g->Variable($K->zeros([1,4]))];
         $this->expectException(InvalidArgumentException::class);
@@ -131,7 +126,7 @@ class Test extends TestCase
 
         $layer = new Gather(
             $K,
-            ['input_shapes'=>[[3],[]]]);
+            input_shapes:[[3],[]]);
 
         //$layer->build($g->Variable($inputs));
 
@@ -204,7 +199,7 @@ class Test extends TestCase
 
         $layer = new Gather(
             $K,
-            ['axis'=>0,'input_shapes'=>[[3,2],[2]]]);
+            axis:0,input_shapes:[[3,2],[2]]);
 
         //$layer->build();
 

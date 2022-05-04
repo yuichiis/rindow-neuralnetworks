@@ -50,9 +50,8 @@ class Test extends TestCase
         $layer = new SimpleRNN(
             $K,
             $units=4,
-            [
-                'input_shape'=>[5,3],
-            ]);
+            input_shape:[5,3],
+            );
 
         $inputs = [$g->Variable($K->zeros([1,5,3]))];
         $layer->build($inputs);
@@ -84,8 +83,7 @@ class Test extends TestCase
         $layer = new SimpleRNN(
             $K,
             $units=4,
-            [
-            ]);
+            );
         $inputs = [$g->Variable($K->zeros([1,5,3]))];
         $layer->build($inputs);
 
@@ -102,9 +100,8 @@ class Test extends TestCase
         $layer = new SimpleRNN(
             $K,
             $units=4,
-            [
-                'input_shape'=>[5,3],
-            ]);
+            input_shape:[5,3],
+            );
 
         $inputs = [$g->Variable($K->zeros([1,5,4]))];
         $this->expectException(InvalidArgumentException::class);
@@ -121,8 +118,7 @@ class Test extends TestCase
         $layer = new SimpleRNN(
             $K,
             $units=4,
-            [
-            ]);
+            );
         $inputs = $g->Variable($K->zeros([1,5,3]));
         $layer->build($inputs);
 
@@ -139,11 +135,10 @@ class Test extends TestCase
         $layer = new SimpleRNN(
             $K,
             $units=4,
-            [
-                'input_shape'=>[5,3],
-                'return_sequences'=>true,
-                'return_state'=>true,
-            ]);
+            input_shape:[5,3],
+            return_sequences:true,
+            return_state:true,
+            );
         $inputs = [$g->Variable($K->zeros([1,5,3]))];
         $layer->build($inputs);
 
@@ -162,9 +157,8 @@ class Test extends TestCase
         $layer = new SimpleRNN(
             $K,
             $units=4,
-            [
-                'input_shape'=>[5,3],
-            ]);
+            input_shape:[5,3],
+            );
 
         //$layer->build();
         //$grads = $layer->getGrads();
@@ -234,11 +228,10 @@ class Test extends TestCase
         $layer = new SimpleRNN(
             $K,
             $units=4,
-            [
-                'input_shape'=>[5,3],
-                'return_sequences'=>true,
-                'return_state'=>true,
-            ]);
+            input_shape:[5,3],
+            return_sequences:true,
+            return_state:true,
+            );
 
         //$layer->build();
         //$grads = $layer->getGrads();
@@ -314,11 +307,10 @@ class Test extends TestCase
         $layer = new SimpleRNN(
             $K,
             $units=4,
-            [
-                'input_shape'=>[5,3],
-                'return_sequences'=>true,
-                'return_state'=>true,
-            ]);
+            input_shape:[5,3],
+            return_sequences:true,
+            return_state:true,
+            );
 
         //$layer->build();
         //$grads = $layer->getGrads();
@@ -394,12 +386,11 @@ class Test extends TestCase
         $layer = new SimpleRNN(
             $K,
             $units=4,
-            [
-                'input_shape'=>[3,5],
-                'return_sequences'=>true,
-                'return_state'=>true,
-                'activation'=>null,
-            ]);
+            input_shape:[3,5],
+            return_sequences:true,
+            return_state:true,
+            activation:'linear',
+            );
 
 
         //  2 batch
@@ -411,7 +402,7 @@ class Test extends TestCase
         $bias = $K->ones([4]);
         $layer->build(
             array_merge([$g->Variable($inputs)],array_map(fn($x)=>$g->Variable($x),$initialStates)),
-            ['sampleWeights'=>[$kernel,$recurrent,$bias]]
+            sampleWeights:[$kernel,$recurrent,$bias]
         );
 
 
@@ -488,12 +479,11 @@ class Test extends TestCase
         $layer = new SimpleRNN(
             $K,
             $units=3,
-            [
-                'input_shape'=>[4,10],
-                'return_sequences'=>true,
-                #'return_state'=>true,
-                #'activation'=>null,
-            ]);
+            input_shape:[4,10],
+            return_sequences:true,
+            #return_state:true,
+            #activation:'linear',
+            );
         //$layer->build();
         //$weights = $layer->getParams();
 
@@ -523,13 +513,12 @@ class Test extends TestCase
         $layer = new SimpleRNN(
             $K,
             $units=3,
-            [
-                'input_shape'=>[4,10],
-                'return_sequences'=>true,
-                'go_backwards'=>true,
-                #'return_state'=>true,
-                #'activation'=>null,
-            ]);
+            input_shape:[4,10],
+            return_sequences:true,
+            go_backwards:true,
+            #return_state:true,
+            #activation:'linear',
+            );
         //$layer->build();
         //$weights = $layer->getParams();
 
@@ -557,9 +546,8 @@ class Test extends TestCase
         $origLayer = new SimpleRNN(
             $K,
             $units=4,
-            [
-                'input_shape'=>[5,3],
-            ]);
+            input_shape:[5,3],
+            );
 
         $inputs = $g->Variable($K->zeros([1,5,3]));
         $inputs2 = $g->Variable($K->zeros([1,5,3]));

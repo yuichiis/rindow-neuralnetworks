@@ -6,16 +6,7 @@ use Interop\Polite\Math\Matrix\NDArray;
 class Conv1D extends AbstractConv
 {
     protected $rank = 1;
-
-    public function __construct(object $backend,int $filters, $kernel_size, array $options=null)
-    {
-        $leftargs = [];
-        extract($this->extractArgs([
-            'name'=>null,
-        ],$options,$leftargs));
-        $this->initName($name,'conv1d');
-        parent::__construct($backend, $filters, $kernel_size, $leftargs);
-    }
+    protected $defaultLayerName = 'conv1d';
 
     protected function call(NDArray $inputs, bool $training) : NDArray
     {

@@ -14,19 +14,20 @@ class RepeatVector extends AbstractLayer
     public function __construct(
         object $backend,
         int $repeats,
-        array $options=null)
+        array $input_shape=null,
+        string $name=null,
+    )
     {
-        extract($this->extractArgs([
-            'input_shape'=>null,
-            'name'=>null,
-        ],$options));
+        $input_shape = $input_shape ?? null;
+        $name = $name ?? null;
+        
         $this->backend = $backend;
         $this->repeats = $repeats;
         $this->inputShape = $input_shape;
         $this->initName($name,'repeatvector');
     }
 
-    public function build($variable=null, array $options=null)
+    public function build($variable=null, array $sampleWeights=null)
     {
         $K = $this->backend;
         $inputShape = $this->normalizeInputShape($variable);

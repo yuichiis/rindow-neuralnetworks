@@ -22,6 +22,7 @@ abstract class AbstractConv extends AbstractImage
     protected $useBias;
     protected $kernelInitializer;
     protected $biasInitializer;
+    protected $defaultLayerName;
 
     protected $kernel;
     protected $bias;
@@ -30,30 +31,48 @@ abstract class AbstractConv extends AbstractImage
     //protected $status;
 
 
-    public function __construct(object $backend,int $filters, $kernel_size, array $options=null)
+    public function __construct(
+        object $backend,
+        int $filters,
+        int|array $kernel_size,
+        int|array $strides=null,
+        string $padding=null,
+        string $data_format=null,
+        int|array $dilation_rate=null,
+        int $groups=null,
+        string|object $activation=null,
+        bool $use_bias=null,
+        string $kernel_initializer=null,
+        string $bias_initializer=null,
+        string $kernel_regularizer=null,
+        string $bias_regularizer=null,
+        string $activity_regularizer=null,
+        string $kernel_constraint=null,
+        string $bias_constraint=null,
+        array $input_shape=null,
+        string $name=null,
+    )
     {
-        extract($this->extractArgs([
-            'strides'=>1,
-            'padding'=>"valid",
-            'data_format'=>null,
-            'dilation_rate'=>1,
-            'groups'=>1,
-            'activation'=>null,
-            'use_bias'=>true,
-            'kernel_initializer'=>"glorot_uniform",
-            'bias_initializer'=>"zeros",
-            'kernel_regularizer'=>null,
-            'bias_regularizer'=>null,
-            'activity_regularizer'=>null,
-            'kernel_constraint'=>null,
-            'bias_constraint'=>null,
+        // defaults 
+        $strides = $strides ?? 1;
+        $padding = $padding ?? "valid";
+        $data_format = $data_format ?? null;
+        $dilation_rate = $dilation_rate ?? 1;
+        $groups = $groups ?? 1;
+        $activation = $activation ?? null;
+        $use_bias = $use_bias ?? true;
+        $kernel_initializer = $kernel_initializer ?? "glorot_uniform";
+        $bias_initializer = $bias_initializer ?? "zeros";
+        $kernel_regularizer = $kernel_regularizer ?? null;
+        $bias_regularizer = $bias_regularizer ?? null;
+        $activity_regularizer = $activity_regularizer ?? null;
+        $kernel_constraint = $kernel_constraint ?? null;
+        $bias_constraint = $bias_constraint ?? null;
+        $input_shape = $input_shape ?? null;
 
-            'input_shape'=>null,
-            'activation'=>null,
-            'use_bias'=>true,
 
-        ],$options));
         $this->backend = $K = $backend;
+        $this->initName($name,$this->defaultLayerName);
         $kernel_size=$this->normalizeFilterSize($kernel_size,'kernel_size',
             null,true);
         $strides=$this->normalizeFilterSize($strides,'strides',1);
@@ -77,11 +96,8 @@ abstract class AbstractConv extends AbstractImage
         $this->setActivation($activation);
     }
 
-    public function build($variable=null, array $options=null)
+    public function build($variable=null, array $sampleWeights=null)
     {
-        extract($this->extractArgs([
-            'sampleWeights'=>null,
-        ],$options));
         $K = $this->backend;
         $kernelInitializer = $this->kernelInitializer;
         $biasInitializer = $this->biasInitializer;

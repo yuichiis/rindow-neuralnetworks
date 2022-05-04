@@ -10,11 +10,14 @@ class SGD implements Optimizer
     protected $backend;
     protected $lr;
 
-    public function __construct(object $backend, array $options=null)
+    public function __construct(
+        object $backend,
+        float $lr=null,
+        )
     {
-        extract($this->extractArgs([
-            'lr'=>0.01,
-        ],$options));
+        // defaults
+        $lr = $lr ?? 0.01;
+        
         $this->backend = $K = $backend;
         $this->lr = $lr;
     }

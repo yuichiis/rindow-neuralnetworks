@@ -28,20 +28,27 @@ class ClassifiedDirectoryDataset implements Countable,IteratorAggregate,Dataset
     protected $maxDatasetSize=0;
 
     public function __construct(
-        $mo, string $path, array $options=null,
-        array &$leftargs=null
-        )
+        object $mo,
+        string $path,
+        string $pattern=null,
+        int $batch_size=null,
+        object $crawler=null,
+        DatasetFilter $filter=null,
+        bool $unclassified=null,
+        bool $shuffle=null,
+        int $limit=null,
+        array $restricted_by_class=null,
+    )
     {
-        extract($this->extractArgs([
-            'pattern'=>null,
-            'batch_size'=>32,
-            'crawler'=>null,
-            'filter'=>null,
-            'unclassified'=>false,
-            'shuffle'=>false,
-            'limit'=>null,
-            'restricted_by_class'=>null,
-        ],$options,$leftargs));
+        $pattern = $pattern ?? null;
+        $batch_size = $batch_size ?? 32;
+        $crawler = $crawler ?? null;
+        $filter = $filter ?? null;
+        $unclassified = $unclassified ?? false;
+        $shuffle = $shuffle ?? false;
+        $limit = $limit ?? null;
+        $restricted_by_class = $restricted_by_class ?? null;
+
         $this->mo = $mo;
         $this->crawler = $crawler;
         $this->path = $path;

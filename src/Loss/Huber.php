@@ -13,11 +13,14 @@ class Huber extends AbstractLoss implements Loss
     protected $backend;
     protected $delta;
 
-    public function __construct(object $backend,array $options=null)
+    public function __construct(
+        object $backend,
+        float $delta=null
+    )
     {
-        extract($this->extractArgs([
-            'delta'=>1.0,
-        ],$options));
+        // defaults
+        $delta = $delta ?? 1.0;
+
         $this->backend = $K = $backend;
         $this->delta = $delta;
     }
@@ -28,7 +31,7 @@ class Huber extends AbstractLoss implements Loss
         ];
     }
 
-    protected function call(NDArray $trues, NDArray $predicts) : float
+    protected function call(NDArray $trues, NDArray $predicts) : NDArray
     {
         $K = $this->backend;
         $container = $this->container();
@@ -57,7 +60,12 @@ class Huber extends AbstractLoss implements Loss
         $container->diffx = $x;
         $container->lessThenDelta = $lessThenDelta;
         $container->greaterThenDelta = $greaterThenDelta;
-        return $K->scalar($K->sum($loss))/$N;
+        $loss = $K->sum($loss);
+
+        if($loss instanceof NDArray) {
+            return $K->scale(1/$N,$loss);
+        }
+        return $K->array($loss/$N,$predicts->dtype());
     }
 
     protected function differentiate(array $dOutputs, ArrayAccess $grads=null, array $oidsToCollect=null) : array
@@ -96,7 +104,7 @@ class Huber extends AbstractLoss implements Loss
             $sum = $K->nrm2($K->sub($predicts,$trues));
         }
         $sum = $K->scalar($sum);
-        $accuracy = $sum / (float)$trues->shape()[0];
+        $accuracy = $sum/$trues->shape()[0];
         return $accuracy;
     }
 }

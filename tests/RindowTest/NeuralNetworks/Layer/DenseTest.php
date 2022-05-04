@@ -46,7 +46,7 @@ class Test extends TestCase
         $mo = $this->newMatrixOperator();
         $nn = $this->newNeuralNetworks($mo);
         $K = $nn->backend();
-        $layer = new Dense($K,$units=3,['input_shape'=>[2]]);
+        $layer = new Dense($K,$units=3,input_shape:[2]);
 
         $layer->build();
         $params = $layer->getParams();
@@ -73,7 +73,7 @@ class Test extends TestCase
         $nn = $this->newNeuralNetworks($mo);
         $K = $nn->backend();
         $g = $nn->gradient();
-        $layer = new Dense($K,$units=3,[]);
+        $layer = new Dense($K,$units=3);
         $inputs = $g->Variable($K->zeros([1,2]));
         $layer->build($inputs);
         $params = $layer->getParams();
@@ -89,7 +89,7 @@ class Test extends TestCase
         $nn = $this->newNeuralNetworks($mo);
         $K = $nn->backend();
         $g = $nn->gradient();
-        $layer = new Dense($K,$units=3,['input_shape'=>[2]]);
+        $layer = new Dense($K,$units=3,input_shape:[2]);
     
         $inputs = $g->Variable($K->zeros([1,3]));
         $this->expectException(InvalidArgumentException::class);
@@ -105,7 +105,7 @@ class Test extends TestCase
         $g = $nn->gradient();
         $fn = $mo->la();
 
-        $layer = new Dense($K,$units=2,['input_shape'=>[3]]);
+        $layer = new Dense($K,$units=2,input_shape:[3]);
 
         // 3 input x 4 minibatch
         $inputs = $K->array([
@@ -115,12 +115,12 @@ class Test extends TestCase
             [0.0, 0.0 , 6.0],
         ]);
 
-        $layer->build($g->Variable($inputs),[
-            'sampleWeights'=>[
+        $layer->build($g->Variable($inputs),
+            sampleWeights:[
                 $K->array([[0.1, 0.2], [0.1, 0.1], [0.2, 0.2]]), // kernel
                 $K->array([0.5, 0.1]),                           // bias
             ]
-        ]);
+        );
 
         //
         // forward
@@ -178,7 +178,7 @@ class Test extends TestCase
         $mo = $this->newMatrixOperator();
         $nn = $this->newNeuralNetworks($mo);
         $K = $nn->backend();
-        $layer = new Dense($K,$units=4,['input_shape'=>[2,3]]);
+        $layer = new Dense($K,$units=4,input_shape:[2,3]);
 
         $layer->build();
         $params = $layer->getParams();
@@ -212,7 +212,7 @@ class Test extends TestCase
         $g = $nn->gradient();
         $fn = $mo->la();
 
-        $layer = new Dense($K,$units=2,['input_shape'=>[3],'activation'=>'tanh']);
+        $layer = new Dense($K,$units=2,input_shape:[3],activation:'tanh');
 
         // 3 input x 4 minibatch
         $inputs = $K->ones([4,3]);

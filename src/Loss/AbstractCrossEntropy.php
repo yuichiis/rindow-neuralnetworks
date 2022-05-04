@@ -20,14 +20,17 @@ abstract class AbstractCrossEntropy extends AbstractLoss implements Loss//,Activ
 
     abstract protected function activationFunction(NDArray $inputs) : NDArray;
     abstract protected function diffActivationFunction(NDArray $dOutputs, NDArray $outputs) : NDArray;
-    abstract protected function lossFunction(NDArray $trues, NDArray $predicts, bool $fromLogits) : float;
+    abstract protected function lossFunction(NDArray $trues, NDArray $predicts, bool $fromLogits) : NDArray;
     abstract protected function diffLossFunction(NDArray $trues, NDArray $predicts, bool $fromLogits) : NDArray;
 
-    public function __construct(object $backend,array $options=null)
+    public function __construct(
+        object $backend,
+        bool $from_logits=null
+        )
     {
-        extract($this->extractArgs([
-            'from_logits' => false,
-        ],$options));
+        // defaults
+        $from_logits = $from_logits ?? false;
+
         $this->backend = $backend;
         $this->fromLogits = $from_logits;
     }
@@ -48,7 +51,7 @@ abstract class AbstractCrossEntropy extends AbstractLoss implements Loss//,Activ
         ];
     }
 
-    protected function call(NDArray $trues, NDArray $predicts) : float
+    protected function call(NDArray $trues, NDArray $predicts) : NDArray
     {
         $container = $this->container();
         $container->trues = $trues;

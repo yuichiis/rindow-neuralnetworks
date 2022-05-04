@@ -15,14 +15,20 @@ class RMSprop implements Optimizer
     protected $a;
     protected $epsilon;
 
-    public function __construct(object $backend, array $options=null)
+    public function __construct(
+        object $backend,
+        float $lr=null,
+        float $rho=null,
+        float $decay=null,
+        float $epsilon=null,
+    )
     {
-        extract($this->extractArgs([
-            'lr'=>0.001,
-            'rho'=>0.9,
-            'decay'=>0.0,
-            'epsilon'=>null,
-        ],$options));
+        // defaults
+        $lr = $lr ?? 0.001;
+        $rho = $rho ?? 0.9;
+        $decay = $decay ?? 0.0;
+        $epsilon = $epsilon ?? null;
+
         $this->backend = $K = $backend;
         $this->lr = $lr;
         $this->rho = $rho;

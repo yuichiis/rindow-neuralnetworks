@@ -15,11 +15,9 @@ trait GradientUtils
     {
         $outputsVariables = [];
         foreach ($outputs as $v) {
-            $opts = [];
-            if($v === null) {
-                $opts['undetermined'] = true;
-            }
-            $outputsVariables[] = new Variable($backend,$v,$opts);
+            $undetermined = ($v === null) ? true : false;
+            $outputsVariables[] = new Variable(
+                $backend, $v, undetermined:$undetermined);
         }
         if(GradientTape::$autoBackProp) {
             $this->inputsVariables = $inputsVariables;
@@ -44,11 +42,9 @@ trait GradientUtils
     {
         $outputsVariables = [];
         foreach ($outputs as $v) {
-            $opts = [];
-            if($v === null) {
-                $opts['undetermined'] = true;
-            }
-            $outputsVariables[] = new Variable($backend,$v,$opts);
+            $undetermined = ($v === null) ? true : false;
+            $outputsVariables[] = new Variable(
+                $backend, $v, undetermined:$undetermined);
         }
         if(GradientTape::$autoBackProp) {
             $this->setCreatorToVariables($session,$outputsVariables);
@@ -102,6 +98,14 @@ trait GradientUtils
         return array_map(function($value) use ($backend) {
             return ($value!==null)?new Variable($backend,$value):null;
         },$values);
+    }
+
+    protected function unpackVariable(object $backend, $value)
+    {
+        if($value instanceof Variable) {
+            return $value->value();
+        } 
+        return $value;
     }
 
     public function packAndUnpackVariable(object $backend, $value) : array

@@ -10,12 +10,17 @@ class Activation extends AbstractLayer
     use GenericUtils;
     protected $backend;
 
-    public function __construct(object $backend, $activation,array $options=null)
+    public function __construct(
+        object $backend,
+        string|object $activation,
+        array $input_shape=null,
+        string $name=null,
+    )
     {
-        extract($this->extractArgs([
-            'input_shape'=>null,
-            'name'=>null,
-        ],$options));
+        // defaults
+        $input_shape = $input_shape ?? null;
+        $name = $name ?? null;
+
         $this->backend = $K = $backend;
         $this->inputShape = $input_shape;
         $this->initName($name,'activation');
@@ -26,9 +31,7 @@ class Activation extends AbstractLayer
     {
         return [
             'activation'=>$this->activationName,
-            'options' => [
-                'input_shape'=>$this->inputShape,
-            ],
+            'input_shape'=>$this->inputShape,
         ];
     }
 

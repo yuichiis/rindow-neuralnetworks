@@ -27,7 +27,7 @@ class Test extends TestCase
         $K = $nn->backend();
         $g = $nn->gradient();
 
-        $layer = new AveragePooling2D($K,['input_shape'=>[4,4,3]]);
+        $layer = new AveragePooling2D($K,input_shape:[4,4,3]);
         $inputs = $g->Variable($K->zeros([1,4,4,3]));
 
         $layer->build($inputs);
@@ -47,7 +47,7 @@ class Test extends TestCase
         $K = $nn->backend();
         $g = $nn->gradient();
 
-        $layer = new AveragePooling2D($K,[]);
+        $layer = new AveragePooling2D($K,);
         $inputs = $g->Variable($K->zeros([1,4,4,3]));
         $layer->build($inputs);
 
@@ -60,7 +60,7 @@ class Test extends TestCase
         $nn = $this->newNeuralNetworks($mo);
         $K = $nn->backend();
         $g = $nn->gradient();
-        $layer = new AveragePooling2D($K,['input_shape'=>[4,4,3],]);
+        $layer = new AveragePooling2D($K,input_shape:[4,4,3]);
         $inputs = $g->Variable($K->zeros([1,4,4,5]));
     
         $this->expectException(InvalidArgumentException::class);
@@ -75,7 +75,7 @@ class Test extends TestCase
         $K = $nn->backend();
         $g = $nn->gradient();
 
-        $layer = new AveragePooling2D($K,['input_shape'=>[4,4,3]]);
+        $layer = new AveragePooling2D($K,input_shape:[4,4,3]);
 
         $inputs = $g->Variable($K->ones([2,4,4,3]));
         $layer->build($inputs);

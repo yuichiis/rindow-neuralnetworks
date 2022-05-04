@@ -23,18 +23,22 @@ class Attention extends AbstractLayerBase
     //protected $key;
     //protected $attentionWeight;
 
-    public function __construct(object $backend, array $options=null)
+    public function __construct(
+        object $backend,
+        array $input_shapes=null,
+        string $name=null,
+    )
     {
-        extract($this->extractArgs([
-            'input_shapes'=>null,
-            'name'=>null,
-        ],$options));
+        // defaults
+        $input_shapes = $input_shapes ?? null;
+        $name = $name ?? null;
+
         $this->backend = $K = $backend;
         $this->inputShape = $input_shapes;
         $this->initName($name,'attention');
     }
 
-    public function build($variables=null, array $options=null)
+    public function build($variables=null, array $sampleWeights=null)
     {
         $K = $this->backend;
         $inputShapes = $this->normalizeInputShape($variables);

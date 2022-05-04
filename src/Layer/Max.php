@@ -11,20 +11,24 @@ class Max extends AbstractLayer
     protected $backend;
     protected $axis;
 
-    public function __construct(object $backend,array $options=null)
+    public function __construct(
+        object $backend,
+        int $axis=null,
+        array $input_shape=null,
+        string $name=null,
+    )
     {
-        extract($this->extractArgs([
-            'axis'=>-1,
-            'input_shape'=>null,
-            'name'=>null,
-        ],$options));
+        $axis = $axis ?? -1;
+        $input_shape = $input_shape ?? null;
+        $name = $name ?? null;
+        
         $this->backend = $backend;
         $this->axis = $axis;
         $this->inputShape = $input_shape;
         $this->initName($name,'max');
     }
 
-    public function build($variable=null, array $options=null)
+    public function build($variable=null, array $sampleWeights=null)
     {
         $K = $this->backend;
 

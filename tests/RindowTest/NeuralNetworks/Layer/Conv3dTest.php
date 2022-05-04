@@ -31,9 +31,8 @@ class Test extends TestCase
             $K,
             $filters=5,
             $kernel_size=3,
-            [
-                'input_shape'=>[4,4,4,1]
-            ]);
+            input_shape:[4,4,4,1]
+            );
 
         $inputs = $g->Variable($K->zeros([1,4,4,4,1]));
         $layer->build($inputs);
@@ -64,8 +63,7 @@ class Test extends TestCase
             $K,
             $filters=5,
             $kernel_size=3,
-            [
-            ]);
+            );
         $inputs = $g->Variable($K->zeros([1,4,4,4,1]));
         $layer->build($inputs);
         $params = $layer->getParams();
@@ -85,9 +83,8 @@ class Test extends TestCase
             $K,
             $filters=5,
             $kernel_size=3,
-            [
-                'input_shape'=>[4,4,4,1]
-            ]);
+            input_shape:[4,4,4,1]
+            );
 
         $inputs = $g->Variable($K->zeros([1,4,4,4,2]));
         $this->expectException(InvalidArgumentException::class);
@@ -106,7 +103,7 @@ class Test extends TestCase
             $K,
             $filters=2,
             $kernel_size=2,
-            ['input_shape'=>[3,3,3,1]]);
+            input_shape:[3,3,3,1]);
 
         //  batch size 2
         $inputs = $K->ones([2,3,3,3,1]);
@@ -122,9 +119,7 @@ class Test extends TestCase
                 [0.5,0.1]
             );  // bias
         $layer->build(null,
-            ['sampleWeights'=>
-                [$kernel,$bias]
-        ]);*/
+            sampleWeights:[$kernel,$bias]);*/
         $layer->build($g->Variable($inputs));
         [$kernel,$bias]=$layer->getParams();
         $this->assertEquals(

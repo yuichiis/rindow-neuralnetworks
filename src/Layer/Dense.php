@@ -22,19 +22,28 @@ class Dense extends AbstractLayer
     protected $dBias;
     //protected $inputs;
 
-    public function __construct(object $backend,int $units, array $options=null)
+    public function __construct(
+        object $backend,
+        int $units,
+        array $input_shape=null,
+        string|object $activation=null,
+        bool $use_bias=null,
+        string $kernel_initializer=null,
+        string $bias_initializer=null,
+        string $name=null,
+    )
     {
-        extract($this->extractArgs([
-            'input_shape'=>null,
-            'activation'=>null,
-            'use_bias'=>true,
-            'kernel_initializer'=>'glorot_uniform',
-            'bias_initializer'=>'zeros',
-            'name'=>null,
-            //'kernel_regularizer'=>null, 'bias_regularizer'=>null,
-            //'activity_regularizer'=null,
-            //'kernel_constraint'=null, 'bias_constraint'=null,
-        ],$options));
+        // defaults
+        $input_shape = $input_shape ?? null;
+        $activation = $activation ?? null;
+        $use_bias = $use_bias ?? true;
+        $kernel_initializer = $kernel_initializer ?? 'glorot_uniform';
+        $bias_initializer = $bias_initializer ?? 'zeros';
+        $name = $name ?? null;
+        //'kernel_regularizer'=>null, 'bias_regularizer'=>null,
+        //'activity_regularizer'=null,
+        //'kernel_constraint'=null, 'bias_constraint'=null,
+
         $this->backend = $K = $backend;
         $this->units = $units;
         $this->inputShape = $input_shape;
@@ -50,11 +59,8 @@ class Dense extends AbstractLayer
         $this->setActivation($activation);
     }
 
-    public function build($variable=null, array $options=null)
+    public function build($variable=null, array $sampleWeights=null)
     {
-        extract($this->extractArgs([
-            'sampleWeights'=>null,
-        ],$options));
         $K = $this->backend;
         $kernelInitializer = $this->kernelInitializer;
         $biasInitializer = $this->biasInitializer;

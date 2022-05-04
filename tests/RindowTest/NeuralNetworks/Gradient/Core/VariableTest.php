@@ -70,9 +70,9 @@ class Test extends TestCase
         $g = $nn->gradient();
 
         $a = $g->Variable([1,2,3]);
-        $this->assertEquals(1,$a[0]);
-        $this->assertEquals(2,$a[1]);
-        $this->assertEquals(3,$a[2]);
+        $this->assertEquals(1,$K->scalar($a[0]));
+        $this->assertEquals(2,$K->scalar($a[1]));
+        $this->assertEquals(3,$K->scalar($a[2]));
     }
 
     public function testIterableAccess()
@@ -88,7 +88,7 @@ class Test extends TestCase
         $results = [];
         foreach($a as $i => $v) {
             $n++;
-            $results[] = "a[$i]=$v";
+            $results[] = "a[$i]=".$K->scalar($v);
         }
         $this->assertEquals(3,$n);
         $this->assertEquals([

@@ -108,22 +108,22 @@ if(file_exists($modelFilePath)) {
     echo "creating model ...\n";
     $model = $nn->models()->Sequential([
         $nn->layers()->Dense($units=128,
-            ['input_shape'=>[(int)array_product($inputShape)],
-            'kernel_initializer'=>'he_normal',
-            'activation'=>'relu',
-            ]),
+            input_shape:[(int)array_product($inputShape)],
+            kernel_initializer:'he_normal',
+            activation:'relu',
+            ),
         $nn->layers()->Dense($units=10
             /*,['activation'=>'softmax']*/),
     ]);
 
-    $model->compile([
-        'loss'=>$nn->losses()->SparseCategoricalCrossentropy(['from_logits'=>true]),
-        'optimizer'=>'adam',
-    ]);
+    $model->compile(
+        loss:$nn->losses()->SparseCategoricalCrossentropy(from_logits:true),
+        optimizer:'adam',
+    );
     $model->summary();
     echo "training model ...\n";
     $history = $model->fit($train_img,$train_label,
-        ['epochs'=>5,'batch_size'=>256,'validation_data'=>[$test_img,$test_label]]);
+        epochs:5,batch_size:256,validation_data:[$test_img,$test_label]);
     $model->save($modelFilePath,$portable=true);
     $plt->plot($mo->array($history['accuracy']),null,null,'accuracy');
     $plt->plot($mo->array($history['val_accuracy']),null,null,'val_accuracy');

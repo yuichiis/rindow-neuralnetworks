@@ -28,9 +28,8 @@ class Test extends TestCase
         $g = $nn->gradient();
         $layer = new Max(
             $K,
-            [
-                'input_shape'=>[3]
-            ]);
+            input_shape:[3]
+            );
 
         $inputs = $g->Variable($K->zeros([1,3]));
         $layer->build($inputs);
@@ -51,8 +50,7 @@ class Test extends TestCase
         $g = $nn->gradient();
         $layer = new Max(
             $K,
-            [
-            ]);
+            );
         $inputs = $g->Variable($K->zeros([1,3]));
         $layer->build($inputs);
 
@@ -67,9 +65,8 @@ class Test extends TestCase
         $g = $nn->gradient();
         $layer = new Max(
             $K,
-            [
-                'input_shape'=>[3]
-            ]);
+            input_shape:[3]
+            );
 
         $inputs = $g->Variable($K->zeros([1,5]));
         $this->expectException(InvalidArgumentException::class);
@@ -87,7 +84,7 @@ class Test extends TestCase
 
         $layer = new Max(
             $K,
-            ['input_shape'=>[3]]);
+            input_shape:[3]);
 
         //$layer->build();
 
@@ -148,7 +145,7 @@ class Test extends TestCase
 
         $layer = new Max(
             $K,
-            ['axis'=>0,'input_shape'=>[3,2]]);
+            axis:0,input_shape:[3,2]);
 
         //$layer->build();
 

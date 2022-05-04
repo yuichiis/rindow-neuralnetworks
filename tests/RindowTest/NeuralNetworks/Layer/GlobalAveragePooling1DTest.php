@@ -28,9 +28,8 @@ class Test extends TestCase
         $g = $nn->gradient();
         $layer = new GlobalAveragePooling1D(
             $K,
-            [
-                'input_shape'=>[4,3]
-            ]);
+            input_shape:[4,3]
+            );
 
         $inputs = $g->Variable($K->zeros([1,4,3]));
         $layer->build($inputs);
@@ -51,8 +50,7 @@ class Test extends TestCase
         $g = $nn->gradient();
         $layer = new GlobalAveragePooling1D(
             $K,
-            [
-            ]);
+            );
 
         $inputs = $g->Variable($K->zeros([1,4,3]));
         $layer->build($inputs);
@@ -68,9 +66,8 @@ class Test extends TestCase
         $g = $nn->gradient();
         $layer = new GlobalAveragePooling1D(
             $K,
-            [
-                'input_shape'=>[4,3]
-            ]);
+            input_shape:[4,3]
+            );
 
         $inputs = $g->Variable($K->zeros([1,4,5]));
         $this->expectException(InvalidArgumentException::class);
@@ -88,7 +85,7 @@ class Test extends TestCase
 
         $layer = new GlobalAveragePooling1D(
             $K,
-            ['input_shape'=>[2,3]]);
+            input_shape:[2,3]);
 
         //$layer->build();
 

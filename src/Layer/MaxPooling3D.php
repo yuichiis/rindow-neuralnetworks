@@ -7,16 +7,7 @@ class MaxPooling3D extends AbstractPooling
 {
     protected $rank = 3;
     protected $pool_mode = 'max';
-
-    public function __construct(object $backend,array $options=null)
-    {
-        $leftargs = [];
-        extract($this->extractArgs([
-            'name'=>null,
-        ],$options,$leftargs));
-        $this->initName($name,'maxpooling3d');
-        parent::__construct($backend, $leftargs);
-    }
+    protected $defaultLayerName = 'maxpooling3d';
 
     protected function call(NDArray $inputs, bool $training) : NDArray
     {

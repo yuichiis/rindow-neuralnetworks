@@ -5,11 +5,11 @@
     "keywords": ["rindow","neural","networks","deep learning","deep","learning","machine learning"],
     "license": "BSD-3-Clause",
     "require": {
-        "php": ">=7.2",
-        "rindow/rindow-math-matrix": ">=1.1.0"
+        "php": ">=8.0",
+        "rindow/rindow-math-matrix": "~1.1.0"
     },
     "require-dev": {
-        "rindow/rindow-math-plot": ">=1.0.5",
+        "rindow/rindow-math-plot": "~1.0.5",
         "ext-pdo_sqlite": "*"
     },
     "suggest": {

@@ -12,10 +12,8 @@ class MeanSquaredError extends AbstractLoss implements Loss
     //protected $trues;
     //protected $predicts;
 
-    public function __construct(object $backend,array $options=null)
+    public function __construct(object $backend)
     {
-        //extract($this->extractArgs([
-        //],$options));
         $this->backend = $backend;
     }
 
@@ -25,7 +23,7 @@ class MeanSquaredError extends AbstractLoss implements Loss
         ];
     }
 
-    protected function call(NDArray $trues, NDArray $predicts) : float
+    protected function call(NDArray $trues, NDArray $predicts) : NDArray
     {
         $K = $this->backend;
         $container = $this->container();
@@ -70,7 +68,7 @@ class MeanSquaredError extends AbstractLoss implements Loss
             $sum = $K->nrm2($K->sub($predicts,$trues));
         }
         $sum = $K->scalar($sum);
-        $accuracy = $sum / (float)$trues->shape()[0];
+        $accuracy = $sum/$trues->shape()[0];
         return $accuracy;
     }
 }

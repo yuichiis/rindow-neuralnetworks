@@ -48,9 +48,7 @@ class Test extends TestCase
 
         $gamma = $K->array([1.0, 1.0, 1.0]);
         $beta = $K->array([0.0, 0.0, 0.0]);
-        $layer->build($inputs,[
-            'sampleWeights'=>[$gamma,$beta],
-        ]);
+        $layer->build($inputs, sampleWeights:[$gamma,$beta]);
 
         $outputsVariable = $nn->with($tape=$g->GradientTape(),
             function() use ($layer,$x) {
@@ -145,9 +143,9 @@ class Test extends TestCase
         $nn = $this->newNeuralNetworks($mo);
         $K = $nn->backend();
         $g = $nn->gradient();
-        $layer = new BatchNormalization($K,[
-            'axis'=>1,
-        ]);
+        $layer = new BatchNormalization($K,
+            axis:1,
+        );
         // 4 batch x 3x2x2
         $x = $K->array([
             [[[1.0,0.5],[1.5,1.0]],[[2.0,1.5],[2.5,2.0]],[[3.0,2.5],[3.5,3.0]]],

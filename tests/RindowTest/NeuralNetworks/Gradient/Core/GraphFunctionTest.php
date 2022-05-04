@@ -320,7 +320,7 @@ class Test extends TestCase
         $K = $this->newBackend($nn);
         $g = $nn->gradient();
 
-        $layer0 = $nn->layers->Dense(3,['kernel_initializer'=>'ones']);
+        $layer0 = $nn->layers->Dense(3, kernel_initializer:'ones');
         $func0 = $g->Function(function($a,$b) use ($K,$g,$layer0) {
             $x = $g->add($a,$b);
             $y = $layer0($x,true);
@@ -382,7 +382,7 @@ class Test extends TestCase
         $K = $this->newBackend($nn);
         $g = $nn->gradient();
 
-        $layer0 = $nn->layers->Dense(3,['kernel_initializer'=>'ones']);
+        $layer0 = $nn->layers->Dense(3, kernel_initializer:'ones');
         $func0 = $g->Function(function($a,$b) use ($K,$g,$layer0) {
             $x = $g->add($a,$b);
             $y = $layer0($x,true);
@@ -446,13 +446,13 @@ class Test extends TestCase
         $K = $this->newBackend($nn);
         $g = $nn->gradient();
 
-        $loss0 = $nn->losses->SparseCategoricalCrossEntropy(['from_logits'=>true]);
+        $loss0 = $nn->losses->SparseCategoricalCrossEntropy(from_logits:true);
         $func0 = $g->Function(function($x,$z) use ($K,$g) {
             $y = $g->add($x,$z);
             return $y;
         });
 
-        $t = $K->array([1, 2],NDArray::int32);
+        $t = $g->Variable($K->array([1, 2],NDArray::int32),trainable:false);
         $x = $g->Variable($K->array([[0.05, 0.95, 0], [0.1, 0.8, 0.1]]));
         $z = $g->Variable($K->zerosLike($x->value()));
 
@@ -489,16 +489,65 @@ class Test extends TestCase
             $K->ndarray($gradients)));
     }
 
+    public function testLossWithGraphCompile()
+    {
+        $mo = $this->newMatrixOperator();
+        $nn = $this->newNeuralNetworks($mo);
+        $K = $this->newBackend($nn);
+        $g = $nn->gradient();
+
+        $loss0 = $nn->losses->SparseCategoricalCrossEntropy(from_logits:true);
+        $func0 = $g->Function(function($x,$z,$t) use ($K,$g,$loss0) {
+            $y = $g->add($x,$z);
+            $outputs = $loss0($t,$y);
+            return $outputs;
+        });
+
+        $t = $g->Variable($K->array([1, 2],NDArray::int32));
+        $x = $g->Variable($K->array([[0.05, 0.95, 0], [0.1, 0.8, 0.1]]));
+        $z = $g->Variable($K->zerosLike($x->value()));
+
+        // building
+        $outputs = $nn->with($tape=$g->GradientTape(),
+            function() use ($K,$func0,$loss0,$t,$x,$z) {
+                $outputs = $func0($x,$z,$t);
+                return $outputs;
+            }
+        );
+        $gradients = $tape->gradient($outputs, $x);
+        $this->assertStringStartsWith("0.98689",$mo->toString($outputs->value()));
+        $this->assertEquals([2,3],$gradients->shape());
+        $this->assertTrue($mo->la()->isclose(
+            $mo->array([[0.11335728, -0.22118607,  0.10782879],
+                        [ 0.12457169,  0.25085658, -0.3754283 ]]),
+            $K->ndarray($gradients)));
+
+        // built graph
+        $outputs = $nn->with($tape=$g->GradientTape(),
+            function() use ($func0,$loss0,$t,$x,$z) {
+                $outputs = $func0($x,$z,$t);
+                return $outputs;
+            }
+        );
+        $gradients = $tape->gradient($outputs, $x);
+        $this->assertStringStartsWith("0.98689",$mo->toString($outputs->value()));
+        $this->assertEquals([2,3],$gradients->shape());
+        $this->assertTrue($mo->la()->isclose(
+            $mo->array([[0.11335728, -0.22118607,  0.10782879],
+                        [ 0.12457169,  0.25085658, -0.3754283 ]]),
+            $K->ndarray($gradients)));
+    }
+
     public function testBackwardDiscardedVariableInBatchBoundary1()
     {
         $mo = $this->newMatrixOperator();
         $nn = $this->newNeuralNetworks($mo);
         $K = $this->newBackend($nn);
         $g = $nn->gradient();
-        $rnn = $nn->layers()->GRU(2,[
-            'return_state'=>true,'return_sequences'=>true,
-            'recurrent_initializer'=>'glorot_uniform'
-        ]);
+        $rnn = $nn->layers()->GRU(2,
+            return_state:true, return_sequences:true,
+            recurrent_initializer:'glorot_uniform'
+        );
 
         $func0 = $g->Function(function($x,$state) use ($K,$g,$rnn) {
             [$y,$dmyStates] = $rnn->forward($x,true,[$state]);

@@ -11,23 +11,27 @@ class AbstractGlobalAveragePooling extends AbstractImage
     protected $backend;
     protected $pool_mode = 'avg';
     protected $channels_first = false;
+    protected $defaultLayerName;
 
-    public function __construct(object $backend, array $options=null)
+    public function __construct(
+        object $backend,
+        string $data_format=null,
+        array $input_shape=null,
+        string $name=null,
+    )
     {
-        extract($this->extractArgs([
-            'data_format'=>null,
-            'input_shape'=>null,
-        ],$options));
+        // defaults
+        $data_format = $data_format ?? null;
+        $input_shape = $input_shape ?? null;
+
         $this->backend = $K = $backend;
         $this->data_format = $data_format;
         $this->inputShape = $input_shape;
+        $this->initName($name,$this->defaultLayerName);
     }
 
-    public function build($variable=null, array $options=null)
+    public function build($variable=null, array $sampleWeights=null)
     {
-        extract($this->extractArgs([
-            'sampleWeights'=>null,
-        ],$options));
         $K = $this->backend;
 
         $inputShape = $this->normalizeInputShape($variable);

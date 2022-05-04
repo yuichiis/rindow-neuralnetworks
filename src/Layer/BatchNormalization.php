@@ -38,20 +38,32 @@ class BatchNormalization extends AbstractLayer
     protected $transformShapePhase2Pre;
     protected $transformShapePhase2Post;
 
-    public function __construct(object $backend,array $options=null)
+    public function __construct(
+        object $backend,
+        int $axis=null,
+        float $momentum=null,
+        float $epsilon=null,
+        bool $center=null,
+        bool $scale=null,
+        string $beta_initializer=null,
+        string $gamma_initializer=null,
+        string $moving_mean_initializer=null,
+        string $moving_variance_initializer=null,
+        string $name=null,
+    )
     {
-        extract($this->extractArgs([
-            'axis'=>-1,
-            'momentum'=>0.99,
-            'epsilon'=>0.001,
-            'center'=>true,
-            'scale'=>true,
-            'beta_initializer'=>'zeros',
-            'gamma_initializer'=>'ones',
-            'moving_mean_initializer'=>'zeros',
-            'moving_variance_initializer'=>'ones',
-            'name'=>null,
-        ],$options));
+        // defaults
+        $axis = $axis ?? -1;
+        $momentum = $momentum ?? 0.99;
+        $epsilon = $epsilon ?? 0.001;
+        $center = $center ?? true;
+        $scale = $scale ?? true;
+        $beta_initializer = $beta_initializer ?? 'zeros';
+        $gamma_initializer = $gamma_initializer ?? 'ones';
+        $moving_mean_initializer = $moving_mean_initializer ?? 'zeros';
+        $moving_variance_initializer = $moving_variance_initializer ?? 'ones';
+        $name = $name ?? null;
+
         $this->backend = $K = $backend;
         $this->axis = $axis;
         $this->momentum = $momentum;
@@ -70,11 +82,8 @@ class BatchNormalization extends AbstractLayer
         $this->allocateWeights(2,$nonTrainables=2);
     }
 
-    public function build($variable=null, array $options=null)
+    public function build($variable=null, array $sampleWeights=null)
     {
-        extract($this->extractArgs([
-            'sampleWeights'=>null,
-        ],$options));
         $K = $this->backend;
         $betaInitializer = $this->betaInitializer;
         $gammaInitializer = $this->gammaInitializer;

@@ -11,13 +11,16 @@ class Matmul extends AbstractFunction
     protected $transA;
     protected $transB;
 
-    public function __construct($backend, array $options=null)
+    public function __construct(
+        object $backend,
+        bool $transpose_a=null,
+        bool $transpose_b=null,
+    )
     {
-        extract($this->extractArgs([
-            'transpose_a'=>false,
-            'transpose_b'=>false,
-        ],$options));
-        parent::__construct($backend, $options);
+        $transpose_a = $transpose_a ?? false;
+        $transpose_b = $transpose_b ?? false;
+
+        parent::__construct($backend);
         $this->transA = $transpose_a;
         $this->transB = $transpose_b;
     }

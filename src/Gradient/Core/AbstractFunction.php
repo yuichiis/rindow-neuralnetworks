@@ -54,7 +54,7 @@ abstract class AbstractFunction
 
     protected $container;
 
-    public function __construct(object $backend, array $options=null)
+    public function __construct(object $backend)
     {
         $this->backend = $backend;
         $this->container = new stdClass();

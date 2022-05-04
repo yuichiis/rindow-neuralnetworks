@@ -25,22 +25,22 @@ class Gradient
         $this->backend = $backend;
     }
 
-    public function Variable($variable,array $options=null)
+    public function Variable($variable, ...$options)
     {
         if(GraphFunction::$mode==GraphFunction::EXECUTING) {
             return $variable;
         }
-        return new Variable($this->backend,$variable,$options);
+        return new Variable($this->backend,$variable,...$options);
     }
 
-    public function toVariables(array $values,array $options=null) : array
+    public function toVariables(array $values, ...$options) : array
     {
         if(GraphFunction::$mode==GraphFunction::EXECUTING) {
             return $values;
         }
         $variables = [];
         foreach($values as $value) {
-            $variables[] = new Variable($this->backend,$value,$options);
+            $variables[] = new Variable($this->backend,$value,...$options);
         }
         return $variables;
     }
@@ -50,9 +50,9 @@ class Gradient
         return new GradientTape($this->backend,$persistent);
     }
 
-    public function Function(callable $func, array $options=null)
+    public function Function(callable $func, ...$options)
     {
-        return new GraphFunction($this->backend,$func,$options);
+        return new GraphFunction($this->backend, $func, ...$options);
     }
 
     public function isUndetermined($variable) : bool
@@ -113,9 +113,17 @@ class Gradient
         return $func($x,$y);
     }
 
-    public function matmul($x,$y,array $options=null)
+    public function matmul(
+        $x,$y,
+        bool $transpose_a=null,
+        bool $transpose_b=null,
+    )
     {
-        $func = new Matmul($this->backend,$options);
+        $func = new Matmul(
+            $this->backend,
+            transpose_a:$transpose_a,
+            transpose_b:$transpose_b,
+        );
         return $func($x,$y);
     }
 

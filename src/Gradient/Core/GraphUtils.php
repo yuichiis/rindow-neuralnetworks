@@ -19,7 +19,6 @@ trait GraphUtils
         foreach($funcs as $func) {
             $used[$func] = true;
         }
-        
         while(count($funcs)>0) {
             $func = array_pop($funcs);
             $pipeline[] = $func;
@@ -80,7 +79,10 @@ trait GraphUtils
             $dDatas = array_map(null,$func->inputs(),$tmpdInputs);
             unset($tmpdInputs);
 
-            foreach ($dDatas as [$input,$dx]) {
+            foreach ($dDatas as $idx => [$input,$dx]) {
+                if($dx===null) { // *** none Backpropagation ***
+                    continue;
+                }
                 $oid = $input;
                 if(isset($grads[$oid])) {
                     // **** CAUTION ****

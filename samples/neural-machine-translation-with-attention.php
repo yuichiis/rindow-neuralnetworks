@@ -97,15 +97,15 @@ class EngFraDataset
     public function tokenize($lang,$numWords=null,$tokenizer=null)
     {
         if($tokenizer==null) {
-            $tokenizer = new Tokenizer($this->mo,[
-                'num_words'=>$numWords,
-                'filters'=>"\"\'#$%&()*+,-./:;=@[\\]^_`{|}~\t\n",
-                'specials'=>"?.!,¿",
-            ]);
+            $tokenizer = new Tokenizer($this->mo,
+                num_words: $numWords,
+                filters: "\"\'#$%&()*+,-./:;=@[\\]^_`{|}~\t\n",
+                specials: "?.!,¿",
+            );
         }
         $tokenizer->fitOnTexts($lang);
         $sequences = $tokenizer->textsToSequences($lang);
-        $tensor = $this->preprocessor->padSequences($sequences,['padding'=>'post']);
+        $tensor = $this->preprocessor->padSequences($sequences,padding:'post');
         return [$tensor, $tokenizer];
     }
 
@@ -171,12 +171,12 @@ class Encoder extends AbstractModel
         $this->units = $units;
         $this->embedding = $builder->layers()->Embedding(
             $vocabSize,$wordVectSize,
-            ['input_length'=>$inputLength]
+            input_length:$inputLength
         );
         $this->rnn = $builder->layers()->GRU(
             $units,
-            ['return_state'=>true,'return_sequences'=>true,
-             'recurrent_initializer'=>'glorot_uniform']
+            return_state:true,return_sequences:true,
+            recurrent_initializer:'glorot_uniform'
         );
     }
 
@@ -227,11 +227,11 @@ class Decoder extends AbstractModel
         $this->targetLength = $targetLength;
         $this->embedding = $builder->layers()->Embedding(
             $vocabSize, $wordVectSize,
-            ['input_length'=>$targetLength]
+            input_length:$targetLength
         );
         $this->rnn = $builder->layers()->GRU($units,
-            ['return_state'=>true,'return_sequences'=>true,
-             'recurrent_initializer'=>'glorot_uniform']
+            return_state:true,return_sequences:true,
+            recurrent_initializer:'glorot_uniform'
         );
         $this->attention = $builder->layers()->Attention();
         $this->concat = $builder->layers()->Concatenate();
@@ -345,7 +345,7 @@ class Seq2seq extends AbstractModel
         return $this->shiftLeftSentence($trues);
     }
 
-    public function predict($inputs, array $options=null) : NDArray
+    public function predict($inputs, ...$options) : NDArray
     {
         $K = $this->backend;
         $attentionPlot = $options['attention_plot'];
@@ -479,11 +479,11 @@ $seq2seq = new Seq2seq(
 );
 
 echo "Compile model...\n";
-$seq2seq->compile([
-    'loss'=>'sparse_categorical_crossentropy',
-    'optimizer'=>'adam',
-    'metrics'=>['accuracy','loss'],
-]);
+$seq2seq->compile(
+    loss:'sparse_categorical_crossentropy',
+    optimizer:'adam',
+    metrics:['accuracy','loss'],
+);
 $seq2seq->build([1,$inputLength], true, [1,$outputLength]); // just for summary
 $seq2seq->summary();
 
@@ -497,12 +497,11 @@ if(file_exists($modelFilePath)) {
     $history = $seq2seq->fit(
         $inputTensorTrain,
         $targetTensorTrain,
-        [
-            'batch_size'=>$batchSize,
-            'epochs'=>$epochs,
-            'validation_data'=>[$inputTensorVal,$targetTensorVal],
-            #callbacks=[checkpoint],
-        ]);
+            batch_size:$batchSize,
+            epochs:$epochs,
+            validation_data:[$inputTensorVal,$targetTensorVal],
+            #callbacks:[checkpoint],
+        );
     $seq2seq->saveWeightsToFile($modelFilePath);
 
     $plt->figure();
@@ -520,7 +519,7 @@ foreach($choice as $idx)
     $question = $inputTensor[$idx]->reshape([1,$inputLength]);
     $attentionPlot = $mo->zeros([$outputLength, $inputLength]);
     $predict = $seq2seq->predict(
-        $question,['attention_plot'=>$attentionPlot]);
+        $question,attention_plot:$attentionPlot);
     $answer = $targetTensor[$idx]->reshape([1,$outputLength]);;
     $sentence = $inpLang->sequencesToTexts($question)[0];
     $predictedSentence = $targLang->sequencesToTexts($predict)[0];

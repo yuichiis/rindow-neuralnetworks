@@ -67,7 +67,7 @@ abstract class AbstractLayerBase implements Layer
         return FunctionFactory::factory($this->backend,$activation);
     }
 
-    public function build($variable=null, array $options=null)
+    public function build($variable=null, array $sampleWeights=null)
     {
         $inputShape = $this->normalizeInputShape($variable);
         if($inputShape!==null)
@@ -258,12 +258,12 @@ abstract class AbstractLayerBase implements Layer
     {
         $variables = [];
         for($i=0;$i<$num;$i++) {
-            $variables[] = new Variable($this->backend,null,['undetermined'=>true]);
+            $variables[] = new Variable($this->backend, null, undetermined: true);
         }
         if($nonTrainables) {
             for($i=0;$i<$nonTrainables;$i++) {
                 $variables[] = new Variable(
-                    $this->backend,null,['undetermined'=>true,'trainable'=>false]);
+                    $this->backend,null, undetermined: true, trainable: false);
             }
         }
         $this->weights = $variables;
@@ -285,7 +285,7 @@ abstract class AbstractLayerBase implements Layer
         }
         foreach(array_map(null,$this->weights,$params) as [$variable,$param]) {
             if($param!==null) {
-                $variable->assign($param,['reference'=>true]);
+                $variable->assign($param, reference: true);
                 $variable->setName('weights:'.$this->basename($this));
             }
         }

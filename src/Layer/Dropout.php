@@ -11,11 +11,12 @@ class Dropout extends AbstractLayer
     protected $rate;
     //protected $mask;
 
-    public function __construct(object $backend,float $rate,array $options=null)
+    public function __construct(
+        object $backend,
+        float $rate,
+        string $name=null,
+        )
     {
-        extract($this->extractArgs([
-            'name'=>null,
-        ],$options));
         $this->backend = $K = $backend;
         $this->rate = min(1.0,max(0.0,$rate));
         $this->initName($name,'dropout');

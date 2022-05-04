@@ -27,10 +27,10 @@ class Test extends TestCase
         $nn = $this->newNeuralNetworks($mo);
         $K = $nn->backend();
         $g = $nn->gradient();
-        $layer = new Concatenate($K,[
-                #'axis'=>-1,
-                'input_shapes'=>[[4,3],[4,2]],
-        ]);
+        $layer = new Concatenate($K,
+                #axis:-1,
+                input_shapes:[[4,3],[4,2]],
+        );
         $inputs = [
             $g->Variable($K->zeros([1,4,3])),
             $g->Variable($K->zeros([1,4,2])),
@@ -52,7 +52,7 @@ class Test extends TestCase
         $nn = $this->newNeuralNetworks($mo);
         $K = $nn->backend();
         $g = $nn->gradient();
-        $layer = new Concatenate($K,['input_shapes'=>[[4,3],[4,2]],]);
+        $layer = new Concatenate($K,input_shapes:[[4,3],[4,2]]);
         $inputs = [
             $g->Variable($K->zeros([1,4,5])),
             $g->Variable($K->zeros([1,4,2])),
@@ -69,7 +69,7 @@ class Test extends TestCase
         $nn = $this->newNeuralNetworks($mo);
         $K = $nn->backend();
         $g = $nn->gradient();
-        $layer = new Concatenate($K,['axis'=>1,]);
+        $layer = new Concatenate($K,axis:1);
         // [batch,2,4],[batch,3,4]
         $inputs = [
             $g->Variable($K->zeros([1,2,4])),
@@ -87,9 +87,9 @@ class Test extends TestCase
         $K = $nn->backend();
         $g = $nn->gradient();
 
-        $layer = new Concatenate($K,[
-                #'axis'=>-1,
-        ]);
+        $layer = new Concatenate($K,
+                #axis:-1,
+        );
 
         //  batch size 2
         $i1 = $K->array($mo->arange(2*2*2,null,null,NDArray::float32)->reshape([2,2,2]));

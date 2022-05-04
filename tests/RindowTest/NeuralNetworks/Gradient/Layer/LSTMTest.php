@@ -36,7 +36,7 @@ class Test extends TestCase
             [0,1,2],
         ]);
         $x = $g->Variable($x);
-        $embedding = $nn->layers->Embedding($inputDim=3, $outputDim=4, ['input_length'=>3]);
+        $embedding = $nn->layers->Embedding($inputDim=3, $outputDim=4, input_length:3);
         $layer = $nn->layers->LSTM($units=3);
 
         $outputs = $nn->with($tape=$g->GradientTape(),
@@ -75,11 +75,11 @@ class Test extends TestCase
             $K->array([[0,1,2],[0,1,2],]),
             $K->array([[0,1,2],[0,1,2],]),
         ];
-        $x = $g->Variable($x,['name'=>'raw-x']);
-        $s = array_map(function($stat) use($g){return $g->Variable($stat,['name'=>'raw-stat']);},$s);
-        $embed1 = $nn->layers->Embedding($inputDim=3, $outputDim=4, ['input_length'=>3]);
-        $flatten1 = $nn->layers->Flatten(['input_shape'=>[3]]);
-        $flatten2 = $nn->layers->Flatten(['input_shape'=>[3]]);
+        $x = $g->Variable($x,name:'raw-x');
+        $s = array_map(function($stat) use($g){return $g->Variable($stat,name:'raw-stat');},$s);
+        $embed1 = $nn->layers->Embedding($inputDim=3, $outputDim=4, input_length:3);
+        $flatten1 = $nn->layers->Flatten(input_shape:[3]);
+        $flatten2 = $nn->layers->Flatten(input_shape:[3]);
         $layer = $nn->layers->LSTM($units=3);
 
         $outputs = $nn->with($tape=$g->GradientTape(),
@@ -122,12 +122,12 @@ class Test extends TestCase
             [0,1,2],
             [0,1,2],
         ]);
-        $x = $g->Variable($x,['name'=>'raw-x']);
-        $embed1 = $nn->layers->Embedding($inputDim=3, $outputDim=4, ['input_length'=>3]);
-        $layer = $nn->layers->LSTM($units=3,[
-            'return_sequences'=>true,
-            'return_state'=>true,
-        ]);
+        $x = $g->Variable($x,name:'raw-x');
+        $embed1 = $nn->layers->Embedding($inputDim=3, $outputDim=4, input_length:3);
+        $layer = $nn->layers->LSTM($units=3,
+            return_sequences:true,
+            return_state:true,
+        );
 
         [$outputs,$states] = $nn->with($tape=$g->GradientTape(),
             function() use ($embed1,$layer,$x) {
@@ -161,12 +161,12 @@ class Test extends TestCase
             [0,1,2],
             [0,1,2],
         ]);
-        $x = $g->Variable($x,['name'=>'raw-x']);
-        $embed1 = $nn->layers->Embedding($inputDim=3, $outputDim=4, ['input_length'=>3]);
-        $layer = $nn->layers->LSTM($units=3,[
-            'return_sequences'=>true,
-            'return_state'=>true,
-        ]);
+        $x = $g->Variable($x,name:'raw-x');
+        $embed1 = $nn->layers->Embedding($inputDim=3, $outputDim=4, input_length:3);
+        $layer = $nn->layers->LSTM($units=3,
+            return_sequences:true,
+            return_state:true,
+        );
 
         $x1 = $embed1($x,true); // x1.shape=[2,3,4]
         $x1->setName('x');

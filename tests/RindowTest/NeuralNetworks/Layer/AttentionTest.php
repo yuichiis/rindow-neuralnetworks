@@ -27,7 +27,7 @@ class Test extends TestCase
         $nn = $this->newNeuralNetworks($mo);
         $K = $nn->backend();
         $g = $nn->gradient();
-        $layer = new Attention($K,['input_shapes'=>[[3,2],[4,2]]]);
+        $layer = new Attention($K, input_shapes:[[3,2],[4,2]]);
         $inputs = [
             $g->Variable($K->zeros([1,3,2])),
             $g->Variable($K->zeros([1,4,2])),
@@ -49,7 +49,7 @@ class Test extends TestCase
         $nn = $this->newNeuralNetworks($mo);
         $K = $nn->backend();
         $g = $nn->gradient();
-        $layer = new Attention($K,['input_shapes'=>[[3,2],[4,2]],]);
+        $layer = new Attention($K, input_shapes:[[3,2],[4,2]]);
         $inputs = [
             $g->Variable($K->zeros([1,3,2])),
             $g->Variable($K->zeros([1,4,2])),
@@ -71,7 +71,7 @@ class Test extends TestCase
         $nn = $this->newNeuralNetworks($mo);
         $K = $nn->backend();
         $g = $nn->gradient();
-        $layer = new Attention($K,['input_shapes'=>[[3,2],[4,2]],]);
+        $layer = new Attention($K, input_shapes:[[3,2],[4,2]]);
         $inputs = [
             $g->Variable($K->zeros([1,3,2])),
             $g->Variable($K->zeros([1,4,2])),
@@ -88,7 +88,7 @@ class Test extends TestCase
         $nn = $this->newNeuralNetworks($mo);
         $K = $nn->backend();
         $g = $nn->gradient();
-        $layer = new Attention($K,['input_shapes'=>[[3,2],[4,2]],]);
+        $layer = new Attention($K, input_shapes:[[3,2],[4,2]]);
         $inputs = [
             $g->Variable($K->zeros([1,5,2])),
             $g->Variable($K->zeros([1,4,2])),

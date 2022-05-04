@@ -66,7 +66,7 @@ class Test extends TestCase
         $this->assertTrue(0.01>abs(0.0-$loss));
 
         $dx = $outputsVariable->creator()->backward([$K->array(1.0)]);
-        $dx = $dx[0];
+        $dx = $dx[1];
         $this->assertEquals($predicts->shape(),$dx->shape());
         $this->assertTrue($K->scalar($K->asum($dx))<0.1);
     }

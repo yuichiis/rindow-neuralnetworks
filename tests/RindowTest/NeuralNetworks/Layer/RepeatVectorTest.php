@@ -30,9 +30,8 @@ class Test extends TestCase
         $layer = new RepeatVector(
             $K,
             $repeats=2,
-            [
-                'input_shape'=>[3]
-            ]);
+            input_shape:[3]
+            );
 
         $inputs = $g->Variable($K->zeros([1,3]));
         $layer->build($inputs);
@@ -54,9 +53,8 @@ class Test extends TestCase
         $layer = new RepeatVector(
             $K,
             $repeats=2,
-            [
-                'input_shape'=>[3]
-            ]);
+            input_shape:[3]
+            );
 
         $inputs = $g->Variable($K->zeros([1,5]));
         $this->expectException(InvalidArgumentException::class);
@@ -73,8 +71,8 @@ class Test extends TestCase
         $layer = new RepeatVector(
             $K,
             $repeats=2,
-            ['input_shape'=>[3,2]
-            ]);
+            input_shape:[3,2]
+            );
 
         $inputs = $g->Variable($K->zeros([1,3,2]));
         $this->expectException(InvalidArgumentException::class);
@@ -93,7 +91,7 @@ class Test extends TestCase
         $layer = new RepeatVector(
             $K,
             $repeats=2,
-            ['input_shape'=>[3]]);
+            input_shape:[3]);
 
         //$layer->build();
 

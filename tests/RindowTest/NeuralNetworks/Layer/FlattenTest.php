@@ -27,10 +27,7 @@ class Test extends TestCase
         $K = $nn->backend();
         $g = $nn->gradient();
         $layer = new Flatten(
-            $K,
-            [
-                'input_shape'=>[4,4,3]
-            ]);
+            $K,input_shape:[4,4,3]);
         $inputs = $g->Variable($K->zeros([1,4,4,3]));
         $layer->build($inputs);
         $params = $layer->getParams();
@@ -51,8 +48,7 @@ class Test extends TestCase
 
         $layer = new Flatten(
             $K,
-            [
-            ]);
+            );
         
         $inputs = $g->Variable($K->zeros([1,4,4,3]));
         $layer->build($inputs);
@@ -68,9 +64,8 @@ class Test extends TestCase
         $g = $nn->gradient();
         $layer = new Flatten(
             $K,
-            [
-                'input_shape'=>[4,4,3]
-            ]);
+            input_shape:[4,4,3]
+            );
         $inputs = $g->Variable($K->zeros([1,4,4,5]));
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Input shape is inconsistent: defined as [4,4,3] but [4,4,5] given in Flatten');
@@ -87,7 +82,7 @@ class Test extends TestCase
 
         $layer = new Flatten(
             $K,
-            ['input_shape'=>[4,4,3]]);
+            input_shape:[4,4,3]);
 
         //$layer->build($g->Variable($inputs));
 

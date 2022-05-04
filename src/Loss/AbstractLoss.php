@@ -18,7 +18,7 @@ abstract class AbstractLoss //implements Loss
     protected $inputsVariables;
     protected $outputsVariables;
 
-    abstract protected function call(NDArray $trues, NDArray $predicts) : float;
+    abstract protected function call(NDArray $trues, NDArray $predicts) : NDArray;
     abstract protected function differentiate(array $dOutputs, ArrayAccess $grads=null, array $oidsToCollect=null) : array;
 
     /*
@@ -49,7 +49,12 @@ abstract class AbstractLoss //implements Loss
 
     public function backward(array $dOutputs, ArrayAccess $grads=null, array $oidsToCollect=null) : array
     {
-        return $this->differentiate($dOutputs, $grads, $oidsToCollect);
+        $K = $this->backend;
+        $container = $this->container();
+        $dInputs = $this->differentiate($dOutputs, $grads, $oidsToCollect);
+        //array_unshift($dInputs, $K->zeros($container->truesShape,$container->truesDtype));
+        array_unshift($dInputs,null);
+        return $dInputs;
     }
 
     public function __invoke(...$args)
@@ -66,17 +71,35 @@ abstract class AbstractLoss //implements Loss
     public function forward(NDArray $trues, NDArray $predicts) : Variable
     {
         $K = $this->backend;
-        [$predicts,$rawPredicts] = $this->packAndUnpackVariable($this->backend,$predicts);
-        $session = $this->preGradientProcessOnSession([$predicts]);
+        [$trues,$rawTrues] = $this->packAndUnpackVariable($K,$trues);
+        [$predicts,$rawPredicts] = $this->packAndUnpackVariable($K,$predicts);
+        $session = $this->preGradientProcessOnSession([$trues,$predicts]);
         $session->begin();
         try {
-            $loss = $this->call($trues,$rawPredicts);
-            $rawOutputs = $K->array($loss,$rawPredicts->dtype());
+            $container = $this->container();
+            $container->truesShape = $rawTrues->shape();
+            $container->truesDtype = $rawTrues->dtype();
+            $loss = $this->call($rawTrues,$rawPredicts);
+            $rawOutputs = $this->packVariable($K,$loss);
         } finally {
             $session->end();
         }
         $outputs = $this->postGradientProcessOnSession(
-            $this->backend, $session, [$predicts], [$rawOutputs]);
+            $this->backend, $session, [$trues,$predicts], [$rawOutputs]);
         return $outputs[0];
+    }
+
+    /**
+     * Call from SessionFunc in compiled graph
+     */
+    public function _rawCall(array $inputs,array $options)
+    {
+        $K = $this->backend;
+        [$trues, $predicts] = $inputs;
+        $container = $this->container();
+        $container->truesShape = $trues->shape();
+        $container->truesDtype = $trues->dtype();
+        $loss = $this->call($trues,$predicts);
+        return [$loss];
     }
 }

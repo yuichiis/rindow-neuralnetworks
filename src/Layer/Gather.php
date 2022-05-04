@@ -11,20 +11,25 @@ class Gather extends AbstractMultiInputLayer
     protected $backend;
     protected $axis;
 
-    public function __construct(object $backend,array $options=null)
+    public function __construct(
+        object $backend,
+        int $axis=null,
+        array $input_shapes=null,
+        string $name=null,
+    )
     {
-        extract($this->extractArgs([
-            'axis'=>-1,
-            'input_shapes'=>null,
-            'name'=>null,
-        ],$options));
+        // defaults
+        $axis = $axis ?? -1;
+        $input_shapes = $input_shapes ?? null;
+        $name = $name ?? null;
+        
         $this->backend = $backend;
         $this->axis = $axis;
         $this->inputShape = $input_shapes;
         $this->initName($name,'gather');
     }
 
-    public function build($variables=null, array $options=null)
+    public function build($variables=null, array $sampleWeights=null)
     {
         $K = $this->backend;
 

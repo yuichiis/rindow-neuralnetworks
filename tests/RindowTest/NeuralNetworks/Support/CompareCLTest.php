@@ -41,8 +41,8 @@ class Test extends TestCase
 
         $dense = $nn->layers()->Dense($units=2);
         $densecl = $nncl->layers()->Dense($units=2);
-        $lossfunc = $nn->losses->SparseCategoricalCrossEntropy(['from_logits' => true]);
-        $lossfunccl = $nncl->losses->SparseCategoricalCrossEntropy(['from_logits' => true]);
+        $lossfunc = $nn->losses->SparseCategoricalCrossEntropy(from_logits:true);
+        $lossfunccl = $nncl->losses->SparseCategoricalCrossEntropy(from_logits:true);
         $optimizer = $nn->optimizers->Adam();
         $optimizercl = $nncl->optimizers->Adam();
         $outputs = $dense->forward($g->Variable($backend->zeros([1,2])),true);
@@ -113,8 +113,8 @@ class Test extends TestCase
 
         $dense = $nn->layers()->Dense($units=2);
         $densecl = $nncl->layers()->Dense($units=2);
-        $lossfunc = $nn->losses->SparseCategoricalCrossEntropy(['from_logits' => true]);
-        $lossfunccl = $nncl->losses->SparseCategoricalCrossEntropy(['from_logits' => true]);
+        $lossfunc = $nn->losses->SparseCategoricalCrossEntropy(from_logits:true);
+        $lossfunccl = $nncl->losses->SparseCategoricalCrossEntropy(from_logits:true);
         $optimizer = $nn->optimizers->Adam();
         $optimizercl = $nncl->optimizers->Adam();
         $func = $nn->gradient->Function(function($inputs,$trues) use ($dense) {
@@ -185,25 +185,25 @@ class Test extends TestCase
         $nn = new NeuralNetworks($mo,$backend);
 
         $model = $nn->models()->Sequential([
-            $nn->layers()->Dense($units=32,['input_shape'=>[2],
-                'activation'=>'sigmoid']),
+            $nn->layers()->Dense($units=32,input_shape:[2],
+                activation:'sigmoid'),
             $nn->layers()->Dense($units=2,
-            ['activation'=>'softmax']),
+                activation:'softmax'),
             //$nn->layers()->Dense($units=2),
         ]);
-        $model->compile(['loss'=>$nn->losses->SparseCategoricalCrossEntropy(['from_logits' => true])]);
+        $model->compile(loss:$nn->losses->SparseCategoricalCrossEntropy(from_logits:true));
 
         $backendCL = $this->newBackendCL($mo);
         $nncl = new NeuralNetworks($mo,$backendCL);
 
         $modelcl = $nncl->models()->Sequential([
-            $nncl->layers()->Dense($units=32,['input_shape'=>[2],
-                'activation'=>'sigmoid']),
+            $nncl->layers()->Dense($units=32,input_shape:[2],
+                activation:'sigmoid'),
             $nncl->layers()->Dense($units=2,
-            ['activation'=>'softmax']),
+                activation:'softmax'),
             //$nncl->layers()->Dense($units=2),
         ]);
-        $modelcl->compile(['loss'=>$nncl->losses->SparseCategoricalCrossEntropy(['from_logits' => true])]);
+        $modelcl->compile(loss:$nncl->losses->SparseCategoricalCrossEntropy(from_logits:true));
 
         $g = $nn->gradient();
         $gcl = $nncl->gradient();
@@ -236,8 +236,8 @@ class Test extends TestCase
         // training greater or less
         $x = $mo->array([[1, 3],]);
         $t = $mo->array([0,]);
-        $history = $model->fit($x,$t,['epochs'=>1,'verbose'=>0]);
-        $history = $modelcl->fit($x,$t,['epochs'=>1,'verbose'=>0]);
+        $history = $model->fit($x,$t,epochs:1,verbose:0);
+        $history = $modelcl->fit($x,$t,epochs:1,verbose:0);
 
         $weights = $model->trainableVariables();
         $weightsCL = $modelcl->trainableVariables();
@@ -265,32 +265,32 @@ class Test extends TestCase
             $nn->layers()->Conv2D(
                $filters=32,
                 $kernel_size=3,
-                ['input_shape'=>$inputShape,
-                'kernel_initializer'=>'he_normal',
-                'activation'=>'relu']),
+                input_shape:$inputShape,
+                kernel_initializer:'he_normal',
+                activation:'relu'),
             $nn->layers()->Conv2D(
                $filters=32,
                 $kernel_size=3,
-                ['kernel_initializer'=>'he_normal',
-                'activation'=>'relu']),
+                kernel_initializer:'he_normal',
+                activation:'relu'),
             $nn->layers()->MaxPooling2D(),
             $nn->layers()->Conv2D(
                $filters=64,
                 $kernel_size=3,
-                ['kernel_initializer'=>'he_normal',
-                'activation'=>'relu']),
+                kernel_initializer:'he_normal',
+                activation:'relu'),
             $nn->layers()->Conv2D(
                $filters=64,
                 $kernel_size=3,
-                ['kernel_initializer'=>'he_normal',
-                'activation'=>'relu']),
+                kernel_initializer:'he_normal',
+                activation:'relu'),
             $nn->layers()->MaxPooling2D(),
             $nn->layers()->Flatten(),
             $nn->layers()->Dense($units=512,
-                ['kernel_initializer'=>'he_normal',
-                'activation'=>'relu']),
+                kernel_initializer:'he_normal',
+                activation:'relu'),
             $nn->layers()->Dense($units=10,
-                ['activation'=>'softmax']),
+                activation:'softmax'),
         ]);
         $model->compile();
 
@@ -301,32 +301,32 @@ class Test extends TestCase
             $nncl->layers()->Conv2D(
                $filters=32,
                 $kernel_size=3,
-                ['input_shape'=>$inputShape,
-                'kernel_initializer'=>'he_normal',
-                'activation'=>'relu']),
+                input_shape:$inputShape,
+                kernel_initializer:'he_normal',
+                activation:'relu'),
             $nncl->layers()->Conv2D(
                $filters=32,
                 $kernel_size=3,
-                ['kernel_initializer'=>'he_normal',
-                'activation'=>'relu']),
+                kernel_initializer:'he_normal',
+                activation:'relu'),
             $nncl->layers()->MaxPooling2D(),
             $nncl->layers()->Conv2D(
                $filters=64,
                 $kernel_size=3,
-                ['kernel_initializer'=>'he_normal',
-                'activation'=>'relu']),
+                kernel_initializer:'he_normal',
+                activation:'relu'),
             $nncl->layers()->Conv2D(
                $filters=64,
                 $kernel_size=3,
-                ['kernel_initializer'=>'he_normal',
-                'activation'=>'relu']),
+                kernel_initializer:'he_normal',
+                activation:'relu'),
             $nncl->layers()->MaxPooling2D(),
             $nncl->layers()->Flatten(),
             $nncl->layers()->Dense($units=512,
-                ['kernel_initializer'=>'he_normal',
-                'activation'=>'relu']),
+                kernel_initializer:'he_normal',
+                activation:'relu'),
             $nncl->layers()->Dense($units=10,
-                ['activation'=>'softmax']),
+                activation:'softmax'),
         ]);
         $modelcl->compile();
 
@@ -362,8 +362,8 @@ class Test extends TestCase
         // training greater or less
         $x = $backend->glorot_normal(array_merge([32],$inputShape));
         $t = $mo->la()->randomUniform([32],0,9,NDArray::int32);
-        $history = $model->fit($x,$t,['epochs'=>1,'verbose'=>0]);
-        $history = $modelcl->fit($x,$t,['epochs'=>1,'verbose'=>0]);
+        $history = $model->fit($x,$t,epochs:1,verbose:0);
+        $history = $modelcl->fit($x,$t,epochs:1,verbose:0);
 
         foreach ($weights as $key => $w) {
             $wcl = $weightsCL[$key];
@@ -387,11 +387,11 @@ class Test extends TestCase
         $backendCL = $this->newBackendCL($mo);
         $nncl = new NeuralNetworks($mo,$backendCL);
 
-        $dense = $nn->layers()->Dense($units=32,['input_shape'=>[2],
-            'activation'=>'sigmoid']);
+        $dense = $nn->layers()->Dense($units=32,input_shape:[2],
+            activation:'sigmoid');
         $dense->build();
-        $densecl = $nncl->layers()->Dense($units=32,['input_shape'=>[2],
-            'activation'=>'sigmoid']);
+        $densecl = $nncl->layers()->Dense($units=32,input_shape:[2],
+            activation:'sigmoid');
         $densecl->build();
 
         $weights = $dense->getParams();
