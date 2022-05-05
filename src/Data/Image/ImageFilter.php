@@ -2,12 +2,10 @@
 namespace Rindow\NeuralNetworks\Data\Image;
 
 use Rindow\NeuralNetworks\Data\Dataset\DatasetFilter;
-use Rindow\NeuralNetworks\Support\GenericUtils;
 use InvalidArgumentException;
 
 class ImageFilter implements DatasetFilter
 {
-    use GenericUtils;
     protected $mo;
     protected $inputs;
     protected $tests;

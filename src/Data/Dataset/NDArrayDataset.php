@@ -2,14 +2,12 @@
 namespace Rindow\NeuralNetworks\Data\Dataset;
 
 use Interop\Polite\Math\Matrix\NDArray;
-use Rindow\NeuralNetworks\Support\GenericUtils;
 use InvalidArgumentException;
 use Countable;
 use IteratorAggregate;
 
 class NDArrayDataset implements Countable,IteratorAggregate,Dataset
 {
-    use GenericUtils;
     protected $mo;
     protected $inputs;
     protected $tests;

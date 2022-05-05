@@ -2,12 +2,10 @@
 namespace Rindow\NeuralNetworks\Data\Sequence;
 
 use Interop\Polite\Math\Matrix\NDArray;
-use Rindow\NeuralNetworks\Support\GenericUtils;
 use InvalidArgumentException;
 
 class Preprocessor
 {
-    use GenericUtils;
     protected $mo;
 
     public function __construct(object $mo)

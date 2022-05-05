@@ -6,13 +6,11 @@ use InvalidArgumentException;
 use LogicException;
 use ArrayAccess;
 use Interop\Polite\Math\Matrix\NDArray;
-use Rindow\NeuralNetworks\Support\GenericUtils;
 use Rindow\NeuralNetworks\Gradient\Variable as VariableInterface;
 
 
 class Variable implements VariableInterface
 {
-    use GenericUtils;
     protected $backend;
     protected $trainable;
     protected $undetermined;

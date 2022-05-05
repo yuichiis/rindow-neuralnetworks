@@ -3,11 +3,9 @@ namespace Rindow\NeuralNetworks\Layer;
 
 use InvalidArgumentException;
 use Interop\Polite\Math\Matrix\NDArray;
-use Rindow\NeuralNetworks\Support\GenericUtils;
 
 class SimpleRNNCell extends AbstractRNNCell
 {
-    use GenericUtils;
     protected $backend;
     protected $units;
     protected $activation;

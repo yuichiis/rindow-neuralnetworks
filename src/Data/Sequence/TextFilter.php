@@ -3,12 +3,10 @@ namespace Rindow\NeuralNetworks\Data\Sequence;
 
 use Interop\Polite\Math\Matrix\NDArray;
 use Rindow\NeuralNetworks\Data\Dataset\DatasetFilter;
-use Rindow\NeuralNetworks\Support\GenericUtils;
 use InvalidArgumentException;
 
 class TextFilter implements DatasetFilter
 {
-    use GenericUtils;
     protected $mo;
     protected $labels = [];
     protected $labelNum = 0;

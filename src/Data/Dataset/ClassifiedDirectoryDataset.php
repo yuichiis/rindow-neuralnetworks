@@ -2,7 +2,6 @@
 namespace Rindow\NeuralNetworks\Data\Dataset;
 
 use Interop\Polite\Math\Matrix\NDArray;
-use Rindow\NeuralNetworks\Support\GenericUtils;
 use Rindow\NeuralNetworks\Support\Dir;
 use ArrayObject;
 use InvalidArgumentException;
@@ -12,7 +11,6 @@ use IteratorAggregate;
 
 class ClassifiedDirectoryDataset implements Countable,IteratorAggregate,Dataset
 {
-    use GenericUtils;
     protected $mo;
     protected $path;
     protected $pattern;

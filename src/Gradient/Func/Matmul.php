@@ -2,11 +2,9 @@
 namespace Rindow\NeuralNetworks\Gradient\Func;
 
 use Rindow\NeuralNetworks\Gradient\Core\AbstractFunction;
-use Rindow\NeuralNetworks\Support\GenericUtils;
 
 class Matmul extends AbstractFunction
 {
-    use GenericUtils;
     protected $numOfInputs = 2;
     protected $transA;
     protected $transB;

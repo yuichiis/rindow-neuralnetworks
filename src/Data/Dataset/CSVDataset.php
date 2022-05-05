@@ -2,7 +2,6 @@
 namespace Rindow\NeuralNetworks\Data\Dataset;
 
 use Interop\Polite\Math\Matrix\NDArray;
-use Rindow\NeuralNetworks\Support\GenericUtils;
 use Rindow\NeuralNetworks\Support\Dir;
 use InvalidArgumentException;
 use LogicException;
@@ -11,7 +10,6 @@ use IteratorAggregate;
 
 class CSVDataset implements Countable,IteratorAggregate,Dataset
 {
-    use GenericUtils;
     protected $mo;
     protected $path;
     protected $pattern;

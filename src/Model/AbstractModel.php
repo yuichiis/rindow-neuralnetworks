@@ -6,7 +6,6 @@ use UnexpectedValueException;
 use LogicException;
 use ReflectionClass;
 use ArrayAccess;
-use Rindow\NeuralNetworks\Support\GenericUtils;
 use Rindow\NeuralNetworks\Optimizer\Optimizer;
 use Rindow\NeuralNetworks\Layer\Layer;
 use Rindow\NeuralNetworks\Activation\Softmax;
@@ -25,8 +24,6 @@ use Interop\Polite\Math\Matrix\NDArray;
 
 abstract class AbstractModel implements Model
 {
-    use GenericUtils;
-
     protected $backend;
     protected $builder;
     protected $hda;

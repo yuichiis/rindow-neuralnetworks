@@ -2,7 +2,6 @@
 namespace Rindow\NeuralNetworks\Data\Sequence;
 
 use Interop\Polite\Math\Matrix\NDArray;
-use Rindow\NeuralNetworks\Support\GenericUtils;
 use InvalidArgumentException;
 use ArrayObject;
 
@@ -58,7 +57,6 @@ if(version_compare(PHP_VERSION, '7.4.0') < 0) {
 
 class Tokenizer
 {
-    use GenericUtils;
     protected $mo;
     protected $analyzer;
     protected $numWords;

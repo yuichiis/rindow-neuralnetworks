@@ -2,17 +2,14 @@
 namespace Rindow\NeuralNetworks\Loss;
 
 use Interop\Polite\Math\Matrix\NDArray;
-//use Rindow\NeuralNetworks\Activation\Activation;
 use Rindow\NeuralNetworks\Gradient\Core\Variable;
 use Rindow\NeuralNetworks\Gradient\Core\GradientTape;
-use Rindow\NeuralNetworks\Support\GenericUtils;
 use InvalidArgumentException;
 use DomainException;
 use ArrayAccess;
 
 abstract class AbstractCrossEntropy extends AbstractLoss implements Loss//,Activation
 {
-    use GenericUtils;
     protected $backend;
     protected $fromLogits = false;
     //protected $outputs;

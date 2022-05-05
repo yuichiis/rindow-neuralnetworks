@@ -2,14 +2,12 @@
 namespace Rindow\NeuralNetworks\Loss;
 
 use Interop\Polite\Math\Matrix\NDArray;
-use Rindow\NeuralNetworks\Support\GenericUtils;
 use InvalidArgumentException;
 use DomainException;
 use ArrayAccess;
 
 class Huber extends AbstractLoss implements Loss
 {
-    use GenericUtils;
     protected $backend;
     protected $delta;
 

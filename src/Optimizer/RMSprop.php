@@ -1,12 +1,10 @@
 <?php
 namespace Rindow\NeuralNetworks\Optimizer;
 
-use Rindow\NeuralNetworks\Support\GenericUtils;
 use Rindow\NeuralNetworks\Gradient\Variable;
 
 class RMSprop implements Optimizer
 {
-    use GenericUtils;
     protected $backend;
     protected $lr;
     protected $rho;

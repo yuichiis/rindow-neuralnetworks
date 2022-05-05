@@ -1,13 +1,11 @@
 <?php
 namespace Rindow\NeuralNetworks\Optimizer;
 
-use Rindow\NeuralNetworks\Support\GenericUtils;
 use Rindow\NeuralNetworks\Gradient\Variable;
 use UnexpectedValueException;
 
 class Adam implements Optimizer
 {
-    use GenericUtils;
     protected $backend;
     protected $lr;
     protected $beta1;

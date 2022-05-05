@@ -1,7 +1,6 @@
 <?php
 require __DIR__.'/../vendor/autoload.php';
 
-use Rindow\NeuralNetworks\Support\GenericUtils;
 use Interop\Polite\Math\Matrix\NDArray;
 use Rindow\NeuralNetworks\Layer\AbstractRNNLayer;
 use Rindow\NeuralNetworks\Model\AbstractModel;
