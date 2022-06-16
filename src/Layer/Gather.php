@@ -117,4 +117,5 @@ class Gather extends AbstractMultiInputLayer
         $dIndex = $K->zerosLike($container->indexes);
         return [$dSource,$dIndex];
     }
+
 }

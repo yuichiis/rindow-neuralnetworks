@@ -39,8 +39,8 @@ class Activation extends AbstractLayer
     {
         $outputs = $inputs;
         if($this->activation) {
-            $this->activation->setStates($this->container());
-            $outputs = $this->activation->forward($outputs,$training);
+            $container = $this->container();
+            $outputs = $this->activation->forward($container,$outputs,$training);
         }
         return $outputs;
     }
@@ -49,8 +49,8 @@ class Activation extends AbstractLayer
     {
         $dInputs = $dOutputs;
         if($this->activation) {
-            $this->activation->setStates($this->container());
-            $dInputs = $this->activation->backward($dOutputs);
+            $container = $this->container();
+            $dInputs = $this->activation->backward($container,$dOutputs);
         }
         return $dInputs;
     }

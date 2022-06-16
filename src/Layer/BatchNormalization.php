@@ -45,10 +45,10 @@ class BatchNormalization extends AbstractLayer
         float $epsilon=null,
         bool $center=null,
         bool $scale=null,
-        string $beta_initializer=null,
-        string $gamma_initializer=null,
-        string $moving_mean_initializer=null,
-        string $moving_variance_initializer=null,
+        string|callable $beta_initializer=null,
+        string|callable $gamma_initializer=null,
+        string|callable $moving_mean_initializer=null,
+        string|callable $moving_variance_initializer=null,
         string $name=null,
     )
     {

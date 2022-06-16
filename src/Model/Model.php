@@ -40,6 +40,7 @@ interface Model extends Module
         ...$options
     ) : NDArray;
 
+    public function build(...$inputShapes) : void;
     public function saveWeights(&$modelWeights,$portable=null) : void;
     public function loadWeights($modelWeights) : void;
 }

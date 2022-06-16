@@ -144,11 +144,23 @@ class Backend
         return $array;
     }
 
-    public function getInitializer($name)
+    public function getInitializer($name,...$options)
     {
-        if(!array_key_exists($name,$this->initializers))
+        if(is_callable($name)) {
+            return $name;
+        }
+        if(!array_key_exists($name,$this->initializers)) {
             throw new InvalidArgumentException('Unsupported initializer: '.$name);
-        return [$this,$this->initializers[$name]];
+        }
+        $initFn = [$this,$this->initializers[$name]];
+        $init = function($shape,$nodeNum=null) use ($initFn,$options) {
+            if($nodeNum===null) {
+                $nodeNum = [];
+            }
+            $nodeNum = array_merge($nodeNum,$options);
+            return $initFn($shape,$nodeNum);
+        };
+        return $init;
     }
 
     public function glorot_normal(array $shape,$nodeNum=null)

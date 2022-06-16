@@ -28,8 +28,8 @@ class Dense extends AbstractLayer
         array $input_shape=null,
         string|object $activation=null,
         bool $use_bias=null,
-        string $kernel_initializer=null,
-        string $bias_initializer=null,
+        string|callable $kernel_initializer=null,
+        string|callable $bias_initializer=null,
         string $name=null,
     )
     {
@@ -156,8 +156,7 @@ class Dense extends AbstractLayer
         $outputs = $outputs->reshape($shape);
         if($this->activation) {
             $container->activation = new \stdClass();
-            $this->activation->setStates($container->activation);
-            $outputs = $this->activation->forward($outputs,$training);
+            $outputs = $this->activation->forward($container->activation,$outputs,$training);
         }
         return $outputs;
     }
@@ -167,8 +166,7 @@ class Dense extends AbstractLayer
         $K = $this->backend;
         $container = $this->container();
         if($this->activation) {
-            $this->activation->setStates($container->activation);
-            $dOutputs = $this->activation->backward($dOutputs);
+            $dOutputs = $this->activation->backward($container->activation,$dOutputs);
         }
         $dInputs = $K->zerosLike($container->inputs);
         $dOutputs=$dOutputs->reshape($container->flattenOutputsShape);

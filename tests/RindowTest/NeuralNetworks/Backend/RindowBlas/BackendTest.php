@@ -35,12 +35,7 @@ class Test extends TestCase
         $backend = $this->newBackend($mo);
         $backendClassName = get_class($backend);
 
-        $initializer = $backend->getInitializer('he_normal');
-        $this->assertInstanceof(
-            $backendClassName,
-            $initializer[0]
-        );
-        $this->assertEquals('he_normal',$initializer[1]);
+        $initializer = $backend->getInitializer('he_normal',-0.1,0.1);
         $this->assertTrue(is_callable($initializer));
         $kernel = $initializer([2,3]);
         $this->assertInstanceof('Interop\Polite\Math\Matrix\NDArray',$kernel);
@@ -49,24 +44,14 @@ class Test extends TestCase
 
 
         $initializer = $backend->getInitializer('glorot_normal');
-        $this->assertInstanceof(
-            $backendClassName,
-            $initializer[0]
-        );
-        $this->assertEquals('glorot_normal',$initializer[1]);
         $this->assertTrue(is_callable($initializer));
-        $kernel = $initializer([2,3]);
+        $kernel = $initializer([2,3],[3,6]);
         $this->assertInstanceof('Interop\Polite\Math\Matrix\NDArray',$kernel);
         $this->assertEquals([2,3],$kernel->shape());
         $this->assertEquals(NDArray::float32,$kernel->dtype());
 
 
         $initializer = $backend->getInitializer('zeros');
-        $this->assertInstanceof(
-            $backendClassName,
-            $initializer[0]
-        );
-        $this->assertEquals('kernel_zeros',$initializer[1]);
         $this->assertTrue(is_callable($initializer));
         $kernel = $initializer([2]);
         $this->assertInstanceof('Interop\Polite\Math\Matrix\NDArray',$kernel);
@@ -74,11 +59,6 @@ class Test extends TestCase
         $this->assertEquals(NDArray::float32,$kernel->dtype());
 
         $initializer = $backend->getInitializer('ones');
-        $this->assertInstanceof(
-            $backendClassName,
-            $initializer[0]
-        );
-        $this->assertEquals('kernel_ones',$initializer[1]);
         $this->assertTrue(is_callable($initializer));
         $kernel = $initializer([2]);
         $this->assertInstanceof('Interop\Polite\Math\Matrix\NDArray',$kernel);

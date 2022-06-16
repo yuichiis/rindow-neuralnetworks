@@ -124,17 +124,4 @@ class Concatenate extends AbstractMultiInputLayer
         $dInputs = $K->split($dOutputs,$sizeSplits,$axis);
         return $dInputs;
     }
-
-    /**
-     * Call from SessionFunc in compiled graph
-     */
-    public function _rawCall(array $inputs,array $options)
-    {
-        $training = $options['training'] ?? false;
-        $outputs = $this->call($inputs, $training);
-        if(!is_array($outputs)) {
-            $outputs = [$outputs];
-        }
-        return $outputs;
-    }
 }

@@ -165,6 +165,12 @@ class GraphFunction
                 if($oid!==null) {
                     $vars[$oid] = $out;
                 }
+                if((!$out instanceof NDArray)) {
+                    echo get_class($func)."\n";
+                    var_dump($func->outputs());
+                    echo "--------\n";
+                    var_dump($outs);
+                }
                 $o->_setShape($out->shape());
             }
         }

@@ -132,8 +132,8 @@ class NeuralNetworks
         return $this->gradient;
     }
 
-    public function with(Context $context, callable $function)
+    public function with(...$args)
     {
-        return Execute::with($context,$function);
+        return Execute::with(...$args);
     }
 }

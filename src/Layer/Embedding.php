@@ -25,7 +25,7 @@ class Embedding extends AbstractLayer
         int $inputDim,
         int $outputDim,
         int $input_length=null,
-        string $kernel_initializer=null,
+        string|callable $kernel_initializer=null,
         string $name=null,
     )
     {

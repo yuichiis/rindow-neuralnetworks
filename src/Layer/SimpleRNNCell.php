@@ -27,9 +27,9 @@ class SimpleRNNCell extends AbstractRNNCell
         array $input_shape=null,
         string|object $activation=null,
         bool $use_bias=null,
-        string $kernel_initializer=null,
-        string $recurrent_initializer=null,
-        string $bias_initializer=null,
+        string|callable $kernel_initializer=null,
+        string|callable $recurrent_initializer=null,
+        string|callable $bias_initializer=null,
     )
     {
         // defaults
@@ -127,8 +127,7 @@ class SimpleRNNCell extends AbstractRNNCell
         $outputs = $K->gemm($prev_h, $this->recurrentKernel,1.0,1.0,$outputs);
         if($this->activation) {
             $calcState->activation = new \stdClass();
-            $this->activation->setStates($calcState->activation);
-            $outputs = $this->activation->forward($outputs,$training);
+            $outputs = $this->activation->forward($calcState->activation,$outputs,$training);
         }
 
         $calcState->inputs = $inputs;
@@ -142,8 +141,7 @@ class SimpleRNNCell extends AbstractRNNCell
         $dNext_h = $dStates[0];
         $dOutputs = $K->add($dOutputs,$dNext_h);
         if($this->activation) {
-            $this->activation->setStates($calcState->activation);
-            $dOutputs = $this->activation->backward($dOutputs);
+            $dOutputs = $this->activation->backward($calcState->activation,$dOutputs);
         }
         $dInputs = $K->zerosLike($calcState->inputs);
         if($this->bias) {

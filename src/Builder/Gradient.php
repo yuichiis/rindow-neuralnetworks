@@ -15,6 +15,7 @@ use Rindow\NeuralNetworks\Gradient\Func\Sub;
 use Rindow\NeuralNetworks\Gradient\Func\Mul;
 use Rindow\NeuralNetworks\Gradient\Func\Div;
 use Rindow\NeuralNetworks\Gradient\Func\Matmul;
+use Rindow\NeuralNetworks\Gradient\Func\ReduceMean;
 
 class Gradient
 {
@@ -125,6 +126,18 @@ class Gradient
             transpose_b:$transpose_b,
         );
         return $func($x,$y);
+    }
+
+    public function reduceMean(
+        $x,
+        int $axis=null,
+    )
+    {
+        $func = new ReduceMean(
+            $this->backend,
+            axis:$axis,
+        );
+        return $func($x);
     }
 
 }
