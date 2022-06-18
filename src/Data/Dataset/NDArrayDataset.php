@@ -5,6 +5,7 @@ use Interop\Polite\Math\Matrix\NDArray;
 use InvalidArgumentException;
 use Countable;
 use IteratorAggregate;
+use Traversable;
 
 class NDArrayDataset implements Countable,IteratorAggregate,Dataset
 {
@@ -84,12 +85,12 @@ class NDArrayDataset implements Countable,IteratorAggregate,Dataset
         return count($this->inputs[0]);
     }
 
-    public function count()
+    public function count() : int
     {
         return (int)ceil(count($this->inputs[0])/$this->batchSize);
     }
 
-    public function  getIterator()
+    public function  getIterator() : Traversable
     {
         $la = $this->mo->la();
         if(count($this->inputs[0])==0)

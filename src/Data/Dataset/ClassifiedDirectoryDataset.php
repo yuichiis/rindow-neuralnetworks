@@ -8,6 +8,7 @@ use InvalidArgumentException;
 use LogicException;
 use Countable;
 use IteratorAggregate;
+use Traversable;
 
 class ClassifiedDirectoryDataset implements Countable,IteratorAggregate,Dataset
 {
@@ -80,7 +81,7 @@ class ClassifiedDirectoryDataset implements Countable,IteratorAggregate,Dataset
         return $this->maxDatasetSize;
     }
 
-    public function count()
+    public function count() : int
     {
         return $this->maxSteps;
     }
@@ -138,7 +139,7 @@ class ClassifiedDirectoryDataset implements Countable,IteratorAggregate,Dataset
         return $tests;
     }
 
-    public function  getIterator()
+    public function  getIterator() : Traversable
     {
         $la = $this->mo->la();
         $filenames = $this->getFilenames();

@@ -7,6 +7,7 @@ use InvalidArgumentException;
 use LogicException;
 use Countable;
 use IteratorAggregate;
+use Traversable;
 
 class CSVDataset implements Countable,IteratorAggregate,Dataset
 {
@@ -86,7 +87,7 @@ class CSVDataset implements Countable,IteratorAggregate,Dataset
         return $this->maxDatasetSize;
     }
 
-    public function count()
+    public function count() : int
     {
         return $this->maxSteps;
     }
@@ -116,7 +117,7 @@ class CSVDataset implements Countable,IteratorAggregate,Dataset
         return [$inputs,$tests];
     }
 
-    public function  getIterator()
+    public function  getIterator() : Traversable
     {
         if(!($this->filter instanceof DatasetFilter)) {
             throw new LogicException('DatasetFilter is not specified');

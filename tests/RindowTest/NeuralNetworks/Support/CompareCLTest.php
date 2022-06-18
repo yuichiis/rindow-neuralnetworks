@@ -467,8 +467,10 @@ class Test extends TestCase
         $acl = $backendCL->zerosLike($a);
         $backendCL->copy($backendCL->array($a),$acl);
 
-        $o = $sigmoid->forward($a,true);
-        $ocl = $sigmoidcl->forward($acl,true);
+        $states = new \stdClass();
+        $statesCL = new \stdClass();
+        $o = $sigmoid->forward($states,$a,true);
+        $ocl = $sigmoidcl->forward($statesCL,$acl,true);
         $diff = $backend->sub($o,$backendCL->ndarray($ocl));
         $this->assertLessThan(1e-7,$backend->scalar($backend->amax($diff)));
         //$this->assertEquals($o->toArray(),$ocl->toArray());

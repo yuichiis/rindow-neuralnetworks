@@ -18,8 +18,8 @@ class ImageFilter implements DatasetFilter
     public function __construct(
         object $mo,
         string $data_format=null,
-        int $height_shift=null,
-        int $width_shift=null,
+        float $height_shift=null,
+        float $width_shift=null,
         bool $vertical_flip=null,
         bool $horizontal_flip=null,
         )

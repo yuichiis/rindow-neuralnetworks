@@ -5,6 +5,7 @@ namespace Rindow\NeuralNetworks\Gradient\Core;
 use InvalidArgumentException;
 use LogicException;
 use ArrayAccess;
+use Traversable;
 use Interop\Polite\Math\Matrix\NDArray;
 use Rindow\NeuralNetworks\Gradient\Variable as VariableInterface;
 
@@ -235,7 +236,7 @@ class Variable implements VariableInterface
         return $value->toArray();
     }
 
-    public function offsetExists( $offset )
+    public function offsetExists( $offset ) : bool
     {
         $value = $this->value;
         if($value===null) {
@@ -247,7 +248,7 @@ class Variable implements VariableInterface
         return $value->offsetExists($offset);
     }
 
-    public function offsetGet( $offset )
+    public function offsetGet( $offset ) : mixed
     {
         $value = $this->value;
         if($value===null) {
@@ -259,7 +260,7 @@ class Variable implements VariableInterface
         return $value->offsetGet($offset);
     }
 
-    public function offsetSet( $offset , $value )
+    public function offsetSet( $offset , $value ) : void
     {
         $value = $this->value;
         if($value===null) {
@@ -271,7 +272,7 @@ class Variable implements VariableInterface
         $value->offsetSet($offset, $value);
     }
 
-    public function offsetUnset( $offset )
+    public function offsetUnset( $offset ) : void
     {
         $value = $this->value;
         if($value===null) {
@@ -283,7 +284,7 @@ class Variable implements VariableInterface
         $value->offsetUnset($offset);
     }
 
-    public function count()
+    public function count() : int
     {
         $value = $this->value;
         if($value===null) {
@@ -295,7 +296,7 @@ class Variable implements VariableInterface
         return $value->count();
     }
 
-    public function  getIterator()
+    public function  getIterator() :  Traversable
     {
         $value = $this->value;
         if($value===null) {

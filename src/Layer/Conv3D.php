@@ -25,8 +25,7 @@ class Conv3D extends AbstractConv
         );
         if($this->activation) {
             $container->activation = new \stdClass();
-            $this->activation->setStates($container->activation);
-            $outputs = $this->activation->forward($outputs,$training);
+            $outputs = $this->activation->forward($container->activation,$outputs,$training);
         }
         return $outputs;
     }
@@ -36,8 +35,7 @@ class Conv3D extends AbstractConv
         $K = $this->backend;
         $container = $this->container();
         if($this->activation) {
-            $this->activation->setStates($container->activation);
-            $dOutputs = $this->activation->backward($dOutputs);
+            $dOutputs = $this->activation->backward($container->activation,$dOutputs);
         }
         $dInputs = $K->dConv3d(
             $container->status,
