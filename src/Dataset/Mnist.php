@@ -168,13 +168,16 @@ class Mnist
     protected function loadZipFile(string $filePath,int $offset,NDArray $data)
     {
         $buffer = $data->buffer();
+        $bfsz = count($buffer);
         $i=$j=0;
         $zp  = gzopen($filePath,'rb');
         $buf = gzread($zp,$offset);
         while($buf=gzread($zp,8096)) {
             $values = unpack("C*",$buf);
             foreach ($values as $value) {
-                $buffer[$i] = $value;
+                if($i<$bfsz) {
+                    $buffer[$i] = $value;
+                }
                 $i++;
             }
             $j++;
@@ -184,5 +187,8 @@ class Mnist
             }
         }
         gzclose($zp);
+        if($i>$bfsz) {
+            throw new RuntimeException("File ".$filePath." is broken maybe. Please remove and reload.");
+        }
     }
 }
