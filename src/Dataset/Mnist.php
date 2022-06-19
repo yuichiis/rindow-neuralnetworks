@@ -191,6 +191,5 @@ class Mnist
         if($i>$bfsz) {
             throw new RuntimeException("File ".$filePath." is broken maybe. Please remove and reload.");
         }
-        $this->console('.');
     }
 }
