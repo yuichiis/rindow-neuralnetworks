@@ -54,7 +54,7 @@ class Huber extends AbstractGradient implements Loss
         $linearLoss = $K->scale($this->delta, $K->increment($absx, -0.5*$this->delta));
         $loss = $K->add(
             $K->mul($lessThenDelta,   $squaredLoss),
-            $K->mul($greaterThenDelta,$linearLoss),
+            $K->mul($greaterThenDelta,$linearLoss)
         );
         $this->diffx = $x;
         $this->lessThenDelta = $lessThenDelta;
@@ -71,7 +71,7 @@ class Huber extends AbstractGradient implements Loss
         $dLinearLoss = $K->scale(-$this->delta/$n,$K->sign($x));
         $dInputs = $K->add(
             $K->mul($this->lessThenDelta,   $dSquaredLoss),
-            $K->mul($this->greaterThenDelta,$dLinearLoss),
+            $K->mul($this->greaterThenDelta,$dLinearLoss)
         );
         return [$dInputs];
     }

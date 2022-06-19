@@ -56,7 +56,7 @@ class RMSprop implements Optimizer
     public function build(array $params) : void
     {
         $K = $this->backend;
-        $this->a = array_map(fn($p)=>$K->zerosLike($p),$params);
+        $this->a = array_map(function($p) use ($K) {return $K->zerosLike($p);},$params);
         $this->iter = $K->zeros([]);
     }
 
