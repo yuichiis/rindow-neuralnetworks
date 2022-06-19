@@ -188,7 +188,7 @@ class Mnist
             }
         }
         gzclose($zp);
-        if($i>$bfsz) {
+        if($i!=$bfsz) {
             throw new RuntimeException("File ".$filePath." is probably broken. Please remove and reload.");
         }
     }
