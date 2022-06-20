@@ -1925,6 +1925,11 @@ class Test extends TestCase
 
     public function testSaveAndLoadWeightsNormal()
     {
+        if(extension_loaded('rindow_openblas')) {
+            $epoch = 300;
+        } else {
+            $epoch = 50;
+        }
         $mo = $this->newMatrixOperator();
         $nn = $this->newNeuralNetworks($mo);
         $K = $nn->backend();
@@ -1940,7 +1945,7 @@ class Test extends TestCase
         $model->compile();
         $x = $mo->array([[1, 3], [1, 4], [2, 4], [3, 1], [4, 1], [4, 2]]);
         $t = $mo->array([0, 0, 0, 1, 1, 1]);
-        $history = $model->fit($x,$t,epochs:100,verbose:0);
+        $history = $model->fit($x,$t,epochs:$epoch,verbose:0);
         [$loss,$accuracy] = $model->evaluate($x,$t);
 
         $origY = $model->predict($x);

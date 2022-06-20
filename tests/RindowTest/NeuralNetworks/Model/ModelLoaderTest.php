@@ -118,7 +118,11 @@ class Test extends TestCase
 
         $REVERSE = True;
         $WORD_VECTOR = 16;
-        $UNITS = 128;
+        if(extension_loaded('rindow_openblas')) {
+            $UNITS = 128;
+        } else {
+            $UNITS = 16;
+        }
         $question = $mo->array([
             [1,2,3,4,5,6],
             [3,4,5,6,7,8],
