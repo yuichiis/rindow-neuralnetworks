@@ -600,7 +600,7 @@ class Backend
     public function mean(NDArray $x,int $axis=null, NDArray $r=null)
     {
         if($axis===null) {
-            return $this->la->sum($x) / $x->size();
+            return $this->la->scalar($this->la->sum($x)) / $x->size();
         } else {
             return $this->la->reduceMean($x,$axis,$r);
         }
