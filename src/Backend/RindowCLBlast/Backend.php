@@ -37,6 +37,8 @@ class Backend
                 $options = ['deviceType' => OpenCL::CL_DEVICE_TYPE_GPU];
             } elseif($options=='CPU') {
                 $options = ['deviceType' => OpenCL::CL_DEVICE_TYPE_CPU];
+            } elseif($options!=='') {
+                $options = ['device' => $options];
             } else {
                 $options = null;
             }
@@ -53,6 +55,11 @@ class Backend
     public function localLA()
     {
         return $this->matrixOperator->laRawMode();
+    }
+
+    public function context()
+    {
+        return $this->la->getContext();
     }
 
     public function finish()
