@@ -535,7 +535,7 @@ class Test extends TestCase
 
         $history = $model->fit(
             $train_inputs, $train_tests,
-            batch_size:2, epochs: 1/*00*/, shuffle:true, verbose:0);
+            batch_size:2, epochs: 100, shuffle:true, verbose:0);
 
         if($this->plot) {
             $plt->plot($mo->array($history['loss']),null,null,'loss');
