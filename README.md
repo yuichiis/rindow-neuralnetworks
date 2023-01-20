@@ -87,6 +87,7 @@ $ cd samples
 $ cp ../vendor/rindow/rindow-neuralnetworks/samples/basic-image-clasification.php .
 $ php basic-image-clasification.php
 ```
+Note: Specify viewnior etc. for RINDOW_MATH_PLOT_VIEWER
 
 If done correctly, a graph of the learning process will be displayed.
 
@@ -107,3 +108,4 @@ $ export RINDOW_NEURALNETWORKS_BACKEND
 $ cd samples
 $ php basic-image-clasification.php
 ```
+Note: For RINDOW_NEURALNETWORKS_BACKEND, you can specify OpenCL device type or a set of Platform-ID and Device-ID in addition to names such as rindowclblast. For example, "rindowclblast::GPU" or "rindowclblast::0,0".
