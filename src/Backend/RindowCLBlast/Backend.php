@@ -62,6 +62,11 @@ class Backend
         return $this->la->getContext();
     }
 
+    public function queue()
+    {
+        return $this->la->getQueue();
+    }
+
     public function finish()
     {
         $this->la->finish();

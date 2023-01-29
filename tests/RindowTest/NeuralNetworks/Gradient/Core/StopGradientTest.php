@@ -5,9 +5,21 @@ use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 use Interop\Polite\Math\Matrix\NDArray;
 use Rindow\Math\Matrix\MatrixOperator;
+use Rindow\Math\Matrix\NDArrayPhp;
+use Rindow\Math\Matrix\NDArrayCL;
 use Rindow\NeuralNetworks\Builder\NeuralNetworks;
 use Rindow\NeuralNetworks\Gradient\Core\AbstractFunction;
 use Rindow\NeuralNetworks\Gradient\Core\Variable;
+
+class TestNDArrayPhp extends NDArrayPhp
+{
+    public $_debug_name;
+}
+
+class TestNDArrayCL extends NDArrayCL
+{
+    public $_debug_name;
+}
 
 class AbstractTestFunction extends AbstractFunction
 {
@@ -67,9 +79,10 @@ class AbstractTestFunction extends AbstractFunction
             $dOutputs,function($c,$v) {
                 return array_merge(
                     $c,
-                    (property_exists($v,'_debug_name')?[$v->_debug_name]:[
-                        $this->checkGetValueType($v)
-                    ]));
+                    (property_exists($v,'_debug_name')?
+                        [$v->_debug_name]:[$this->checkGetValueType($v)]
+                    )
+                );
             },[]);
         $this->logger->log('diff '.$this->name.'('.implode(',',$args).') gen='.$this->generation);
         $K = $this->backend;
@@ -92,6 +105,11 @@ class AbstractTestFunction extends AbstractFunction
         $dInputs = [];
         foreach($inputs as $key => $i) {
             $v = $K->onesLike($i->value());
+            if($v instanceof NDArrayCL) {
+                $v = new TestNDArrayCL($K->context(),$K->queue(),$v->buffer(),$v->dtype(),$v->shape(),$v->offset());
+            } else {
+                $v = new TestNDArrayPhp($v->buffer(),$v->dtype(),$v->shape(),$v->offset());
+            }
             $v->_debug_name = 'dIn'.$key.'@'.$this->name;
             $dInputs[] = $v;
         }

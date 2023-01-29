@@ -7,6 +7,8 @@ use Rindow\NeuralNetworks\Gradient\Core\AbstractFunction;
 
 class ReduceMean extends AbstractFunction
 {
+    protected $axis;
+    
     public function __construct(
         object $backend,
         int $axis=null,
