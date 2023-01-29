@@ -41,7 +41,7 @@ Rindow Neural networks usually work with:
 Requires
 ========
 
-- PHP 8.0 and PHP 8.1.
+- PHP 8.0 and PHP 8.1 and PHP 8.2.
 - If you want to use it in PHP 7.x environment, please use Release 1.x.
 
 Install
@@ -103,7 +103,7 @@ Download binaries and setup PHP extension and libraries.
 Set environment variable.
 
 ```shell
-$ RINDOW_NEURALNETWORKS_BACKEND=rindowclblast
+$ RINDOW_NEURALNETWORKS_BACKEND=rindowclblast::GPU
 $ export RINDOW_NEURALNETWORKS_BACKEND
 $ cd samples
 $ php basic-image-clasification.php
