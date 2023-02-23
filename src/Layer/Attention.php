@@ -15,6 +15,7 @@ class Attention extends AbstractLayerBase
     use GenericUtils;
     use GradientUtils;
     protected $backend;
+    protected $useScale;
     protected $scoresShape;
     //protected $returnAttentionScores;
 
@@ -26,15 +27,18 @@ class Attention extends AbstractLayerBase
     public function __construct(
         object $backend,
         array $input_shapes=null,
+        bool $use_scale=null,
         string $name=null,
     )
     {
         // defaults
         $input_shapes = $input_shapes ?? null;
         $name = $name ?? null;
+        $use_scale = $use_scale ?? false;
 
         $this->backend = $K = $backend;
         $this->inputShape = $input_shapes;
+        $this->useScale = $use_scale;
         $this->initName($name,'attention');
     }
 
@@ -167,6 +171,13 @@ class Attention extends AbstractLayerBase
         }
         // scores = query * key
         $scores = $K->matmul($query, $key, null, $tranB=true);
+        if($this->useScale) {
+            // scores = scores / sqrt(qk) 
+            $qk = $key->shape();
+            $qk = array_pop($qk);
+            $qk = 1/sqrt($qk);
+            $scores = $K->scale($qk,$scores);
+        }
         // weights = softmax(scores)
         $attentionWeight = $K->softmax($scores);
         // vector = weights * value
@@ -197,6 +208,14 @@ class Attention extends AbstractLayerBase
         $dAttentionWeight = $K->matmul($dOutputs,$container->value,$transA=false,$transB=true);
         $dValue = $K->matmul($container->attentionWeight,$dOutputs,$transA=true,$transB=false);
         $dScores = $K->dSoftmax($dAttentionWeight,$container->attentionWeight);
+
+        if($this->useScale) {
+            // dScores = dScores / sqrt(qk) 
+            $qk = $key->shape();
+            $qk = array_pop($qk);
+            $qk = 1/sqrt($qk);
+            $dScores = $K->scale($qk,$dScores);
+        }
 
         $dQuery = $K->matmul($dScores,$container->key,$transA=false,$transB=false);
         $dKey = $K->matmul($dScores,$container->query,$transA=true,$transB=false);

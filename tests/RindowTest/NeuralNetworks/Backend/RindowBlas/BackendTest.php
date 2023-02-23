@@ -337,6 +337,50 @@ class Test extends TestCase
         $this->assertEquals(NDArray::int32,$z->dtype());
     }
 
+    public function testSin()
+    {
+        $mo = $this->newMatrixOperator();
+        $K = $this->newBackend($mo);
+        $la = $K->localLA();
+        $x = $K->array([M_PI,M_PI*0.5],NDArray::float32);
+        $y = $K->ndarray($K->sin($x));
+        $this->assertTrue($la->isclose(
+            $mo->array([0,1]),$y));
+    }
+
+    public function testCos()
+    {
+        $mo = $this->newMatrixOperator();
+        $K = $this->newBackend($mo);
+        $la = $K->localLA();
+        $x = $K->array([M_PI,M_PI*0.5],NDArray::float32);
+        $y = $K->ndarray($K->cos($x));
+        $this->assertTrue($la->isclose(
+            $mo->array([-1,0]),$y));
+    }
+
+    public function testTan()
+    {
+        $mo = $this->newMatrixOperator();
+        $K = $this->newBackend($mo);
+        $la = $K->localLA();
+        $x = $K->array([0,M_PI*0.25],NDArray::float32);
+        $y = $K->ndarray($K->tan($x));
+        $this->assertTrue($la->isclose(
+            $mo->array([0,1]),$y));
+    }
+
+    public function testTanh()
+    {
+        $mo = $this->newMatrixOperator();
+        $K = $this->newBackend($mo);
+        $la = $K->localLA();
+        $x = $K->array([-10,0,10],NDArray::float32);
+        $y = $K->ndarray($K->tanh($x));
+        $this->assertTrue($la->isclose(
+            $mo->array([-1,0,1]),$y));
+    }
+
     public function testSum()
     {
         $mo = $this->newMatrixOperator();

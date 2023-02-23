@@ -583,6 +583,21 @@ class Backend
         return $this->la->equal($x,$y);
     }
 
+    public function sin($x)
+    {
+        return $this->la->sin($this->la->copy($x));
+    }
+
+    public function cos($x)
+    {
+        return $this->la->cos($this->la->copy($x));
+    }
+
+    public function tan($x)
+    {
+        return $this->la->tan($this->la->copy($x));
+    }
+
     public function tanh($x)
     {
         return $this->la->tanh($this->la->copy($x));

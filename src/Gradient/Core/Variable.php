@@ -19,6 +19,7 @@ class Variable implements VariableInterface
     protected $value;
     protected $creator;
     protected $generation=0;
+    protected $mask;
 
     public function __construct(
         object $backend,
@@ -27,6 +28,7 @@ class Variable implements VariableInterface
         bool $reference=null,
         bool $trainable=null,
         bool $undetermined=null,
+        NDArray $mask=null,
     )
     {
         $this->backend = $backend;
@@ -39,7 +41,8 @@ class Variable implements VariableInterface
         }
     }
 
-    public function assign($value, bool $reference=null) : void
+    public function assign(
+        $value, bool $reference=null, NDArray $mask=null) : void
     {
         $K = $this->backend;
         $reference = $reference ?? false;
@@ -59,7 +62,18 @@ class Variable implements VariableInterface
         } else {
             throw new InvalidArgumentException('Invalid vaule type:'.gettype($value));
         }
+        $this->mask = $mask;
         $this->undetermined = false;
+    }
+
+    public function mask() : NDArray
+    {
+        return $this->mask;
+    }
+
+    public function setMask(NDArray $mask) : void
+    {
+        $this->mask = $mask;
     }
 
     public function isTrainable() : bool
