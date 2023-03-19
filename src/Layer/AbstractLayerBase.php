@@ -33,6 +33,11 @@ abstract class AbstractLayerBase implements Layer
     protected $training = false;
     protected $callOptions = [];
 
+    public function isBuilt() : bool
+    {
+        return $this->built;
+    }
+
     public function getActivation()
     {
         return $this->activation;

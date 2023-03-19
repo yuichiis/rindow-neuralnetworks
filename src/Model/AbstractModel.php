@@ -612,6 +612,23 @@ abstract class AbstractModel implements Model
         return $variables;
     }
 
+    public function parameterVariables() : array
+    {
+        $variables = [];
+        foreach ($this->submodules() as $module) {
+            if($module instanceof Model) {
+                $variables = array_merge($variables,$module->parameterVariables());
+            }
+        }
+        foreach(get_object_vars($this) as $var) {
+            if($var instanceof Variable) {
+                $variables[] = $var;
+            }
+        }
+
+        return $variables;
+    }
+
     public function trainableVariables() : array
     {
         return array_filter($this->variables(),fn($v)=>$v->isTrainable());
@@ -730,11 +747,6 @@ abstract class AbstractModel implements Model
         return $predicts->value();
     }
 
-    public function parameterVariables() : array
-    {
-        return [];
-    }
-
     public function build(...$inputShapes) : void
     {
         if($this->built) {
@@ -769,7 +781,11 @@ abstract class AbstractModel implements Model
         $totalParams = 0;
         foreach ($this->layers() as $layer) {
             $type = $this->basename($layer);
-            $this->display(substr(str_pad($layer->getName().'('.$type.')',29),0,29));
+            $layerName = $layer->getName().'('.$type.')';
+            $this->display(substr(str_pad($layerName,29),0,29));
+            if(!$layer->isBuilt()) {
+                throw new LogicException('the layer is not built: '.$layerName);
+            }
             $outputShape = $layer->outputShape();
             if(count($outputShape)>0 && is_array($outputShape[0])) {
                 $outputShape = $outputShape[0];

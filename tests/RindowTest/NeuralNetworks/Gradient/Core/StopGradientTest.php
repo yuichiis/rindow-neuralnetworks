@@ -195,6 +195,22 @@ class Test extends TestCase
         return new NeuralNetworks($mo);
     }
 
+    public function testReturnValue()
+    {
+        $mo = $this->newMatrixOperator();
+        $nn = $this->newNeuralNetworks($mo);
+        $K = $nn->backend();
+        $g = $nn->gradient();
+
+        $x = $g->Variable(1);
+        $this->assertTrue($x->isbackpropagatable());
+        $this->assertFalse($g->StopGradient($x)->isbackpropagatable());
+        $this->assertTrue($g->add($x,$x)->isbackpropagatable());
+        $this->assertFalse($g->StopGradient($g->add($x,$x))->isbackpropagatable());
+        $r = $g->StopGradient($x);
+        $this->assertFalse($r->isbackpropagatable());
+    }
+
     public function testSinglePath()
     {
         $mo = $this->newMatrixOperator();

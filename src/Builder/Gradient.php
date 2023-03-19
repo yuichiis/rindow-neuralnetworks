@@ -19,6 +19,9 @@ use Rindow\NeuralNetworks\Gradient\Func\Matmul;
 use Rindow\NeuralNetworks\Gradient\Func\ReduceMean;
 use Rindow\NeuralNetworks\Gradient\Func\ReduceSum;
 use Rindow\NeuralNetworks\Gradient\Func\ClipByValue;
+use Rindow\NeuralNetworks\Gradient\Func\Equal;
+use Rindow\NeuralNetworks\Gradient\Func\NotEqual;
+use Rindow\NeuralNetworks\Gradient\Func\ZerosLike;
 
 class Gradient
 {
@@ -172,6 +175,24 @@ class Gradient
             $min,
             $max,
         );
+        return $func($x);
+    }
+
+    public function equal($x,$y)
+    {
+        $func = new Equal($this->backend);
+        return $func($x,$y);
+    }
+
+    public function notEqual($x,$y)
+    {
+        $func = new NotEqual($this->backend);
+        return $func($x,$y);
+    }
+
+    public function zerosLike($x)
+    {
+        $func = new ZerosLike($this->backend);
         return $func($x);
     }
 

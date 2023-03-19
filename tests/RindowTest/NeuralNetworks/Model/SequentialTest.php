@@ -10,6 +10,8 @@ use Rindow\NeuralNetworks\Model\AbstractModel;
 use Rindow\NeuralNetworks\Layer\Dense;
 use Rindow\NeuralNetworks\Callback\AbstractCallback;
 use Rindow\NeuralNetworks\Data\Dataset\DatasetFilter;
+use Rindow\NeuralNetworks\Gradient\Variable;
+use Rindow\NeuralNetworks\Layer\Layer;
 use Rindow\Math\Plot\Plot;
 use Rindow\Math\Plot\Renderer\GDDriver;
 use Interop\Polite\Math\Matrix\NDArray;
@@ -94,7 +96,6 @@ class TestFilter implements DatasetFilter
     }
 }
 
-
 class TestCustomModel extends AbstractModel
 {
     protected $seq;
@@ -111,6 +112,30 @@ class TestCustomModel extends AbstractModel
     }
 }
 
+class TestCustomSubModel extends AbstractModel
+{
+    protected Variable $param1;
+    protected Layer $sublayer;
+
+    public function __construct($backend,$builder)
+    {
+        parent::__construct($backend,$builder);
+        $g = $builder->gradient();
+        $this->param1 = $g->Variable([0,0]);
+        $this->sublayer = $builder->layers->Dense(10);
+    }
+
+    public function call($inputs,$training=null)
+    {
+        $g = $this->builder->gradient();
+        $outputs = $g->square($inputs);
+
+        // dummy
+        $this->sublayer->forward($inputs);
+
+        return $outputs;
+    }
+}
 
 class Test extends TestCase
 {
@@ -2081,5 +2106,72 @@ class Test extends TestCase
         $this->assertEquals([5,2],$predicts->shape());
         $res = $model->evaluate($mo->zeros([5,3]),$mo->zeros([5]));
         $this->assertTrue(true);
+    }
+
+    public function testAddCustomModel()
+    {
+        $mo = $this->newMatrixOperator();
+        $nn = $this->newNeuralNetworks($mo);
+        $K = $nn->backend();
+        $g = $nn->gradient();
+
+        $seq = $nn->models->Sequential();
+        $seq->add(new TestCustomSubModel($K,$nn));
+        $seq->add(new TestCustomSubModel($K,$nn));
+        // Raw data
+        $x = $K->array([[2],[3]]);
+        $y = $seq($x);
+        $this->assertEquals("[[16],[81]]",$mo->toString($y));
+        // Pure model
+        $x = $g->Variable($x);
+        $y = $seq($x);
+        $this->assertEquals("[[16],[81]]",$mo->toString($y));
+        // Gradient on pure model
+        $y = $nn->with($tape=$g->GradientTape(),fn() =>
+            $seq($x)
+        );
+        $this->assertEquals("[[16],[81]]",$mo->toString($y));
+        $this->assertEquals("[[32],[108]]",$mo->toString($tape->gradient($y,$x)));
+        // In function graph
+        $func = $g->Function(fn($x) =>
+            $seq($x)
+        );
+        // ...  building graph
+        $y = $func($x);
+        $this->assertEquals("[[16],[81]]",$mo->toString($y));
+        // ...  execute graph
+        $y = $func($x);
+        $this->assertEquals("[[16],[81]]",$mo->toString($y));
+        // Gradient on graph
+        $y = $nn->with($tape=$g->GradientTape(),fn() =>
+            $func($x)
+        );
+        $this->assertEquals("[[16],[81]]",$mo->toString($y));
+        $this->assertEquals("[[32],[108]]",$mo->toString($tape->gradient($y,$x)));
+
+        // get params
+        $params =  $seq->trainableVariables();
+        $this->assertCount(6,$params);
+
+        $layerParams = $nn->layers->Dense(10)->trainableVariables();
+        $this->assertEquals(get_class($layerParams[0]),get_class($params[0]));
+
+        ob_start();
+        $seq->summary();
+        $dump = ob_get_clean();
+        $summary =
+        'Layer(type)                  Output Shape               Param #   '."\n".
+        '=================================================================='."\n".
+        'dense(Dense)                 (10)                       20        '."\n".
+        'dense_1(Dense)               (10)                       20        '."\n".
+        '=================================================================='."\n".
+        'Weights                      Shape                      Param #   '."\n".
+        '=================================================================='."\n".
+        'No name                      (2)                        2         '."\n".
+        'No name                      (2)                        2         '."\n".
+        '=================================================================='."\n".
+        'Total params: 44'."\n";
+        $this->assertEquals($summary,$dump);
+
     }
 }

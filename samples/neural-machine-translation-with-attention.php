@@ -175,7 +175,7 @@ class Encoder extends AbstractModel
         int $inputLength
         )
     {
-        $this->backend = $backend;
+        parent::__construct($backend,$builder);
         $this->vocabSize = $vocabSize;
         $this->wordVectSize = $wordVectSize;
         $this->units = $units;
@@ -200,7 +200,15 @@ class Encoder extends AbstractModel
         $wordVect = $this->embedding->forward($inputs);
         [$outputs,$states] = $this->rnn->forward(
             $wordVect,initialStates:$initialStates);
+        
         return [$outputs, $states];
+    }
+
+    public function computeMask($inputs)
+    {
+        $g = $this->builder->gradient();
+        $mask = $g->notEqual($inputs,$g->zerosLike($inputs));
+        return $mask;
     }
 }
 
@@ -252,6 +260,7 @@ class Decoder extends AbstractModel
         object $inputs,
         array $initialStates=null,
         Variable $encOutputs=null,
+        Variable $inputMask=null,
         bool $returnAttentionScores=null,
         ) : array
     {
@@ -262,7 +271,10 @@ class Decoder extends AbstractModel
             $x,initialStates:$initialStates);
 
         $contextVector = $this->attention->forward(
-            [$rnnSequence,$encOutputs],returnAttentionScores:$returnAttentionScores);
+            [$rnnSequence,$encOutputs],
+            mask:[null,$inputMask],
+            returnAttentionScores:$returnAttentionScores,
+        );
         if(is_array($contextVector)) {
             [$contextVector,$attentionScores] = $contextVector;
             $this->attentionScores = $attentionScores;
@@ -342,8 +354,9 @@ class Seq2seq extends AbstractModel
     {
         $K = $this->backend;
         [$encOutputs,$states] = $this->encoder->forward($inputs);
+        $inputMask = $this->encoder->computeMask($inputs);
         [$outputs,$dmyStatus] = $this->decoder->forward(
-                                    $trues,initialStates:$states, encOutputs:$encOutputs);
+            $trues,initialStates:$states, encOutputs:$encOutputs, inputMask:$inputMask);
         $outputs = $this->out->forward($outputs);
         return $outputs;
     }

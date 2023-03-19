@@ -44,6 +44,19 @@ class Test extends TestCase
         $this->assertEquals("100",$mo->toString($y->value()));
     }
 
+    public function testFunctionRawData()
+    {
+        $mo = $this->newMatrixOperator();
+        $nn = $this->newNeuralNetworks($mo);
+        $K = $this->newBackend($nn);
+        $g = $nn->gradient();
+
+        $x = $K->array(10);
+        $y = $g->square($x);
+        $this->assertTrue($y->isbackpropagatable());
+        $this->assertEquals("100",$mo->toString($y->value()));
+    }
+
     public function testChainFunctionNormal()
     {
         $mo = $this->newMatrixOperator();

@@ -43,7 +43,15 @@ class Sequential extends AbstractModel
 
     public function layers() : array
     {
-        return $this->layers;
+        $layers = [];
+        foreach($this->layers as $module) {
+            if($module instanceof Layer) {
+                $layers[] = $module;
+            } else {
+                $layers = array_merge($layers,$module->layers());
+            }
+        }
+        return $layers;
     }
 
     public function submodules() : array
@@ -54,8 +62,8 @@ class Sequential extends AbstractModel
     public function variables() : array
     {
         $variables = [];
-        foreach($this->layers as $layer) {
-            $variables = array_merge($variables,$layer->weights());
+        foreach($this->layers as $module) {
+            $variables = array_merge($variables,$module->variables());
         }
 
         return $variables;

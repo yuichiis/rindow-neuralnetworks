@@ -121,6 +121,7 @@ abstract class AbstractFunction
         if(count($inputs)!=$this->numOfInputs) {
             throw new InvalidArgumentException($this->numOfInputs.' arguments are required.');
         }
+        [$inputs,$rawInputs]     = $this->packAndUnpackVariables($this->backend,$inputs);
         if(GraphFunction::$mode==GraphFunction::EXECUTING) {
             $outputs = $this->call($inputs);
             if(count($outputs)==1) {
@@ -131,9 +132,8 @@ abstract class AbstractFunction
         if(GradientTape::$autoBackProp) {
             $this->inputsVariables = $inputs;
         }
-        $values = array_map(function($input){return $input->value();},$inputs);
         $this->unbackpropagatables = null;
-        $outValues = $this->call($values);
+        $outValues = $this->call($rawInputs);
         $outputs = $this->postGradientProcess($this->backend,$inputs,
                                                 $outValues,$this->unbackpropagatables);
 
