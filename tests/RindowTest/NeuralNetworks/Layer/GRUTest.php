@@ -26,14 +26,14 @@ class Test extends TestCase
     {
         $f = function($x) use ($mo,$K,$function){
             $x = $K->array($x);
-            $y = $function->forward($x,$training=true);
+            $y = $function->forward($x);
             return $K->ndarray($y);
         };
         $grads = $mo->la()->numericalGradient(1e-3,$f,$K->ndarray($x));
 
         $outputsVariable = $nn->with($tape=$g->GradientTape(),
             function() use ($function,$x) {
-                $outputsVariable = $function->forward($x, $training=true);
+                $outputsVariable = $function->forward($x);
                 return $outputsVariable;
             }
         );
@@ -212,7 +212,7 @@ class Test extends TestCase
         $copyStates = [$K->copy($initialStates[0])];
         $outputsVariable = $nn->with($tape=$g->GradientTape(),
             function() use ($layer,$inputs,$initialStates) {
-                $outputsVariable = $layer->forward($inputs,$training=true, $initialStates);
+                $outputsVariable = $layer->forward($inputs,initialStates:$initialStates);
                 return $outputsVariable;
             }
         );
@@ -281,7 +281,7 @@ class Test extends TestCase
         $copyInputs = $K->copy($inputs);
         $outputsVariable = $nn->with($tape=$g->GradientTape(),
             function() use ($layer,$inputs,$initialStates) {
-                $outputsVariable = $layer->forward($inputs,$training=true, $initialStates);
+                $outputsVariable = $layer->forward($inputs,initialStates:$initialStates);
                 return $outputsVariable;
             }
         );
@@ -351,7 +351,7 @@ class Test extends TestCase
             $K->copy($initialStates[0])];
         [$outputsVariable,$nextStateVariables] = $nn->with($tape=$g->GradientTape(),
             function() use ($layer,$inputs,$initialStates) {
-                [$outputsVariable,$nextStateVariables] = $layer->forward($inputs,$training=true, $initialStates);
+                [$outputsVariable,$nextStateVariables] = $layer->forward($inputs,initialStates:$initialStates);
                 return [$outputsVariable,$nextStateVariables];
             }
         );
@@ -429,7 +429,7 @@ class Test extends TestCase
         //$copyStates = [$mo->copy($initialStates[0])];
         [$outputsVariable,$nextStateVariables] = $nn->with($tape=$g->GradientTape(),
             function() use ($layer,$inputs,$initialStates) {
-                [$outputsVariable,$nextStateVariables] = $layer->forward($inputs,$training=true, $initialStates);
+                [$outputsVariable,$nextStateVariables] = $layer->forward($inputs,initialStates:$initialStates);
                 return [$outputsVariable,$nextStateVariables];
             }
         );
@@ -513,7 +513,7 @@ class Test extends TestCase
         //
         [$outputsVariable,$nextStateVariables] = $nn->with($tape=$g->GradientTape(),
             function() use ($layer,$inputs,$initialStates) {
-                [$outputsVariable,$nextStateVariables] = $layer->forward($inputs,$training=true, $initialStates);
+                [$outputsVariable,$nextStateVariables] = $layer->forward($inputs,initialStates:$initialStates);
                 return [$outputsVariable,$nextStateVariables];
             }
         );
@@ -584,7 +584,7 @@ class Test extends TestCase
         $x = $K->onehot($x->reshape([4]),$numClass=10)->reshape([1,4,10]);
         $outputsVariable = $nn->with($tape=$g->GradientTape(),
             function() use ($layer,$x) {
-                $outputsVariable = $layer->forward($x,$training=true);
+                $outputsVariable = $layer->forward($x);
                 return $outputsVariable;
             }
         );
@@ -619,7 +619,7 @@ class Test extends TestCase
         $x = $K->onehot($x->reshape([4]),$numClass=10)->reshape([1,4,10]);
         $outputsVariable = $nn->with($tape=$g->GradientTape(),
             function() use ($layer,$x) {
-                $outputsVariable = $layer->forward($x,$training=true);
+                $outputsVariable = $layer->forward($x);
                 return $outputsVariable;
             }
         );
@@ -695,7 +695,7 @@ class Test extends TestCase
             [0,1,2,9],
         ]);
         $x = $mo->la()->onehot($x->reshape([4]),$numClass=10)->reshape([1,4,10]);
-        $outputs = $layer->forward($x,$training=true);
+        $outputs = $layer->forward($x);
         echo "outputs=".$mo->toString($outputs,'%5.3f',true);
 
         $ones = $mo->ones($outputs->shape());
@@ -741,7 +741,7 @@ class Test extends TestCase
             [1],
         ]);
         $x = $mo->la()->onehot($x->reshape([1]),$numClass=10)->reshape([1,1,10]);
-        $outputs = $layer->forward($x,$training=true);
+        $outputs = $layer->forward($x);
         echo "outputs=".$mo->toString($outputs,'%5.2f',true);
 
         $ones = $mo->ones($outputs->shape());

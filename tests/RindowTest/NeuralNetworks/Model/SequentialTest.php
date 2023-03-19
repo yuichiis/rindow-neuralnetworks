@@ -104,9 +104,9 @@ class TestCustomModel extends AbstractModel
         $this->seq = $seq;
     }
 
-    public function call($inputs, $training=null, $trues=null)
+    public function call($inputs)
     {
-        $outputs = $this->seq->forward($inputs, $training, $trues);
+        $outputs = $this->seq->forward($inputs);
         return $outputs;
     }
 }

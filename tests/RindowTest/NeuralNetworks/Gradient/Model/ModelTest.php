@@ -23,10 +23,10 @@ class TestModel1 extends AbstractModel
         $this->dense = $builder->layers->Dense($units=5,input_shape:[1]);
     }
 
-    protected function call($inputs,$training)
+    protected function call($inputs)
     {
         $dense = $this->dense;
-        $outputs = $dense($inputs,$training);
+        $outputs = $dense($inputs);
         return $outputs;
     }
 }
@@ -47,12 +47,12 @@ class TestModel2 extends AbstractModel
         $this->dense2 = $builder->layers->Dense($units=2);
     }
 
-    protected function call($inputs,$training)
+    protected function call($inputs)
     {
         $dense1 = $this->dense1;
         $dense2 = $this->dense2;
-        $x = $dense1($inputs,$training);
-        $outputs = $dense2($x,$training);
+        $x = $dense1($inputs);
+        $outputs = $dense2($x);
         return $outputs;
     }
 }
@@ -70,10 +70,10 @@ class Test3Mini1 extends AbstractModel
                 input_shape:[2], activation:'sigmoid'
             );
     }
-    protected function call($inputs,$training)
+    protected function call($inputs)
     {
         $dense1 = $this->dense1;
-        $outputs = $dense1($inputs,$training);
+        $outputs = $dense1($inputs);
         return $outputs;
     }
 }
@@ -89,10 +89,10 @@ class Test3Mini2 extends AbstractModel
         parent::__construct($backend,$builder);
         $this->dense2 = $builder->layers->Dense($units=2);
     }
-    protected function call($inputs,$training)
+    protected function call($inputs)
     {
         $dense2 = $this->dense2;
-        $outputs = $dense2($inputs,$training);
+        $outputs = $dense2($inputs);
         return $outputs;
     }
 }
@@ -111,12 +111,12 @@ class Test3Main extends AbstractModel
         $this->model2 = new Test3Mini2($backend,$builder);
     }
 
-    protected function call($inputs,$training)
+    protected function call($inputs)
     {
         $model1 = $this->model1;
         $model2 = $this->model2;
-        $x = $model1($inputs,$training);
-        $outputs = $model2($x,$training);
+        $x = $model1($inputs);
+        $outputs = $model2($x);
         return $outputs;
     }
 }
@@ -140,13 +140,13 @@ class TestRNNEncoder extends AbstractModel
             );
     }
 
-    protected function call($inputs,$training,$initial_states)
+    protected function call($inputs,$initial_states=null)
     {
         $embed = $this->embed;
         $rnn = $this->rnn;
 
-        $x = $embed($inputs,$training);
-        [$outputs,$states] = $rnn($x,$training,$initial_states);
+        $x = $embed($inputs);
+        [$outputs,$states] = $rnn($x,initialStates:$initial_states);
         return [$outputs, $states];
     }
 }
@@ -177,7 +177,7 @@ class TestRNNDecoder extends AbstractModel
         $this->dense = $builder->layers->Dense($units=8);
     }
 
-    protected function call($inputs,$encOutputs,$training,$encStates,$options)
+    protected function call($inputs,$encOutputs,$encStates,$returnAttentionScores=null)
     {
         $embed = $this->embed;
         $rnn = $this->rnn;
@@ -185,15 +185,16 @@ class TestRNNDecoder extends AbstractModel
         $concat = $this->concat;
         $dense = $this->dense;
 
-        $x = $embed($inputs,$training);
-        [$rnnSequence,$states] = $rnn($x,$training,$encStates);
-        $contextVector = $attention([$rnnSequence,$encOutputs],$training,$options);
+        $x = $embed($inputs);
+        [$rnnSequence,$states] = $rnn($x,initialStates:$encStates);
+        $contextVector = $attention([$rnnSequence,$encOutputs],
+                                        returnAttentionScores:$returnAttentionScores);
         if(is_array($contextVector)) {
             [$contextVector,$attentionScores] = $contextVector;
             $this->attentionScores = $attentionScores;
         }
-        $outputs = $concat([$contextVector, $rnnSequence],$training);
-        $outputs = $dense($outputs,$training);
+        $outputs = $concat([$contextVector, $rnnSequence]);
+        $outputs = $dense($outputs);
         return [$outputs,$states];
     }
 
@@ -222,16 +223,16 @@ class TestRNNMain extends AbstractModel
         $this->out = $builder->layers->Activation('softmax');
     }
 
-    protected function call($inputs,$training,$trues)
+    protected function call($inputs,$trues=null)
     {
         $encoder = $this->encoder;
         $decoder = $this->decoder;
         $out = $this->out;
         //$trues =$this->builder->gradient->Variable($trues);
 
-        [$encOutputs,$states] = $encoder($inputs,$training,null);
-        [$outputs,$dmyStatus] = $decoder($trues,$encOutputs,$training,$states,$options=null);
-        $outputs = $out($outputs,$training);
+        [$encOutputs,$states] = $encoder($inputs);
+        [$outputs,$dmyStatus] = $decoder($trues,$encOutputs,$states);
+        $outputs = $out($outputs);
         return $outputs;
     }
 
@@ -284,7 +285,7 @@ class TestRNNMain extends AbstractModel
             $g->Variable($K->zeros([$batchs, 32])),
             $g->Variable($K->zeros([$batchs, 32]))
         ];
-        [$encOutputs, $status] = $encoder($inputs, $training=false, $status);
+        [$encOutputs, $status] = $encoder($inputs, $status);
 
         $decInputs = $g->Variable($K->array([[0]],$inputs->dtype()));
 
@@ -292,8 +293,8 @@ class TestRNNMain extends AbstractModel
         $this->setShapeInspection(false);
         for($t=0;$t<3;$t++) {
             [$predictions, $status] = $decoder(
-                $decInputs, $encOutputs, $training=false, $status,
-                ['return_attention_scores'=>true]);
+                $decInputs, $encOutputs, $status,
+                returnAttentionScores:true);
 
             # storing the attention weights to plot later on
             $scores = $decoder->getAttentionScores();
@@ -420,13 +421,13 @@ class TestGraphMode extends AbstractModel
         $this->fc = $nn->layers->Dense(3);
     }
 
-    protected function call($inputs,$training)
+    protected function call($inputs)
     {
         $this->log('call');
         $in = $this->in;
         $fc = $this->fc;
-        $x = $in($inputs,$training);
-        $outputs = $fc($x,$training);
+        $x = $in($inputs);
+        $outputs = $fc($x);
         return $outputs;
     }
 

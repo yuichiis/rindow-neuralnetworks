@@ -580,7 +580,21 @@ class Backend
 
     public function equal($x,$y)
     {
+        $y = $this->la->copy($y);
         return $this->la->equal($x,$y);
+    }
+
+    public function notEqual($x,$y)
+    {
+        $z = $this->la->copy($y);
+        $this->la->equal($x,$z);
+        return $this->la->not($z);
+    }
+
+    public function not($x)
+    {
+        $x = $this->la->copy($x);
+        return $this->la->not($x);
     }
 
     public function sin($x)
@@ -1789,7 +1803,7 @@ class Backend
         $stepFunction,
         NDArray $inputs,
         array $initialStates,
-        bool $training,
+        bool $training=null,
         NDArray $outputs=null,
         bool $goBackwards=null
     ) : array

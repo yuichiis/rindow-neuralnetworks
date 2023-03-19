@@ -192,15 +192,14 @@ class Encoder extends AbstractModel
 
     protected function call(
         object $inputs,
-        Variable|bool $training,
-        array $initial_state=null,
+        array $initialStates=null,
         array $options=null
         ) : array
     {
         $K = $this->backend;
-        $wordVect = $this->embedding->forward($inputs,$training);
+        $wordVect = $this->embedding->forward($inputs);
         [$outputs,$states] = $this->rnn->forward(
-            $wordVect,$training,$initial_state);
+            $wordVect,initialStates:$initialStates);
         return [$outputs, $states];
     }
 }
@@ -251,27 +250,26 @@ class Decoder extends AbstractModel
 
     protected function call(
         object $inputs,
-        Variable|bool $training,
-        array $initial_state=null,
-        array $options=null
+        array $initialStates=null,
+        Variable $encOutputs=null,
+        bool $returnAttentionScores=null,
         ) : array
     {
         $K = $this->backend;
-        $encOutputs=$options['enc_outputs'];
 
-        $x = $this->embedding->forward($inputs,$training);
+        $x = $this->embedding->forward($inputs);
         [$rnnSequence,$states] = $this->rnn->forward(
-            $x,$training,$initial_state);
+            $x,initialStates:$initialStates);
 
         $contextVector = $this->attention->forward(
-            [$rnnSequence,$encOutputs],$training,$options);
+            [$rnnSequence,$encOutputs],returnAttentionScores:$returnAttentionScores);
         if(is_array($contextVector)) {
             [$contextVector,$attentionScores] = $contextVector;
             $this->attentionScores = $attentionScores;
         }
-        $outputs = $this->concat->forward([$contextVector, $rnnSequence],$training);
+        $outputs = $this->concat->forward([$contextVector, $rnnSequence]);
 
-        $outputs = $this->dense->forward($outputs,$training);
+        $outputs = $this->dense->forward($outputs);
         return [$outputs,$states];
     }
 
@@ -340,13 +338,13 @@ class Seq2seq extends AbstractModel
         $this->plt = $plt;
     }
 
-    protected function call($inputs, $training, $trues)
+    protected function call($inputs, $trues=null)
     {
         $K = $this->backend;
-        [$encOutputs,$states] = $this->encoder->forward($inputs,$training);
-        $options = ['enc_outputs'=>$encOutputs];
-        [$outputs,$dmyStatus] = $this->decoder->forward($trues,$training,$states,$options);
-        $outputs = $this->out->forward($outputs,$training);
+        [$encOutputs,$states] = $this->encoder->forward($inputs);
+        [$outputs,$dmyStatus] = $this->decoder->forward(
+                                    $trues,initialStates:$states, encOutputs:$encOutputs);
+        $outputs = $this->out->forward($outputs);
         return $outputs;
     }
 
@@ -382,7 +380,7 @@ class Seq2seq extends AbstractModel
             throw new InvalidArgumentException('num of batch must be one.');
         }
         $status = [$K->zeros([$batchs, $this->units])];
-        [$encOutputs, $status] = $this->encoder->forward($inputs, $training=false, $status);
+        [$encOutputs, $status] = $this->encoder->forward($inputs, initialStates:$status);
 
         $decInputs = $K->array([[$this->startVocId]],$inputs->dtype());
 
@@ -390,8 +388,8 @@ class Seq2seq extends AbstractModel
         $this->setShapeInspection(false);
         for($t=0;$t<$this->outputLength;$t++) {
             [$predictions, $status] = $this->decoder->forward(
-                $decInputs, $training=false, $status,
-                ['enc_outputs'=>$encOutputs,'return_attention_scores'=>true]);
+                $decInputs, initialStates:$status,
+                encOutputs:$encOutputs,returnAttentionScores:true);
 
             # storing the attention weights to plot later on
             $scores = $this->decoder->getAttentionScores();
@@ -444,7 +442,7 @@ class Seq2seq extends AbstractModel
 }
 
 $numExamples=20000;#30000
-$numWords=null;
+$numWords=1024;#null;
 $epochs = 10;
 $batchSize = 64;
 $wordVectSize=256;
@@ -507,7 +505,7 @@ $seq2seq->compile(
     optimizer:'adam',
     metrics:['accuracy','loss'],
 );
-$seq2seq->build([1,$inputLength], true, [1,$outputLength]); // just for summary
+$seq2seq->build([1,$inputLength], trues:[1,$outputLength]); // just for summary
 $seq2seq->summary();
 
 $modelFilePath = __DIR__."/neural-machine-translation-with-attention.model";

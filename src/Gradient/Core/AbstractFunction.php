@@ -9,6 +9,8 @@ use Interop\Polite\Math\Matrix\NDArray;
 abstract class AbstractFunction
 {
     use GradientUtils;
+    protected ?array $unbackpropagatables = null;
+
     /**
     *  @param array<NDArray>  $inputs
     *       inputs
@@ -130,8 +132,10 @@ abstract class AbstractFunction
             $this->inputsVariables = $inputs;
         }
         $values = array_map(function($input){return $input->value();},$inputs);
+        $this->unbackpropagatables = null;
         $outValues = $this->call($values);
-        $outputs = $this->postGradientProcess($this->backend,$inputs,$outValues);
+        $outputs = $this->postGradientProcess($this->backend,$inputs,
+                                                $outValues,$this->unbackpropagatables);
 
         if(count($outputs)==1) {
             return $outputs[0];

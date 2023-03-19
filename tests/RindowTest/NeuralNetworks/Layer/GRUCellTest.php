@@ -27,12 +27,12 @@ class Test extends TestCase
         $f = function($x) use ($mo,$K,$function,$states){
             $x = $K->array($x);
             $object = new \stdClass();
-            [$y,$states] = $function->forward($x,$states,$training=true,$object);
+            [$y,$states] = $function->forward($x,$states, calcState:$object);
             return $K->ndarray($y);
         };
         $grads = $mo->la()->numericalGradient(1e-3,$f,$K->ndarray($x));
         $object = new \stdClass();
-        [$outputs,$next_states] = $function->forward($x,$states,$training=true,$object);
+        [$outputs,$next_states] = $function->forward($x,$states, calcState:$object);
         $dOutputs = $K->ones($outputs->shape(),$outputs->dtype());
         $dNextStates = [$K->zeros([1,3])];
         [$dInputs,$dPrevStates] = $function->backward($dOutputs,$dNextStates,$object);
@@ -162,7 +162,7 @@ class Test extends TestCase
         $object = new \stdClass();
         $copyInputs = $K->copy($inputs);
         $copyStates = [$K->copy($states[0])];
-        [$outputs,$nextStates] = $layer->forward($inputs, $states,$training=true,$object);
+        [$outputs,$nextStates] = $layer->forward($inputs, $states,calcState:$object);
         //
         $this->assertEquals([2,4],$outputs->shape());
         $this->assertCount(1,$nextStates);
@@ -234,7 +234,7 @@ class Test extends TestCase
         $inputs = $K->ones([2,3]);
         $states = [$K->ones([2,4])];
         $object = new \stdClass();
-        [$outputs,$nextStates] = $layer->forward($inputs, $states,$training=true,$object);
+        [$outputs,$nextStates] = $layer->forward($inputs, $states,calcState:$object);
         //
         $this->assertEquals([
             [-383,-383,-383,-383],
@@ -332,7 +332,7 @@ class Test extends TestCase
         $inputs = $K->ones([2,3]);
         $states = [$K->ones([2,4])];
         $object = new \stdClass();
-        [$outputs,$nextStates] = $layer->forward($inputs, $states,$training=true,$object);
+        [$outputs,$nextStates] = $layer->forward($inputs, $states,calcState:$object);
         //
         $this->assertEquals([
             [-244,-244,-244,-244],
@@ -416,7 +416,7 @@ class Test extends TestCase
         $states = [$K->zeros([1,3])];
         $object = new \stdClass();
         $x = $K->onehot($x->reshape([1]),$numClass=10)->reshape([1,10]);
-        $outputs = $layer->forward($x,$states,$training=true,$object);
+        $outputs = $layer->forward($x,$states,calcState:$object);
 
         $this->assertTrue(
             $this->verifyGradient($mo,$K,$layer,$x,$states));
@@ -446,7 +446,7 @@ class Test extends TestCase
         $states = [$K->zeros([1,3])];
         $object = new \stdClass();
         $x = $K->onehot($x->reshape([1]),$numClass=10)->reshape([1,10]);
-        $outputs = $layer->forward($x,$states,$training=true,$object);
+        $outputs = $layer->forward($x,$states,calcState:$object);
 
         $this->assertTrue(
             $this->verifyGradient($mo,$K,$layer,$x,$states));

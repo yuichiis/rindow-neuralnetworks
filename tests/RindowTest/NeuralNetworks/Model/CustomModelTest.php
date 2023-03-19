@@ -41,12 +41,11 @@ class TestModel extends AbstractModel
     //    $shape = $this->registerLayer($this->fc,$shape);
     //}
 
-    protected function call($inputs, $training=null, $trues=null)
+    protected function call($inputs)
     {
-        $training = $training ?? false;
-        $flat = $this->flatten->forward($inputs,$training);
-        $customout = $this->custom->forward($flat,$training);
-        $outputs = $this->fc->forward($customout,$training);
+        $flat = $this->flatten->forward($inputs);
+        $customout = $this->custom->forward($flat);
+        $outputs = $this->fc->forward($customout);
         return $outputs;
     }
 
@@ -76,9 +75,9 @@ class TestSubModel extends AbstractModel
     //    return $this->outputShape;
     //}
 
-    protected function call($inputs, $training)
+    protected function call($inputs)
     {
-        $out = $this->fc->forward($inputs,$training);
+        $out = $this->fc->forward($inputs);
         return $out;
     }
 
@@ -126,18 +125,18 @@ class TestRNNModel extends AbstractModel
         $this->activation = $builder->layers->Activation('softmax');
     }
 
-    protected function call($inputs, $training=null, $trues=null)
+    protected function call($inputs, $trues=null)
     {
         // encoder
-        $x = $this->embed0->forward($inputs,$training);
-        [$encOutputs,$encStates] = $this->rnn0->forward($x,$training);
+        $x = $this->embed0->forward($inputs);
+        [$encOutputs,$encStates] = $this->rnn0->forward($x);
         // decoder
-        $targets = $this->embed1->forward($trues,$training);
-        [$rnnSequence,$states] = $this->rnn1->forward($targets,$training,$encStates);
-        $contextVector = $this->attention->forward([$rnnSequence,$encOutputs],$training);
-        $outputs = $this->concat->forward([$contextVector, $rnnSequence],$training);
-        $outputs = $this->dense->forward($outputs,$training);
-        $outputs = $this->activation->forward($outputs,$training);
+        $targets = $this->embed1->forward($trues);
+        [$rnnSequence,$states] = $this->rnn1->forward($targets,initialStates:$encStates);
+        $contextVector = $this->attention->forward([$rnnSequence,$encOutputs]);
+        $outputs = $this->concat->forward([$contextVector, $rnnSequence]);
+        $outputs = $this->dense->forward($outputs);
+        $outputs = $this->activation->forward($outputs);
         return $outputs;
     }
 
@@ -185,12 +184,12 @@ class TestMultiInputModel extends AbstractModel
         $this->fc = $builder->layers()->Dense(5,activation:'softmax');
     }
 
-    protected function call($inp1,$inp2,$training)
+    protected function call($inp1,$inp2)
     {
-        $inp1 = $this->inp1->forward($inp1,$training);
-        $inp2 = $this->inp2->forward($inp2,$training);
-        $x = $this->concat->forward([$inp1,$inp2],$training);
-        $out = $this->fc->forward($x,$training);
+        $inp1 = $this->inp1->forward($inp1);
+        $inp2 = $this->inp2->forward($inp2);
+        $x = $this->concat->forward([$inp1,$inp2]);
+        $out = $this->fc->forward($x);
         return $out;
     }
 

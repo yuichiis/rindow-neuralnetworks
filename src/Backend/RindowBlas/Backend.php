@@ -417,10 +417,17 @@ class Backend
         return $x;
     }
 
-    public function update_add(NDArray $x, NDArray $increment,
-        float $alpha=null) : NDArray
+    public function update_add(
+        NDArray $x,
+        NDArray $increment,
+        float $alpha=null,
+        bool $trans=null) : NDArray
     {
-        $this->la->axpy($increment,$x,$alpha);
+        if($trans || ($x->shape()!=$increment->shape())) {
+            $this->la->add($increment,$x,$alpha,$trans);
+        } else {
+            $this->la->axpy($increment,$x,$alpha);
+        }
         return $x;
     }
 
@@ -434,9 +441,12 @@ class Backend
         return $x;
     }
 
-    public function update_mul(NDArray $x, NDArray $magnifications) : NDArray
+    public function update_mul(
+        NDArray $x,
+        NDArray $magnifications,
+        bool $trans=null) : NDArray
     {
-        return $this->la->multiply($magnifications,$x);
+        return $this->la->multiply($magnifications,$x,$trans);
     }
 
     public function scale(float $a, NDArray $x)
@@ -558,7 +568,21 @@ class Backend
 
     public function equal($x,$y)
     {
+        $y = $this->la->copy($y);
         return $this->la->equal($x,$y);
+    }
+
+    public function notEqual($x,$y)
+    {
+        $z = $this->la->copy($y);
+        $this->la->equal($x,$z);
+        return $this->la->not($z);
+    }
+
+    public function not($x)
+    {
+        $x = $this->la->copy($x);
+        return $this->la->not($x);
     }
 
     public function sin($x)
@@ -1720,7 +1744,7 @@ class Backend
         $stepFunction,
         NDArray $inputs,
         array $initialStates,
-        bool $training,
+        bool $training=null,
         NDArray $outputs=null,
         bool $goBackwards=null
     ) : array
@@ -1737,7 +1761,7 @@ class Backend
             $calcStates[$t] = $calcState;
             [$outputs_t, $states_t] = $stepFunction(
                 $this->rnnGetTimestep($inputs, $t),
-                $states_t,$training,$calcState);
+                $states_t,training:$training,calcState:$calcState);
             if($outputs){
                 $this->rnnSetTimestep($outputs,$t,$outputs_t);
             }

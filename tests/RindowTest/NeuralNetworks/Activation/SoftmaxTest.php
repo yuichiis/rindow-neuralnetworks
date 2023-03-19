@@ -50,7 +50,7 @@ class Test extends TestCase
         ]);
         $copyX = $mo->copy($x);
         $x = $K->array($x);
-        $y = $activation->forward($states,$x, $training=true);
+        $y = $activation->forward($states,$x);
         $y = $K->ndarray($y);
         $x = $K->ndarray($x);
         $this->assertEquals($copyX->toArray(),$x->toArray());
@@ -79,6 +79,6 @@ class Test extends TestCase
             [-10.0,-0.5,0.0,0.5,10.0],
         ]);
         $this->assertTrue(
-            $this->verifyGradient($mo,$K,$activation,$inputs,$training=true));
+            $this->verifyGradient($mo,$K,$activation,$inputs));
     }
 }

@@ -4,8 +4,10 @@ namespace Rindow\NeuralNetworks\Model;
 use InvalidArgumentException;
 use UnexpectedValueException;
 use LogicException;
-use Rindow\NeuralNetworks\Layer\Layer;
+use Rindow\NeuralNetworks\Gradient\Module;
+use Rindow\NeuralNetworks\Gradient\Variable;
 use Interop\Polite\Math\Matrix\NDArray;
+
 
 class Sequential extends AbstractModel
 {
@@ -21,7 +23,7 @@ class Sequential extends AbstractModel
         }
     }
 
-    public function add(Layer $layer)
+    public function add(Module $layer)
     {
         $this->layers[] = $layer;
         //$this->extractWeights($layer);
@@ -59,16 +61,16 @@ class Sequential extends AbstractModel
         return $variables;
     }
     
-    protected function call(...$args)
+    protected function call($x, Variable|bool $training=null, ...$args)
     {
-        $x = array_shift($args);
-        $training = array_shift($args);
-        if($training==null) {
-            $training = false;
-        }
+        $trainingOpt = ['training'=> $training];
         //$trues = array_shift($args);
         foreach($this->layers as $layer) {
-            $x = $layer->forward($x, $training);
+            $options = [];
+            if($layer->isAwareOf('training')) {
+                $options = $trainingOpt;
+            }
+            $x = $layer->forward($x, ...$options);
         }
         return $x;
     }

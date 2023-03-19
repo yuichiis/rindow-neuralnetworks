@@ -8,6 +8,8 @@ use Rindow\NeuralNetworks\Support\GenericUtils;
 class BatchNormalization extends AbstractLayer
 {
     use GenericUtils;
+    protected $trainingAware = true;
+
     protected $backend;
     protected $axis;
     protected $momentum;
@@ -82,6 +84,7 @@ class BatchNormalization extends AbstractLayer
         $this->movingVarianceInitializer = $K->getInitializer($moving_variance_initializer);
         $this->initName($name,'batchnormalization');
         $this->allocateWeights(2,$nonTrainables=2);
+        $this->callOptions['training'] = true;
     }
 
     public function build($variable=null, array $sampleWeights=null)
@@ -216,12 +219,14 @@ class BatchNormalization extends AbstractLayer
         return $inputs;
     }
 
-    protected function call(NDArray $inputs, bool $training) : NDArray
+    protected function call(NDArray $inputs, bool $training=null) : NDArray
     {
         $K = $this->backend;
+        if($training===null) {
+            throw new InvalidArgumentException("training option must be true or false.");
+        }
         $container = $this->container();
         $inputs = $this->transformShape($inputs);
-
         // normalization
         if($training) {
             $mu = $K->mean($inputs,$axis=0);

@@ -326,15 +326,73 @@ class Test extends TestCase
         $K = $this->newBackend($mo);
         $x = $K->array([4,9],NDArray::float32);
         $y = $K->array([9,9],NDArray::float32);
+        $x_backup = $K->copy($x); $K->finish();
+        $y_backup = $K->copy($y); $K->finish();
+
         $z = $K->equal($x,$y); $K->finish();
         $this->assertEquals([0,1],$z->toArray());
         $this->assertEquals(NDArray::float32,$z->dtype());
+        $this->assertEquals($x_backup->toArray(),$x->toArray());
+        $this->assertEquals($y_backup->toArray(),$y->toArray());
 
         $x = $K->array([4,9],NDArray::int32);
         $y = $K->array([9,9],NDArray::int32);
+        $x_backup = $K->copy($x); $K->finish();
+        $y_backup = $K->copy($y); $K->finish();
+
         $z = $K->equal($x,$y); $K->finish();
         $this->assertEquals([0,1],$z->toArray());
         $this->assertEquals(NDArray::int32,$z->dtype());
+        $this->assertEquals($x_backup->toArray(),$x->toArray());
+        $this->assertEquals($y_backup->toArray(),$y->toArray());
+    }
+
+    public function testNotEqual()
+    {
+        $mo = $this->newMatrixOperator();
+        $K = $this->newBackend($mo);
+        $x = $K->array([4,9],NDArray::float32);
+        $y = $K->array([9,9],NDArray::float32);
+        $x_backup = $K->copy($x); $K->finish();
+        $y_backup = $K->copy($y); $K->finish();
+
+        $z = $K->notEqual($x,$y); $K->finish();
+        $this->assertEquals([1,0],$z->toArray());
+        $this->assertEquals(NDArray::float32,$z->dtype());
+        $this->assertEquals($x_backup->toArray(),$x->toArray());
+        $this->assertEquals($y_backup->toArray(),$y->toArray());
+
+        $x = $K->array([4,9],NDArray::int32);
+        $y = $K->array([9,9],NDArray::int32);
+        $x_backup = $K->copy($x); $K->finish();
+        $y_backup = $K->copy($y); $K->finish();
+
+        $z = $K->notEqual($x,$y); $K->finish();
+        $this->assertEquals([1,0],$z->toArray());
+        $this->assertEquals(NDArray::int32,$z->dtype());
+        $this->assertEquals($x_backup->toArray(),$x->toArray());
+        $this->assertEquals($y_backup->toArray(),$y->toArray());
+    }
+
+    public function testNot()
+    {
+        $mo = $this->newMatrixOperator();
+        $K = $this->newBackend($mo);
+        $x = $K->array([4,0],NDArray::float32);
+        $x_backup = $K->copy($x); $K->finish();
+
+        $z = $K->not($x); $K->finish();
+        $this->assertEquals([0,1],$z->toArray());
+        $this->assertEquals(NDArray::float32,$z->dtype());
+        $this->assertEquals($x_backup->toArray(),$x->toArray());
+
+        $x = $K->array([0,9],NDArray::int32);
+        $x_backup = $K->copy($x); $K->finish();
+
+        $z = $K->not($x); $K->finish();
+        $this->assertEquals([1,0],$z->toArray());
+        $this->assertEquals(NDArray::int32,$z->dtype());
+        $this->assertEquals($x_backup->toArray(),$x->toArray());
     }
 
     public function testSin()

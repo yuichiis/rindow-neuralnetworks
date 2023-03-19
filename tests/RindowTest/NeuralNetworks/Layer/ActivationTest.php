@@ -77,7 +77,7 @@ class Test extends TestCase
         $inputs = $K->array($inputs);
         $outputsVariable = $nn->with($tape=$g->GradientTape(),
             function() use ($layer,$inputs) {
-                $outputsVariable = $layer->forward($inputs, $training=true);
+                $outputsVariable = $layer->forward($inputs);
                 return $outputsVariable;
             }
         );

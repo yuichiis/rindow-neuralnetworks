@@ -157,74 +157,134 @@ class EngFraDataset
     }
 }
 
-abstract class BaseAttention extends AbstractModel
+class MultiHeadAttention extends AbstractModel
 {
-    protected object $mha;
-    protected object $layernorm;
-    protected object $add;
+    protected int $num_heads;
+    protected int $depth;
+    protected Layer $attention;
+    protected Layer $wq;
+    protected Layer $wk;
+    protected Layer $wv;
+    protected Layer $dense;
+    protected object $gradient;
 
-    public function __construct($backend,$builder,...$args)
+    public function __construct(
+        object $backend,
+        object $builder,
+        int $depth,
+        int $num_heads)
     {
         parent::__construct($backend,$builder);
-        $this->mha = $builder->layers->MultiHeadAttention(...$args);
-        $this->layernorm = $builder->layers->LayerNormalization();
-        $this->add = $builder->layers->Add();
+        $this->gradient = $builder->gradient();
+        $this->num_heads = $num_heads;
+        $this->depth = $depth;
+        if($depth % $num_heads != 0) {
+            throw new InvalidArgumentException('"depth" must be an integer multiple of "num_heads"');
+        }
+
+        // self.depth = depth // self.num_heads
+    
+        $this->attention = $builder->layers->Attention(use_scale:true);
+        $this->wq = $builder->layers->Dense($depth);
+        $this->wk = $builder->layers->Dense($depth);
+        $this->wv = $builder->layers->Dense($depth);
+    
+        $this->dense = $builder->layers->Dense($depth);
+    }
+
+    /**
+     * Split the last dimension into (num_heads, depth).
+     * Transpose the result such that the shape is (batch_size, num_heads, seq_len, depth)
+     */
+    protected function split_heads($x, $batch_size)
+    {
+        $g = $this->gradient;
+        $x = $g->reshape($x, [$batch_size, -1, $this->num_heads, $this->depth]);
+        return $g->transpose($x, perm:[0, 2, 1, 3]);
+    }
+
+    protected function call($v, $k, $q, $mask)
+    {
+        $g = $this->gradient;
+
+        $batch_size = $q->shape()[0];
+
+        $q = $this->wq->forward($q);  # (batch_size, seq_len, depth)
+        $k = $this->wk->forward($k);  # (batch_size, seq_len, depth)
+        $v = $this->wv->forward($v);  # (batch_size, seq_len, depth)
+    
+        $q = $this->split_heads($q, $batch_size);  # (batch_size, num_heads, seq_len_q, depth)
+        $k = $this->split_heads($k, $batch_size);  # (batch_size, num_heads, seq_len_k, depth)
+        $v = $this->split_heads($v, $batch_size);  # (batch_size, num_heads, seq_len_v, depth)
+    
+        # scaled_attention.shape == (batch_size, num_heads, seq_len_q, depth)
+        # attention_weights.shape == (batch_size, num_heads, seq_len_q, seq_len_k)
+        [$scaled_attention, $attention_weights] = 
+            $this->attention->forward([$q, $k, $v], returnAttentionScores:true, mask:$mask);
+    
+        $scaled_attention = $g->transpose($scaled_attention, perm:[0, 2, 1, 3]);  # (batch_size, seq_len_q, num_heads, depth)
+    
+        $concat_attention = $g->reshape($scaled_attention,
+                                      [$batch_size, -1, $this->depth]);  # (batch_size, seq_len_q, depth)
+    
+        $output = $this->dense($concat_attention);  # (batch_size, seq_len_q, depth)
+    
+        return [$output, $attention_weights];
     }
 }
 
-class CrossAttention(BaseAttention):
-  def call(self, x, context):
-    attn_output, attn_scores = self.mha(
-        query=x,
-        key=context,
-        value=context,
-        return_attention_scores=True)
+function point_wise_feed_forward_network(object $builder, int $depth, int $dff) : object
+{
+    return $builder->models->Sequential([
+        $builder->layers->Dense($dff, activation:'relu'),   # (batch_size, seq_len, dff)
+        $builder->layers->Dense($depth),                    # (batch_size, seq_len, depth)
+    ]);
+}
 
-    # Cache the attention scores for plotting later.
-    self.last_attn_scores = attn_scores
+class EncoderLayer extends AbstractModel
+{
+    protected Model $mha;
+    protected Model $fnn;
+    protected Layer $layernorm1;
+    protected Layer $layernorm2;
 
-    x = self.add([x, attn_output])
-    x = self.layernorm(x)
+    public function __construct(
+        object $backend,
+        object $builder,
+        int $wordVectSize=null, 
+        int $num_heads=null, 
+        int $dff=null, 
+        float $dropout_rate=0.1)
+    {
+        parent::__construct($backend,$builder);
+        $this->gradient = $builder->gradient();
+        $this->mha = new MultiHeadAttention($wordVectSize, $num_heads);
+        $this->ffn = point_wise_feed_forward_network($builder,$wordVectSize, $dff);
+    
+        $this->layernorm1 = $builder->layers->LayerNormalization(epsilon:1e-6);
+        $this->layernorm2 = $builder->layers->LayerNormalization(epsilon:1e-6);
+    
+        $this->dropout1 = $builder->layers->Dropout($dropout_rate);
+        $this->dropout2 = $builder->layers->Dropout($dropout_rate);
+    }
+  
+    protected function call(
+        NDArray $x, 
+        Variable|bool $training, 
+        NDArray $mask)
+    {
+        $g = $this->gradient;
 
-    return x
-
-class GlobalSelfAttention(BaseAttention):
-  def call(self, x):
-    attn_output = self.mha(
-        query=x,
-        value=x,
-        key=x)
-    x = self.add([x, attn_output])
-    x = self.layernorm(x)
-    return x
-
-class CausalSelfAttention(BaseAttention):
-  def call(self, x):
-    attn_output = self.mha(
-        query=x,
-        value=x,
-        key=x,
-        use_causal_mask = True)
-    x = self.add([x, attn_output])
-    x = self.layernorm(x)
-    return x
-
-class FeedForward(tf.keras.layers.Layer):
-  def __init__(self, d_model, dff, dropout_rate=0.1):
-    super().__init__()
-    self.seq = tf.keras.Sequential([
-      tf.keras.layers.Dense(dff, activation='relu'),
-      tf.keras.layers.Dense(d_model),
-      tf.keras.layers.Dropout(dropout_rate)
-    ])
-    self.add = tf.keras.layers.Add()
-    self.layer_norm = tf.keras.layers.LayerNormalization()
-
-  def call(self, x):
-    x = self.add([x, self.seq(x)])
-    x = self.layer_norm(x) 
-    return x
-
+        [$attn_output, $dummy] = $this->mha($x, $x, $x, $mask);  # (batch_size, input_seq_len, d_model)
+        $attn_output = $this->dropout1($attn_output, $training);
+        $out1 = $this->layernorm1($g->add([$x, $attn_output]));  # (batch_size, input_seq_len, d_model)
+    
+        $ffn_output = $this->ffn($out1);  # (batch_size, input_seq_len, d_model)
+        $ffn_output = $this->dropout2($ffn_output, $training);
+        $out2 = $this->layernorm2($g->add([$out1, $ffn_output]));  # (batch_size, input_seq_len, d_model)
+        return $out2;
+    }
+}
 
 class Encoder extends AbstractModel
 {
@@ -239,12 +299,16 @@ class Encoder extends AbstractModel
     protected $mo;
 
     public function __construct(
-        $backend,
-        $builder,
+        object $backend,
+        object $builder,
+        int $numLayers,
+        int $num_heads,
+        int $dff,
         int $vocabSize,
         int $wordVectSize,
         int $units,
         int $inputLength,
+        float $dropout_rate,
         object $mo=null,
         )
     {
@@ -258,20 +322,19 @@ class Encoder extends AbstractModel
             $vocabSize,$wordVectSize,
             input_length:$inputLength
         );
-        $this->enc_layers = $builder->SeqSequential();
+        $this->enc_layers = $builder->models->SeqSequential();
         for($i=0;$i<$numLayers;$i++) {
             $this->enc_layers->add(
-                $builder->layers->EncoderLayer(d_model=d_model,
-                         num_heads=num_heads,
-                         dff=dff,
-                         dropout_rate=dropout_rate)
+                new EncoderLayer(
+                    $backend,$builder,
+                    wordVectSize:$wordVectSize,
+                    num_heads:$num_heads,
+                    dff:$dff,
+                    dropout_rate:$dropout_rate,
+                )
             );
         }
-            for _ in range(num_layers)]
-        self.dropout = tf.keras.layers.Dropout(dropout_rate)
-    
-
-        $this->mo = $mo;
+        $this->dropout = $builder->layers->Dropout($dropout_rate);
     }
 
     protected function pow(NDArray|float $x, NDArray $y)
@@ -331,24 +394,91 @@ class Encoder extends AbstractModel
     protected function call(
         object $inputs,
         Variable|bool $training,
-        array $initial_state=null,
-        array $options=null
+        NDArray $mask=null
         ) : array
     {
         $g = $this->gradient;
 
         $length = $inputs->shape()[1];
 
-        $wordVect = $this->embedding->forward($inputs,$training);
-        $wordVect = $g->mul($g->Variable(sqrt($this->wordVectSize)),$wordVect);
-        $wordVect = $g->add($wordVect,$g->Variable($this->posEncoding[[0,$length-1]]));
+        $x = $this->embedding->forward($inputs,$training);
 
-        [$outputs,$states] = $this->rnn->forward(
-            $wordVect,$training,$initial_state);
-        return [$outputs, $states];
+        // positional Encoding
+        $x = $g->scale(sqrt($this->wordVectSize), $x);
+        $pos_encoding = $this->pos_encoding[[0,$length-1]];
+        $x = $g->add($x, $g->expandDims($pos_encoding),0); // broadcast add
+        # Add dropout.
+        $x = $this->dropout->forward($x,$training);
+
+        // seq layers
+        $x = $this->enc_layers->forward($inputs,$training, $mask);
+
+        return $x;  # Shape `(batch_size, seq_len, wordVectSize)`.
     }
 }
 
+class DecoderLayer extends AbstractModel
+{
+    protected Model $mha1;
+    protected Model $mha2;
+    protected Model $ffn;
+    protected Layer $layernorm1;
+    protected Layer $layernorm2;
+    protected Layer $layernorm3;
+
+    public function __construct(
+        object $backend,
+        object $builder,
+        int $wordVectSize=null,
+        int $num_heads=null,
+        int $dff=null,
+        float $dropout_rate=0.1
+        )
+    {
+        parent::__construct($backend,$builder);
+        $this->gradient = $builder->Gradient();
+        $this->vocabSize = $vocabSize;
+    
+        $this->mha1 = new MultiHeadAttention($wordVectSize, $num_heads);
+        $this->mha2 = new MultiHeadAttention($wordVectSize, $num_heads);
+    
+        $this->ffn = point_wise_feed_forward_network($wordVectSize, $dff);
+    
+        $this->layernorm1 = $builder->layers->LayerNormalization(epsilon:1e-6);
+        $this->layernorm2 = $builder->layers->LayerNormalization(epsilon:1e-6);
+        $this->layernorm3 = $builder->layers->LayerNormalization(epsilon:1e-6);
+    
+        $this->dropout1 = $builder->layers->Dropout($dropout_rate);
+        $this->dropout2 = $builder->layers->Dropout($dropout_rate);
+        $this->dropout3 = $builder->layers->Dropout($dropout_rate);
+    }
+    
+    protected function call(
+        NDArray $x,
+        NDArray $enc_output,
+        Variable|bool $training,
+        NDArray $look_ahead_mask,
+        NDArray $padding_mask)
+    {
+        # enc_output.shape == (batch_size, input_seq_len, d_model)
+    
+        [$attn1, $attn_weights_block1] = $this->mha1->forward($x, $x, $x, $look_ahead_mask);  # (batch_size, target_seq_len, wordVectSize)
+        $attn1 = $this->dropout1->forward($attn1, $training);
+        $out1 = $this->layernorm1->forward($g->add($attn1, + $x));
+    
+        [$attn2, $attn_weights_block2] = $this->mha2->forward(
+            $enc_output, $enc_output, $out1, $padding_mask);  # (batch_size, target_seq_len, d_model)
+        attn2 = self.dropout2(attn2, training=training);
+        out2 = self.layernorm2(attn2 + out1)  # (batch_size, target_seq_len, d_model)
+    
+        ffn_output = self.ffn(out2)  # (batch_size, target_seq_len, d_model)
+        ffn_output = self.dropout3(ffn_output, training=training)
+        out3 = self.layernorm3(ffn_output + out2)  # (batch_size, target_seq_len, d_model)
+    
+        return out3, attn_weights_block1, attn_weights_block2
+    }
+}
+  
 class Decoder extends AbstractModel
 {
     protected $backend;
@@ -426,7 +556,7 @@ class Decoder extends AbstractModel
 }
 
 
-class Seq2seq extends AbstractModel
+class Transformer extends AbstractModel
 {
     protected $encoder;
     protected $decoder;
@@ -484,7 +614,35 @@ class Seq2seq extends AbstractModel
         $this->plt = $plt;
     }
 
-    protected function call($inputs, $training, $trues)
+    def create_padding_mask(seq):
+        seq = tf.cast(tf.math.equal(seq, 0), tf.float32)
+
+        # add extra dimensions to add the padding
+        # to the attention logits.
+        return seq[:, tf.newaxis, tf.newaxis, :]  # (batch_size, 1, 1, seq_len)
+
+    def create_look_ahead_mask(size):
+        mask = 1 - tf.linalg.band_part(tf.ones((size, size)), -1, 0)
+        return mask  # (seq_len, seq_len)
+
+    def create_masks(self, inp, tar):
+        # Encoder padding mask
+        enc_padding_mask = create_padding_mask(inp)
+    
+        # Used in the 2nd attention block in the decoder.
+        # This padding mask is used to mask the encoder outputs.
+        dec_padding_mask = create_padding_mask(inp)
+    
+        # Used in the 1st attention block in the decoder.
+        # It is used to pad and mask future tokens in the input received by
+        # the decoder.
+        look_ahead_mask = create_look_ahead_mask(tf.shape(tar)[1])
+        dec_target_padding_mask = create_padding_mask(tar)
+        look_ahead_mask = tf.maximum(dec_target_padding_mask, look_ahead_mask)
+    
+        return enc_padding_mask, look_ahead_mask, dec_padding_mask
+
+    protected function call($inputs, $training=null $trues=null)
     {
         $K = $this->backend;
         [$encOutputs,$states] = $this->encoder->forward($inputs,$training);
@@ -535,7 +693,7 @@ class Seq2seq extends AbstractModel
         for($t=0;$t<$this->outputLength;$t++) {
             [$predictions, $status] = $this->decoder->forward(
                 $decInputs, $training=false, $status,
-                ['enc_outputs'=>$encOutputs,'return_attention_scores'=>true]);
+                encOutputs:$encOutputs,returnAttentionScores:true);
 
             # storing the attention weights to plot later on
             $scores = $this->decoder->getAttentionScores();
@@ -588,10 +746,10 @@ class Seq2seq extends AbstractModel
 }
 
 $numExamples=20000;#30000
-$numWords=null;
+$numWords=1024;#null;
 $epochs = 10;
 $batchSize = 64;
-$wordVectSize=256;
+$wordVectSize=256;  // d_model
 $units=1024;
 
 
@@ -667,7 +825,7 @@ $seq2seq->compile(
     optimizer:'adam',
     metrics:['accuracy','loss'],
 );
-$seq2seq->build([1,$inputLength], true, [1,$outputLength]); // just for summary
+$seq2seq->build([1,$inputLength], trues:[1,$outputLength]); // just for summary
 $seq2seq->summary();
 
 $modelFilePath = __DIR__."/neural-machine-translation-with-attention.model";

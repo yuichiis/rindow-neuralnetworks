@@ -82,10 +82,10 @@ class ImageClassification extends AbstractModel
         $this->dense2 = $builder->layers->Dense($units=10);
     }
 
-    protected function call($inputs,$training)
+    protected function call($inputs)
     {
-        $x = $this->dense1->forward($inputs,$training);
-        $outputs = $this->dense2->forward($x,$training);
+        $x = $this->dense1->forward($inputs);
+        $outputs = $this->dense2->forward($x);
         return $outputs;
     }
 }
@@ -95,7 +95,7 @@ $model->compile(
     loss:$nn->losses()->SparseCategoricalCrossentropy(from_logits:true),
     optimizer:'adam',
 );
-$model->build([1,(int)(28*28*1)],true); // This is only needed for summary
+$model->build([1,(int)(28*28*1)]); // This is only needed for summary
 $model->summary();
 
 $modelFilePath = __DIR__."/basic-image-classification-custom-{$dataset}.model";

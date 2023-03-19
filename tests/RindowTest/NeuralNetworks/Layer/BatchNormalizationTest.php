@@ -52,7 +52,7 @@ class Test extends TestCase
 
         $outputsVariable = $nn->with($tape=$g->GradientTape(),
             function() use ($layer,$x) {
-                $outputsVariable = $layer->forward($x, $training=true);
+                $outputsVariable = $layer->forward($x, training:true);
                 return $outputsVariable;
             }
         );
@@ -117,7 +117,7 @@ class Test extends TestCase
 
         $outputsVariable = $nn->with($tape=$g->GradientTape(),
             function() use ($layer,$x) {
-                $outputsVariable = $layer->forward($x, $training=true);
+                $outputsVariable = $layer->forward($x, training:true);
                 return $outputsVariable;
             }
         );
@@ -168,7 +168,7 @@ class Test extends TestCase
 
         $outputsVariable = $nn->with($tape=$g->GradientTape(),
             function() use ($layer,$x) {
-                $outputsVariable = $layer->forward($x, $training=true);
+                $outputsVariable = $layer->forward($x, training:true);
                 return $outputsVariable;
             }
         );

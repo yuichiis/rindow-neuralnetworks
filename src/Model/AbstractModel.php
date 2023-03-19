@@ -41,6 +41,7 @@ abstract class AbstractModel implements Model
     protected $generation;
     protected $graph = [];
     protected $weights;
+    protected $callOptions;
 
     public function __construct(object $backend,object $builder,$hda=null)
     {
@@ -50,6 +51,12 @@ abstract class AbstractModel implements Model
             $this->hda = $builder->utils()->HDA();
         } else {
             $this->hda = $hda;
+        }
+        $refClass = new ReflectionClass($this);
+        $refParams = $refClass->getMethod('call')->getParameters();
+        $this->callOptions = [];
+        foreach($refParams as $param) {
+            $this->callOptions[$param->name] = true;
         }
     }
 
@@ -94,6 +101,16 @@ abstract class AbstractModel implements Model
     {
         $classname = get_class($object);
         return substr($classname,strrpos($classname,'\\')+1);
+    }
+
+    public function isAwareOf(string $name) : bool
+    {
+        return isset($this->callOptions[$name]);
+    }
+
+    protected function setAwareOf(string $name) : bool
+    {
+        $this->callOptions[$name] = true;
     }
 
     public function compile(
@@ -172,6 +189,10 @@ abstract class AbstractModel implements Model
         if($this->optimizer==null || $this->lossFunction==null) {
             throw new LogicException('Not yet compile');
         }
+        if($this->callOptions===null) {
+            throw new LogicException('Not yet initialized by constructor.');
+        }
+        
         $K = $this->backend;
         $mo = $K->localMatrixOperator();
         $localLA = $K->localLA();
@@ -521,8 +542,8 @@ abstract class AbstractModel implements Model
             return $this->graph['model'];
         }
         $model = $this;
-        $func = function($x,$training,$t) use ($model) {
-            return $model->forward($x,$training,$t);
+        $func = function($x,...$options) use ($model) {
+            return $model->forward($x,...$options);
         };
         //$options = ['alternateCreator'=>$this];
         //[$weights,$grads] = $this->initWeights();
@@ -530,7 +551,7 @@ abstract class AbstractModel implements Model
         //    $options['weights'] = $weights;
         //    $options['grads'] = $grads;
         //}
-        $this->graph['model'] = $this->builder->gradient->function(
+        $this->graph['model'] = $this->builder->gradient->Function(
             $func,alternateCreator:$this);
         return $this->graph['model'];
     }
@@ -632,8 +653,12 @@ abstract class AbstractModel implements Model
             $inputs = [$inputs];
         }
         $inputs = array_map(fn($x)=>$g->Variable($x),$inputs);
-        $inputs[] = $g->Variable(true);
-        $inputs[] = $g->Variable($trues);
+        if($this->isAwareOf('training')) {
+            $inputs['training'] = $g->Variable(true);
+        }
+        if($this->isAwareOf('trues')) {
+            $inputs['trues'] = $g->Variable($trues);
+        }
         $trues = $this->trueValuesFilter($trues);
         $model = $this->getModelGraph();
         $lossfunc = $this->lossFunction;
@@ -669,8 +694,12 @@ abstract class AbstractModel implements Model
             $inputs = [$inputs];
         }
         $inputs = array_map(fn($x)=>$g->Variable($x),$inputs);
-        $inputs[] = $g->Variable(false); // training
-        $inputs[] = $g->Variable($trues);
+        if($this->isAwareOf('training')) {
+            $inputs['training'] = $g->Variable(false); // training
+        }
+        if($this->isAwareOf('trues')) {
+            $inputs['trues'] = $g->Variable($trues);
+        }
 
         $trues = $this->trueValuesFilter($trues);
         $model = $this->getModelGraph();
@@ -690,8 +719,12 @@ abstract class AbstractModel implements Model
             $inputs = [$inputs];
         }
         $inputs = array_map(fn($x)=>$g->Variable($x),$inputs);
-        $inputs[] = $g->Variable(false); // training
-        $inputs[] = $g->Variable(false); // trues
+        if($this->isAwareOf('training')) {
+            $inputs['training'] = $g->Variable(false); // training
+        }
+        if($this->isAwareOf('trues')) {
+            $inputs['trues'] = $g->Variable(false); // trues
+        }
         $model = $this->getModelGraph();
         $predicts = $model(...$inputs);
         return $predicts->value();
@@ -715,6 +748,9 @@ abstract class AbstractModel implements Model
             } else {
                 $inputs[] = $inputShape;
             }
+        }
+        if($this->isAwareOf('training')) {
+            $inputs['training'] = false;
         }
         $this->forward(...$inputs);
     }

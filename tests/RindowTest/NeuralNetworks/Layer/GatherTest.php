@@ -146,7 +146,7 @@ class Test extends TestCase
         $copyIndexes = $K->copy($indexes);
         $outputsVariable = $nn->with($tape=$g->GradientTape(),
             function() use ($layer,$sources,$indexes) {
-                $outputsVariable = $layer->forward([$sources,$indexes], $training=true);
+                $outputsVariable = $layer->forward([$sources,$indexes]);
                 return $outputsVariable;
             }
         );
@@ -219,7 +219,7 @@ class Test extends TestCase
         $copyIndexes = $K->copy($indexes);
         $outputsVariable = $nn->with($tape=$g->GradientTape(),
             function() use ($layer,$sources,$indexes) {
-                $outputsVariable = $layer->forward([$sources,$indexes], $training=true);
+                $outputsVariable = $layer->forward([$sources,$indexes]);
                 return $outputsVariable;
             }
         );

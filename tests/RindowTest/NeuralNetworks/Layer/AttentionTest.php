@@ -129,8 +129,8 @@ class Test extends TestCase
         $copyInputs = [$K->copy($query),$K->copy($value)];
         [$outputsVariable,$scores] = $nn->with($tape=$g->GradientTape(),
             function() use ($layer,$inputs) {
-                [$outputsVariable,$scores] = $layer->forward($inputs, $training=true,
-                                ['return_attention_scores'=>true]);
+                [$outputsVariable,$scores] = $layer->forward($inputs,
+                                returnAttentionScores:true);
                 return [$outputsVariable,$scores];
             }
         );
@@ -187,4 +187,207 @@ class Test extends TestCase
             ]),
             $K->ndarray($dInputs[1])));
     }
+
+    public function testMaskBoth()
+    {
+        $mo = $this->newMatrixOperator();
+        $nn = $this->newNeuralNetworks($mo);
+        $K = $nn->backend();
+        $g = $nn->gradient();
+        $layer = new Attention($K);
+        $inputs = [
+            $g->Variable($K->zeros([2,2,3])),
+            $g->Variable($K->zeros([2,4,3])),
+        ];
+
+        $layer->build($inputs);
+
+        //
+        // forward
+        //
+        //  batch size 2
+        $query = $K->array([
+            [[1,0,0],[0,1,0]],
+            [[1,0,0],[0,1,0]],
+        ]);
+        $value = $K->array([
+            [[1,0,0],[0,1,0],[0,0,1],[0,0,0]],
+            [[1,0,0],[0,1,0],[0,0,1],[0,0,0]],
+        ]);
+        $queryMask = $K->array([
+            [true,false],
+            [false,true],
+        ]);
+        $valueMask = $K->array([
+            [false,false,true,true],
+            [false,true,true,false],
+        ]);
+        $inputs = [$query,$value];
+        $copyInputs = [$K->copy($query),$K->copy($value)];
+        [$outputsVariable,$scores] = $nn->with($tape=$g->GradientTape(),
+            function() use ($layer,$inputs,$queryMask,$valueMask) {
+                [$outputsVariable,$scores] = $layer->forward($inputs, mask:[$queryMask,$valueMask],
+                                returnAttentionScores:true);
+                return [$outputsVariable,$scores];
+            }
+        );
+        $outputs = $K->ndarray($outputsVariable);
+        //
+        $this->assertEquals([2,2,4],$scores->shape());
+        $this->assertEquals([2,2,3],$outputs->shape());
+        $this->assertEquals($copyInputs[0]->toArray(),$inputs[0]->toArray());
+        $this->assertEquals($copyInputs[1]->toArray(),$inputs[1]->toArray());
+        $this->assertTrue($mo->la()->isclose(
+            $mo->array(
+                [[[0.0,         0.0,        0.5,        0.5       ],
+                  [0.0,         0.0,        0.5,        0.5       ]],
+                 [[0.0,         0.5,        0.5,        0.0       ],
+                  [0.0,         0.7310586,  0.26894143, 0.0       ]]]         
+            ),
+            $scores = $K->ndarray($scores)
+        ));
+        $this->assertTrue($mo->la()->isclose(
+            $mo->array(
+                [[[0.0,         0.0,        0.5       ],
+                  [0.0,         0.0,        0.0       ]],
+                 [[0.0,         0.0,        0.0       ],
+                  [0.0,         0.7310586,  0.26894143]]]
+            ),
+            $outputs = $K->ndarray($outputs)
+        ));
+        //
+        // backward
+        //
+        // 2 batch
+        $dOutputs = $K->ones($outputs->shape());
+
+        $copydOutputs = $K->copy(
+            $dOutputs);
+        $dInputs = $outputsVariable->creator()->backward([$dOutputs]);
+        // 2 batch
+        $this->assertCount(2,$dInputs);
+        $this->assertEquals([2,2,3],$dInputs[0]->shape());
+        $this->assertEquals([2,4,3],$dInputs[1]->shape());
+        $this->assertEquals($copydOutputs->toArray(),$dOutputs->toArray());
+        $this->assertTrue($mo->la()->isclose(
+            $mo->array(
+                [[[0.0,   0.0,   0.25],
+                  [0.0,   0.0,   0.0 ]],
+                 [[0.0,   0.0,   0.0 ],
+                  [0.0,   0.0,   0.0 ]]]
+            ),
+            $K->ndarray($dInputs[0])));
+        $this->assertTrue($mo->la()->isclose(
+            $mo->array(
+                [[[0.0,        0.0,        0.0       ],
+                  [0.0,        0.0,        0.0       ],
+                  [0.75,       0.5,        0.5       ],
+                  [0.25,       0.5,        0.5       ]],
+                 [[0.0,        0.0,        0.0       ],
+                  [0.7310586,  0.7310586,  0.7310586 ],
+                  [0.26894143, 0.26894143, 0.26894143],
+                  [0.0,        0.0,        0.0       ]]]                
+            ),
+            $K->ndarray($dInputs[1])));
+    }
+
+    public function testMaskOneSide()
+    {
+        $mo = $this->newMatrixOperator();
+        $nn = $this->newNeuralNetworks($mo);
+        $K = $nn->backend();
+        $g = $nn->gradient();
+        $layer = new Attention($K);
+        $inputs = [
+            $g->Variable($K->zeros([2,2,3])),
+            $g->Variable($K->zeros([2,4,3])),
+        ];
+
+        $layer->build($inputs);
+
+        $query = $K->array([
+            [[1,0,0],[0,1,0]],
+            [[1,0,0],[0,1,0]],
+        ]);
+        $value = $K->array([
+            [[1,0,0],[0,1,0],[0,0,1],[0,0,0]],
+            [[1,0,0],[0,1,0],[0,0,1],[0,0,0]],
+        ]);
+        $queryMask = $K->array([
+            [true,false],
+            [false,true],
+        ]);
+        $valueMask = $K->array([
+            [false,false,true,true],
+            [false,true,true,false],
+        ]);
+        $inputs = [$query,$value];
+        $copyInputs = [$K->copy($query),$K->copy($value)];
+
+        //
+        //  queryMask
+        //
+        // forward
+        //
+        [$outputsVariable,$scores] = $nn->with($tape=$g->GradientTape(),
+            function() use ($layer,$inputs,$queryMask,$valueMask) {
+                [$outputsVariable,$scores] = $layer->forward($inputs, mask:[$queryMask,null],
+                                returnAttentionScores:true);
+                return [$outputsVariable,$scores];
+            }
+        );
+        $outputs = $K->ndarray($outputsVariable);
+        //
+        $this->assertEquals([2,2,4],$scores->shape());
+        $this->assertEquals([2,2,3],$outputs->shape());
+        $this->assertEquals($copyInputs[0]->toArray(),$inputs[0]->toArray());
+        $this->assertEquals($copyInputs[1]->toArray(),$inputs[1]->toArray());
+        //
+        // backward
+        //
+        $dOutputs = $K->ones($outputs->shape());
+
+        $copydOutputs = $K->copy(
+            $dOutputs);
+        $dInputs = $outputsVariable->creator()->backward([$dOutputs]);
+        // 2 batch
+        $this->assertCount(2,$dInputs);
+        $this->assertEquals([2,2,3],$dInputs[0]->shape());
+        $this->assertEquals([2,4,3],$dInputs[1]->shape());
+        $this->assertEquals($copydOutputs->toArray(),$dOutputs->toArray());
+
+
+        //
+        //  valueMask
+        //
+        // forward
+        //
+        [$outputsVariable,$scores] = $nn->with($tape=$g->GradientTape(),
+            function() use ($layer,$inputs,$queryMask,$valueMask) {
+                [$outputsVariable,$scores] = $layer->forward($inputs, mask:[null,$valueMask],
+                                returnAttentionScores:true);
+                return [$outputsVariable,$scores];
+            }
+        );
+        $outputs = $K->ndarray($outputsVariable);
+        //
+        $this->assertEquals([2,2,4],$scores->shape());
+        $this->assertEquals([2,2,3],$outputs->shape());
+        $this->assertEquals($copyInputs[0]->toArray(),$inputs[0]->toArray());
+        $this->assertEquals($copyInputs[1]->toArray(),$inputs[1]->toArray());
+        //
+        // backward
+        //
+        $dOutputs = $K->ones($outputs->shape());
+
+        $copydOutputs = $K->copy(
+            $dOutputs);
+        $dInputs = $outputsVariable->creator()->backward([$dOutputs]);
+        // 2 batch
+        $this->assertCount(2,$dInputs);
+        $this->assertEquals([2,2,3],$dInputs[0]->shape());
+        $this->assertEquals([2,4,3],$dInputs[1]->shape());
+        $this->assertEquals($copydOutputs->toArray(),$dOutputs->toArray());
+    }
+
 }

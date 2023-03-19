@@ -19,6 +19,7 @@ class Variable implements VariableInterface
     protected $value;
     protected $creator;
     protected $generation=0;
+    protected $unbackpropagatable;
     protected $mask;
 
     public function __construct(
@@ -28,15 +29,16 @@ class Variable implements VariableInterface
         bool $reference=null,
         bool $trainable=null,
         bool $undetermined=null,
+        bool $unbackpropagatable=null,
         NDArray $mask=null,
     )
     {
         $this->backend = $backend;
-        $this->undetermined = $undetermined;
+        $this->undetermined = $undetermined ?? false;
         $this->name = $name;
         $this->trainable = $trainable ?? true;
-        $undetermined = $undetermined ?? false;
-        if(!$undetermined) {
+        $this->unbackpropagatable = $unbackpropagatable ?? false;
+        if(!$this->undetermined) {
             $this->assign($value, reference:$reference);
         }
     }
@@ -84,6 +86,11 @@ class Variable implements VariableInterface
     public function isUndetermined() : bool
     {
         return $this->undetermined;
+    }
+
+    public function isbackpropagatable() : bool
+    {
+        return !$this->unbackpropagatable;
     }
 
     public function value()
