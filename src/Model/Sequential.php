@@ -6,6 +6,7 @@ use UnexpectedValueException;
 use LogicException;
 use Rindow\NeuralNetworks\Gradient\Module;
 use Rindow\NeuralNetworks\Gradient\Variable;
+use Rindow\NeuralNetworks\Layer\Layer;
 use Interop\Polite\Math\Matrix\NDArray;
 
 
