@@ -199,7 +199,7 @@ class MultiHeadAttention extends AbstractModel
     protected function split_heads($x, $batch_size)
     {
         $g = $this->gradient;
-        $x = $g->reshape($x, [$batch_size, -1, $this->num_heads, $this->depth]);
+        $x = $g->reshape($x, [$batch_size, 1, $this->num_heads, $this->depth]);
         return $g->transpose($x, perm:[0, 2, 1, 3]);
     }
 

@@ -2110,6 +2110,7 @@ class Test extends TestCase
 
     public function testAddCustomModel()
     {
+        Dense::$nameNumbering = 0;
         $mo = $this->newMatrixOperator();
         $nn = $this->newNeuralNetworks($mo);
         $K = $nn->backend();
