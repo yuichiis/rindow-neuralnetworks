@@ -15,6 +15,8 @@ class Attention extends AbstractLayerBase
     use GradientUtils;
     protected $backend;
     protected $useScale;
+    protected $scale;
+    protected $dScale;
     protected $scoresShape;
     protected ?array $unbackpropagatables = null;
 
@@ -40,6 +42,11 @@ class Attention extends AbstractLayerBase
         $this->backend = $K = $backend;
         $this->inputShape = $input_shapes;
         $this->useScale = $use_scale;
+        if($this->useScale) {
+            $this->scale = $K->array(1.0);
+            $this->dScale = $K->array(0.0);
+            $this->allocateWeights(1);
+        }
         $this->initName($name,'attention');
     }
 
@@ -73,6 +80,25 @@ class Attention extends AbstractLayerBase
         }
         $this->outputShape = [$tq,$dim];
         $this->scoresShape = [$tq,$tv];
+        $this->syncWeightVariables();
+    }
+
+    public function getParams() : array
+    {
+        if($this->useScale) {
+            return [$this->scale];
+        } else {
+            return [];
+        }
+    }
+
+    public function getGrads() : array
+    {
+        if($this->useScale) {
+            return [$this->dScale];
+        } else {
+            return [];
+        }
     }
 
     public function getConfig() : array
@@ -184,11 +210,10 @@ class Attention extends AbstractLayerBase
         
         if($this->useScale) {
             // scores = scores / sqrt(qk) 
-            $qk = $key->shape();
-            $qk = array_pop($qk);
-            $scale = 1/sqrt($qk);
+            $scale = $K->scalar($this->scale);
             $scores = $K->update_scale($scores,$scale);
             $container->scale = $scale;
+            $container->scores = $K->copy($scores);
         }
         $queryMask = null;
         $valueMask = null;
@@ -196,18 +221,24 @@ class Attention extends AbstractLayerBase
             [$queryMask,$valueMask] = $mask;
         }
         if($valueMask) {
-            // valueMask = [batch_size, Tv] => [Tv, batch_size] 
-            // scores = [batch_size, Tq, Tv] => [Tv, batch_size, Tq] => [Tq, Tv, batch_size]
+            // scores = [batch_size, Tq, Tv] => [Tq, batch_size, Tv]
+            $scoresShape = $scores->shape();
+            $origScoreShape = $scoresShape;
+            $Tv = array_pop($scoresShape);
+            $Tq = array_pop($scoresShape);
+            $scores = $scores->reshape([(int)array_product($scoresShape),$Tq,$Tv]);
+            $scores = $K->transpose($scores,perm:[1,0,2]);
+            $scores = $scores->reshape(array_merge([$Tq],$scoresShape,[$Tv]));
+            // broadcast mask
+            // scores = [Tq, batch_size, Tv]
+            // valueMask = [batch_size, Tv] 
             $valueMask = $K->cast($K->equal($valueMask,$K->zerosLike($valueMask)),$scores->dtype());
-            $valueMask = $K->transpose($valueMask);
-            $valueMask = $valueMask->reshape([(int)array_product($valueMask->shape())]);
-            $maskScaledValue = $K->scale(-1e9,$valueMask);
-            [$batchSize,$Tq,$Tv] = $scores->shape();
-            $scores = $K->transpose($scores->reshape([$batchSize*$Tq, $Tv]));
-            $scores = $scores->reshape([$Tv*$batchSize, $Tq]);
-            $scores = $K->update_add($scores,$maskScaledValue,trans:true);
-            $scores = $K->transpose($scores->reshape([$Tv,$batchSize*$Tq]));
-            $scores = $scores->reshape([$batchSize, $Tq, $Tv]);
+            $valueMask = $K->scale(-1e9,$valueMask);
+            $K->update_add($scores,$valueMask);
+            // scores = [Tq, batch_size, Tv] => [batch_size, Tq, Tv]
+            $scores = $scores->reshape([$Tq,(int)array_product($scoresShape),$Tv]);
+            $scores = $K->transpose($scores,perm:[1,0,2]);
+            $scores = $scores->reshape($origScoreShape);
         }
         // weights = softmax(scores)
         $attentionWeight = $K->softmax($scores);
@@ -269,7 +300,13 @@ class Attention extends AbstractLayerBase
         // valueMask is dAdd so it is passed through.
 
         if(isset($container->scale)) {
-            // dScores = dScores / sqrt(qk) 
+            // dScale  = sum(dScales * scales)
+            // dScores = dScores * scale 
+            $dScale = $K->sum($K->mul($dScores,$container->scores));
+            if(is_scalar($dScale)) {
+                $dScale = $K->array($dScale);
+            }
+            $K->copy($dScale,$this->dScale);
             $K->update_scale($dScores,$container->scale);
         }
 

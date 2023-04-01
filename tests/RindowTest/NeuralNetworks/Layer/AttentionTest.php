@@ -8,6 +8,7 @@ use Rindow\NeuralNetworks\Backend\RindowBlas\Backend;
 use Rindow\NeuralNetworks\Builder\NeuralNetworks;
 use Rindow\NeuralNetworks\Layer\Attention;
 use InvalidArgumentException;
+use WeakMap;
 
 class Test extends TestCase
 {
@@ -390,4 +391,90 @@ class Test extends TestCase
         $this->assertEquals($copydOutputs->toArray(),$dOutputs->toArray());
     }
 
+    public function testUseScale()
+    {
+        $mo = $this->newMatrixOperator();
+        $nn = $this->newNeuralNetworks($mo);
+        $K = $nn->backend();
+        $g = $nn->gradient();
+        $layer = new Attention($K,use_scale:true);
+        $inputs = [
+            $g->Variable($K->zeros([2,2,3])),
+            $g->Variable($K->zeros([2,4,3])),
+        ];
+        $layer->build($inputs);
+
+        //
+        // forward
+        //
+        $query = $K->array(
+            [[[1,0,0],[0,1,0]],
+             [[1,0,0],[0,1,0]]]
+        );
+        $value = $K->array(
+            [[[1,0,0],[0,1,0],[0,0,1],[0,0,0]],
+             [[1,0,0],[0,1,0],[0,0,1],[0,0,0]]]
+        );
+        $inputs = [$query,$value];
+        $copyInputs = [$K->copy($query),$K->copy($value)];
+        [$outputsVariable,$scoresVariable] = $nn->with($tape=$g->GradientTape(),
+            function() use ($layer,$inputs) {
+                [$outputsVariable,$scoresVariable] = $layer->forward($inputs,
+                                returnAttentionScores:true);
+                return [$outputsVariable,$scoresVariable];
+            }
+        );
+        $outputs = $K->ndarray($outputsVariable);
+        $scores = $K->ndarray($scoresVariable);
+
+        //
+        $this->assertEquals([2,2,4],$scores->shape());
+        $this->assertEquals([2,2,3],$outputs->shape());
+        $this->assertEquals($copyInputs[0]->toArray(),$inputs[0]->toArray());
+        $this->assertEquals($copyInputs[1]->toArray(),$inputs[1]->toArray());
+        $this->assertTrue($mo->la()->isclose(
+            $mo->array(
+                [[[0.47536692, 0.17487772, 0.17487772, 0.17487772],
+                  [0.17487772, 0.47536692, 0.17487772, 0.17487772]],
+                 [[0.47536692, 0.17487772, 0.17487772, 0.17487772],
+                  [0.17487772, 0.47536692, 0.17487772, 0.17487772]]]
+            ),
+            $K->ndarray($scores)
+        ));
+        $this->assertTrue($mo->la()->isclose(
+            $mo->array(
+                [[[0.47536692, 0.17487772, 0.17487772],
+                  [0.17487772, 0.47536692, 0.17487772]],
+                 [[0.47536692, 0.17487772, 0.17487772],
+                  [0.17487772, 0.47536692, 0.17487772]]]
+            ),
+            $K->ndarray($outputs)
+        ));
+
+        //
+        // backward
+        //
+        $dOutputs = [
+            $K->ones($outputs->shape()),
+            $K->ones($scores->shape()),
+        ];
+
+        $variables = $layer->trainableVariables();
+        $grads = new WeakMap();
+        $copydOutputs = [];
+        $copydOutputs[] = $K->copy($dOutputs[0]);
+        $copydOutputs[] = $K->copy($dOutputs[1]);
+        $dInputs = $outputsVariable->creator()->backward($dOutputs,$grads,$variables);
+        // 2 batch
+        $this->assertCount(2,$dInputs);
+        $this->assertEquals([2,2,3],$dInputs[0]->shape());
+        $this->assertEquals([2,4,3],$dInputs[1]->shape());
+        $this->assertEquals($copydOutputs[0]->toArray(),$dOutputs[0]->toArray());
+        $this->assertEquals($copydOutputs[1]->toArray(),$dOutputs[1]->toArray());
+
+        $this->assertCount(1,$variables);
+        $this->assertCount(1,$grads);
+        $this->assertEquals(1.0, $K->scalar($variables[0]->value()));
+        $this->assertLessThan(1e-6,(0.33252418-$K->scalar($grads[$variables[0]])));
+    }
 }

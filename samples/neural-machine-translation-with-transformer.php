@@ -196,10 +196,10 @@ class MultiHeadAttention extends AbstractModel
      * Split the last dimension into (num_heads, depth).
      * Transpose the result such that the shape is (batch_size, num_heads, seq_len, depth)
      */
-    protected function split_heads($x, $batch_size)
+    protected function split_heads($x)
     {
         $g = $this->gradient;
-        $x = $g->reshape($x, [$batch_size, 1, $this->num_heads, $this->depth]);
+        $x = $g->reshape($x, [0, -1, $this->num_heads, $this->depth]);
         return $g->transpose($x, perm:[0, 2, 1, 3]);
     }
 
@@ -207,15 +207,13 @@ class MultiHeadAttention extends AbstractModel
     {
         $g = $this->gradient;
 
-        $batch_size = $q->shape()[0];
-
         $q = $this->wq->forward($q);  # (batch_size, seq_len, depth)
         $k = $this->wk->forward($k);  # (batch_size, seq_len, depth)
         $v = $this->wv->forward($v);  # (batch_size, seq_len, depth)
     
-        $q = $this->split_heads($q, $batch_size);  # (batch_size, num_heads, seq_len_q, depth)
-        $k = $this->split_heads($k, $batch_size);  # (batch_size, num_heads, seq_len_k, depth)
-        $v = $this->split_heads($v, $batch_size);  # (batch_size, num_heads, seq_len_v, depth)
+        $q = $this->split_heads($q);  # (batch_size, num_heads, seq_len_q, depth)
+        $k = $this->split_heads($k);  # (batch_size, num_heads, seq_len_k, depth)
+        $v = $this->split_heads($v);  # (batch_size, num_heads, seq_len_v, depth)
     
         # scaled_attention.shape == (batch_size, num_heads, seq_len_q, depth)
         # attention_weights.shape == (batch_size, num_heads, seq_len_q, seq_len_k)
@@ -225,7 +223,7 @@ class MultiHeadAttention extends AbstractModel
         $scaled_attention = $g->transpose($scaled_attention, perm:[0, 2, 1, 3]);  # (batch_size, seq_len_q, num_heads, depth)
     
         $concat_attention = $g->reshape($scaled_attention,
-                                      [$batch_size, -1, $this->depth]);  # (batch_size, seq_len_q, depth)
+                                      [0, -1, $this->depth]);  # (batch_size, seq_len_q, depth)
     
         $output = $this->dense($concat_attention);  # (batch_size, seq_len_q, depth)
     
@@ -317,7 +315,7 @@ class Encoder extends AbstractModel
         $this->vocabSize = $vocabSize;
         $this->wordVectSize = $wordVectSize;
         $this->units = $units;
-        $this->posEncoding = $this->positionalEncoding($length=2048, $depth=$wordVectSize);
+        $this->posEncoding = $this->positionalEncoding($length=256, $depth=$wordVectSize);
         $this->embedding = $builder->layers()->Embedding(
             $vocabSize,$wordVectSize,
             input_length:$inputLength
@@ -371,7 +369,7 @@ class Encoder extends AbstractModel
         return $y;
     }
 
-    public function positionalEncoding(int $length, int $depth) : NDArray
+    public function positionalEncoding(int $maxLength, int $depth) : NDArray
     {
         $K = $this->backend;
         if($depth%2 != 0) {
@@ -379,12 +377,13 @@ class Encoder extends AbstractModel
         }
         $depth = $depth/2;
 
-        $positions = $K->repeat($this->range(0,$length),$depth,axis:1); # [seq, depth]
-        $depths = $K->scale(1/$depth,$this->range(0,$depth));           # [depth]
-        $angleRates = $K->reciprocal($this->pow(10000,$depths));        # [depth]
-        $angleRads = $K->mul($positions,$angleRates);                   # [pos, depth]
+        $positions = $K->repeat(                                # [maxLength, depth]
+            $this->range(0,$maxLength),$depth,axis:1);
+        $depths = $K->scale(1/$depth,$this->range(0,$depth));   # [depth]
+        $angleRates = $K->reciprocal($this->pow(10000,$depths));# [depth]
+        $angleRads = $K->mul($positions,$angleRates);           # [maxLength, depth]
       
-        $posEncoding = $K->concat(
+        $posEncoding = $K->concat(                              # [2 x maxLength, depth]
             [$K->sin($angleRads), $K->cos($angleRads)],
             $axis=-1); 
       
@@ -399,14 +398,15 @@ class Encoder extends AbstractModel
     {
         $g = $this->gradient;
 
-        $length = $inputs->shape()[1];
+        $inputShape = $g->shape($inputs);
+        $length = $g->offsetGet($inputShape,1);
 
         $x = $this->embedding->forward($inputs,$training);
 
         // positional Encoding
         $x = $g->scale(sqrt($this->wordVectSize), $x);
-        $pos_encoding = $this->pos_encoding[[0,$length-1]];
-        $x = $g->add($x, $g->expandDims($pos_encoding),0); // broadcast add
+        $pos_encoding = $g->slice($this->pos_encoding,[0],[$length]);
+        $x = $g->add($x, $pos_encoding); // broadcast add
         # Add dropout.
         $x = $this->dropout->forward($x,$training);
 

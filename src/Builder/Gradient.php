@@ -22,6 +22,8 @@ use Rindow\NeuralNetworks\Gradient\Func\ClipByValue;
 use Rindow\NeuralNetworks\Gradient\Func\Equal;
 use Rindow\NeuralNetworks\Gradient\Func\NotEqual;
 use Rindow\NeuralNetworks\Gradient\Func\ZerosLike;
+use Rindow\NeuralNetworks\Gradient\Func\Reshape;
+use Rindow\NeuralNetworks\Gradient\Func\Transpose;
 
 class Gradient
 {
@@ -193,6 +195,30 @@ class Gradient
     public function zerosLike($x)
     {
         $func = new ZerosLike($this->backend);
+        return $func($x);
+    }
+
+    public function reshape($x, NDArray|array $shape)
+    {
+        if(is_array($shape)) {
+            if(count($shape)==0) {
+                $shape = 1;
+            }
+            $shape = $this->backend->array($shape,NDArray::int32);
+        }
+        $func = new Reshape($this->backend);
+        return $func($x,$shape);
+    }
+
+    public function transpose(
+        $x,
+        array $perm=null,
+    )
+    {
+        $func = new Transpose(
+            $this->backend,
+            $perm,
+        );
         return $func($x);
     }
 

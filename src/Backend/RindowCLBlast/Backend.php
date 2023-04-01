@@ -339,7 +339,7 @@ class Backend
         return $this->la->astype($x,$dtype);
     }
 
-    public function transpose(NDArray $x)
+    public function transpose(NDArray $x,NDArray|array $perm=null)
     {
         return $this->la->transpose($x);
     }
@@ -347,19 +347,19 @@ class Backend
     public function batch_transpose(NDArray $x)
     {
         $la = $this->la;
-        if($x->ndim()!=3) {
+        if($x->ndim()>=3) {
             throw new InvalidArgumentException('The shape of X must be an array of three dimensions.');
         }
+        $size = $x->size();
         $shape = $x->shape();
+        $r0 = array_pop($shape);
+        $r1 = array_pop($shape);
         $repeats = array_shift($shape);
-        $feature = array_pop($shape);
-        $size = (int)array_product($shape);
-        $flattenX = $x->reshape([$repeats,$size,$feature]);
-        $y = $la->alloc([$repeats,$feature,$size],$x->dtype());
-        for($i=0;$i<$repeats;$i++) {
-            $la->transpose($flattenX[$i],$y[$i]);
-        }
-        return $y->reshape(array_merge([$repeats],[$feature],$shape));
+        $flattenX = $x->reshape([$repeats,$r1,$r0]);
+        $y = $la->transpose($flattenX,perm:[0,2,1]);
+        array_push($shape,$r0,$r1);
+        $y = $y->reshape($shape);
+        return $y;
     }
 
     public function add(NDArray $x, NDArray $y)
