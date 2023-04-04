@@ -3,6 +3,7 @@ require __DIR__.'/../vendor/autoload.php';
 
 use Interop\Polite\Math\Matrix\NDArray;
 use Rindow\NeuralNetworks\Layer\AbstractRNNLayer;
+use Rindow\NeuralNetworks\Layer\Layer;
 use Rindow\NeuralNetworks\Model\AbstractModel;
 use Rindow\NeuralNetworks\Gradient\Variable;
 use Rindow\Math\Matrix\MatrixOperator;
@@ -199,6 +200,9 @@ class MultiHeadAttention extends AbstractModel
     protected function split_heads($x)
     {
         $g = $this->gradient;
+        if($x->ndim()!=3) {
+            throw new InvalidArgumentException('input array must be 3D NDArray');
+        }
         $x = $g->reshape($x, [0, -1, $this->num_heads, $this->depth]);
         return $g->transpose($x, perm:[0, 2, 1, 3]);
     }
@@ -210,7 +214,6 @@ class MultiHeadAttention extends AbstractModel
         $q = $this->wq->forward($q);  # (batch_size, seq_len, depth)
         $k = $this->wk->forward($k);  # (batch_size, seq_len, depth)
         $v = $this->wv->forward($v);  # (batch_size, seq_len, depth)
-    
         $q = $this->split_heads($q);  # (batch_size, num_heads, seq_len_q, depth)
         $k = $this->split_heads($k);  # (batch_size, num_heads, seq_len_k, depth)
         $v = $this->split_heads($v);  # (batch_size, num_heads, seq_len_v, depth)
@@ -218,14 +221,14 @@ class MultiHeadAttention extends AbstractModel
         # scaled_attention.shape == (batch_size, num_heads, seq_len_q, depth)
         # attention_weights.shape == (batch_size, num_heads, seq_len_q, seq_len_k)
         [$scaled_attention, $attention_weights] = 
-            $this->attention->forward([$q, $k, $v], returnAttentionScores:true, mask:$mask);
+            $this->attention->forward([$q, $v, $k], returnAttentionScores:true, mask:$mask);
     
         $scaled_attention = $g->transpose($scaled_attention, perm:[0, 2, 1, 3]);  # (batch_size, seq_len_q, num_heads, depth)
     
         $concat_attention = $g->reshape($scaled_attention,
                                       [0, -1, $this->depth]);  # (batch_size, seq_len_q, depth)
     
-        $output = $this->dense($concat_attention);  # (batch_size, seq_len_q, depth)
+        $output = $this->dense->forward($concat_attention);  # (batch_size, seq_len_q, depth)
     
         return [$output, $attention_weights];
     }
@@ -468,17 +471,17 @@ class DecoderLayer extends AbstractModel
     
         [$attn2, $attn_weights_block2] = $this->mha2->forward(
             $enc_output, $enc_output, $out1, $padding_mask);  # (batch_size, target_seq_len, d_model)
-        attn2 = self.dropout2(attn2, training=training);
-        out2 = self.layernorm2(attn2 + out1)  # (batch_size, target_seq_len, d_model)
+        $attn2 = $this->dropout2($attn2, training:$training);
+        $out2 = $this->layernorm2($g->add($attn2, $out1));  # (batch_size, target_seq_len, d_model)
     
-        ffn_output = self.ffn(out2)  # (batch_size, target_seq_len, d_model)
-        ffn_output = self.dropout3(ffn_output, training=training)
-        out3 = self.layernorm3(ffn_output + out2)  # (batch_size, target_seq_len, d_model)
+        $ffn_output = $this->ffn($out2);  # (batch_size, target_seq_len, d_model)
+        $ffn_output = $this->dropout3($ffn_output, training:$training);
+        $out3 = $this->layernorm3($g->add($ffn_output, $out2));  # (batch_size, target_seq_len, d_model)
     
-        return out3, attn_weights_block1, attn_weights_block2
+        return [$out3, $attn_weights_block1, $attn_weights_block2];
     }
 }
-  
+
 class Decoder extends AbstractModel
 {
     protected $backend;
@@ -614,35 +617,42 @@ class Transformer extends AbstractModel
         $this->plt = $plt;
     }
 
-    def create_padding_mask(seq):
-        seq = tf.cast(tf.math.equal(seq, 0), tf.float32)
+    protected function create_padding_mask(Variable $seq) : Variable
+    {
+        $seq = $g->notEqual($seq, $g->zerosLike($seq)); # dtype is int32. 1:pass 0:masking
 
         # add extra dimensions to add the padding
         # to the attention logits.
-        return seq[:, tf.newaxis, tf.newaxis, :]  # (batch_size, 1, 1, seq_len)
+        return $g->reshape($seq,[0, 1, 1, -1]); # (batch_size, 1, 1, seq_len)
+    }
 
-    def create_look_ahead_mask(size):
-        mask = 1 - tf.linalg.band_part(tf.ones((size, size)), -1, 0)
-        return mask  # (seq_len, seq_len)
+    protected function create_look_ahead_mask(int $size) : NDArray
+    {
+        $K = $this->backend;
+        $mask = 1 - $K->band_part( $K->ones([$size, $size]), -1, 0); # Lower triangular part is one.
+        return $mask;  # (seq_len, seq_len)
+    }
 
-    def create_masks(self, inp, tar):
+    protected function create_masks(Variable $inp, Variable $tar) : array
+    {
         # Encoder padding mask
-        enc_padding_mask = create_padding_mask(inp)
+        $enc_padding_mask = $this->create_padding_mask($inp);
     
         # Used in the 2nd attention block in the decoder.
         # This padding mask is used to mask the encoder outputs.
-        dec_padding_mask = create_padding_mask(inp)
+        $dec_padding_mask = $this->create_padding_mask($inp);
     
         # Used in the 1st attention block in the decoder.
         # It is used to pad and mask future tokens in the input received by
         # the decoder.
-        look_ahead_mask = create_look_ahead_mask(tf.shape(tar)[1])
-        dec_target_padding_mask = create_padding_mask(tar)
-        look_ahead_mask = tf.maximum(dec_target_padding_mask, look_ahead_mask)
+        $look_ahead_mask = $this->create_look_ahead_mask(tf.shape(tar)[1]);
+        $dec_target_padding_mask = $this->create_padding_mask($tar);
+        $look_ahead_mask = tf.maximum($dec_target_padding_mask, $look_ahead_mask);
     
-        return enc_padding_mask, look_ahead_mask, dec_padding_mask
+        return [$enc_padding_mask, $look_ahead_mask, $dec_padding_mask];
+    }
 
-    protected function call($inputs, $training=null $trues=null)
+    protected function call($inputs, $training=null, $trues=null)
     {
         $K = $this->backend;
         [$encOutputs,$states] = $this->encoder->forward($inputs,$training);
@@ -744,6 +754,9 @@ class Transformer extends AbstractModel
         $plt->yticks($this->mo->arange(count($predictedSentence)),$predictedSentence);
     }
 }
+
+
+return;
 
 $numExamples=20000;#30000
 $numWords=1024;#null;

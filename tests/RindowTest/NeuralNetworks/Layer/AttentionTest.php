@@ -477,4 +477,65 @@ class Test extends TestCase
         $this->assertEquals(1.0, $K->scalar($variables[0]->value()));
         $this->assertLessThan(1e-6,(0.33252418-$K->scalar($grads[$variables[0]])));
     }
+
+    public function testMultiHead()
+    {
+        $mo = $this->newMatrixOperator();
+        $nn = $this->newNeuralNetworks($mo);
+        $K = $nn->backend();
+        $g = $nn->gradient();
+        $layer = new Attention($K,use_scale:true);
+        $inputs = [
+            $g->Variable($K->zeros([2,4,2,2,3])),
+            $g->Variable($K->zeros([2,4,2,4,3])),
+        ];
+        $layer->build($inputs);
+
+        //
+        // forward
+        //
+        $query = $K->ones(
+            $inputs[0]->shape()
+        );
+        $value = $K->ones(
+            $inputs[1]->shape()
+        );
+        $inputs = [$query,$value];
+        $copyInputs = [$K->copy($query),$K->copy($value)];
+        [$outputsVariable,$scoresVariable] = $nn->with($tape=$g->GradientTape(),
+            function() use ($layer,$inputs) {
+                [$outputsVariable,$scoresVariable] = $layer->forward($inputs,
+                                returnAttentionScores:true);
+                return [$outputsVariable,$scoresVariable];
+            }
+        );
+        $outputs = $K->ndarray($outputsVariable);
+        $scores = $K->ndarray($scoresVariable);
+
+        //
+        $this->assertEquals([2,4,2,2,4],$scores->shape());
+        $this->assertEquals([2,4,2,2,3],$outputs->shape());
+        //
+        // backward
+        //
+        $dOutputs = [
+            $K->ones($outputs->shape()),
+            $K->ones($scores->shape()),
+        ];
+
+        $variables = $layer->trainableVariables();
+        $grads = new WeakMap();
+        $copydOutputs = [];
+        $copydOutputs[] = $K->copy($dOutputs[0]);
+        $copydOutputs[] = $K->copy($dOutputs[1]);
+        $dInputs = $outputsVariable->creator()->backward($dOutputs,$grads,$variables);
+        // 2 batch
+        $this->assertCount(2,$dInputs);
+        $this->assertEquals([2,4,2,2,3],$dInputs[0]->shape());
+        $this->assertEquals([2,4,2,4,3],$dInputs[1]->shape());
+
+        $this->assertCount(1,$variables);
+        $this->assertCount(1,$grads);
+    }
+
 }

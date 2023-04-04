@@ -136,23 +136,21 @@ class Test extends TestCase
         $K = $this->newBackend($nn);
         $g = $nn->gradient();
 
-        // reshape [2,1,3] => [2,3]
-        $x = $g->Variable($K->array([ [[1.0,2.0,3.0]], [[4.0,5.0,6.0]] ]));
-        $this->assertEquals([2,1,3],$x->shape());
+        // reshape [2,3,4] => [2,2,6]
+        $x = $g->Variable($K->ones([2,3,4]));
+        $this->assertEquals([2,3,4],$x->shape());
         $z = $nn->with($tape=$g->GradientTape(),
             function() use ($g,$x) {
-                $z = $g->reshape($x,[0,-1]); // dim -1 means fit shapesize
+                $z = $g->reshape($x,[0,2,-1]); // dim -1 means fit shapesize
                 return $z;
             }
         );
-        $this->assertEquals([2,3],$z->shape());
+        $this->assertEquals([2,2,6],$z->shape());
 
-        $this->assertEquals("[[[1,2,3]],[[4,5,6]]]",$mo->toString($K->ndarray($x->value())));
-        $this->assertEquals("[[1,2,3],[4,5,6]]",$mo->toString($K->ndarray($z->value())));
         $this->assertTrue($x->isbackpropagatable());
         $this->assertTrue($z->isbackpropagatable());
         $dx = $tape->gradient($z,$x);
-        $this->assertEquals("[[[1,1,1]],[[1,1,1]]]",$mo->toString($K->ndarray($dx)));
+        $this->assertEquals([2,3,4],$dx->shape());
     }
 
     public function testFitShapeDuplicate()

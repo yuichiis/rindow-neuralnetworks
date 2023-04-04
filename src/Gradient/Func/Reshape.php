@@ -33,27 +33,28 @@ class Reshape extends AbstractFunction
             return [$out];
         }
         $tmpShape = [];
-        $allSize = 1;
+        $fixedSize = 1;
         $countFlatten = 0;
         foreach($shape as $dim) {
             if($dim==0) {
                 $dim = $inpShape[0];
             }
             if($dim!=-1) {
-                $allSize *= $dim;
+                $fixedSize *= $dim;
             } else {
                 $countFlatten++;
             }
             $tmpShape[] = $dim;
         }
         $inpSize = (int)array_product($inpShape);
-        if($inpSize%$allSize != 0 || $countFlatten>1) {
+        if($inpSize%$fixedSize != 0 || $countFlatten>1) {
+            $strTarShape = array_map(fn($x)=>($x==-1)?'?':$x, $tmpShape);
             throw new InvalidArgumentException(
                 'Shape is an invalid size specification.'.
                 ' input-shape:['.implode(',',$inpShape).'],'.
-                ' target-shape:['.implode(',',$shape->toArray()).']');
+                ' target-shape:['.implode(',',$strTarShape).']');
         }
-        $flatten = (int)($inpSize/$allSize);
+        $flatten = (int)($inpSize/$fixedSize);
         foreach($tmpShape as $dim) {
             if($dim==-1) {
                 $targetShape[] = $flatten;

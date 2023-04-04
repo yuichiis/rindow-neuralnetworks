@@ -20,6 +20,7 @@ use Rindow\NeuralNetworks\Gradient\Func\ReduceMean;
 use Rindow\NeuralNetworks\Gradient\Func\ReduceSum;
 use Rindow\NeuralNetworks\Gradient\Func\ClipByValue;
 use Rindow\NeuralNetworks\Gradient\Func\Equal;
+use Rindow\NeuralNetworks\Gradient\Func\Cast;
 use Rindow\NeuralNetworks\Gradient\Func\NotEqual;
 use Rindow\NeuralNetworks\Gradient\Func\ZerosLike;
 use Rindow\NeuralNetworks\Gradient\Func\Reshape;

@@ -58,7 +58,7 @@ class Attention extends AbstractLayerBase
             throw new InvalidArgumentException('num of inputs must be 2 or 3: inputs is '.count($inputShapes));
         }
         foreach ($inputShapes as $idx => $shape) {
-            if(!is_array($shape)||count($shape)!=2) {
+            if(!is_array($shape)||count($shape)<2) {
                 if(is_array($shape)) {
                     $type = '['.implode(',',$shape).']';
                 } else {
@@ -67,9 +67,13 @@ class Attention extends AbstractLayerBase
                 throw new InvalidArgumentException('input_shapes must be the list of shape: '.$type.' included in #'.$idx.'.');
             }
         }
-        [$tq, $dim] = $inputShapes[0];  // Query
-        [$tv, $tdim] = $inputShapes[1]; // Value
-        if($dim!=$tdim) {
+        $query = $inputShapes[0];  // Query
+        $dim = array_pop($query);
+        $tq  = array_pop($query);
+        $value = $inputShapes[1]; // Value
+        $tdim = array_pop($value);
+        $tv =   array_pop($value);
+        if($dim!=$tdim || $query!=$value) {
             throw new InvalidArgumentException('Unmatch query shape and value shape:'.
             '['.implode(',',$inputShapes[0]).'],['.implode(',',$inputShapes[1]).']');
         }
@@ -78,8 +82,8 @@ class Attention extends AbstractLayerBase
                 throw new InvalidArgumentException('value shape and key shape must be same.');
             }
         }
-        $this->outputShape = [$tq,$dim];
-        $this->scoresShape = [$tq,$tv];
+        $this->outputShape = array_merge($query,[$tq,$dim]);
+        $this->scoresShape = array_merge($query,[$tq,$tv]);
         $this->syncWeightVariables();
     }
 
@@ -120,29 +124,38 @@ class Attention extends AbstractLayerBase
         if(count($inputs)!=2 && count($inputs)!=3) {
             throw new InvalidArgumentException('Must have 2 or 3 arguments in '.$this->name.':'.$direction);
         }
-        $tq = $this->inputShape[0][0];
-        $dim = $this->inputShape[0][1];
-        $tv = $this->inputShape[1][0];
+        //$tq = $this->inputShape[0][0];
+        //$dim = $this->inputShape[0][1];
+        //$tv = $this->inputShape[1][0];
         $qshape = $inputs[0]->shape();
-        if($qshape[1]!=$tq||$qshape[2]!=$dim){
-            throw new InvalidArgumentException('Unmatch query shape [b,'.$tq.','.$dim.'] NDArray.'.
-                ' ['.implode(',',$qshape).'] given in '.$this->name.':'.$direction);
+        $batchNum = array_shift($qshape);
+        $vshape = $inputs[1]->shape();
+        $vbatchNum = array_shift($vshape);
+        if($batchNum!=$vbatchNum) {
+            throw new InvalidArgumentException('Unmatch batch size of query and value: '.
+                "query=[$batchNum,".implode(',',$qshape)."],".
+                "value=[$vbatchNum,".implode(',',$vshape)."]".
+                "in ".$this->name.':'.$direction);
         }
-        if($qshape[1]!=$tq||$qshape[2]!=$dim){
-            throw new InvalidArgumentException('Unmatch query shape [b,'.$tq.','.$dim.'] NDArray.'.
-                ' ['.implode(',',$qshape).'] given in '.$this->name.':'.$direction);
+        if($this->inputShape[0]!=$qshape){
+            throw new InvalidArgumentException('Unmatch query shape '.
+                ' [b,'.implode(',',$this->inputShape[0]).'] NDArray.'.
+                ' ['.$batchNum.','.implode(',',$qshape).'] given in '.$this->name.':'.$direction);
         }
-        $vshape = $inputs[0]->shape();
-        if($vshape[1]!=$tq||$vshape[2]!=$dim){
-            throw new InvalidArgumentException('Unmatch value shape [b,'.$tq.','.$dim.'] NDArray.'.
-                ' ['.implode(',',$vshape).'] given in '.$this->name.':'.$direction);
-        }
-        if($qshape[0]!=$vshape[0]) {
-            throw new InvalidArgumentException('Unmatch batch size.:'.
-                ' ['.implode(',',$qshape).'],['.implode(',',$vshape).'] given in '.$this->name.':'.$direction);
+        if($this->inputShape[1]!=$vshape){
+            throw new InvalidArgumentException('Unmatch value shape '.
+                ' [b,'.implode(',',$this->inputShape[1]).'] NDArray.'.
+                ' ['.$vbatchNum.','.implode(',',$vshape).'] given in '.$this->name.':'.$direction);
         }
         if(count($inputs)==3) {
-            $kshape = $inputs[0]->shape();
+            $kshape = $inputs[2]->shape();
+            $kbatchNum = array_shift($kshape);
+            if($vbatchNum!=$kbatchNum) {
+                throw new InvalidArgumentException('Unmatch batch size of value and key: '.
+                    "query=[$vbatchNum,".implode(',',$vshape)."],".
+                    "value=[$kbatchNum,".implode(',',$kshape)."]".
+                    "in ".$this->name.':'.$direction);
+            }
             if($kshape!=$vshape){
                 throw new InvalidArgumentException('Unmatch value shape and key shape.:'.
                     ' ['.implode(',',$vshape).'],['.implode(',',$kshape).'] in '.$this->name.':'.$direction);

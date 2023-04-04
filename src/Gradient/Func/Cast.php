@@ -4,9 +4,18 @@ namespace Rindow\NeuralNetworks\Gradient\Func;
 use Rindow\NeuralNetworks\Gradient\Core\AbstractFunction;
 use LogicException;
 
-class Equal extends AbstractFunction
+class Cast extends AbstractFunction
 {
-    protected $numOfInputs = 2;
+    protected int $dtype;
+
+    public function __construct(
+        object $backend,
+        int $dtype,
+    )
+    {
+        parent::__construct($backend);
+        $this->dtype = $dtype;
+    }
 
     /**
     *  @param array<NDArray>  $inputs
@@ -16,7 +25,7 @@ class Equal extends AbstractFunction
     */
     protected function call(array $inputs) : array
     {
-        $output = $this->backend->equal($inputs[0],$inputs[1]);
+        $output = $this->backend->cast($inputs[0],$this->dtype);
         $this->unbackpropagatables = [true];
         return [$output];
     }
