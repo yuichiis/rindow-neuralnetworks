@@ -610,21 +610,21 @@ class Backend
         return $this->la->asum($x);
     }
 
-    public function sum(NDArray $x, int $axis=null, NDArray $r=null)
+    public function sum(NDArray $x, int $axis=null, bool $keepdims=null, NDArray $output=null)
     {
         if($axis===null) {
             return $this->la->sum($x);
         } else {
-            return $this->la->reduceSum($x,$axis,$r);
+            return $this->la->reduceSum($x,axis:$axis,keepdims:$keepdims,output:$output);
         }
     }
 
-    public function mean(NDArray $x,int $axis=null, NDArray $r=null)
+    public function mean(NDArray $x,int $axis=null, bool $keepdims=null, NDArray $output=null)
     {
         if($axis===null) {
             return $this->la->sum($x) / $x->size();
         } else {
-            return $this->la->reduceMean($x,$axis,$r);
+            return $this->la->reduceMean($x,axis:$axis,keepdims:$keepdims,output:$output);
         }
     }
 
@@ -646,12 +646,12 @@ class Backend
         return $std;
     }
 
-    public function max(NDArray $x,int $axis=null, NDArray $r=null)
+    public function max(NDArray $x,int $axis=null, bool $keepdims=null, NDArray $output=null)
     {
         if($axis===null) {
             return $this->la->max($x);
         } else {
-            return $this->la->reduceMax($x,$axis,$r);
+            return $this->la->reduceMax($x,axis:$axis,keepdims:$keepdims,output:$output);
         }
     }
 
@@ -744,6 +744,16 @@ class Backend
         return $this->la->matmul($a,$b,$transA,$transB,$c,$alpha,$beta);
     }
 
+    public function expandDims(NDArray $x, int $axis)
+    {
+        return $this->la->expandDims($x,$axis);
+    }
+
+    public function squeeze(NDArray $x, int $axis=null)
+    {
+        return $this->la->squeeze($x,$axis);
+    }
+
     public function gather(NDArray $source,NDArray $indices,$axis=null)
     {
         return $this->la->gather($source,$indices,$axis);
@@ -816,12 +826,14 @@ class Backend
     public function repeat(
         NDArray $inputs,
         int $repeats,
-        int $axis=null
+        int $axis=null,
+        bool $keepdims=null,
         ) {
         return $this->la->repeat(
             $inputs,
             $repeats,
-            $axis
+            axis:$axis,
+            keepdims:$keepdims,
             );
     }
 

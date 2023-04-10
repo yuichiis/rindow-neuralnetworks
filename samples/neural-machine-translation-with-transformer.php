@@ -5,6 +5,7 @@ use Interop\Polite\Math\Matrix\NDArray;
 use Rindow\NeuralNetworks\Layer\AbstractRNNLayer;
 use Rindow\NeuralNetworks\Layer\Layer;
 use Rindow\NeuralNetworks\Model\AbstractModel;
+use Rindow\NeuralNetworks\Model\Model;
 use Rindow\NeuralNetworks\Gradient\Variable;
 use Rindow\Math\Matrix\MatrixOperator;
 use Rindow\Math\Plot\Plot;
@@ -162,6 +163,7 @@ class MultiHeadAttention extends AbstractModel
 {
     protected int $num_heads;
     protected int $depth;
+    protected int $splited_depth;
     protected Layer $attention;
     protected Layer $wq;
     protected Layer $wk;
@@ -182,10 +184,9 @@ class MultiHeadAttention extends AbstractModel
         if($depth % $num_heads != 0) {
             throw new InvalidArgumentException('"depth" must be an integer multiple of "num_heads"');
         }
-
-        // self.depth = depth // self.num_heads
+        $this->splited_depth = $depth / $num_heads;
     
-        $this->attention = $builder->layers->Attention(use_scale:true);
+        $this->attention = $builder->layers->Attention(use_scale:true,do_not_expand_mask:true);
         $this->wq = $builder->layers->Dense($depth);
         $this->wk = $builder->layers->Dense($depth);
         $this->wv = $builder->layers->Dense($depth);
@@ -203,8 +204,33 @@ class MultiHeadAttention extends AbstractModel
         if($x->ndim()!=3) {
             throw new InvalidArgumentException('input array must be 3D NDArray');
         }
-        $x = $g->reshape($x, [0, -1, $this->num_heads, $this->depth]);
+        $x = $g->reshape($x, [0, -1, $this->num_heads, $this->splited_depth]);
         return $g->transpose($x, perm:[0, 2, 1, 3]);
+    }
+
+    protected function createMask($mask,$q,$v)
+    {
+        // value_mask
+        // 
+        $maskShape = $mask->shape(); // (batch_size, seq_len_v)
+        $queryShape = $q->shape();   // (batch_size, num_heads, seq_len_q, splited_depth)
+        $valueShape = $v->shape();   // (batch_size, num_heads, seq_len_v, splited_depth)
+
+        $mTv = array_pop($maskShape);
+
+        $dmy = array_pop($queryShape);
+        $Tq = array_pop($queryShape);
+
+        $dmy = array_pop($valueShape);
+        $Tv = array_pop($valueShape);
+        $numHeads = array_pop($valueShape);
+
+        if($Tv!=$mTv || $maskShape!=$valueShape) {
+            throw new InvalidArgumentException("Unmatch shape mask and q and v.");
+        }
+        // weights (batch_size, num_heads, seq_len_q, seq_len_v)
+        $mask = $mask->reshape(array_merge($valueShape,[1,1,$Tv]));
+        return $mask;
     }
 
     protected function call($v, $k, $q, $mask)
@@ -214,14 +240,14 @@ class MultiHeadAttention extends AbstractModel
         $q = $this->wq->forward($q);  # (batch_size, seq_len, depth)
         $k = $this->wk->forward($k);  # (batch_size, seq_len, depth)
         $v = $this->wv->forward($v);  # (batch_size, seq_len, depth)
-        $q = $this->split_heads($q);  # (batch_size, num_heads, seq_len_q, depth)
-        $k = $this->split_heads($k);  # (batch_size, num_heads, seq_len_k, depth)
-        $v = $this->split_heads($v);  # (batch_size, num_heads, seq_len_v, depth)
-    
-        # scaled_attention.shape == (batch_size, num_heads, seq_len_q, depth)
-        # attention_weights.shape == (batch_size, num_heads, seq_len_q, seq_len_k)
+        $q = $this->split_heads($q);  # (batch_size, num_heads, seq_len_q, splited_depth)
+        $k = $this->split_heads($k);  # (batch_size, num_heads, seq_len_k, splited_depth)
+        $v = $this->split_heads($v);  # (batch_size, num_heads, seq_len_v, splited_depth)
+        $mask = $this->createMask($mask,$q,$v);
+        # scaled_attention.shape == (batch_size, num_heads, seq_len_q, splited_depth)
+        # attention_weights.shape == (batch_size, num_heads, seq_len_q, seq_len_v)
         [$scaled_attention, $attention_weights] = 
-            $this->attention->forward([$q, $v, $k], returnAttentionScores:true, mask:$mask);
+            $this->attention->forward([$q, $v, $k], returnAttentionScores:true, mask:[null,$mask]);
     
         $scaled_attention = $g->transpose($scaled_attention, perm:[0, 2, 1, 3]);  # (batch_size, seq_len_q, num_heads, depth)
     
@@ -244,10 +270,13 @@ function point_wise_feed_forward_network(object $builder, int $depth, int $dff) 
 
 class EncoderLayer extends AbstractModel
 {
+    protected object $gradient;
     protected Model $mha;
-    protected Model $fnn;
+    protected Model $ffn;
     protected Layer $layernorm1;
     protected Layer $layernorm2;
+    protected Layer $dropout1;
+    protected Layer $dropout2;
 
     public function __construct(
         object $backend,
@@ -259,7 +288,7 @@ class EncoderLayer extends AbstractModel
     {
         parent::__construct($backend,$builder);
         $this->gradient = $builder->gradient();
-        $this->mha = new MultiHeadAttention($wordVectSize, $num_heads);
+        $this->mha = new MultiHeadAttention($backend,$builder,$wordVectSize, $num_heads);
         $this->ffn = point_wise_feed_forward_network($builder,$wordVectSize, $dff);
     
         $this->layernorm1 = $builder->layers->LayerNormalization(epsilon:1e-6);
@@ -268,21 +297,21 @@ class EncoderLayer extends AbstractModel
         $this->dropout1 = $builder->layers->Dropout($dropout_rate);
         $this->dropout2 = $builder->layers->Dropout($dropout_rate);
     }
-  
+
     protected function call(
-        NDArray $x, 
-        Variable|bool $training, 
-        NDArray $mask)
+        NDArray $x,                 # (batch_size, input_seq_len, d_model)
+        Variable|bool $training,    # bool
+        NDArray $mask)              # (batch_size, input_seq_len)
     {
         $g = $this->gradient;
 
-        [$attn_output, $dummy] = $this->mha($x, $x, $x, $mask);  # (batch_size, input_seq_len, d_model)
-        $attn_output = $this->dropout1($attn_output, $training);
-        $out1 = $this->layernorm1($g->add([$x, $attn_output]));  # (batch_size, input_seq_len, d_model)
+        [$attn_output, $dummy] = $this->mha->forward($x, $x, $x, $mask);  # (batch_size, input_seq_len, d_model)
+        $attn_output = $this->dropout1->forward($attn_output, $training);
+        $out1 = $this->layernorm1->forward($g->add($x, $attn_output), $training);  # (batch_size, input_seq_len, d_model)
     
-        $ffn_output = $this->ffn($out1);  # (batch_size, input_seq_len, d_model)
-        $ffn_output = $this->dropout2($ffn_output, $training);
-        $out2 = $this->layernorm2($g->add([$out1, $ffn_output]));  # (batch_size, input_seq_len, d_model)
+        $ffn_output = $this->ffn->forward($out1);  # (batch_size, input_seq_len, d_model)
+        $ffn_output = $this->dropout2->forward($ffn_output, $training);
+        $out2 = $this->layernorm2->forward($g->add($out1, $ffn_output), $training);  # (batch_size, input_seq_len, d_model)
         return $out2;
     }
 }
@@ -323,7 +352,7 @@ class Encoder extends AbstractModel
             $vocabSize,$wordVectSize,
             input_length:$inputLength
         );
-        $this->enc_layers = $builder->models->SeqSequential();
+        $this->enc_layers = $builder->models->Sequential();
         for($i=0;$i<$numLayers;$i++) {
             $this->enc_layers->add(
                 new EncoderLayer(

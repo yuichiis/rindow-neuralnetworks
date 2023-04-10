@@ -197,8 +197,8 @@ class Test extends TestCase
         $g = $nn->gradient();
         $layer = new Attention($K);
         $inputs = [
-            $g->Variable($K->zeros([2,2,3])),
-            $g->Variable($K->zeros([2,4,3])),
+            $g->Variable($K->zeros([2,3,4])),
+            $g->Variable($K->zeros([2,5,4])),
         ];
 
         $layer->build($inputs);
@@ -207,21 +207,15 @@ class Test extends TestCase
         // forward
         //
         //  batch size 2
-        $query = $K->array([
-            [[1,0,0],[0,1,0]],
-            [[1,0,0],[0,1,0]],
+        $query = $K->ones([2,3,4]);
+        $value = $K->ones([2,5,4]);
+        $queryMask = $K->array([ // (2,3)
+            [true,true, false],
+            [true,false,false],
         ]);
-        $value = $K->array([
-            [[1,0,0],[0,1,0],[0,0,1],[0,0,0]],
-            [[1,0,0],[0,1,0],[0,0,1],[0,0,0]],
-        ]);
-        $queryMask = $K->array([
-            [true,false],
-            [false,true],
-        ]);
-        $valueMask = $K->array([
-            [false,false,true,true],
-            [false,true,true,false],
+        $valueMask = $K->array([ // (2,5)
+            [true,true,false,false,false],
+            [true,true,true, true, false],
         ]);
         $inputs = [$query,$value];
         $copyInputs = [$K->copy($query),$K->copy($value)];
@@ -234,25 +228,29 @@ class Test extends TestCase
         );
         $outputs = $K->ndarray($outputsVariable);
         //
-        $this->assertEquals([2,2,4],$scores->shape());
-        $this->assertEquals([2,2,3],$outputs->shape());
+        $this->assertEquals([2,3,5],$scores->shape());
+        $this->assertEquals([2,3,4],$outputs->shape());
         $this->assertEquals($copyInputs[0]->toArray(),$inputs[0]->toArray());
         $this->assertEquals($copyInputs[1]->toArray(),$inputs[1]->toArray());
         $this->assertTrue($mo->la()->isclose(
             $mo->array(
-                [[[0.0,         0.0,        0.5,        0.5       ],
-                  [0.0,         0.0,        0.5,        0.5       ]],
-                 [[0.0,         0.5,        0.5,        0.0       ],
-                  [0.0,         0.7310586,  0.26894143, 0.0       ]]]         
+                [[[0.5, 0.5, 0.0, 0.0, 0.0],
+                  [0.5, 0.5, 0.0, 0.0, 0.0],
+                  [0.5, 0.5, 0.0, 0.0, 0.0]],
+                  [[0.25, 0.25, 0.25, 0.25, 0.0  ],
+                   [0.25, 0.25, 0.25, 0.25, 0.0  ],
+                   [0.25, 0.25, 0.25, 0.25, 0.0  ]]]
             ),
             $scores = $K->ndarray($scores)
         ));
         $this->assertTrue($mo->la()->isclose(
             $mo->array(
-                [[[0.0,         0.0,        0.5       ],
-                  [0.0,         0.0,        0.0       ]],
-                 [[0.0,         0.0,        0.0       ],
-                  [0.0,         0.7310586,  0.26894143]]]
+                [[[1.0, 1.0, 1.0, 1.0],
+                  [1.0, 1.0, 1.0, 1.0],
+                  [0.0, 0.0, 0.0, 0.0]],
+                 [[1.0, 1.0, 1.0, 1.0],
+                  [0.0, 0.0, 0.0, 0.0],
+                  [0.0, 0.0, 0.0, 0.0]]]
             ),
             $outputs = $K->ndarray($outputs)
         ));
@@ -267,29 +265,93 @@ class Test extends TestCase
         $dInputs = $outputsVariable->creator()->backward([$dOutputs]);
         // 2 batch
         $this->assertCount(2,$dInputs);
-        $this->assertEquals([2,2,3],$dInputs[0]->shape());
-        $this->assertEquals([2,4,3],$dInputs[1]->shape());
+        $this->assertEquals([2,3,4],$dInputs[0]->shape());
+        $this->assertEquals([2,5,4],$dInputs[1]->shape());
         $this->assertEquals($copydOutputs->toArray(),$dOutputs->toArray());
         $this->assertTrue($mo->la()->isclose(
             $mo->array(
-                [[[0.0,   0.0,   0.25],
-                  [0.0,   0.0,   0.0 ]],
-                 [[0.0,   0.0,   0.0 ],
-                  [0.0,   0.0,   0.0 ]]]
+                [[[0.0, 0.0, 0.0, 0.0],
+                  [0.0, 0.0, 0.0, 0.0],
+                  [0.0, 0.0, 0.0, 0.0]],
+                 [[0.0, 0.0, 0.0, 0.0],
+                  [0.0, 0.0, 0.0, 0.0],
+                  [0.0, 0.0, 0.0, 0.0]]]
             ),
             $K->ndarray($dInputs[0])));
         $this->assertTrue($mo->la()->isclose(
             $mo->array(
-                [[[0.0,        0.0,        0.0       ],
-                  [0.0,        0.0,        0.0       ],
-                  [0.75,       0.5,        0.5       ],
-                  [0.25,       0.5,        0.5       ]],
-                 [[0.0,        0.0,        0.0       ],
-                  [0.7310586,  0.7310586,  0.7310586 ],
-                  [0.26894143, 0.26894143, 0.26894143],
-                  [0.0,        0.0,        0.0       ]]]                
+                [[[1.0,   1.0,   1.0,   1.0 ],
+                  [1.0,   1.0,   1.0,   1.0 ],
+                  [0.0,   0.0,   0.0,   0.0 ],
+                  [0.0,   0.0,   0.0,   0.0 ],
+                  [0.0,   0.0,   0.0,   0.0 ]],
+                 [[0.25,  0.25,  0.25,  0.25],
+                  [0.25,  0.25,  0.25,  0.25],
+                  [0.25,  0.25,  0.25,  0.25],
+                  [0.25,  0.25,  0.25,  0.25],
+                  [0.0,   0.0,   0.0,   0.0 ]]]
             ),
             $K->ndarray($dInputs[1])));
+    }
+
+    public function testMaskDoNotExpandMask()
+    {
+        $mo = $this->newMatrixOperator();
+        $nn = $this->newNeuralNetworks($mo);
+        $K = $nn->backend();
+        $g = $nn->gradient();
+        $layer = new Attention($K,do_not_expand_mask:true);
+
+        $query = $K->ones([2,2,3,2]);
+        $value = $K->ones([2,2,5,2]);
+
+        $inputs = [
+            $g->Variable($query),
+            $g->Variable($value),
+        ];
+        $layer->build($inputs);
+
+        //
+        // forward
+        //
+        //  batch size 2
+        $queryMask = $K->array([ // (2,1,3,1)
+            [[[true],[true], [false]]],
+            [[[true],[false],[false]]],
+        ]);
+        $valueMask = $K->array([ // (2,1,1,5)
+            [[[true,true,false,false,false]]],
+            [[[true,true,true, true, false]]],
+        ]);
+        $inputs = [$query,$value];
+        $copyInputs = [$K->copy($query),$K->copy($value)];
+        [$outputsVariable,$scores] = $nn->with($tape=$g->GradientTape(),
+            function() use ($layer,$inputs,$queryMask,$valueMask) {
+                [$outputsVariable,$scores] = $layer->forward($inputs, mask:[$queryMask,$valueMask],
+                                returnAttentionScores:true);
+                return [$outputsVariable,$scores];
+            }
+        );
+        $outputs = $K->ndarray($outputsVariable);
+        //
+        $this->assertEquals([2,2,3,5],$scores->shape());
+        $this->assertEquals([2,2,3,2],$outputs->shape());
+        $this->assertEquals($copyInputs[0]->toArray(),$inputs[0]->toArray());
+        $this->assertEquals($copyInputs[1]->toArray(),$inputs[1]->toArray());
+        //
+        // backward
+        //
+        // 2 batch
+        $dOutputs = $K->ones($outputs->shape());
+
+        $copydOutputs = $K->copy(
+            $dOutputs);
+        $dInputs = $outputsVariable->creator()->backward([$dOutputs]);
+        // 2 batch
+        $this->assertCount(2,$dInputs);
+        $this->assertEquals([2,2,3,2],$dInputs[0]->shape());
+        $this->assertEquals([2,2,5,2],$dInputs[1]->shape());
+        $this->assertEquals($copydOutputs->toArray(),$dOutputs->toArray());
     }
 
     public function testMaskOneSide()

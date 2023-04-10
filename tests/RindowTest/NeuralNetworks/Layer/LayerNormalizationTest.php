@@ -1,12 +1,11 @@
 <?php
-namespace RindowTest\NeuralNetworks\Layer\BatchNormalizationTest;
+namespace RindowTest\NeuralNetworks\Layer\LayerNormalizationTest;
 
 use PHPUnit\Framework\TestCase;
 use Rindow\Math\Matrix\MatrixOperator;
 use Rindow\NeuralNetworks\Backend\RindowBlas\Backend;
-use Rindow\NeuralNetworks\Layer\BatchNormalization;
+use Rindow\NeuralNetworks\Layer\LayerNormalization;
 use Rindow\NeuralNetworks\Builder\NeuralNetworks;
-
 
 class Test extends TestCase
 {
@@ -27,14 +26,14 @@ class Test extends TestCase
         $K = $nn->backend();
         $g = $nn->gradient();
 
-        $layer = new BatchNormalization($K);
+        $layer = new LayerNormalization($K);
 
         // 3 input x 4 batch
         $x = $K->array([
-            [1.0, 2.0, 1.0],
-            [1.0, 2.0, 1.0],
-            [2.0, 1.0, 2.0],
-            [2.0, 1.0, 2.0],
+            [1.0, 2.0, 3.0],
+            [1.0, 2.0, 3.0],
+            [3.0, 2.0, 1.0],
+            [3.0, 2.0, 1.0],
         ]);
 
         $inputs = $g->Variable($x);
@@ -60,10 +59,10 @@ class Test extends TestCase
         // 3 output x 4 batch
         $this->assertEquals([4,3],$out->shape());
         $this->assertTrue($mo->la()->isclose($mo->la()->array(
-            [[-0.998,0.998,-0.998],
-             [-0.998,0.998,-0.998],
-             [0.998,-0.998,0.998],
-             [0.998,-0.998,0.998]]
+            [[-1.2238274,  0.0,  1.2238274],
+             [-1.2238274,  0.0,  1.2238274],
+             [ 1.2238274,  0.0, -1.2238274],
+             [ 1.2238274,  0.0, -1.2238274],]
         ), $out));
         // 2 output x 4 batch
         $dout = $K->array([
@@ -74,15 +73,15 @@ class Test extends TestCase
         ]);
         [$dx] = $outputsVariable->creator()->backward([$dout]);
         $this->assertTrue($mo->la()->isclose($mo->la()->array(
-            [[-0.004,0.000,0.004],
-             [-0.004,0.000,0.004],
-             [0.004,0.000,-0.004],
-             [0.004,0.000,-0.004]]
+            [[-0.00069,  0.15298,  0.30664],
+             [-0.00069,  0.15298,  0.30664],
+             [ 0.30664,  0.15298, -0.00069],
+             [ 0.30664,  0.15298, -0.00069]]
         ), $dx, $r=1e-1));
         // 3 input x 4 batch
         $this->assertEquals([4,3],$dx->shape());
 
-        $this->assertCount(4,$layer->variables());
+        $this->assertCount(2,$layer->variables());
         $this->assertCount(2,$layer->trainableVariables());
 
     }
@@ -94,12 +93,12 @@ class Test extends TestCase
         $K = $nn->backend();
         $g = $nn->gradient();
 
-        $layer = new BatchNormalization($K);
-        $this->assertCount(4,$layer->variables());
+        $layer = new LayerNormalization($K);
+        $this->assertCount(2,$layer->variables());
         $this->assertCount(2,$layer->trainableVariables());
 
         $layer2 = clone $layer;
-        $this->assertCount(4,$layer2->variables());
+        $this->assertCount(2,$layer2->variables());
         $this->assertCount(2,$layer2->trainableVariables());
     }
 
@@ -109,7 +108,7 @@ class Test extends TestCase
         $nn = $this->newNeuralNetworks($mo);
         $K = $nn->backend();
         $g = $nn->gradient();
-        $layer = new BatchNormalization($K);
+        $layer = new LayerNormalization($K);
         // 4 batch x 2x2x3
         $x = $K->array([
             [[[1.0,2.0,3.0],[0.5,1.5,2.5]],[[1.5,2.5,3.5],[1.0,2.0,3.0]]],
@@ -155,7 +154,7 @@ class Test extends TestCase
         $nn = $this->newNeuralNetworks($mo);
         $K = $nn->backend();
         $g = $nn->gradient();
-        $layer = new BatchNormalization($K,
+        $layer = new LayerNormalization($K,
             axis:1,
         );
         // 4 batch x 3x2x2

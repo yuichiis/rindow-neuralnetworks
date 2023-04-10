@@ -840,12 +840,14 @@ class Backend
     public function repeat(
         NDArray $inputs,
         int $repeats,
-        int $axis=null
+        int $axis=null,
+        bool $keepdims=null,
         ) {
         return $this->la->repeat(
             $inputs,
             $repeats,
-            $axis
+            axis:$axis,
+            keepdims:$keepdims,
             );
     }
 

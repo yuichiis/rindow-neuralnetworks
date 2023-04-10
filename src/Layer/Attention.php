@@ -15,6 +15,7 @@ class Attention extends AbstractLayerBase
     use GradientUtils;
     protected $backend;
     protected $useScale;
+    protected $doNotExpandMask;
     protected $scale;
     protected $dScale;
     protected $scoresShape;
@@ -31,6 +32,7 @@ class Attention extends AbstractLayerBase
         object $backend,
         array $input_shapes=null,
         bool $use_scale=null,
+        bool $do_not_expand_mask=null,
         string $name=null,
     )
     {
@@ -38,10 +40,12 @@ class Attention extends AbstractLayerBase
         $input_shapes = $input_shapes ?? null;
         $name = $name ?? null;
         $use_scale = $use_scale ?? false;
+        $do_not_expand_mask = $do_not_expand_mask ?? false;
 
         $this->backend = $K = $backend;
         $this->inputShape = $input_shapes;
         $this->useScale = $use_scale;
+        $this->doNotExpandMask = $do_not_expand_mask;
         if($this->useScale) {
             $this->scale = $K->array(1.0);
             $this->dScale = $K->array(0.0);
@@ -196,6 +200,23 @@ class Attention extends AbstractLayerBase
         return $dInputs;
     }
 
+    protected function expandMask($sourceMask,$target)
+    {
+        $K = $this->backend;
+        $mask = $sourceMask;
+        $maskShape = $mask->shape();
+        $targetShape = $target->shape();
+        foreach (array_map(null,$maskShape,$targetShape) as $axis => [$mT,$T]) {
+            if($mT==1 && $T!=1) {
+                $mask = $K->repeat($mask,$T,axis:$axis,keepdims:true);
+            } elseif($mT!=$T) {
+                throw new InvalidArgumentException('Incompatible shapes for broadcasting: '.
+                    '['.implode(',',$sourceMask->shape()).'] vs. ['.implode(',',$target->shape()).']');
+            }
+        }
+        return $mask;
+    }
+
     protected function call(
         array $inputs,
         bool $training=null,
@@ -234,24 +255,33 @@ class Attention extends AbstractLayerBase
             [$queryMask,$valueMask] = $mask;
         }
         if($valueMask) {
-            // scores = [batch_size, Tq, Tv] => [Tq, batch_size, Tv]
-            $scoresShape = $scores->shape();
-            $origScoreShape = $scoresShape;
-            $Tv = array_pop($scoresShape);
-            $Tq = array_pop($scoresShape);
-            $scores = $scores->reshape([(int)array_product($scoresShape),$Tq,$Tv]);
-            $scores = $K->transpose($scores,perm:[1,0,2]);
-            $scores = $scores->reshape(array_merge([$Tq],$scoresShape,[$Tv]));
-            // broadcast mask
-            // scores = [Tq, batch_size, Tv]
-            // valueMask = [batch_size, Tv] 
-            $valueMask = $K->cast($K->equal($valueMask,$K->zerosLike($valueMask)),$scores->dtype());
-            $valueMask = $K->scale(-1e9,$valueMask);
-            $K->update_add($scores,$valueMask);
-            // scores = [Tq, batch_size, Tv] => [batch_size, Tq, Tv]
-            $scores = $scores->reshape([$Tq,(int)array_product($scoresShape),$Tv]);
-            $scores = $K->transpose($scores,perm:[1,0,2]);
-            $scores = $scores->reshape($origScoreShape);
+            if(!$this->doNotExpandMask) { // Broadcasting 
+                // scores = [batch_size, Tq, Tv]
+                // valueMask = [batch_size, Tv]
+                $scoresShape = $scores->shape();
+                $Tv = array_pop($scoresShape);
+                $Tq = array_pop($scoresShape);
+                $maskShape = $valueMask->shape();
+                $mTv = array_pop($maskShape);
+                if($maskShape!=$scoresShape||$Tv!=$mTv) {
+                    throw new InvalidArgumentException('unmatch inputs and queryMask.'.
+                    ' scores:['.implode(',',$scores->shape()).']'.
+                    ' given mask:['.implode(',',$valueMask->shape()).']');
+                }
+                // valueMask = (float)(not(valueMask))
+                $valueMask = $K->cast($K->equal($valueMask,$K->zerosLike($valueMask)),$scores->dtype());
+                // scores = [batch_size, Tq, Tv]
+                // valueMask = [batch_size, Tv] =repeat=> [batch_size, Tq, Tv]
+                $valueMask = $K->repeat($valueMask,$Tq,axis:-1);
+                // scores += (-1e9*valueMask)
+                $K->update_add($scores,$valueMask,alpha:-1e9);
+            } else { // No Broadcasting 
+                // valueMask = (float)(not(valueMask))
+                $valueMask = $K->cast($K->equal($valueMask,$K->zerosLike($valueMask)),$scores->dtype());
+                // scores += (-1e9*valueMask)
+                $valueMask = $this->expandMask($valueMask,$scores);
+                $K->update_add($scores,$valueMask,alpha:-1e9);
+            }
         }
         // weights = softmax(scores)
         $attentionWeight = $K->softmax($scores);
@@ -263,14 +293,29 @@ class Attention extends AbstractLayerBase
         $contextVector = $K->matmul($attentionWeight, $value);
 
         if($queryMask) {
-            // queryMask = [batch_size, Tq]
-            // vector = [batch_size, Tq, dim] => [dim, batch_size, Tq]
-            $queryMask = $K->cast($queryMask,$contextVector->dtype());
-            $queryMask = $queryMask->reshape([(int)array_product($queryMask->shape())]);
-            [$batchSize,$Tq,$dim] = $contextVector->shape();
-            $contextVector = $contextVector->reshape([$batchSize*$Tq, $dim]);
-            $contextVector = $K->update_mul($contextVector, $queryMask, trans:true);
-            $contextVector = $contextVector->reshape([$batchSize, $Tq, $dim]);
+            if(!$this->doNotExpandMask) { // Broadcasting 
+                // queryMask = [batch_size, Tq]
+                // vector = [batch_size, Tq, dim] => [dim, batch_size, Tq]
+                $shape = $contextVector->shape();
+                $orgShape = $shape;
+                $dim = array_pop($shape);
+                if($queryMask->shape()!=$shape) {
+                    throw new InvalidArgumentException('unmatch inputs and queryMask.'.
+                    ' contextVector:['.implode(',',$contextVector->shape()).']'.
+                    ' given mask:['.implode(',',$queryMask->shape()).']');
+                }
+                $Tq = array_pop($shape);
+                $batchSize = (int)array_product($shape);
+                $queryMask = $K->cast($queryMask,$contextVector->dtype());
+                $queryMask = $queryMask->reshape([(int)array_product($queryMask->shape())]);
+                $contextVector = $contextVector->reshape([$batchSize*$Tq, $dim]);
+                $contextVector = $K->update_mul($contextVector, $queryMask, trans:true);
+                $contextVector = $contextVector->reshape($orgShape);
+            } else { // No Broadcasting 
+                $queryMask = $K->cast($queryMask,$contextVector->dtype());
+                $queryMask = $this->expandMask($queryMask,$contextVector);
+                $contextVector = $K->update_mul($contextVector, $queryMask);
+            }
             $container->queryMask = $queryMask;
         }
 
@@ -297,12 +342,20 @@ class Attention extends AbstractLayerBase
         //   dValue   = weights^T (*) dVector
 
         if(isset($container->queryMask)) {
-            // queryMask = [batch_size*Tq]
-            // vector = [batch_size, Tq, dim] => [dim, batch_size, Tq]
-            [$batchSize,$Tq,$dim] = $dOutputs->shape();
-            $dOutputs = $K->copy($dOutputs->reshape([$batchSize*$Tq, $dim]));
-            $dOutputs = $K->update_mul($dOutputs, $container->queryMask, trans:true);
-            $dOutputs = $dOutputs->reshape([$batchSize, $Tq, $dim]);
+            if(!$this->doNotExpandMask) { // Broadcasting 
+                // queryMask = [batch_size*Tq]
+                // vector = [batch_size, Tq, dim] => [dim, batch_size, Tq]
+                $batchShape = $dOutputs->shape();
+                $dim = array_pop($batchShape);
+                $Tq = array_pop($batchShape);
+                $batchSize = (int)array_product($batchShape);
+                $dOutputs = $K->copy($dOutputs->reshape([$batchSize*$Tq, $dim]));
+                $dOutputs = $K->update_mul($dOutputs, $container->queryMask, trans:true);
+                $dOutputs = $dOutputs->reshape([$batchSize, $Tq, $dim]);
+            } else {
+                $dOutputs = $K->copy($dOutputs);
+                $dOutputs = $K->update_mul($dOutputs, $container->queryMask);
+            }
         }
 
         $dAttentionWeight = $K->matmul($dOutputs,$container->value,$transA=false,$transB=true);
