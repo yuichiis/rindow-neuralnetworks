@@ -4,6 +4,7 @@ namespace Rindow\NeuralNetworks\Builder;
 use Interop\Polite\Math\Matrix\NDArray;
 use Rindow\NeuralNetworks\Gradient\Variable as VariableInterface;
 use Rindow\NeuralNetworks\Gradient\Core\Variable;
+use Rindow\NeuralNetworks\Gradient\Core\Modules;
 use Rindow\NeuralNetworks\Gradient\Core\GradientTape;
 use Rindow\NeuralNetworks\Gradient\Core\GraphFunction;
 use Rindow\NeuralNetworks\Gradient\Core\StopGradient;
@@ -25,6 +26,9 @@ use Rindow\NeuralNetworks\Gradient\Func\NotEqual;
 use Rindow\NeuralNetworks\Gradient\Func\ZerosLike;
 use Rindow\NeuralNetworks\Gradient\Func\Reshape;
 use Rindow\NeuralNetworks\Gradient\Func\Transpose;
+use Rindow\NeuralNetworks\Gradient\Func\Shape;
+use Rindow\NeuralNetworks\Gradient\Func\Get;
+use Rindow\NeuralNetworks\Gradient\Func\Scale;
 
 class Gradient
 {
@@ -53,6 +57,11 @@ class Gradient
             $variables[] = new Variable($this->backend,$value,...$options);
         }
         return $variables;
+    }
+
+    public function modules($modules=null)
+    {
+        return new Modules($modules);
     }
 
     public function GradientTape($persistent=null)
@@ -221,6 +230,36 @@ class Gradient
             $perm,
         );
         return $func($x);
+    }
+
+    public function shape(
+        $x,
+    )
+    {
+        $func = new Shape($this->backend);
+        return $func($x);
+    }
+
+    public function get(
+        $x,
+        $offset,
+        $count=null,
+    )
+    {
+        if($count===null) {
+            $count = 0;
+        }
+        $func = new Get($this->backend);
+        return $func($x,$offset,$count);
+    }
+
+    public function scale(
+        $alpha,
+        $x,
+    )
+    {
+        $func = new Scale($this->backend);
+        return $func($alpha,$x);
     }
 
 }

@@ -3,15 +3,19 @@ namespace Rindow\NeuralNetworks\Gradient\Func;
 
 use InvalidArgumentException;
 use LogicException;
-use Interop\Polite\Math\Matrix\NDArray;
 use Rindow\NeuralNetworks\Gradient\Core\AbstractFunction;
+use Rindow\NeuralNetworks\Gradient\Core\ArrayShape;
 
-class ZerosLike extends AbstractFunction
+class Shape extends AbstractFunction
 {
+    protected $outputs;
+
     protected function call(array $inputs) : array
     {
+        $shape = $inputs[0]->shape();
+        $outputs = new ArrayShape($shape);
         $this->unbackpropagatables = [true];
-        return [$this->backend->zerosLike($inputs[0])];
+        return [$outputs];
     }
 
     protected function differentiate(array $dOutputs) : array

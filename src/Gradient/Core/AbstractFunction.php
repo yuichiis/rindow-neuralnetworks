@@ -110,6 +110,11 @@ abstract class AbstractFunction
         return get_class($this);
     }
 
+    protected function preprocess(array $inputs) : array
+    {
+        return $inputs;
+    }
+
     /**
     *  @param array<Variable>  $inputs
     *       inputs
@@ -121,6 +126,7 @@ abstract class AbstractFunction
         if(count($inputs)!=$this->numOfInputs) {
             throw new InvalidArgumentException($this->numOfInputs.' arguments are required.');
         }
+        $inputs = $this->preprocess($inputs);
         [$inputs,$rawInputs]     = $this->packAndUnpackVariables($this->backend,$inputs);
         if(GraphFunction::$mode==GraphFunction::EXECUTING) {
             $outputs = $this->call($inputs);
