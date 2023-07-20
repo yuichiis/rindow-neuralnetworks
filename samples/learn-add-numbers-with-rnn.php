@@ -238,7 +238,7 @@ for($i=0;$i<10;$i++) {
     $input = $question->reshape([1,$input_length]);
 
     $predict = $model->predict($input);
-    $predict_seq = $mo->argMax($predict[0]->reshape([$output_length,count($target_dic)]),$axis=1);
+    $predict_seq = $mo->argMax($predict[0]->reshape([$output_length,count($target_dic)]),axis:1);
     $predict_str = $dataset->seq2str($predict_seq,$target_voc);
     $question_str = $dataset->seq2str($question,$input_voc);
     $answer_str = $dataset->seq2str($answers[$idx],$target_voc);

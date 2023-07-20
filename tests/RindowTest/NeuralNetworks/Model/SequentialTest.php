@@ -314,7 +314,7 @@ class Test extends TestCase
         $history = $model->fit($x,$t,epochs:100,verbose:0);
 
         $y = $model->predict($x);
-        $this->assertEquals($t->toArray(),$mo->argMax($y,$axis=1)->toArray());
+        $this->assertEquals($t->toArray(),$mo->argMax($y,axis:1)->toArray());
 
         //$plt->plot($mo->array($history['loss']));
         //$plt->plot($mo->array($history['accuracy']));
@@ -355,7 +355,7 @@ class Test extends TestCase
         $history = $model->fit($dataset,null,epochs:100,verbose:0);
 
         $y = $model->predict($x);
-        $this->assertEquals($t->toArray(),$mo->argMax($y,$axis=1)->toArray());
+        $this->assertEquals($t->toArray(),$mo->argMax($y,axis:1)->toArray());
 
         //$plt->plot($mo->array($history['loss']));
         //$plt->plot($mo->array($history['accuracy']));
@@ -400,7 +400,7 @@ class Test extends TestCase
         $x = $mo->array([[1, 3], [1, 4], [2, 4], [3, 1], [4, 1], [4, 2]]);
         $t = $mo->array([0, 0, 0, 1, 1, 1]);
         $y = $model->predict($x);
-        $this->assertEquals($t->toArray(),$mo->argMax($y,$axis=1)->toArray());
+        $this->assertEquals($t->toArray(),$mo->argMax($y,axis:1)->toArray());
 
         //$plt->plot($mo->array($history['loss']));
         //$plt->plot($mo->array($history['accuracy']));
@@ -570,7 +570,7 @@ class Test extends TestCase
         $history = $model->fit($x,$t,epochs:100,validation_data:[$v_x,$v_t],verbose:0);
 
         $y = $model->predict($x);
-        $this->assertEquals($t->toArray(),$mo->argMax($y,$axis=1)->toArray());
+        $this->assertEquals($t->toArray(),$mo->argMax($y,axis:1)->toArray());
 
         if($this->plot) {
             $plt->plot($mo->array($history['loss']),null,null,'loss');
@@ -612,8 +612,8 @@ class Test extends TestCase
         $history = $model->fit($x,$t,epochs:100,validation_data:[$v_x,$v_t],verbose:0);
 
         $y = $model->predict($x);
-        $this->assertEquals($mo->argMax($t,$axis=1)->toArray(),
-                            $mo->argMax($y,$axis=1)->toArray());
+        $this->assertEquals($mo->argMax($t,axis:1)->toArray(),
+                            $mo->argMax($y,axis:1)->toArray());
 
         $this->assertEquals(['loss','accuracy','val_loss','val_accuracy'],array_keys($history));
 

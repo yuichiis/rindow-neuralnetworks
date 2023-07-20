@@ -31,6 +31,7 @@ abstract class AbstractModel implements Model
     protected $optimizer;
     protected $metrics;
     protected $lossFunction;
+    protected $accuracyFunction;
     protected $built = false;
     protected $shapeInspection=true;
     protected $backupShapeInspection;
@@ -92,6 +93,11 @@ abstract class AbstractModel implements Model
         return $this->lossFunction;
     }
 
+    public function accuracyFunction()
+    {
+        return $this->accuracyFunction;
+    }
+
     public function optimizer()
     {
         return $this->optimizer;
@@ -113,18 +119,8 @@ abstract class AbstractModel implements Model
         $this->callOptions[$name] = true;
     }
 
-    public function compile(
-        string|object $optimizer=null,
-        string|object $loss=null,
-        array $metrics=null,
-        int $numInputs=null,
-    ) : void
+    protected function resolveOptimizer(mixed $optimizer) : mixed
     {
-        $optimizer = $optimizer ?? 'SGD';
-        $loss = $loss ?? 'SparseCategoricalCrossEntropy';
-        $metrics = $metrics ?? ['loss','accuracy'];
-        $numInputs = $numInputs ?? 1;
-
         // resolve optimizer
         if(is_string($optimizer)) {
             $optimizer = strtolower($optimizer);
@@ -144,14 +140,20 @@ abstract class AbstractModel implements Model
             }
             throw new InvalidArgumentException('invalid optimizer: '.$msg);
         }
-        $this->optimizer = $optimizer;
+        return $optimizer;
+    }
 
+    protected function resolveLossFunction(mixed $loss) : mixed
+    {
         if(is_string($loss)) {
             $loss = strtolower($loss);
         }
         if($loss=='sparsecategoricalcrossentropy'||
             $loss=='sparse_categorical_crossentropy') {
             $loss = $this->builder->losses()->SparseCategoricalCrossEntropy();
+        }
+        if(is_callable($loss)) {
+            return $loss;
         }
 
         if(!($loss instanceof Loss)) {
@@ -164,8 +166,27 @@ abstract class AbstractModel implements Model
             }
             throw new InvalidArgumentException('invalid loss function: '.$msg);
         }
-        $this->lossFunction = $loss;
+        return $loss;
+    }
 
+    public function compile(
+        string|object $optimizer=null,
+        string|object $loss=null,
+        array $metrics=null,
+        int $numInputs=null,
+    ) : void
+    {
+        $optimizer = $optimizer ?? 'SGD';
+        $loss = $loss ?? 'SparseCategoricalCrossEntropy';
+        $metrics = $metrics ?? ['loss','accuracy'];
+        $numInputs = $numInputs ?? 1;
+
+        $this->optimizer = $this->resolveOptimizer($optimizer);
+
+        $this->lossFunction = $this->resolveLossFunction($loss);
+        if($this->lossFunction instanceof Loss) {
+            $this->accuracyFunction = [$this->lossFunction,'accuracy'];
+        }
         // resolve metrics
         if(empty($metrics)) {
             $metrics = [];
@@ -229,6 +250,17 @@ abstract class AbstractModel implements Model
             [$val_inputs, $val_test] = [null,null];
         } elseif(is_array($validation_data)) {
             [$val_inputs, $val_test] = $validation_data;
+            if(is_array($val_inputs)) {
+                $val_inputs = new NDArrayDataset(
+                    $K->localMatrixOperator(),
+                    $val_inputs,
+                    batch_size: $batch_size,
+                    shuffle: $shuffle,
+                    filter: $filter,
+                    tests: $val_test,
+                );
+                $val_test = null;
+            }
         } elseif($validation_data instanceof Dataset) {
             $val_inputs = $validation_data;
             $val_test = null;
@@ -394,15 +426,15 @@ abstract class AbstractModel implements Model
         return $trues;
     }
 
-    protected function loss(NDArray $trues,NDArray $preds) : float
-    {
-        return $this->lossFunction->forward($trues,$preds);
-    }
-
-    protected function accuracy(NDArray $trues,NDArray $preds) : float
-    {
-        return $this->lossFunction->accuracy($trues,$preds);
-    }
+    //protected function loss(NDArray $trues,NDArray $preds) : float
+    //{
+    //    return $this->lossFunction->forward($trues,$preds);
+    //}
+    //
+    //protected function accuracy(NDArray $trues,NDArray $preds) : float
+    //{
+    //    return $this->lossFunction->accuracy($trues,$preds);
+    //}
 
     public function evaluate(
         $inputs,
@@ -693,9 +725,9 @@ abstract class AbstractModel implements Model
         $gradients = $tape->gradient($loss, $params);
         $this->optimizer->update($params, $gradients);
 
-        if(in_array('accuracy',$this->metrics)) {
+        if($this->accuracyFunction!=null && in_array('accuracy',$this->metrics)) {
             //$preds = $this->forwardLastlayer($preds);
-            $accuracy = $this->lossFunction->accuracy($trues,$preds->value());
+            $accuracy = ($this->accuracyFunction)($trues,$preds->value());
         } else {
             $accuracy = 0;
         }
@@ -724,7 +756,11 @@ abstract class AbstractModel implements Model
         $predicts = $model(...$inputs);
         $loss = $lossfunc($trues,$predicts);
         $loss = $K->scalar($loss->value());
-        $accuracy = $this->lossFunction->accuracy($trues,$predicts->value());
+        if($this->accuracyFunction!=null) {
+            $accuracy = ($this->accuracyFunction)($trues,$predicts->value());
+        } else {
+            $accuracy = 0;
+        }
         return [$loss,$accuracy];
     }
 
@@ -753,12 +789,13 @@ abstract class AbstractModel implements Model
             return;
         }
         $K = $this->backend;
+        $nn = $this->builder;
         $inputs = [];
-        foreach($inputShapes as $inputShape) {
+        foreach($inputShapes as $idx => $inputShape) {
             if(is_array($inputShape)) {
-                $inputs[] = $K->zeros($inputShape);
+                $inputs[$idx] = $nn->gradient()->Variable($K->zeros($inputShape));
             } else {
-                $inputs[] = $inputShape;
+                $inputs[$idx] = $inputShape;
             }
         }
         if($this->isAwareOf('training')) {
@@ -848,10 +885,6 @@ abstract class AbstractModel implements Model
     public function loadWeights($modelWeights) : void
     {
         $K = $this->backend;
-        $nn = $this->builder;
-        $g = $nn->gradient();
-        $model = $this;
-        $lossfunc = $this->lossFunction;
         foreach($this->variables() as $idx => $weights) {
             $data = unserialize($modelWeights['weights'][$idx]);
             $data = $K->array($data);
@@ -913,6 +946,7 @@ abstract class AbstractModel implements Model
         $this->outputsVariables = null;
         $this->optimizer = null;
         $this->lossFunction = null;
+        $this->accuracyFunction = null;
         $this->metrics = null;
     }
 }

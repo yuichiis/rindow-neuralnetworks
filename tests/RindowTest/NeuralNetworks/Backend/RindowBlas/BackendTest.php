@@ -481,12 +481,12 @@ class Test extends TestCase
         }
 
         $x = $K->array([[2,3],[1,2]],NDArray::float32);
-        $z = $K->sum($x,$axis=1); $K->finish();
+        $z = $K->sum($x,axis:1); $K->finish();
         $this->assertEquals([5,3],$z->toArray());
         $this->assertEquals(NDArray::float32,$z->dtype());
         if($K->fp64()) {
             $x = $K->array([[2,3],[1,2]],NDArray::float64);
-            $z = $K->sum($x,$axis=1); $K->finish();
+            $z = $K->sum($x,axis:1); $K->finish();
             $this->assertEquals([5,3],$z->toArray());
             $this->assertEquals(NDArray::float64,$z->dtype());
         }
@@ -494,8 +494,8 @@ class Test extends TestCase
         /// ***** CAUTION *****
         /// OpenBLAS\Math::reduceSum not supports integer dtypes
         //$x = $mo->array([[2,3],[1,2]],NDArray::int32);
-        //$this->assertEquals([5,3],$K->sum($x,$axis=1)->toArray());
-        //$this->assertEquals(NDArray::float32,$K->sum($x,$axis=1)->dtype());
+        //$this->assertEquals([5,3],$K->sum($x,axis:1)->toArray());
+        //$this->assertEquals(NDArray::float32,$K->sum($x,axis:1)->dtype());
     }
 
     public function testMean()
@@ -503,7 +503,7 @@ class Test extends TestCase
         $mo = $this->newMatrixOperator();
         $K = $this->newBackend($mo);
         $x = $K->array([[2,3],[1,2]]);
-        $z = $K->mean($x,$axis=1); $K->finish();
+        $z = $K->mean($x,axis:1); $K->finish();
         $this->assertEquals([2.5,1.5],$z->toArray());
         $z = $K->mean($x); $K->finish();
         $this->assertLessThan(1e-5,abs(((2+3+1+2)/4)-$z));
@@ -602,7 +602,7 @@ class Test extends TestCase
         $softmax = $K->softmax($x); $K->finish();
         $this->assertLessThanOrEqual(1,$K->scalar($K->max($softmax)));
         $this->assertGreaterThanOrEqual(0,$K->scalar($K->max($softmax)));
-        $sum = $K->sum($softmax,$axis=1); $K->finish(); $sum = $sum->toArray();
+        $sum = $K->sum($softmax,axis:1); $K->finish(); $sum = $sum->toArray();
         $this->assertLessThan(0.0001,abs($sum[0]-1));
         $this->assertLessThan(0.0001,abs($sum[1]-1));
     }

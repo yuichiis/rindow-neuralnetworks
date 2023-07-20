@@ -73,6 +73,7 @@ class Test extends TestCase
             [1.0, 0.5, 0.0],
         ]);
         [$dx] = $outputsVariable->creator()->backward([$dout]);
+        $dx = $K->ndarray($dx);
         $this->assertTrue($mo->la()->isclose($mo->la()->array(
             [[-0.004,0.000,0.004],
              [-0.004,0.000,0.004],

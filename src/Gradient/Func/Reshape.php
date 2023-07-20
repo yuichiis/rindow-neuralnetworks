@@ -3,26 +3,35 @@ namespace Rindow\NeuralNetworks\Gradient\Func;
 
 use InvalidArgumentException;
 use Interop\Polite\Math\Matrix\NDArray;
+use Rindow\NeuralNetworks\Gradient\ArrayShape as ArrayShapeInterface;
 use Rindow\NeuralNetworks\Gradient\Core\AbstractFunction;
+use Rindow\NeuralNetworks\Gradient\Core\Scalar;
+use Rindow\NeuralNetworks\Gradient\Core\ArrayShape;
 
 class Reshape extends AbstractFunction
 {
     protected $numOfInputs = 2;
 
+    protected function preprocess(array $inputs) : array
+    {
+        $inp = $inputs[0];
+        $inputs = $this->extractShapeArgment($inputs[1]);
+        array_unshift($inputs,$inp);
+        return $inputs;
+    }
+
     protected function call(array $inputs) : array
     {
         $K = $this->backend;
-        $inp = $inputs[0];
-        $shape = $inputs[1];
-        $shape = $K->ndarray($shape);
+        $inp = array_shift($inputs);
+        $shape = $this->translateToShape($inputs);
         $inpShape = $inp->shape();
 
         $container = $this->container();
         $container->inpShape = $inpShape;
-        $container->shapeShape = $shape->shape();
-        $container->shapeDtype = $shape->dtype();
+        $container->shape = $inputs;
 
-        if($shape->shape()===[]) {
+        if(count($shape)==0) {
             if($inpShape!==[1] && $inpShape!==[]) {
                 throw new InvalidArgumentException(
                     'Shape is an invalid size specification.'.
@@ -72,11 +81,16 @@ class Reshape extends AbstractFunction
         $K = $this->backend;
         $container = $this->container();
         $inpShape = $container->inpShape;
-        $shapeShape = $container->shapeShape;
-        $shapeDtype = $container->shapeDtype;
+        $shape = $container->shape;
 
-        $dInputs = $dOutputs[0]->reshape($inpShape);
-        $dShape = $K->zeros($shapeShape,$shapeDtype);
-        return [$dInputs,$dShape];
+        $dInputs = [$dOutputs[0]->reshape($inpShape)];
+        foreach($shape as $v) {
+            if($v instanceof ArrayShapeInterface) {
+                $dInputs[] = new ArrayShape(array_fill(0,count($v),0));
+            } else {
+                $dInputs[] = new Scalar(0);
+            }
+        }
+        return $dInputs;
     }
 }

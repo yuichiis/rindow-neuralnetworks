@@ -125,11 +125,11 @@ class LayerNormalization extends AbstractNormalization
         $numItems = $dOutputs->shape()[0];
 
         if($this->dBeta) {
-            $dbeta = $K->sum($dOutputs,$axis=0,$this->dBeta);
+            $dbeta = $K->sum($dOutputs,axis:0,output:$this->dBeta);
             //$K->copy($dbeta,$this->dBeta);
         }
         if($this->dGamma) {
-            $dgamma = $K->sum($K->mul($container->xn, $dOutputs), $axis=0,$this->dGamma);
+            $dgamma = $K->sum($K->mul($container->xn, $dOutputs), axis:0, output:$this->dGamma);
             //$K->copy($dgamma,$this->dGamma);
             $dxn = $K->mul($this->gamma, $dOutputs);
         } else {
@@ -142,7 +142,7 @@ class LayerNormalization extends AbstractNormalization
         $size = array_pop($shape);
         $dstd = $K->scale(-1.0, $K->sum(
             $K->div($K->mul($dxn, $container->xc), $K->mul($container->std, $container->std)),
-            $axis=-1));
+            axis:-1));
         $dstd = $K->expandDims($dstd,$axis=-1);
         $dstd = $K->repeat($dstd,$size,axis:-1);
         $dstd = $K->squeeze($dstd,axis:-1);

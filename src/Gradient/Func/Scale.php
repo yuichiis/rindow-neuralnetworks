@@ -33,22 +33,9 @@ class Scale extends AbstractFunction
 
         $alpha = $inputs[0];
         $array = $inputs[1];
+        $alpha = $this->toScalar($alpha,1);
+        $container->alpha = $alpha;
 
-        if($alpha instanceof ScalarInterface) {
-            $alpha = $alpha->value();
-        } elseif($alpha instanceof NDArray) {
-            if($alpha->ndim()!=0) {
-                throw new InvalidArgumentException('arg #1 must not be scalar.');
-            }
-            $alpha = $K->scalar($alpha);
-        } else {
-            if(is_object($alpha)) {
-                $type = get_class($alpha);
-            } else {
-                $type = gettype($alpha);
-            }
-            throw new InvalidArgumentException("arg #1 is invalid data type.: ".$type);
-        }
         $output = $K->scale($alpha,$array);
         return [$output];
     }
@@ -66,19 +53,19 @@ class Scale extends AbstractFunction
         [$alpha, $array] = $container->inputs;
 
         if($alpha instanceof ScalarInterface) {
-            $alpha = $alpha->value();
             $dAlpha = new Scalar(0);
         } elseif($alpha instanceof NDArray) {
             if($alpha->ndim()!=0) {
                 throw new InvalidArgumentException('arg #1 must not be scalar.');
             }
-            $alpha = $K->scalar($alpha);
-            $dAlpha = $K->sum($dOutputs[0]);
+            // da = sum(dOut * X)
+            $dAlpha = $K->sum($K->mul($dOutputs[0],$array));
             if(!($dAlpha instanceof NDArray)) {
                 $dAlpha = $K->array($dAlpha);
             }
         }
-
+        // dX = a * dOut
+        $alpha = $container->alpha;
         $dInputs = $K->scale($alpha,$dOutputs[0]);
         
         return [$dAlpha, $dInputs];

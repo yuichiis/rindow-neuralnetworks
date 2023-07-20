@@ -226,7 +226,7 @@ class LSTMCell extends AbstractRNNCell
         $K->gemm($calcState->inputs, $dOutputs,1.0,1.0,
             $this->dKernel,true,false);
         if($this->useBias) {
-            $K->update_add($this->dBias,$K->sum($dOutputs, $axis=0));
+            $K->update_add($this->dBias,$K->sum($dOutputs, axis:0));
         }
 
         $dInputs = $K->gemm($dOutputs, $this->kernel,1.0,0.0,

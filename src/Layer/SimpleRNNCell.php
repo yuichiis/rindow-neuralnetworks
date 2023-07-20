@@ -149,7 +149,7 @@ class SimpleRNNCell extends AbstractRNNCell
         }
         $dInputs = $K->zerosLike($calcState->inputs);
         if($this->bias) {
-            $K->update_add($this->dBias,$K->sum($dOutputs,$axis=0));
+            $K->update_add($this->dBias,$K->sum($dOutputs,axis:0));
         }
         // Add RecurrentKernel grad
         $K->gemm($calcState->prev_h, $dOutputs,1.0,1.0,$this->dRecurrentKernel,true);

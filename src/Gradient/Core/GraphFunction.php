@@ -264,6 +264,7 @@ class GraphFunction
         foreach(array_map(null,$this->endOutputOids,$dOutputs) as $oset) {
             [$oid,$dOut] = $oset;
             $grads[$oid] = $dOut;
+            //echo "set grads(".spl_object_id($oid).") from endOutputs\n";
         }
         unset($output);
         unset($dOut);

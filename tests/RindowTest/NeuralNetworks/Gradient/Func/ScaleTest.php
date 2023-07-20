@@ -31,30 +31,30 @@ class Test extends TestCase
 
         $func = $g->Function(
             function($x) use ($g){
-                $y = $g->scale(2,$x);
+                $y = $g->scale(3,$x);
                 return $y;
             }
         );
 
         // build
-        $x = $g->Variable($K->ones([3,2]));
+        $x = $g->Variable($K->array([2,2]));
         $y = $nn->with($tape=$g->GradientTape(),$func,[$x],true);
         $grads = $tape->gradient($y,[$x]);
         $this->assertTrue($mo->la()->isclose(
-            $mo->la()->scal(2,$mo->ones([3,2])),
+            $mo->la()->array([6,6]),
             $K->ndarray($y->value())));
         $this->assertTrue($mo->la()->isclose(
-            $mo->la()->scal(2,$mo->ones([3,2])),
+            $mo->la()->array([3,3]),
             $K->ndarray($grads[0])));
         // exec
-        $x = $g->Variable($K->ones([3,2]));
+        $x = $g->Variable($K->array([2,2]));
         $y = $nn->with($tape=$g->GradientTape(),$func,[$x],true);
         $grads = $tape->gradient($y,[$x]);
         $this->assertTrue($mo->la()->isclose(
-            $mo->la()->scal(2,$mo->ones([3,2])),
+            $mo->la()->array([6,6]),
             $K->ndarray($y->value())));
         $this->assertTrue($mo->la()->isclose(
-            $mo->la()->scal(2,$mo->ones([3,2])),
+            $mo->la()->array([3,3]),
             $K->ndarray($grads[0])));
     }
 
@@ -73,29 +73,29 @@ class Test extends TestCase
         );
 
         // build
-        $a = $g->Variable($K->array(2));
-        $x = $g->Variable($K->ones([3,2]));
+        $a = $g->Variable($K->array(3));
+        $x = $g->Variable($K->array([2,2]));
         $y = $nn->with($tape=$g->GradientTape(),$func,[$a,$x],true);
         $grads = $tape->gradient($y,[$a,$x]);
         $this->assertTrue($mo->la()->isclose(
-            $mo->la()->scal(2,$mo->ones([3,2])),
+            $mo->la()->array([6,6]),
             $K->ndarray($y->value())));
-        $this->assertEquals(6,$K->scalar($grads[0]));
+        $this->assertEquals(4,$K->scalar($grads[0]));
         $this->assertTrue($mo->la()->isclose(
-            $mo->la()->scal(2,$mo->ones([3,2])),
+            $mo->la()->array([3,3]),
             $K->ndarray($grads[1])));
         
         // exec
-        $a = $g->Variable($K->array(2));
-        $x = $g->Variable($K->ones([3,2]));
+        $a = $g->Variable($K->array(3));
+        $x = $g->Variable($K->array([2,2]));
         $y = $nn->with($tape=$g->GradientTape(),$func,[$a,$x],true);
         $grads = $tape->gradient($y,[$a,$x]);
         $this->assertTrue($mo->la()->isclose(
-            $mo->la()->scal(2,$mo->ones([3,2])),
+            $mo->la()->array([6,6]),
             $K->ndarray($y->value())));
-        $this->assertEquals(6,$K->scalar($grads[0]));
+        $this->assertEquals(4,$K->scalar($grads[0]));
         $this->assertTrue($mo->la()->isclose(
-            $mo->la()->scal(2,$mo->ones([3,2])),
+            $mo->la()->array([3,3]),
             $K->ndarray($grads[1])));
     }
 }

@@ -343,7 +343,7 @@ class GRUCell extends AbstractRNNCell
             ]);
 
             if($this->dRecurrentBias) {
-                $K->update_add($this->dRecurrentBias,$K->sum($dInternalOutput, $axis=0));
+                $K->update_add($this->dRecurrentBias,$K->sum($dInternalOutput, axis:0));
             }
             $K->gemm($calcState->prev_h, $dInternalOutput,1.0,1.0,
                 $this->dRecurrentKernel,true,false);
@@ -385,7 +385,7 @@ class GRUCell extends AbstractRNNCell
         ]);
 
         if($this->dInputBias) {
-            $K->update_add($this->dInputBias,$K->sum($dGateOuts, $axis=0));
+            $K->update_add($this->dInputBias,$K->sum($dGateOuts, axis:0));
         }
         $K->gemm($calcState->inputs, $dGateOuts,1.0,1.0,$this->dKernel,true,false);
         $dInputs = $K->gemm($dGateOuts, $this->kernel,1.0,1.0,null,false,true);

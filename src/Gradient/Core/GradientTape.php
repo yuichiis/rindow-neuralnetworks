@@ -8,6 +8,7 @@ use Throwable;
 use WeakMap;
 use Rindow\NeuralNetworks\Support\Control\Context;
 use Rindow\NeuralNetworks\Layer\LayerBase;
+use Rindow\NeuralNetworks\Gradient\Variable as VariableInterface;
 
 class GradientTape implements Context
 {
@@ -41,7 +42,7 @@ class GradientTape implements Context
         return false;
     }
 
-    public function gradient($target,$sources)
+    public function gradient(VariableInterface $target,$sources)
     {
         if(self::$autoBackProp) {
             throw new LogicException("The gradient function is not supported for use within the automatic differentiation context.");
@@ -62,7 +63,13 @@ class GradientTape implements Context
         } else {
             $grads = new WeakMap();
             foreach($target->creator()->outputs() as $o) {
-                $grads[$o->get()] = $K->ones($o->shape(),$o->dtype());
+                if($o->get()===$target) {
+                    //echo "set grads(".spl_object_id($o->get()).") <= Ones from target func's outputs\n";
+                    $grads[$o->get()] = $K->ones($o->shape(),$o->dtype());
+                } else {
+                    //echo "set grads(".spl_object_id($o->get()).") <= Zeros from target func's outputs\n";
+                    $grads[$o->get()] = $K->zeros($o->shape(),$o->dtype());
+                }
             }
             //$grads[$targetId] = $K->onesLike($target->value());
         }

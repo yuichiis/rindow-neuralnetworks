@@ -3,28 +3,39 @@ namespace Rindow\NeuralNetworks\Loss;
 
 use Interop\Polite\Math\Matrix\NDArray;
 use InvalidArgumentException;
+use ArrayAccess;
 
-class CategoricalCrossEntropy extends AbstractCrossEntropy
+class CategoricalCrossEntropy extends AbstractLoss
 {
-    protected function activationFunction(NDArray $inputs) : NDArray
+    protected function call(NDArray $trues, NDArray $predicts) : NDArray
     {
-        return $this->backend->softmax($inputs);
+        $K = $this->backend;
+        if($this->fromLogits) {
+            $predicts = $K->softmax($predicts);
+        }
+        [$trues,$predicts] = $this->flattenShapes($trues,$predicts);
+        $container = $this->container();
+        $container->trues = $trues;
+        $container->predicts = $predicts;
+        $outputs = $K->categoricalCrossEntropy(
+            $trues, $predicts,
+            $this->fromLogits, $this->reduction
+        );
+        $outputs = $this->reshapeLoss($outputs);
+        return $outputs;
     }
 
-    protected function diffActivationFunction(NDArray $dOutputs, NDArray $outputs) : NDArray
+    protected function differentiate(array $dOutputs, ArrayAccess $grads=null, array $oidsToCollect=null) : array
     {
-        return $this->backend->dSoftmax($dOutputs, $outputs);
-    }
-
-    protected function lossFunction(NDArray $trues, NDArray $predicts, bool $fromLogits) : NDArray
-    {
-        return $this->backend->categoricalCrossEntropy($trues, $predicts);
-    }
-
-    protected function diffLossFunction(NDArray $trues, NDArray $predicts, bool $fromLogits) : NDArray
-    {
-        return $this->backend->dCategoricalCrossEntropy(
-                                            $trues, $predicts, $fromLogits);
+        $K = $this->backend;
+        $dLoss = $this->flattenLoss($dOutputs[0]);
+        $container = $this->container();
+        $dInputs = $K->dCategoricalCrossEntropy(
+            $dLoss, $container->trues, $container->predicts,
+            $this->fromLogits, $this->reduction
+        );
+        $dInputs = $this->reshapePredicts($dInputs);
+        return [$dInputs];
     }
 
     public function accuracy(
@@ -34,7 +45,8 @@ class CategoricalCrossEntropy extends AbstractCrossEntropy
         if($trues->shape()!=$predicts->shape())
             throw new InvalidArgumentException('unmatch shape of trues and predicts results');
         if($this->fromLogits) {
-            $predicts = $this->activationFunction($predicts);
+            //$predicts = $this->activationFunction($predicts);
+            $predicts = $K->softmax($predicts);
         }
         $ndim = $trues->ndim();
         if($ndim>2){
@@ -50,8 +62,8 @@ class CategoricalCrossEntropy extends AbstractCrossEntropy
         } else {
             $dtype = NDArray::int32;
         }
-        $predicts = $K->argmax($predicts, $axis=1,$dtype);
-        $trues = $K->argmax($trues, $axis=1,$dtype);
+        $predicts = $K->argmax($predicts, axis:1, dtype:$dtype);
+        $trues = $K->argmax($trues, axis:1, dtype:$dtype);
         $sum = $K->sum($K->equal($trues, $predicts));
         $sum = $K->scalar($sum);
         $accuracy = $sum/$trues->shape()[0];

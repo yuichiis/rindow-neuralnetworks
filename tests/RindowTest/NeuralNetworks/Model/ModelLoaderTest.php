@@ -75,7 +75,7 @@ class Test extends TestCase
         $history = $model->fit($x,$t, epochs:100, verbose:0);
 
         $y = $model->predict($x);
-        $this->assertEquals($t->toArray(),$mo->argMax($y,$axis=1)->toArray());
+        $this->assertEquals($t->toArray(),$mo->argMax($y,axis:1)->toArray());
     }
 
     public function testSaveAndLoadModelDefaultDenseBatchNrm()
@@ -107,7 +107,7 @@ class Test extends TestCase
         $this->assertLessThan(0.5,abs($accuracy-$accuracy2));
         $y2 = $model->predict($x);
         $this->assertLessThan(1e-7,$mo->la()->sum($mo->la()->square($mo->op($y,'-',$y2))));
-        //$this->assertEquals($t->toArray(),$mo->argMax($y,$axis=1)->toArray());
+        //$this->assertEquals($t->toArray(),$mo->argMax($y,axis:1)->toArray());
     }
 
     public function testSaveAndLoadModelDefaultRnnEmbed()
@@ -229,7 +229,7 @@ class Test extends TestCase
         $this->assertEquals(spl_object_id($densevals1[1]),spl_object_id($densevals2[1]));
 
         $this->assertLessThan(1e-7,$mo->la()->sum($mo->la()->square($mo->op($y,'-',$y2))));
-        //$this->assertEquals($t->toArray(),$mo->argMax($y,$axis=1)->toArray());
+        //$this->assertEquals($t->toArray(),$mo->argMax($y,axis:1)->toArray());
     }
 
     public function testSaveAndLoadModelPortable()
@@ -273,6 +273,6 @@ class Test extends TestCase
         [$loss2,$accuracy2] = $model->evaluate($x,$t);
         $this->assertLessThan(0.5,abs($loss-$loss2));
         $this->assertLessThan(0.5,abs($accuracy-$accuracy2));
-        //$this->assertEquals($t->toArray(),$mo->argMax($y,$axis=1)->toArray());
+        //$this->assertEquals($t->toArray(),$mo->argMax($y,axis:1)->toArray());
     }
 }

@@ -255,6 +255,11 @@ class Attention extends AbstractLayerBase
             [$queryMask,$valueMask] = $mask;
         }
         if($valueMask) {
+            if($valueMask->dtype()==NDArray::bool || $K->isInt($valueMask)) {
+                $valueMask = $K->cast($valueMask,$scores->dtype());
+            }
+            $valueMask = $K->less($valueMask,0.5);              // (mask<0.5)>1.0 , (mask>0.5)=>0.0
+            // scores += (-1e9*valueMask)
             if(!$this->doNotExpandMask) { // Broadcasting 
                 // scores = [batch_size, Tq, Tv]
                 // valueMask = [batch_size, Tv]
@@ -268,20 +273,14 @@ class Attention extends AbstractLayerBase
                     ' scores:['.implode(',',$scores->shape()).']'.
                     ' given mask:['.implode(',',$valueMask->shape()).']');
                 }
-                // valueMask = (float)(not(valueMask))
-                $valueMask = $K->cast($K->equal($valueMask,$K->zerosLike($valueMask)),$scores->dtype());
                 // scores = [batch_size, Tq, Tv]
                 // valueMask = [batch_size, Tv] =repeat=> [batch_size, Tq, Tv]
                 $valueMask = $K->repeat($valueMask,$Tq,axis:-1);
-                // scores += (-1e9*valueMask)
-                $K->update_add($scores,$valueMask,alpha:-1e9);
             } else { // No Broadcasting 
-                // valueMask = (float)(not(valueMask))
-                $valueMask = $K->cast($K->equal($valueMask,$K->zerosLike($valueMask)),$scores->dtype());
                 // scores += (-1e9*valueMask)
                 $valueMask = $this->expandMask($valueMask,$scores);
-                $K->update_add($scores,$valueMask,alpha:-1e9);
             }
+            $K->update_add($scores,$valueMask,alpha:-1e9);
         }
         // weights = softmax(scores)
         $attentionWeight = $K->softmax($scores);
@@ -293,6 +292,11 @@ class Attention extends AbstractLayerBase
         $contextVector = $K->matmul($attentionWeight, $value);
 
         if($queryMask) {
+            if($K->isFloat($queryMask)) {
+                $queryMask = $K->greater($queryMask,0.5);
+            } else {
+                $queryMask = $K->cast($queryMask,$contextVector->dtype());
+            }
             if(!$this->doNotExpandMask) { // Broadcasting 
                 // queryMask = [batch_size, Tq]
                 // vector = [batch_size, Tq, dim] => [dim, batch_size, Tq]
@@ -306,13 +310,11 @@ class Attention extends AbstractLayerBase
                 }
                 $Tq = array_pop($shape);
                 $batchSize = (int)array_product($shape);
-                $queryMask = $K->cast($queryMask,$contextVector->dtype());
                 $queryMask = $queryMask->reshape([(int)array_product($queryMask->shape())]);
                 $contextVector = $contextVector->reshape([$batchSize*$Tq, $dim]);
                 $contextVector = $K->update_mul($contextVector, $queryMask, trans:true);
                 $contextVector = $contextVector->reshape($orgShape);
             } else { // No Broadcasting 
-                $queryMask = $K->cast($queryMask,$contextVector->dtype());
                 $queryMask = $this->expandMask($queryMask,$contextVector);
                 $contextVector = $K->update_mul($contextVector, $queryMask);
             }

@@ -57,7 +57,7 @@ class Test extends TestCase
         $this->assertEquals($x->shape(),$y->shape());
         $this->assertTrue($mo->la()->isclose(
             $mo->ones([3]),
-            $mo->sum($y,$axis=1)
+            $mo->sum($y,axis:1)
         ));
 
         $dout = $mo->array([
