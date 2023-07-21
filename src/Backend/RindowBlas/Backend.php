@@ -1850,8 +1850,8 @@ class Backend
             $loss = $la->reduceSum($loss,axis:-1);
             return $loss;
         }
-        $batchSize = $predicts->shape()[0];
-        $loss = $la->sum($loss)/$batchSize;
+        $size = $predicts->size();
+        $loss = $la->sum($loss)/$size;
         return $this->array($loss,$predicts->dtype());
     }
 
@@ -1869,7 +1869,7 @@ class Backend
         if($trues->shape()!=$predicts->shape()){
             throw new InvalidArgumentException('must be same shape of dimensions');
         }
-        $batchSize = $predicts->shape()[0];
+        $size = $predicts->size();
         if($fromLogits) {
             if($reduction=='none') {
                 $trans = true;  //  broadcast to cols
@@ -1880,7 +1880,7 @@ class Backend
             $dx = $la->axpy($trues,$la->copy($predicts),-1);
             $la->multiply($dLoss,$dx,$trans);
             if($reduction!='none') {
-                $la->scal(1/$batchSize,$dx);
+                $la->scal(1/$size,$dx);
             }
             return $dx;
         } else {
@@ -1898,7 +1898,7 @@ class Backend
             -1.0);
             $la->multiply($dLoss,$dx,$trans);
             if($reduction!='none') {
-                $la->scal(1/$batchSize,$dx);
+                $la->scal(1/$size,$dx);
             }
             return $dx;
         }

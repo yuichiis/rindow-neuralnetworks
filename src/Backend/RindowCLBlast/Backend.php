@@ -1900,7 +1900,7 @@ class Backend
                             $la->scal(-1,$la->log(
                                             $la->increment($la->copy($predicts),1,-1))))
         );
-        $batchSize = $predicts->shape()[0];
+        $size = $predicts->size();
         if($reduction=='none') {
             $loss = $la->reduceSum($loss,axis:-1);
             return $loss;
@@ -1908,9 +1908,9 @@ class Backend
         $loss = $la->sum($loss);
 
         if($loss instanceof NDArray) {
-            return $la->scal(1/$batchSize,$loss);
+            return $la->scal(1/$size,$loss);
         }
-        return $la->array($loss/$batchSize,$predicts->dtype());
+        return $la->array($loss/$size,$predicts->dtype());
     }
 
     public function dBinaryCrossEntropy(
@@ -1923,7 +1923,7 @@ class Backend
         if($trues->shape()!=$predicts->shape()){
             throw new InvalidArgumentException('must be same shape of dimensions');
         }
-        $batchSize = $predicts->shape()[0];
+        $size = $predicts->size();
         if($fromLogits) {
             if($reduction=='none') {
                 $trans = true;  //  broadcast to cols
@@ -1934,7 +1934,7 @@ class Backend
             $dx = $la->axpy($trues,$la->copy($predicts),-1);
             $la->multiply($dLoss,$dx,$trans);
             if($reduction!='none') {
-                $la->scal(1/$batchSize,$dx);
+                $la->scal(1/$size,$dx);
             }
             return $dx;
         } else {
@@ -1952,7 +1952,7 @@ class Backend
             -1.0);
             $la->multiply($dLoss,$dx,$trans);
             if($reduction!='none') {
-                $la->scal(1/$batchSize,$dx);
+                $la->scal(1/$size,$dx);
             }
             return $dx;
         }

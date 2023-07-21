@@ -84,6 +84,7 @@ abstract class AbstractLoss implements Loss
     protected function flattenShapes(NDArray $trues, NDArray $predicts) : array
     {
         $origTrueShape = $trues->shape();
+        $origPredictsShape = $predicts->shape();
         if($trues->ndim()<$predicts->ndim()) {
             $shape = $trues->shape();
             array_push($shape,1);
@@ -93,13 +94,18 @@ abstract class AbstractLoss implements Loss
             throw new InvalidArgumentException('trues and predicts must be same shape of dimensions. '.
                 'trues,predicts are ['.implode(',',$origTrueShape).'],['.implode(',',$predicts->shape()).']');
         }
+        if($predicts->ndim()==1) {
+            $size = $predicts->size();
+            $predicts = $predicts->reshape([1,$size]);
+            $trues = $trues->reshape([1,$size]);
+        }
         //$origPredictsShape = $predicts->shape();
         //$orgTruesShape = $trues->shape();
         $batchShape = $predicts->shape();
         $feature = array_pop($batchShape);
         $batchSize = array_product($batchShape);
         $container = $this->container();
-        $container->predictsShape = $predicts->shape();
+        $container->predictsShape = $origPredictsShape;
         $container->batchShape = $batchShape;
         $container->batchSize = $batchSize;
         $container->batchShape = $batchShape;
