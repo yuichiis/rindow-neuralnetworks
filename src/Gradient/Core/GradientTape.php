@@ -78,11 +78,14 @@ class GradientTape implements Context
         if(!$this->persistent || !array_key_exists($targetId,$this->persistentGrads)) {
             $this->calcGradient($grads,$target,$sourceIds);
         }
+        $idx = 1;
         foreach ($sourceIds as $sourceId) {
             if(!isset($grads[$sourceId])) {
-                throw new InvalidArgumentException("No applicable gradient found for source");
+                $name = $sourceId->name();
+                throw new InvalidArgumentException("No applicable gradient found for source #{$idx}({$name}).");
             }
             $gradients[] = $grads[$sourceId];
+            $idx++;
         }
         if($this->persistent) {
             $this->persistentGrads[$targetId] = $grads;

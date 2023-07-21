@@ -12,6 +12,7 @@ use Rindow\NeuralNetworks\Gradient\Module;
 class Modules implements Module, ArrayAccess, Countable, IteratorAggregate
 {
     protected $modules = [];
+    protected $shapeInspection=true;
 
     public function __construct(array $modules=null)
     {
@@ -28,6 +29,21 @@ class Modules implements Module, ArrayAccess, Countable, IteratorAggregate
     public function add(Module $module) : void
     {
         $this->modules[] = $module;
+    }
+
+    public function shapeInspection() : bool
+    {
+        return $this->shapeInspection;
+    }
+
+    public function setShapeInspection(bool $enable)
+    {
+        if($this->shapeInspection==$enable)
+            return;
+        foreach ($this->submodules() as $module) {
+            $module->setShapeInspection($enable);
+        }
+        $this->shapeInspection = $enable;
     }
 
     public function submodules() : array

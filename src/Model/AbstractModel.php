@@ -709,6 +709,7 @@ abstract class AbstractModel implements Model
             $inputs['trues'] = $g->Variable($trues);
         }
         $trues = $this->trueValuesFilter($trues);
+        $trues = $g->Variable($trues);
         $model = $this->getModelGraph();
         $lossfunc = $this->lossFunction;
         [$loss,$preds] = $nn->with($tape=$g->GradientTape(),
@@ -846,16 +847,18 @@ abstract class AbstractModel implements Model
                 "\n");
             $this->display(str_repeat('=',29+27+10)."\n");
             foreach($params as $param) {
-                $name = $param->name();
-                if(!$name) {
-                    $name = 'No name';
+                if($param->isTrainable()) {
+                    $name = $param->name();
+                    if(!$name) {
+                        $name = 'No name';
+                    }
+                    $this->display(str_pad($name,29));
+                    $this->display(str_pad('('.implode(',',$param->shape()).')',27));
+                    $nump = $param->size();
+                    $this->display(str_pad($nump,10));
+                    $this->display("\n");
+                    $totalParams += $nump;
                 }
-                $this->display(str_pad($name,29));
-                $this->display(str_pad('('.implode(',',$param->shape()).')',27));
-                $nump = $param->size();
-                $this->display(str_pad($nump,10));
-                $this->display("\n");
-                $totalParams += $nump;
             }
         }
         $this->display(str_repeat('=',29+27+10)."\n");

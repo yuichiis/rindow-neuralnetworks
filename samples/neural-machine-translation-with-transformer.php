@@ -269,8 +269,9 @@ class PositionalEmbedding extends AbstractModel
             $vocab_size, $wordVectSize, input_length:$inputLength);
         $this->posEncoding = $g->Variable(
             $this->positionalEncoding($maximumPositionEncoding, $depth=$wordVectSize),
-            trainable:true,
+            trainable:false,
             unbackpropagatable:true,
+            name:'posEncoding',
         );
     }
 
