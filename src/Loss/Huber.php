@@ -103,8 +103,7 @@ class Huber extends AbstractLoss
         NDArray $trues, NDArray $predicts) : float
     {
         $K = $this->backend;
-        if($trues->shape()!=$predicts->shape())
-            throw new InvalidArgumentException('unmatch shape of trues and predicts results');
+        [$trues,$predicts] = $this->flattenShapes($trues,$predicts);
         // calc accuracy
         $shape=$predicts->shape();
         if(count($shape)>=2) {

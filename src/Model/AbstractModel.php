@@ -654,7 +654,9 @@ abstract class AbstractModel implements Model
         }
         foreach(get_object_vars($this) as $var) {
             if($var instanceof Variable) {
-                $variables[] = $var;
+                if($var->isbackpropagatable()) {
+                    $variables[] = $var;
+                }
             }
         }
 
@@ -847,18 +849,16 @@ abstract class AbstractModel implements Model
                 "\n");
             $this->display(str_repeat('=',29+27+10)."\n");
             foreach($params as $param) {
-                if($param->isTrainable()) {
-                    $name = $param->name();
-                    if(!$name) {
-                        $name = 'No name';
-                    }
-                    $this->display(str_pad($name,29));
-                    $this->display(str_pad('('.implode(',',$param->shape()).')',27));
-                    $nump = $param->size();
-                    $this->display(str_pad($nump,10));
-                    $this->display("\n");
-                    $totalParams += $nump;
+                $name = $param->name();
+                if(!$name) {
+                    $name = 'No name';
                 }
+                $this->display(str_pad($name,29));
+                $this->display(str_pad('('.implode(',',$param->shape()).')',27));
+                $nump = $param->size();
+                $this->display(str_pad($nump,10));
+                $this->display("\n");
+                $totalParams += $nump;
             }
         }
         $this->display(str_repeat('=',29+27+10)."\n");

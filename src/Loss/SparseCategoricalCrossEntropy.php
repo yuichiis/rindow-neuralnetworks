@@ -10,10 +10,10 @@ class SparseCategoricalCrossEntropy extends AbstractLoss
     protected function call(NDArray $trues, NDArray $predicts) : NDArray
     {
         $K = $this->backend;
+        [$trues,$predicts] = $this->flattenShapesForSparse($trues,$predicts);
         if($this->fromLogits) {
             $predicts = $K->softmax($predicts);
         }
-        [$trues,$predicts] = $this->flattenShapesForSparse($trues,$predicts);
         $container = $this->container();
         $container->trues = $trues;
         $container->predicts = $predicts;
@@ -42,6 +42,7 @@ class SparseCategoricalCrossEntropy extends AbstractLoss
         NDArray $c_true, NDArray $y_pred) : float
     {
         $K = $this->backend;
+        [$c_true,$y_pred] = $this->flattenShapesForSparse($c_true,$y_pred);
         // transrate one hot to categorical labels
         if($this->fromLogits) {
             //$y_pred = $this->activationFunction($y_pred);

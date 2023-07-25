@@ -42,9 +42,6 @@ class BinaryCrossEntropy extends AbstractLoss
         NDArray $trues, NDArray $predicts) : float
     {
         $K = $this->backend;
-        if($trues->ndim()==1) {
-            $trues = $trues->reshape([$trues->shape()[0],1]);
-        }
         [$trues,$predicts] = $this->flattenShapes($trues,$predicts);
         if($this->fromLogits) {
             //$predicts = $this->activationFunction($predicts);

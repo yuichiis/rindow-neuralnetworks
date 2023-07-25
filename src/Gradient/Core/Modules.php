@@ -46,6 +46,10 @@ class Modules implements Module, ArrayAccess, Countable, IteratorAggregate
         $this->shapeInspection = $enable;
     }
 
+    public function reverseSyncWeightVariables() : void
+    {
+    }
+
     public function submodules() : array
     {
         return $this->modules;

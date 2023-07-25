@@ -5,9 +5,10 @@ use Interop\Polite\Math\Matrix\NDArray;
 use Rindow\Math\Matrix\MatrixOperator;
 use Rindow\NeuralNetworks\Builder\NeuralNetworks;
 use Rindow\Math\Plot\Plot;
-$mo = new MatrixOperator();
-$nn = new NeuralNetworks($mo);
-$plt = new Plot([],$mo);
+
+//$mo = new MatrixOperator();
+//$nn = new NeuralNetworks($mo);
+//$plt = new Plot([],$mo);
 $K = $nn->backend();
 $g = $nn->gradient();
 
