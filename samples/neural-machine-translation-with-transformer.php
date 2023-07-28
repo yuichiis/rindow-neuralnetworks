@@ -782,13 +782,47 @@ class CustomLossFunction
             from_logits:true, reduction:'none');
     }
 
-    public function __invoke(NDArray $trues, NDArray $pred) : NDArray
+    public function __invoke(NDArray $label, NDArray $pred) : NDArray
     {
         $g = $this->gradient;
         $mask = $g->greater($g->cast($trues,dtype:NDArray::float32),0.0);
         $loss = $this->loss_object->forward($trues, $pred);
         $loss = $g->mul($loss,$mask);
         return $g->div($g->reduceSum($loss),$g->reduceSum($mask));
+    }
+}
+
+class CustomAccuracy
+{
+    protected $backend;
+    protected $nn;
+    protected $gradient;
+
+    public function __construct($nn)
+    {
+        $this->backend = $nn->backend();
+        $this->nn = $nn;
+        $this->gradient = $nn->gradient();
+    }
+
+    public function __invoke($label, $pred)
+    {
+        $K = $this->backend;
+        $pred = $K->argMax($pred, axis:2);
+        $label = $K->cast($label,dtype:$pred->dtype());
+        $match = $K->equal($label, $pred);
+        $mask = $K->notEqual($label, $K->zerosLike($label));
+        $match = $K->cast($match,dtype:NDArray::float32);
+        $mask = $K->cast($mask,dtype:NDArray::float32);
+        $match = $K->mul($match,$mask);
+        $sumMatch = $K->sum($match);
+        if(is_numeric($sumMatch)) {
+            $accuracy = $sumMatch/$K->sum($mask);
+        } else {
+            $accuracy = $K->add($sumMatch,$K->sum($mask));
+            $accuracy = $K->scalar($accuracy);
+        }
+        return $accuracy;
     }
 }
 
@@ -933,11 +967,13 @@ function make_labels($la,$label_tensor) {
     return $label_tensor;
 }
 
+return;
+
 $numExamples=20000;#30000
 $numWords=1024;#null;
-$epochs = 10;
+$epochs = 10;#20;
 $batchSize = 64;
-$wordVectSize=256;  // d_model embedding_dim
+$wordVectSize=256;#128  // d_model embedding_dim
 $dff=512;  // units 
 $num_layers=4;
 $num_heads =8;
@@ -1040,10 +1076,10 @@ if(file_exists($modelFilePath)) {
     $transformer->saveWeightsToFile($modelFilePath);
 
     $plt->figure();
-    $plt->plot($mo->array($history['accuracy']),null,null,'accuracy');
-    $plt->plot($mo->array($history['val_accuracy']),null,null,'val_accuracy');
+    //$plt->plot($mo->array($history['accuracy']),null,null,'accuracy');
+    //$plt->plot($mo->array($history['val_accuracy']),null,null,'val_accuracy');
     $plt->plot($mo->array($history['loss']),null,null,'loss');
-    $plt->plot($mo->array($history['val_loss']),null,null,'val_loss');
+    //$plt->plot($mo->array($history['val_loss']),null,null,'val_loss');
     $plt->legend();
     $plt->title('seq2seq-transformer-translation');
 }

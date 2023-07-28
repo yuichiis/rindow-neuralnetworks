@@ -6,14 +6,14 @@ use Rindow\Math\Matrix\MatrixOperator;
 use Rindow\NeuralNetworks\Builder\NeuralNetworks;
 use Rindow\Math\Plot\Plot;
 
-//$mo = new MatrixOperator();
-//$nn = new NeuralNetworks($mo);
-//$plt = new Plot([],$mo);
+$mo = new MatrixOperator();
+$nn = new NeuralNetworks($mo);
+$plt = new Plot([],$mo);
 $K = $nn->backend();
 $g = $nn->gradient();
 
-$a = $mo->array(1);
-echo $mo->toString($a)."\n";
+//$a = $mo->array(1);
+//echo $mo->toString($a)."\n";
 
 //$batchSize = 5;
 //$wordVectSize = 16;
@@ -351,3 +351,29 @@ echo $mo->toString($a)."\n";
 //echo $mo->toString($x).$mo->dtypeToString($x->dtype())."\n";
 //echo "==y==\n";
 //echo $mo->toString($y).$mo->dtypeToString($y->dtype())."\n";
+
+
+//===================================================
+$calcac = new CustomAccuracy($nn);
+
+$pred = $K->array([
+    [[0,1,0,0],[0,0,1,0],[1,0,0,0]],
+    [[0,0,1,0],[0,0,0,1],[1,0,0,0]],
+]);
+$label = $K->array([
+    [1,2,0],
+    [2,0,0],
+],dtype:NDArray::int32);
+
+$ac = $calcac($label,$pred);
+echo "label=".$K->toString($label)."\n";
+echo "accuracy=".$ac."\n";
+
+$label = $K->array([
+    [1,2,0],
+    [2,1,0],
+],dtype:NDArray::int32);
+
+$ac = $calcac($label,$pred);
+echo "label=".$K->toString($label)."\n";
+echo "accuracy=".$ac."\n";
