@@ -48,7 +48,7 @@ class BinaryCrossEntropy extends AbstractLoss
             $predicts = $this->backend->sigmoid($predicts);
         }
         // calc accuracy
-        $predicts = $K->greater($K->copy($predicts),0.5);
+        $predicts = $K->greater($predicts,0.5);
         if($trues->dtype()!=$predicts->dtype()) {
             $predicts = $K->cast($predicts,$trues->dtype());
         }
