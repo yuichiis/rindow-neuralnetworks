@@ -8,14 +8,15 @@ class SparseCategoricalAccuracy extends AbstractMetric
 {
     protected string $name = 'sparse_categorical_accuracy';
 
-    public function forward(NDArray $true, NDArray $predicts) : float
+    public function forward(NDArray $trues, NDArray $predicts) : float
     {
+        $K = $this->backend;
+        [$trues,$predicts] = $this->flattenShapesForSparse($trues, $predicts);
         if(!$K->isInt($trues)) {
             throw new InvalidArgumentException('trues must be integers.');
         }
-        $K = $this->backend;
-        $predicts = $K->argMax($predicts,axis:-1,dtype:$true->dtype());
-        $equals = $K->scalar($K->sum($K->equals($trues,$predicts)));
-        return $equals/$true->size();
+        $predicts = $K->argMax($predicts,axis:-1,dtype:$trues->dtype());
+        $equals = $K->scalar($K->sum($K->equal($trues,$predicts)));
+        return $equals/$trues->size();
     }
 }

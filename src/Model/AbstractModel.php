@@ -14,6 +14,8 @@ use Rindow\NeuralNetworks\Loss\Loss;
 use Rindow\NeuralNetworks\Loss\SparseCategoricalCrossEntropy;
 use Rindow\NeuralNetworks\Loss\CategoricalCrossEntropy;
 use Rindow\NeuralNetworks\Loss\BinaryCrossEntropy;
+use Rindow\NeuralNetworks\Metric\Metric;
+use Rindow\NeuralNetworks\Metric\MetricCatalog;
 use Rindow\NeuralNetworks\Callback\CallbackList;
 use Rindow\NeuralNetworks\Data\Dataset\Dataset;
 use Rindow\NeuralNetworks\Data\Dataset\NDArrayDataset;
@@ -169,6 +171,44 @@ abstract class AbstractModel implements Model
         return $loss;
     }
 
+    protected function resolveMetricFunctions(?array $metrics) : array
+    {
+        if(empty($metric)) {
+            $metric = [];
+        }
+        $newMetrics = [];
+        foreach($metrics as $idx => $metric) {
+            if(is_string($metric)) {
+                if($metric=='accuracy') {
+                    $metric = $this->lossFunction->accuracyMetric($metric);
+                }
+                $metricObject = MetricCatalog::factory($metric);
+            } elseif($metric instanceof Metric) {
+                $metricObject = $metric;
+            } elseif(is_callable($metric)) {
+                $metricObject = $this->builder->metrics()->GenericMetric($metric);
+            } else {
+                if(is_object($metric)) {
+                    $name = get_class($metric);
+                } else {
+                    $name = gettype($metric);
+                }
+                throw new InvalidArgumentException('Invarid metric type:'.$name);
+            }
+            if(is_int($idx)) {
+                if($metric=='accuracy') {
+                    $name = 'accuracy';
+                } else {
+                    $name = $metricObject->name();
+                }
+            } else {
+                $name = $idx;
+            }
+            $newMetrics[$name] = $metric;
+        }
+        return $newMetrics;
+    }
+
     public function compile(
         string|object $optimizer=null,
         string|object $loss=null,
@@ -188,11 +228,8 @@ abstract class AbstractModel implements Model
             $this->accuracyFunction = [$this->lossFunction,'accuracy'];
         }
         // resolve metrics
-        if(empty($metrics)) {
-            $metrics = [];
-        }
+        $metrics = $this->resolveMetricFunctions($metrics);
         $this->metrics = $metrics;
-
     }
 
     public function fit(

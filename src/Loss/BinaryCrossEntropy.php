@@ -57,4 +57,9 @@ class BinaryCrossEntropy extends AbstractLoss
         $accuracy = $sum/$trues->size();
         return $accuracy;
     }
+
+    public function accuracyMetric() : string
+    {
+        return 'binary_accuracy';
+    }
 }

@@ -19,17 +19,15 @@ class BinaryAccuracy extends AbstractMetric
         $this->threshold = $threshold;
     }
 
-    public function forward(NDArray $true, NDArray $predicts) : float
+    public function forward(NDArray $trues, NDArray $predicts) : float
     {
         $K = $this->backend;
-        $shape = $predicts->shape();
-        $featuresize = array_pop($shape);
-
+        [$trues,$predicts] = $this->flattenShapes($trues, $predicts);
         if(!$K->isInt($trues)) {
-            $trues = $K->cast($trues,dtype:int32);
+            $trues = $K->cast($trues,dtype:NDArray::int32);
         }
         $predicts = $K->cast($K->greater($predicts,$this->threshold),dtype:$trues->dtype());
-        $equals = $K->scalar($K->sum($K->equals($trues,$predicts)));
-        return $equals/$true->size();
+        $equals = $K->scalar($K->sum($K->equal($trues,$predicts)));
+        return $equals/$trues->size();
     }
 }

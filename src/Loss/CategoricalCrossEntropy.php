@@ -68,4 +68,9 @@ class CategoricalCrossEntropy extends AbstractLoss
         $accuracy = $sum/$trues->shape()[0];
         return $accuracy;
     }
+
+    public function accuracyMetric() : string
+    {
+        return 'categorical_accuracy';
+    }
 }

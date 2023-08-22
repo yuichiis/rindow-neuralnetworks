@@ -20,6 +20,7 @@ class NeuralNetworks
     protected $models;
     protected $layers;
     protected $losses;
+    protected $metrics;
     protected $optimizers;
     protected $networks;
     protected $datasets;
@@ -90,6 +91,14 @@ class NeuralNetworks
             $this->losses = new Losses($this->backend);
         }
         return $this->losses;
+    }
+
+    public function metrics()
+    {
+        if($this->metrics==null) {
+            $this->metrics = new Metrics($this->backend);
+        }
+        return $this->metrics;
     }
 
     public function optimizers()
