@@ -184,4 +184,28 @@ class Test extends TestCase
         $this->assertTrue(
             $this->verifyGradient($mo,$nn,$K,$g,$lossFunction,$t,$x));
     }
+
+    public function testForwardOtherReductionNone()
+    {
+        $mo = $this->newMatrixOperator();
+        $nn = $this->newNeuralNetworks($mo);
+        $K = $nn->backend();
+        $g = $nn->gradient();
+        $lossFunction = $nn->losses()->MeanSquaredError(reduction:'none');
+
+        $predicts = $K->array([
+            [0.1, 0.9],
+            [0.4, 0.6],
+            [0.5, 0.5],
+        ]);
+        $trues = $K->array([
+            [0.2, 0.8],
+            [0.2, 0.8],
+            [0.5, 0.5],
+        ]);
+        $loss = $lossFunction->forward($trues,$predicts);
+        $loss = $K->ndarray($loss);
+        $trueLoss = $mo->array([0.01,0.04,0.0]);
+        $this->assertTrue($mo->la()->isclose($loss,$trueLoss));
+    }
 }

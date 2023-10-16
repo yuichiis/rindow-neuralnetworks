@@ -506,7 +506,7 @@ class Test extends TestCase
         $lossfunc = $nn->losses->SparseCategoricalCrossentropy(from_logits:true);
         $optimizer = $nn->optimizers->Adam();
         $train_inputs = $K->array([[1, 3], [1, 4], [2, 4], [3, 1], [4, 1], [4, 2]]);
-        $train_tests = $K->array([0, 0, 0, 1, 1, 1]);
+        $train_tests = $K->array([0, 0, 0, 1, 1, 1],dtype:NDArray::int32);
         $dataset = $nn->data->NDArrayDataset($train_inputs,
             tests:$train_tests,
             batch_size:64,
@@ -556,7 +556,7 @@ class Test extends TestCase
         $model = new TestModel2($K,$nn);
         $lossfunc = $nn->losses->SparseCategoricalCrossentropy(from_logits:true);
         $train_inputs = $mo->array([[1, 3], [1, 4], [2, 4], [3, 1], [4, 1], [4, 2]]);
-        $train_tests = $mo->array([0, 0, 0, 1, 1, 1]);
+        $train_tests = $mo->array([0, 0, 0, 1, 1, 1],dtype:NDArray::int32);
         $model->compile(
             loss: $lossfunc,
             optimizer: 'adam',
@@ -595,12 +595,12 @@ class Test extends TestCase
 
         // training greater or less
         $x = $mo->array([[1, 3], [1, 4], [2, 4], [3, 1], [4, 1], [4, 2]]);
-        $t = $mo->array([0, 0, 0, 1, 1, 1]);
+        $t = $mo->array([0, 0, 0, 1, 1, 1],dtype:NDArray::int32);
         $history = $model->fit($x,$t,epochs:100, verbose:0);
 
-        [$loss,$accuracy] = $model->evaluate($x,$t);
-        $this->assertLessThan(1.0,$loss);
-        $this->assertEquals(1.0,$accuracy);
+        $evals = $model->evaluate($x,$t);
+        $this->assertLessThan(1.0,$evals['loss']);
+        $this->assertEquals(1.0,$evals['accuracy']);
     }
 
     public function testFitWithEvaluate()
@@ -613,9 +613,9 @@ class Test extends TestCase
 
         $model = new TestModel2($K,$nn);
         $train_inputs = $mo->array([[1, 3], [1, 4], [2, 4], [3, 1], [4, 1], [4, 2]]);
-        $train_tests = $mo->array([0, 0, 0, 1, 1, 1]);
+        $train_tests = $mo->array([0, 0, 0, 1, 1, 1],dtype:NDArray::int32);
         $val_inputs = $mo->array([[1, 2], [3, 2],]);
-        $val_tests = $mo->array([0, 1,]);
+        $val_tests = $mo->array([0, 1,],dtype:NDArray::int32);
 
         $model->compile(
             loss:$nn->losses->SparseCategoricalCrossentropy(from_logits:true),
@@ -649,9 +649,9 @@ class Test extends TestCase
 
         $model = new Test3Main($K,$nn);
         $train_inputs = $mo->array([[1, 3], [1, 4], [2, 4], [3, 1], [4, 1], [4, 2]]);
-        $train_tests = $mo->array([0, 0, 0, 1, 1, 1]);
+        $train_tests = $mo->array([0, 0, 0, 1, 1, 1],dtype:NDArray::int32);
         $val_inputs = $mo->array([[1, 2], [3, 2],]);
-        $val_tests = $mo->array([0, 1,]);
+        $val_tests = $mo->array([0, 1,],dtype:NDArray::int32);
 
         $model->compile(
             loss: $nn->losses->SparseCategoricalCrossentropy(from_logits:true),
@@ -684,9 +684,9 @@ class Test extends TestCase
 
         $model = new TestModel2($K,$nn);
         $train_inputs = $mo->array([[1, 3], [1, 4], [2, 4], [3, 1], [4, 1], [4, 2]]);
-        $train_tests = $mo->array([0, 0, 0, 1, 1, 1]);
+        $train_tests = $mo->array([0, 0, 0, 1, 1, 1],dtype:NDArray::int32);
         $val_inputs = $mo->array([[1, 2], [3, 2],]);
-        $val_tests = $mo->array([0, 1,]);
+        $val_tests = $mo->array([0, 1,],dtype:NDArray::int32);
 
         $model->compile(
             loss: $nn->losses->SparseCategoricalCrossentropy(from_logits:true),
@@ -710,9 +710,9 @@ class Test extends TestCase
 
         $model = new TestModel2($K,$nn);
         $train_inputs = $mo->array([[1, 3], [1, 4], [2, 4], [3, 1], [4, 1], [4, 2]]);
-        $train_tests = $mo->array([0, 0, 0, 1, 1, 1]);
+        $train_tests = $mo->array([0, 0, 0, 1, 1, 1],dtype:NDArray::int32);
         $val_inputs = $mo->array([[1, 2], [3, 2],]);
-        $val_tests = $mo->array([0, 1,]);
+        $val_tests = $mo->array([0, 1,],dtype:NDArray::int32);
 
         $model->compile(
             loss: $nn->losses->SparseCategoricalCrossentropy(from_logits:true),
@@ -720,10 +720,10 @@ class Test extends TestCase
         );
         $model->loadWeights($savedWeights);
 
-        [$totalLoss,$totalAccuracy] = $model->evaluate($val_inputs,$val_tests);
+        $evals = $model->evaluate($val_inputs,$val_tests);
 
-        $this->assertGreaterThanOrEqual(0.9,$totalAccuracy);
-        $this->assertLessThanOrEqual(0.5,$totalLoss);
+        $this->assertGreaterThanOrEqual(0.9,$evals['accuracy']);
+        $this->assertLessThanOrEqual(0.5,$evals['loss']);
         //$model->summary();
     }
 
@@ -804,7 +804,7 @@ class Test extends TestCase
         $model = new TestVariableMain($K,$nn);
         $lossfunc = $nn->losses->SparseCategoricalCrossentropy(from_logits:true);
         $train_inputs = $mo->array([[1, 3], [1, 4], [2, 4], [3, 1], [4, 1], [4, 2]]);
-        $train_tests = $mo->array([0, 0, 0, 1, 1, 1]);
+        $train_tests = $mo->array([0, 0, 0, 1, 1, 1],dtype:NDArray::int32);
         $model->compile(
             loss: $lossfunc,
             optimizer: 'adam',
@@ -836,7 +836,7 @@ class Test extends TestCase
         $model = new TestVariableMain($K,$nn);
         $lossfunc = $nn->losses->SparseCategoricalCrossentropy(from_logits:true);
         $x = $mo->array([[1, 3], [1, 4], [2, 4], [3, 1], [4, 1], [4, 2]]);
-        $t = $mo->array([0, 0, 0, 1, 1, 1]);
+        $t = $mo->array([0, 0, 0, 1, 1, 1],dtype:NDArray::int32);
 
         $model->compile(
             loss: $lossfunc,
@@ -844,9 +844,9 @@ class Test extends TestCase
         );
         $model->loadWeights($savedWeights);
 
-        [$loss,$accuracy] = $model->evaluate($x,$t);
-        $this->assertLessThan(1.0,$loss);
-        $this->assertEquals(1.0,$accuracy);
+        $evals = $model->evaluate($x,$t);
+        $this->assertLessThan(1.0,$evals['loss']);
+        $this->assertEquals(1.0,$evals['accuracy']);
         //$model->summary();
 
         //$loadedWeights = $model->trainableVariables();
@@ -870,7 +870,7 @@ class Test extends TestCase
         //$train_inputs = $mo->array([[1, 3], [1, 4], [2, 4], [3, 1], [4, 1], [4, 2]]);
         //$train_tests = $mo->array([0, 0, 0, 1, 1, 1]);
         $train_inputs = $mo->array([[1, 3]]);
-        $train_tests = $mo->array([0]);
+        $train_tests = $mo->array([0],dtype:NDArray::int32);
         $model->compile(
             loss: $lossfunc,
             optimizer: 'adam',
@@ -909,7 +909,7 @@ class Test extends TestCase
         $model = new TestGraphMode($K,$nn);
         $lossfunc = $nn->losses->SparseCategoricalCrossentropy(from_logits:true);
         $train_inputs = $mo->array([[1, 3], [1, 4], [2, 4], [3, 1], [4, 1], [4, 2]]);
-        $train_tests = $mo->array([0, 0, 0, 1, 1, 1]);
+        $train_tests = $mo->array([0, 0, 0, 1, 1, 1],dtype:NDArray::int32);
         $model->compile(
             loss: $lossfunc,
             optimizer: 'adam',

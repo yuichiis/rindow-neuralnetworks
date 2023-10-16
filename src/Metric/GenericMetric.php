@@ -11,10 +11,14 @@ class GenericMetric extends AbstractMetric
     public function __construct(
         object $backend,
         callable $func,
+        string $name=null,
         )
     {
         parent::__construct($backend);
         $this->func = $func;
+        if($name!==null) {
+            $this->name = $name;
+        }
     }
 
     public function forward(NDArray $trues, NDArray $predicts) : float

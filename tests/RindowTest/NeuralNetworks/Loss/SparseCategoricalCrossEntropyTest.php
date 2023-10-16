@@ -80,7 +80,7 @@ class Test extends TestCase
         $y = [];
         foreach($x as $k => $xx) {
             $tt = $t[$k];
-            $y[] = $K->scalar($loss->forward($K->array([$tt]),$K->array([$xx])));
+            $y[] = $K->scalar($loss->forward($K->array([$tt],dtype:NDArray::int32),$K->array([$xx])));
         }
         $plt->plot($mo->array($y));
         $plt->show();
@@ -114,7 +114,7 @@ class Test extends TestCase
             [0.00000, 0.00000 , 1.00000],
             [0.99998, 0.00001 , 0.00001],
         ]);
-        $t = $mo->array([2, 0],NDArray::int32);
+        $t = $mo->array([2, 0],dtype:NDArray::int32);
         $copyx = $mo->copy($x);
         $copyt = $mo->copy($t);
         $t = $K->array($t);
@@ -154,7 +154,7 @@ class Test extends TestCase
             [0.00000, 0.00000 , 1.00000],
             [0.99998, 0.00001 , 0.00001],
         ]);
-        $t = $mo->array([1, 1]);
+        $t = $mo->array([1, 1],dtype:NDArray::int32);
         $t = $K->array($t);
         $x = $K->array($x);
         $y = $nn->with($tape=$g->GradientTape(),
@@ -180,7 +180,7 @@ class Test extends TestCase
             [0.00001, 0.20000 , 0.79998],
             [0.79998, 0.00001 , 0.20000],
         ]);
-        $t = $mo->array([2, 2]);
+        $t = $mo->array([2, 2],dtype:NDArray::int32);
         $this->assertTrue(
             $this->verifyGradient($mo,$nn,$K,$g,$func,$t,$x));
     }
@@ -239,7 +239,7 @@ class Test extends TestCase
             [0.00000, 0.00000 , 1.00000],
             [0.99998, 0.00001 , 0.00001],
         ]);
-        $t = $mo->array([1, 1]);
+        $t = $mo->array([1, 1],dtype:NDArray::int32);
         $t = $K->array($t);
         $x = $K->array($x);
         $y = $nn->with($tape=$g->GradientTape(),
@@ -260,7 +260,7 @@ class Test extends TestCase
             [0.00001, 0.20000 , 0.79998],
             [0.79998, 0.00001 , 0.20000],
         ]);
-        $t = $mo->array([2, 2]);
+        $t = $mo->array([2, 2],dtype:NDArray::int32);
         $this->assertTrue(
             $this->verifyGradient($mo,$nn,$K,$g,$func,$t,$x));
     }
@@ -312,7 +312,7 @@ class Test extends TestCase
             [-10.0, -10.0 , 10.0],
             [ 10.0, -10.0 ,-10.0],
         ]);
-        $t = $mo->array([1, 1]);
+        $t = $mo->array([1, 1],dtype:NDArray::int32);
         $t = $K->array($t);
         $x = $K->array($x);
         $y = $nn->with($tape=$g->GradientTape(),
@@ -334,7 +334,7 @@ class Test extends TestCase
             [-2.0,  0.0, 2.0],
             [ 2.0, -2.0, 0.0],
         ]);
-        $t = $mo->array([2, 2]);
+        $t = $mo->array([2, 2],dtype:NDArray::int32);
         $this->assertTrue(
             $this->verifyGradient($mo,$nn,$K,$g,$func,$t,$x,true));
     }
@@ -390,7 +390,7 @@ class Test extends TestCase
             [-10.0, -10.0 , 10.0],
             [ 10.0, -10.0 ,-10.0],
         ]);
-        $t = $mo->array([1, 1]);
+        $t = $mo->array([1, 1],dtype:NDArray::int32);
         $t = $K->array($t);
         $x = $K->array($x);
         $y = $nn->with($tape=$g->GradientTape(),
@@ -412,7 +412,7 @@ class Test extends TestCase
             [-2.0,  0.0, 2.0],
             [ 2.0, -2.0, 0.0],
         ]);
-        $t = $mo->array([2, 2]);
+        $t = $mo->array([2, 2],dtype:NDArray::int32);
         $this->assertTrue(
             $this->verifyGradient($mo,$nn,$K,$g,$func,$t,$x,true));
     }

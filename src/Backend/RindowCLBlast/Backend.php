@@ -92,7 +92,7 @@ class Backend
         $this->epsilon = $epsilon;
     }
 
-    public function dtypeToString($dtype) : string
+    public function dtypeToString(int $dtype) : string
     {
         $mo = $this->matrixOperator;
         return $mo->dtypeToString($dtype);

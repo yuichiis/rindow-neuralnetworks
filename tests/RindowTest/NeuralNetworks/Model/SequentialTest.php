@@ -28,7 +28,7 @@ class WeightLog extends AbstractCallback
         $this->prev_w = null;
     }
 
-    public function onEpochEnd(int $epoch, array $logs=null) : void
+    public function onEpochEnd(int $epoch, array $metrics=null) : void
     {
         $model = $this->getModel();
         $K = $model->backend();
@@ -85,7 +85,7 @@ class TestFilter implements DatasetFilter
         $batchSize= count($inputs);
         $cols = count($inputs[0])-1;
         $inputsNDArray = $this->mo->la()->alloc([$batchSize,$cols]);
-        $testsNDArray = $this->mo->la()->alloc([$batchSize,1]);
+        $testsNDArray = $this->mo->la()->alloc([$batchSize,1],dtype:NDArray::int32);
         foreach ($inputs as $i => $row) {
             $testsNDArray[$i][0] = (float)array_pop($row);
             for($j=0;$j<$cols;$j++) {
@@ -310,7 +310,7 @@ class Test extends TestCase
 
         // training greater or less
         $x = $mo->array([[1, 3], [1, 4], [2, 4], [3, 1], [4, 1], [4, 2]]);
-        $t = $mo->array([0, 0, 0, 1, 1, 1]);
+        $t = $mo->array([0, 0, 0, 1, 1, 1],dtype:NDArray::int32);
         $history = $model->fit($x,$t,epochs:100,verbose:0);
 
         $y = $model->predict($x);
@@ -346,7 +346,7 @@ class Test extends TestCase
 
         // training greater or less
         $x = $mo->array([[1, 3], [1, 4], [2, 4], [3, 1], [4, 1], [4, 2]]);
-        $t = $mo->array([0, 0, 0, 1, 1, 1]);
+        $t = $mo->array([0, 0, 0, 1, 1, 1],dtype:NDArray::int32);
         $dataset = $nn->data->NDArrayDataset($x,
             tests:$t,
             batch_size:64,
@@ -398,7 +398,7 @@ class Test extends TestCase
         $history = $model->fit($dataset,null, epochs: 100, verbose: 0);
 
         $x = $mo->array([[1, 3], [1, 4], [2, 4], [3, 1], [4, 1], [4, 2]]);
-        $t = $mo->array([0, 0, 0, 1, 1, 1]);
+        $t = $mo->array([0, 0, 0, 1, 1, 1],dtype:NDArray::int32);
         $y = $model->predict($x);
         $this->assertEquals($t->toArray(),$mo->argMax($y,axis:1)->toArray());
 
@@ -426,12 +426,12 @@ class Test extends TestCase
 
         // training greater or less
         $x = $mo->array([[1, 3], [1, 4], [2, 4], [3, 1], [4, 1], [4, 2]]);
-        $t = $mo->array([0, 0, 0, 1, 1, 1]);
+        $t = $mo->array([0, 0, 0, 1, 1, 1],dtype:NDArray::int32);
         $history = $model->fit($x,$t,epochs:100,verbose:0);
 
-        [$loss,$accuracy] = $model->evaluate($x,$t);
-        $this->assertLessThan(1.0,$loss);
-        $this->assertEquals(1.0,$accuracy);
+        $logs = $model->evaluate($x,$t);
+        $this->assertLessThan(1.0,$logs['loss']);
+        $this->assertEquals(1.0,$logs['accuracy']);
     }
 
     public function testEvaluateNDArrayDataset()
@@ -452,7 +452,7 @@ class Test extends TestCase
 
         // training greater or less
         $x = $mo->array([[1, 3], [1, 4], [2, 4], [3, 1], [4, 1], [4, 2]]);
-        $t = $mo->array([0, 0, 0, 1, 1, 1]);
+        $t = $mo->array([0, 0, 0, 1, 1, 1],dtype:NDArray::int32);
         $history = $model->fit($x,$t,epochs:100,verbose:0);
 
         $dataset = $nn->data->NDArrayDataset($x,
@@ -460,9 +460,9 @@ class Test extends TestCase
             batch_size:64,
             shuffle:true,
         );
-        [$loss,$accuracy] = $model->evaluate($dataset);
-        $this->assertLessThan(1.0,$loss);
-        $this->assertEquals(1.0,$accuracy);
+        $logs = $model->evaluate($dataset);
+        $this->assertLessThan(1.0,$logs['loss']);
+        $this->assertEquals(1.0,$logs['accuracy']);
     }
 
     public function testEvaluateCSVDataset()
@@ -483,7 +483,7 @@ class Test extends TestCase
 
         // training greater or less
         $x = $mo->array([[1, 3], [1, 4], [2, 4], [3, 1], [4, 1], [4, 2]]);
-        $t = $mo->array([0, 0, 0, 1, 1, 1]);
+        $t = $mo->array([0, 0, 0, 1, 1, 1],dtype:NDArray::int32);
         $history = $model->fit($x,$t,epochs:100,verbose:0);
 
         $dataset = $nn->data->CSVDataset(
@@ -493,9 +493,9 @@ class Test extends TestCase
             shuffle:true,
             filter:new TestFilter($mo),
         );
-        [$loss,$accuracy] = $model->evaluate($dataset);
-        $this->assertLessThan(1.0,$loss);
-        $this->assertEquals(1.0,$accuracy);
+        $logs = $model->evaluate($dataset);
+        $this->assertLessThan(1.0,$logs['loss']);
+        $this->assertEquals(1.0,$logs['accuracy']);
     }
 
     public function testFitWithEvaluate()
@@ -517,9 +517,9 @@ class Test extends TestCase
 
         // training greater or less
         $x = $mo->array([[1, 3], [1, 4], [2, 4], [3, 1], [4, 1], [4, 2]]);
-        $t = $mo->array([0, 0, 0, 1, 1, 1]);
+        $t = $mo->array([0, 0, 0, 1, 1, 1],dtype:NDArray::int32);
         $v_x = $mo->array([[5, 1], [1, 5], [2, 6], [6, 1], [1, 7], [7, 2]]);
-        $v_t = $mo->array([1, 0, 0, 1, 0, 1]);
+        $v_t = $mo->array([1, 0, 0, 1, 0, 1],dtype:NDArray::int32);
         $history = $model->fit($x,$t,epochs:100,validation_data:[$v_x,$v_t],verbose:0);
 
         $this->assertEquals(['loss','accuracy','val_loss','val_accuracy'],array_keys($history));
@@ -564,9 +564,9 @@ class Test extends TestCase
 
         // training greater or less
         $x = $mo->array([[1, 3], [1, 4], [2, 4], [3, 1], [4, 1], [4, 2]]);
-        $t = $mo->array([0, 0, 0, 1, 1, 1]);
+        $t = $mo->array([0, 0, 0, 1, 1, 1],dtype:NDArray::int32);
         $v_x = $mo->array([[5, 1], [1, 5], [2, 6], [6, 1], [1, 7], [7, 2]]);
-        $v_t = $mo->array([1, 0, 0, 1, 0, 1]);
+        $v_t = $mo->array([1, 0, 0, 1, 0, 1],dtype:NDArray::int32);
         $history = $model->fit($x,$t,epochs:100,validation_data:[$v_x,$v_t],verbose:0);
 
         $y = $model->predict($x);
@@ -647,9 +647,9 @@ class Test extends TestCase
 
         // training greater or less
         $x = $mo->array([[1, 3], [1, 4], [2, 4], [3, 1], [4, 1], [4, 2]]);
-        $t = $mo->array([0, 0, 0, 1, 1, 1]);
+        $t = $mo->array([0, 0, 0, 1, 1, 1],dtype:NDArray::int32);
         $v_x = $mo->array([[5, 1], [1, 5], [2, 6], [6, 1], [1, 7], [7, 2]]);
-        $v_t = $mo->array([1, 0, 0, 1, 0, 1]);
+        $v_t = $mo->array([1, 0, 0, 1, 0, 1],dtype:NDArray::int32);
         $history = $model->fit($x,$t,epochs:100,validation_data:[$v_x,$v_t],verbose:0);
 
         $this->assertEquals(['loss','accuracy','val_loss','val_accuracy'],array_keys($history));
@@ -684,9 +684,9 @@ class Test extends TestCase
 
         // training greater or less
         $x = $mo->array([[1, 3], [1, 4], [2, 4], [3, 1], [4, 1], [4, 2]]);
-        $t = $mo->array([0, 0, 0, 1, 1, 1]);
+        $t = $mo->array([0, 0, 0, 1, 1, 1],dtype:NDArray::int32);
         $v_x = $mo->array([[5, 1], [1, 5], [2, 6], [6, 1], [1, 7], [7, 2]]);
-        $v_t = $mo->array([1, 0, 0, 1, 0, 1]);
+        $v_t = $mo->array([1, 0, 0, 1, 0, 1],dtype:NDArray::int32);
         $history = $model->fit($x,$t,epochs:100,validation_data:[$v_x,$v_t],verbose:0);
 
         $this->assertEquals(['loss','accuracy','val_loss','val_accuracy'],array_keys($history));
@@ -721,9 +721,9 @@ class Test extends TestCase
 
         // training greater or less
         $x = $mo->array([[1, 3], [1, 4], [2, 4], [3, 1], [4, 1], [4, 2]]);
-        $t = $mo->array([0, 0, 0, 1, 1, 1]);
+        $t = $mo->array([0, 0, 0, 1, 1, 1],dtype:NDArray::int32);
         $v_x = $mo->array([[5, 1], [1, 5], [2, 6], [6, 1], [1, 7], [7, 2]]);
-        $v_t = $mo->array([1, 0, 0, 1, 0, 1]);
+        $v_t = $mo->array([1, 0, 0, 1, 0, 1],dtype:NDArray::int32);
         $history = $model->fit($x,$t,epochs:100,validation_data:[$v_x,$v_t],verbose:0);
 
         $this->assertEquals(['loss','accuracy','val_loss','val_accuracy'],array_keys($history));
@@ -872,7 +872,7 @@ class Test extends TestCase
             [[0.5],[0.5],[0.4],[0.4],[0.3],[0.3],[0.2],[0.2],[0.1],[0.1]],
         ]);
         $t = $mo->array(
-            [1,0,1,0]
+            [1,0,1,0],dtype:NDArray::int32
         );
         $v_x = $mo->array([
             [[0.1],[0.1],[0.25],[0.25],[0.35],[0.35],[0.45],[0.45],[0.6], [0.6] ],
@@ -881,7 +881,7 @@ class Test extends TestCase
             [[0.5],[0.5],[0.45],[0.45],[0.4], [0.4], [0.35],[0.35],[0.3], [0.3] ],
         ]);
         $v_t = $mo->array(
-            [1,0,1,0]
+            [1,0,1,0],dtype:NDArray::int32
         );
         $history = $model->fit(
             $x,$t,
@@ -942,7 +942,7 @@ class Test extends TestCase
         for($i=1;$i<9;$i++)  { $x[2][$i+1][$i+1][0]=1.0;}
         for($i=1;$i<9;$i++)  { $x[3][$i+1][9-$i][0]=1.0;}
         $t = $mo->array(
-            [1,0,1,0]
+            [1,0,1,0],dtype:NDArray::int32
         );
         $v_x = $mo->zeros([4,10,10,1]);
         for($i=0;$i<8;$i++) { $x[0][$i][$i+2][0]=1.0;}
@@ -950,7 +950,7 @@ class Test extends TestCase
         for($i=1;$i<8;$i++) { $x[2][$i+1][$i][0]=1.0;}
         for($i=1;$i<8;$i++) { $x[3][$i+2][9-$i][0]=1.0;}
         $v_t = $mo->array(
-            [1,0,1,0]
+            [1,0,1,0],dtype:NDArray::int32
         );
         $history = $model->fit(
             $x,$t,
@@ -1008,7 +1008,7 @@ class Test extends TestCase
         for($i=1;$i<9;$i++)  { $x[2][$i][$i+1][$i+1][0]=1.0;}
         for($i=1;$i<9;$i++)  { $x[3][$i][$i+1][9-$i][0]=1.0;}
         $t = $mo->array(
-            [1,0,1,0]
+            [1,0,1,0],dtype:NDArray::int32
         );
         $v_x = $mo->zeros([4,10,10,10,1]);
         for($i=0;$i<8;$i++) { $x[0][$i][$i][$i+2][0]=1.0;}
@@ -1016,7 +1016,7 @@ class Test extends TestCase
         for($i=1;$i<8;$i++) { $x[2][$i][$i+1][$i][0]=1.0;}
         for($i=1;$i<8;$i++) { $x[3][$i][$i+2][9-$i][0]=1.0;}
         $v_t = $mo->array(
-            [1,0,1,0]
+            [1,0,1,0],dtype:NDArray::int32
         );
         $history = $model->fit($x,$t,epochs:$epoch/*100*/,validation_data:[$v_x,$v_t],verbose:0);
 
@@ -1074,7 +1074,7 @@ class Test extends TestCase
             [[0.5],[0.5],[0.4],[0.4],[0.3],[0.3],[0.2],[0.2],[0.1],[0.1]],
         ]);
         $t = $mo->array(
-            [1,0,1,0]
+            [1,0,1,0],dtype:NDArray::int32
         );
         $v_x = $mo->array([
             [[0.1],[0.1],[0.25],[0.25],[0.35],[0.35],[0.45],[0.45],[0.6], [0.6] ],
@@ -1083,7 +1083,7 @@ class Test extends TestCase
             [[0.5],[0.5],[0.45],[0.45],[0.4], [0.4], [0.35],[0.35],[0.3], [0.3] ],
         ]);
         $v_t = $mo->array(
-            [1,0,1,0]
+            [1,0,1,0],dtype:NDArray::int32
         );
         $history = $model->fit(
             $x,$t,
@@ -1144,7 +1144,7 @@ class Test extends TestCase
         for($i=1;$i<9;$i++)  { $x[2][$i+1][$i+1][0]=1.0;}
         for($i=1;$i<9;$i++)  { $x[3][$i+1][9-$i][0]=1.0;}
         $t = $mo->array(
-            [1,0,1,0]
+            [1,0,1,0],dtype:NDArray::int32
         );
         $v_x = $mo->zeros([4,10,10,1]);
         for($i=0;$i<8;$i++) { $x[0][$i][$i+2][0]=1.0;}
@@ -1152,7 +1152,7 @@ class Test extends TestCase
         for($i=1;$i<8;$i++) { $x[2][$i+1][$i][0]=1.0;}
         for($i=1;$i<8;$i++) { $x[3][$i+2][9-$i][0]=1.0;}
         $v_t = $mo->array(
-            [1,0,1,0]
+            [1,0,1,0],dtype:NDArray::int32
         );
         $history = $model->fit(
             $x,$t,
@@ -1210,7 +1210,7 @@ class Test extends TestCase
         for($i=1;$i<9;$i++)  { $x[2][$i][$i+1][$i+1][0]=1.0;}
         for($i=1;$i<9;$i++)  { $x[3][$i][$i+1][9-$i][0]=1.0;}
         $t = $mo->array(
-            [1,0,1,0]
+            [1,0,1,0],dtype:NDArray::int32
         );
         $v_x = $mo->zeros([4,10,10,10,1]);
         for($i=0;$i<8;$i++) { $x[0][$i][$i][$i+2][0]=1.0;}
@@ -1218,7 +1218,7 @@ class Test extends TestCase
         for($i=1;$i<8;$i++) { $x[2][$i][$i+1][$i][0]=1.0;}
         for($i=1;$i<8;$i++) { $x[3][$i][$i+2][9-$i][0]=1.0;}
         $v_t = $mo->array(
-            [1,0,1,0]
+            [1,0,1,0],dtype:NDArray::int32
         );
         $history = $model->fit($x,$t,epochs:$epoch/*100*/,validation_data:[$v_x,$v_t],verbose:0);
 
@@ -1274,7 +1274,7 @@ class Test extends TestCase
             [9,8,7,6],
             [1,3,3,4],
             [5,4,3,2],
-        ]);
+        ],dtype:NDArray::int32);
         $v_x = $mo->array([
             [2,3,3,4],
             [1,1,1,4],
@@ -1286,7 +1286,7 @@ class Test extends TestCase
             [1,1,1,4],
             [4,3,3,1],
             [9,3,3,2],
-        ]);
+        ],dtype:NDArray::int32);
 
         $history = $model->fit($x,$t,epochs:$epoch/*300*/,batch_size:1,validation_data:[$v_x,$v_t],verbose:0);
 
@@ -1342,7 +1342,7 @@ class Test extends TestCase
             [5,4,3,2],
         ]);
         $t = $mo->array(
-            [1,0,1,0]
+            [1,0,1,0],dtype:NDArray::int32
         );
         $v_x = $mo->array([
             [2,3,3,4],
@@ -1351,7 +1351,7 @@ class Test extends TestCase
             [9,3,3,2],
         ]);
         $v_t = $mo->array(
-            [1,1,0,0]
+            [1,1,0,0],dtype:NDArray::int32
         );
         $x = $mo->la()->onehot($x->reshape([16]),$numClass=10)->reshape([4,4,10]);
         $v_x = $mo->la()->onehot($v_x->reshape([16]),$numClass=10)->reshape([4,4,10]);
@@ -1415,7 +1415,7 @@ class Test extends TestCase
             [9,8,7,6],
             [1,3,3,4],
             [5,4,3,2],
-        ]);
+        ],dtype:NDArray::int32);
         $v_x = $mo->array([
             [2,3,3,4],
             [1,1,1,4],
@@ -1427,7 +1427,7 @@ class Test extends TestCase
             [1,1,1,4],
             [4,3,3,1],
             [9,3,3,2],
-        ]);
+        ],dtype:NDArray::int32);
         $x = $mo->la()->onehot($x->reshape([16]),$numClass=10)->reshape([4,4,10]);
         $v_x = $mo->la()->onehot($v_x->reshape([16]),$numClass=10)->reshape([4,4,10]);
 
@@ -1493,7 +1493,7 @@ class Test extends TestCase
             [5],
         ]);
         $t = $mo->array(
-            [0,9,1,5]
+            [0,9,1,5],dtype:NDArray::int32
         );
         $v_x = $mo->array([
             [2],
@@ -1502,7 +1502,7 @@ class Test extends TestCase
             [9],
         ]);
         $v_t = $mo->array(
-            [2,1,4,9]
+            [2,1,4,9],dtype:NDArray::int32
         );
         $x = $mo->la()->onehot($x->reshape([4]),$numClass=10)->reshape([4,10]);
         $v_x = $mo->la()->onehot($v_x->reshape([4]),$numClass=10)->reshape([4,10]);
@@ -1556,7 +1556,7 @@ class Test extends TestCase
             [5,4,3,2],
         ]);
         $t = $mo->array(
-            [1,0,1,0]
+            [1,0,1,0],dtype:NDArray::int32
         );
         $v_x = $mo->array([
             [2,3,3,4],
@@ -1565,7 +1565,7 @@ class Test extends TestCase
             [9,3,3,2],
         ]);
         $v_t = $mo->array(
-            [1,1,0,0]
+            [1,1,0,0],dtype:NDArray::int32
         );
         $x = $mo->la()->onehot($x->reshape([16]),$numClass=10)->reshape([4,4,10]);
         $v_x = $mo->la()->onehot($v_x->reshape([16]),$numClass=10)->reshape([4,4,10]);
@@ -1624,7 +1624,7 @@ class Test extends TestCase
             [9,8,7,6],
             [1,3,3,4],
             [5,4,3,2],
-        ]);
+        ],dtype:NDArray::int32);
         $v_x = $mo->array([
             [2,3,3,4],
             [1,1,1,4],
@@ -1636,7 +1636,7 @@ class Test extends TestCase
             [1,1,1,4],
             [4,3,3,1],
             [9,3,3,2],
-        ]);
+        ],dtype:NDArray::int32);
         $x = $mo->la()->onehot($x->reshape([16]),$numClass=10)->reshape([4,4,10]);
         $v_x = $mo->la()->onehot($v_x->reshape([16]),$numClass=10)->reshape([4,4,10]);
         $history = $model->fit($x,$t,epochs:$epoch/*300*/,batch_size:1,validation_data:[$v_x,$v_t],verbose:0);
@@ -1689,7 +1689,7 @@ class Test extends TestCase
             [5,4,3,2],
         ]);
         $t = $mo->array(
-            [1,0,1,0]
+            [1,0,1,0],dtype:NDArray::int32
         );
         $v_x = $mo->array([
             [2,3,3,4],
@@ -1698,7 +1698,7 @@ class Test extends TestCase
             [9,3,3,2],
         ]);
         $v_t = $mo->array(
-            [1,1,0,0]
+            [1,1,0,0],dtype:NDArray::int32
         );
         $x = $mo->la()->onehot($x->reshape([16]),$numClass=10)->reshape([4,4,10]);
         $v_x = $mo->la()->onehot($v_x->reshape([16]),$numClass=10)->reshape([4,4,10]);
@@ -1753,7 +1753,7 @@ class Test extends TestCase
             [5,4,3,2],
         ]);
         $t = $mo->array(
-            [1,0,1,0]
+            [1,0,1,0],dtype:NDArray::int32
         );
         $v_x = $mo->array([
             [2,3,3,4],
@@ -1762,7 +1762,7 @@ class Test extends TestCase
             [9,3,3,2],
         ]);
         $v_t = $mo->array(
-            [1,1,0,0]
+            [1,1,0,0],dtype:NDArray::int32
         );
         $x = $mo->la()->onehot($x->reshape([16]),$numClass=10)->reshape([4,4,10]);
         $v_x = $mo->la()->onehot($v_x->reshape([16]),$numClass=10)->reshape([4,4,10]);
@@ -1825,7 +1825,7 @@ class Test extends TestCase
             [9,8,7,6],
             [1,3,3,4],
             [5,4,3,2],
-        ]);
+        ],dtype:NDArray::int32);
         $v_x = $mo->array([
             [2,3,3,4],
             [1,1,1,4],
@@ -1837,7 +1837,7 @@ class Test extends TestCase
             [1,1,1,4],
             [4,3,3,1],
             [9,3,3,2],
-        ]);
+        ],dtype:NDArray::int32);
         $x = $mo->la()->onehot($x->reshape([16]),$numClass=10)->reshape([4,4,10]);
         $v_x = $mo->la()->onehot($v_x->reshape([16]),$numClass=10)->reshape([4,4,10]);
 
@@ -1904,7 +1904,7 @@ class Test extends TestCase
             [1,0,1],
             [0,1,0],
             [1,0,1],
-        ]);
+        ],dtype:NDArray::int32);
         $v_x = $mo->array([
             [2,3,3,4],
             [1,1,1,4],
@@ -1916,7 +1916,7 @@ class Test extends TestCase
             [0,1,0],
             [1,0,1],
             [1,0,1],
-        ]);
+        ],dtype:NDArray::int32);
         $x = $mo->la()->onehot($x->reshape([16]),$numClass=10)->reshape([4,4,10]);
         $v_x = $mo->la()->onehot($v_x->reshape([16]),$numClass=10)->reshape([4,4,10]);
         $history = $model->fit($x,$t,epochs:$epoch/*300*/,batch_size:1,validation_data:[$v_x,$v_t],verbose:0);
@@ -1972,9 +1972,9 @@ class Test extends TestCase
         ]);
         $model->compile();
         $x = $mo->array([[1, 3], [1, 4], [2, 4], [3, 1], [4, 1], [4, 2]]);
-        $t = $mo->array([0, 0, 0, 1, 1, 1]);
+        $t = $mo->array([0, 0, 0, 1, 1, 1],dtype:NDArray::int32);
         $history = $model->fit($x,$t,epochs:$epoch,verbose:0);
-        [$loss,$accuracy] = $model->evaluate($x,$t);
+        $logs = $model->evaluate($x,$t);
 
         $origY = $model->predict($x);
         $this->assertCount(8,$model->variables());
@@ -1993,9 +1993,9 @@ class Test extends TestCase
         $model = $loader->modelFromConfig($config);
         $model->loadWeights($weights);
 
-        [$loss2,$accuracy2] = $model->evaluate($x,$t);
-        $this->assertLessThan(0.5,abs($loss-$loss2));
-        $this->assertLessThan(0.5,abs($accuracy-$accuracy2));
+        $logs2 = $model->evaluate($x,$t);
+        $this->assertLessThan(0.5,abs($logs['loss']-$logs2['loss']));
+        $this->assertLessThan(0.5,abs($logs['accuracy']-$logs2['accuracy']));
 
         $y = $model->predict($x);
         $this->assertCount(8,$model->variables());
@@ -2098,13 +2098,13 @@ class Test extends TestCase
         //$model->summary();
         $parms = $model->trainableVariables();
         $this->assertCount(2,$parms);
-        $model->fit($mo->zeros([5,3]),$mo->zeros([5],NDArray::int32),
+        $model->fit($mo->zeros([5,3]),$mo->zeros([5],dtype:NDArray::int32),
             epochs:1, verbose:0);
         $this->assertEquals([3,2],$parms[0]->shape());
         $this->assertEquals([2],$parms[1]->shape());
         $predicts = $model->predict($mo->zeros([5,3]));
         $this->assertEquals([5,2],$predicts->shape());
-        $res = $model->evaluate($mo->zeros([5,3]),$mo->zeros([5]));
+        $res = $model->evaluate($mo->zeros([5,3]),$mo->zeros([5],dtype:NDArray::int32));
         $this->assertTrue(true);
     }
 
@@ -2175,4 +2175,57 @@ class Test extends TestCase
         $this->assertEquals($summary,$dump);
 
     }
+
+    public function testCustomMetric()
+    {
+        $mo = $this->newMatrixOperator();
+        $nn = $this->newNeuralNetworks($mo);
+        $K = $nn->backend();
+        $g = $nn->gradient();
+        $plt = new Plot($this->getPlotConfig(),$mo);
+
+        $model = $nn->models()->Sequential([
+            $nn->layers()->Dense($units=128,input_shape:[2],
+                activation:'sigmoid'),
+            $nn->layers()->Dense($units=2,
+                activation:'softmax'),
+        ]);
+
+        $cateAcc = $nn->metrics->CategoricalAccuracy();
+        $metricFn = function ($trues, $preds) use ($cateAcc) {
+            $value = $cateAcc($trues, $preds);
+            return $value;
+        };
+
+        $model->compile(
+            loss:$nn->losses()->MeanSquaredError(),
+            metrics:['loss'=>'loss','custom'=>$metricFn]
+        );
+
+        // training greater or less
+
+        // training greater or less
+        $x = $mo->array([[1, 3], [1, 4], [2, 4], [3, 1], [4, 1], [4, 2]]);
+        $t = $mo->array([[1, 0], [1, 0], [1, 0], [0, 1], [0, 1], [0, 1]]);
+        $v_x = $mo->array([[5, 1], [1, 5], [2, 6], [6, 1], [1, 7], [7, 2]]);
+        $v_t = $mo->array([[0, 1], [1, 0], [1, 0], [0, 1], [1, 0], [0, 1]]);
+        $history = $model->fit($x,$t,epochs:100,validation_data:[$v_x,$v_t],verbose:0);
+
+        $y = $model->predict($x);
+        $this->assertEquals($mo->argMax($t,axis:1)->toArray(),
+                            $mo->argMax($y,axis:1)->toArray());
+
+        $this->assertEquals(['loss','custom','val_loss','val_custom'],array_keys($history));
+
+        if($this->plot) {
+            $plt->plot($mo->array($history['loss']),null,null,'loss');
+            $plt->plot($mo->array($history['val_loss']),null,null,'val_loss');
+            $plt->plot($mo->array($history['custom']),null,null,'custom');
+            $plt->plot($mo->array($history['val_custom']),null,null,'val_custom');
+            $plt->legend();
+            $plt->title('Custom Metric');
+            $plt->show();
+        }
+    }
+
 }

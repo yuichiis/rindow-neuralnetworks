@@ -14,12 +14,12 @@ class MetricCatalog
         'sparse_categorical_accuracy' => SparseCategoricalAccuracy::class,
     ];
 
-    static function factory(object $backend,string $name) : Metri
+    static function factory(object $backend,string $metricName) : Metric
     {
-        if(isset(self::$catalog[$name])) {
-            $name = self::$catalog[$name];
+        if(isset(self::$catalog[$metricName])) {
+            $metricName = self::$catalog[$metricName];
         }
-        $metric = new $name($backend);
+        $metric = new $metricName($backend);
         return $metric;
     }
 }

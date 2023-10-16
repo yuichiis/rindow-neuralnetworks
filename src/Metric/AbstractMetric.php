@@ -42,6 +42,12 @@ abstract class AbstractMetric implements Metric
         $this->count++;
     }
 
+    public function immediateUpdate(float $value) : void
+    {
+        $this->state += $value;
+        $this->count++;
+    }
+
     public function __invoke(...$args) : mixed
     {
         [$trues,$predicts] = $args;

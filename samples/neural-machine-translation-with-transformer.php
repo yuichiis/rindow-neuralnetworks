@@ -730,7 +730,6 @@ class Transformer extends AbstractModel
         $K = $this->backend;
         # Keras models prefer if you pass all your inputs in the first argument
         //[$inp, $tar] = $inputs;
-
         [$enc_padding_mask, $look_ahead_mask, $dec_padding_mask] = $this->create_masks($inp, $tar);
 
         $enc_output = $this->encoder->forward($inp, $training, $enc_padding_mask);  # (batch_size, inp_seq_len, d_model)
@@ -785,8 +784,8 @@ class CustomLossFunction
     public function __invoke(NDArray $label, NDArray $pred) : NDArray
     {
         $g = $this->gradient;
-        $mask = $g->greater($g->cast($trues,dtype:NDArray::float32),0.0);
-        $loss = $this->loss_object->forward($trues, $pred);
+        $mask = $g->greater($g->cast($label,dtype:NDArray::float32),0.0);
+        $loss = $this->loss_object->forward($label, $pred);
         $loss = $g->mul($loss,$mask);
         return $g->div($g->reduceSum($loss),$g->reduceSum($mask));
     }
@@ -967,8 +966,6 @@ function make_labels($la,$label_tensor) {
     return $label_tensor;
 }
 
-return;
-
 $numExamples=20000;#30000
 $numWords=1024;#null;
 $epochs = 10;#20;
@@ -1044,6 +1041,7 @@ $transformer = new Transformer(
 );
 
 $lossfunc = new CustomLossFunction($nn);
+$accuracyFunc = new CustomAccuracy($nn);
 $learning_rate = new CustomSchedule($wordVectSize);
 $optimizer = $nn->optimizers->Adam(lr:$learning_rate, beta1:0.9, beta2:0.98,
                                      epsilon:1e-9);
@@ -1052,7 +1050,7 @@ echo "Compile model...\n";
 $transformer->compile(
     loss:$lossfunc,
     optimizer:$optimizer,
-    metrics:['accuracy','loss'],
+    metrics:['loss'=>'loss','accuracy'=>$accuracyFunc],
 );
 
 $transformer->build([1,$inputLength], [1,$outputLength], trues:[1,$outputLength]); // just for summary
@@ -1070,7 +1068,7 @@ if(file_exists($modelFilePath)) {
         $labelTensorTrain,
         batch_size:$batchSize,
         epochs:$epochs,
-        //validation_data:[[$inputTensorVal,$labelTensorVal],$targetTensorVal],
+        //validation_data:[[$inputTensorVal,$targetTensorVal],$labelTensorVal],
         #callbacks:[checkpoint],
     );
     $transformer->saveWeightsToFile($modelFilePath);
@@ -1095,18 +1093,30 @@ $translator = new Translator(
 
 //$choice = $mo->random()->choice($corpusSize,10,false);
 $choice = $mo->random()->choice($trainSize,10,false);
+try {
 foreach($choice as $idx)
 {
     $question = $inputTensor[$idx];
     [$predict,$attentionPlot] = $translator->predict($question);
     $answer = $targetTensor[$idx];
+    //$predictLabel = $mo->la()->reduceArgMax($mo->la()->squeeze($transformer->predict(inputs:[
+    //    $mo->la()->expandDims($question,axis:0),$mo->la()->expandDims($answer,axis:0)])),axis:0);
+        
     $sentence = $inpLang->sequencesToTexts([$question])[0];
     $predictedSentence = $targLang->sequencesToTexts([$predict])[0];
     $targetSentence = $targLang->sequencesToTexts([$answer])[0];
+    //$predictLabelSentence = $targLang->sequencesToTexts([$predictLabel])[0];
     echo "Input:   $sentence\n";
     echo "Predict: $predictedSentence\n";
     echo "Target:  $targetSentence\n";
-    echo "label:", $targLang->sequencesToTexts([$labelTensorTrain[$idx]])[0]."\n";
+    //echo "Label:  $predictLabelSentence\n";
+    //echo "label:", $targLang->sequencesToTexts([$labelTensorTrain[$idx]])[0]."\n";
     echo "\n";    
+}
+} catch(\Exception $e) {
+    echo get_class($e).": ".$e->getMessage()."\n";
+    echo "File: ".$e->getFile()."(".$e->getLine().")\n";
+    echo $e->getTraceAsString()."\n";
+    echo "Exception!!!\n";
 }
 //$plt->show();

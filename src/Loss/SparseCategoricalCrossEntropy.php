@@ -10,6 +10,9 @@ class SparseCategoricalCrossEntropy extends AbstractLoss
     protected function call(NDArray $trues, NDArray $predicts) : NDArray
     {
         $K = $this->backend;
+        if(!$K->isInt($trues)) {
+            throw new InvalidArgumentException('trues must be integers.');
+        }
         [$trues,$predicts] = $this->flattenShapesForSparse($trues,$predicts);
         if($this->fromLogits) {
             $predicts = $K->softmax($predicts);

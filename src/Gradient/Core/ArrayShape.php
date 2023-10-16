@@ -29,6 +29,7 @@ class ArrayShape implements ArrayShapeInterface
     public function offsetGet( $offset ) : mixed
     {
         if(!$this->offsetExists($offset)) {
+            var_dump(array_keys($this->shape));
             throw new LogicException('no found the offset: '.$offset);
         }
         return $this->shape[$offset];

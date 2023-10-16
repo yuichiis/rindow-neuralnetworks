@@ -31,7 +31,7 @@ abstract class AbstractModel implements Model
     protected $hda;
     protected $name;
     protected $optimizer;
-    protected $metrics;
+    protected $metrics = [];
     protected $lossFunction;
     protected $accuracyFunction;
     protected $built = false;
@@ -95,10 +95,10 @@ abstract class AbstractModel implements Model
         return $this->lossFunction;
     }
 
-    public function accuracyFunction()
-    {
-        return $this->accuracyFunction;
-    }
+    // public function accuracyFunction()
+    // {
+    //     return $this->accuracyFunction;
+    // }
 
     public function optimizer()
     {
@@ -179,14 +179,21 @@ abstract class AbstractModel implements Model
         $newMetrics = [];
         foreach($metrics as $idx => $metric) {
             if(is_string($metric)) {
-                if($metric=='accuracy') {
-                    $metric = $this->lossFunction->accuracyMetric($metric);
+                $name = $metric;
+                if($metric == 'loss') {
+                    $metricObject = $this->builder->metrics()->ScalarMetric(name:'loss');
+                } else {
+                    if($metric=='accuracy') {
+                        $metric = $this->lossFunction->accuracyMetric($metric); // string name
+                    }
+                    $metricObject = MetricCatalog::factory($this->backend,$metric);
                 }
-                $metricObject = MetricCatalog::factory($metric);
             } elseif($metric instanceof Metric) {
                 $metricObject = $metric;
+                $name = $metric->name();
             } elseif(is_callable($metric)) {
                 $metricObject = $this->builder->metrics()->GenericMetric($metric);
+                $name = $metricObject->name();
             } else {
                 if(is_object($metric)) {
                     $name = get_class($metric);
@@ -195,16 +202,10 @@ abstract class AbstractModel implements Model
                 }
                 throw new InvalidArgumentException('Invarid metric type:'.$name);
             }
-            if(is_int($idx)) {
-                if($metric=='accuracy') {
-                    $name = 'accuracy';
-                } else {
-                    $name = $metricObject->name();
-                }
-            } else {
+            if(!is_int($idx)) {
                 $name = $idx;
             }
-            $newMetrics[$name] = $metric;
+            $newMetrics[$name] = $metricObject;
         }
         return $newMetrics;
     }
@@ -305,10 +306,13 @@ abstract class AbstractModel implements Model
             throw new InvalidArgumentException('unsupported dataset type.'.
                 ' validation_data must be set of NDArray or instance of Dataset.');
         }
-        $history = ['loss'=>[], 'accuracy'=>[]];
+        foreach($this->metrics as $idx => $m) {
+            $history[$idx] = [];
+        }
         if($val_inputs) {
-            $history['val_loss'] = [];
-            $history['val_accuracy'] = [];
+            foreach($this->metrics as $idx => $m) {
+                $history['val_'.$idx] = [];
+            }
         }
         $callbacks = new CallbackList($this,$callbacks);
         if($verbose>=1) {
@@ -332,8 +336,11 @@ abstract class AbstractModel implements Model
         for($epoch=0;$epoch<$epochs;$epoch++) {
             $callbacks->onEpochBegin($epoch);
             $startTime = time();
-            [$totalLoss,$totalAccuracy] =
-                $this->trainProcess($dataset,$epoch,$epochs,$startTime,$totalSteps,
+            foreach($this->metrics as $metric) {
+                $metric->reset();
+            }
+            $logs = [];
+            $this->trainProcess($dataset,$epoch,$epochs,$startTime,$totalSteps,
                                                     $verbose,$callbacks);
             if($totalSteps==0) {
                 $totalSteps = count($dataset);
@@ -341,19 +348,19 @@ abstract class AbstractModel implements Model
             if($totalSteps==0) {
                 $totalSteps=1;
             }
-            if(in_array('loss',$this->metrics)) {
-                $history['loss'][] = $totalLoss / $totalSteps;
+            foreach($this->metrics as $name => $metric) {
+                $value = $metric->result();
+                $history[$name][] = $value;
+                $logs[$name] = $value;
             }
-            if(in_array('accuracy',$this->metrics)) {
-                $history['accuracy'][] = $totalAccuracy / $totalSteps;
-            }
-            $logs = ['loss'=>$totalLoss,'accuracy'=>$totalAccuracy];
             if($val_inputs) {
-                [$loss, $accuracy] = $this->evaluate($val_inputs, $val_test,
+                $evals = $this->evaluate($val_inputs, $val_test,
                     batch_size:$batch_size, verbose:0, callbacks:$callbacks);
-                $history['val_loss'][] = $loss;
-                $history['val_accuracy'][] = $accuracy;
-                $logs = ['val_loss'=>$loss,'val_accuracy'=>$accuracy];
+ 
+                foreach($this->metrics as $name => $metric) {
+                    $history['val_'.$name][] = $evals[$name];
+                    $logs['val_'.$name] = $evals[$name];
+                }
             }
             if($verbose>=1) {
                 $sec = time() - $startTime;
@@ -372,19 +379,17 @@ abstract class AbstractModel implements Model
     }
 
     protected function trainProcess(
-        $dataset,$epoch,$epochs,$startTime,$totalSteps,$verbose,$callbacks)
+        $dataset,$epoch,$epochs,$startTime,$totalSteps,$verbose,$callbacks) : void
     {
         $K = $this->backend;
         if($verbose>=1) {
             $this->console('Epoch '.($epoch+1).'/'.$epochs." ");
         }
-        $totalLoss = 0;
         if($totalSteps==0) {
             $indicateCount = 1000;
         } else {
             $indicateCount = (int)($totalSteps/25);
         }
-        $totalAccuracy = 0;
         $indicate = 0;
         foreach($dataset as $batchIndex => $data) {
             if($verbose>=1) {
@@ -400,7 +405,6 @@ abstract class AbstractModel implements Model
                 if($indicate>$indicateCount)
                     $indicate = 0;
             }
-            $callbacks->onTrainBatchBegin($batchIndex);
             ////
             [$inputs,$trues] = $data;
             if(!is_array($inputs)) {
@@ -415,13 +419,10 @@ abstract class AbstractModel implements Model
             }
             $trues = $K->array($trues);
 
-            [$loss, $accuracy] = $this->trainStep($inputs, $trues);
-            $totalLoss += $loss;
-            $totalAccuracy += $accuracy;
+            $this->trainStep($batchIndex,$inputs, $trues,$callbacks);
             if($this->shapeInspection) {
                 $this->setShapeInspection(false);
             }
-            $callbacks->onTrainBatchEnd($batchIndex,['loss'=>$loss,'accuracy'=>$accuracy]);
         }
         if($verbose==1) {
             $this->progressBar($epoch,$epochs,$startTime,
@@ -429,7 +430,6 @@ abstract class AbstractModel implements Model
         } elseif($verbose>1) {
             $this->console(".");
         }
-        return [$totalLoss,$totalAccuracy];
     }
 
     protected function progressBar($epoch,$epochs,$startTime,$batchIndex,$batchIndexCount,$maxDot)
@@ -490,8 +490,9 @@ abstract class AbstractModel implements Model
         $t = $trues; unset($trues);
 
         $K = $this->backend;
-        $totalLoss = 0.0;
-        $totalAccuracy = 0.0;
+        foreach($this->metrics as $metric) {
+            $metric->reset();
+        }
         if(!($callbacks instanceof CallbackList)) {
             $callbacks = new CallbackList($this,$callbacks);
         }
@@ -514,7 +515,6 @@ abstract class AbstractModel implements Model
             if($verbose>=1) {
                     $this->console('.');
             }
-            $callbacks->onTestBatchBegin($batchIndex);
             [$inputs,$trues] = $data;
             if(!is_array($inputs)) {
                 $inputs = $K->array($inputs);
@@ -528,27 +528,26 @@ abstract class AbstractModel implements Model
             }
             $trues = $K->array($trues);
 
-            [$loss,$accuracy] = $this->evaluateStep($inputs,$trues);
+            $this->evaluateStep($batchIndex,$inputs,$trues,$callbacks);
 
-            $callbacks->onTestBatchEnd($batchIndex,['val_loss'=>$loss,'val_accuracy'=>$accuracy]);
-            $totalLoss += $loss;
-            $totalAccuracy += $accuracy;
         }
-        $totalSteps = count($dataset);
-        if($totalSteps==0) {
-            $totalSteps=1;
+        $logs = [];
+        foreach($this->metrics as $name => $metric) {
+            $logs[$name] = $metric->result();
         }
-        $totalLoss = $totalLoss / $totalSteps;
-        $totalAccuracy = $totalAccuracy / $totalSteps;
         if($verbose>=1) {
             $sec = time() - $startTime;
             $this->console(' - '.$sec." sec.\n");
-            $this->console(' loss:'.sprintf('%2.4f',$totalLoss));
-            $this->console(' accuracy:'.sprintf('%2.4f',$totalAccuracy));
+            if(array_key_exists('loss',$logs)) {
+                $this->console(' loss:'.sprintf('%2.4f',$logs['loss']));
+            }
+            if(array_key_exists('accuracy',$logs)) {
+                $this->console(' accuracy:'.sprintf('%2.4f',$logs['accuracy']));
+            }
             $this->console("\n");
         }
-        $callbacks->onTestEnd(['val_loss'=>$totalLoss,'val_accuracy'=>$totalAccuracy]);
-        return [$totalLoss,$totalAccuracy];
+        $callbacks->onTestEnd($logs);
+        return $logs;
     }
 
     public function predict(
@@ -732,10 +731,12 @@ abstract class AbstractModel implements Model
         return $this->graph['model']->backward($dOutputs, $grads, $oidsToCollect);
     }
 
-    protected function trainStep($inputs, $trues)
+    protected function trainStep($batchIndex, $inputs, $trues ,$callbacks) : void
     {
         $K = $this->backend;
         $nn = $this->builder;
+        $callbacks->onTrainBatchBegin($batchIndex);
+
         $g = $nn->gradient();
         if(!is_array($inputs)) {
             $inputs = [$inputs];
@@ -765,18 +766,21 @@ abstract class AbstractModel implements Model
         $gradients = $tape->gradient($loss, $params);
         $this->optimizer->update($params, $gradients);
 
-        if($this->accuracyFunction!=null && in_array('accuracy',$this->metrics)) {
-            //$preds = $this->forwardLastlayer($preds);
-            $accuracy = ($this->accuracyFunction)($trues,$preds->value());
-        } else {
-            $accuracy = 0;
+        foreach($this->metrics as $name => $metric) {
+            if($name=='loss') {
+                $metric->immediateUpdate($lossValue);
+            } else {
+                $metric->update($trues,$preds->value());
+            }
         }
-        return [$lossValue,$accuracy];
+        $callbacks->onTrainBatchEnd($batchIndex,$this->metrics);
     }
 
-    protected function evaluateStep($inputs,$trues)
+    protected function evaluateStep($batchIndex,$inputs,$trues,$callbacks) : void
     {
         $nn = $this->builder;
+        $callbacks->onTestBatchBegin($batchIndex);
+
         $K = $nn->backend();
         $g = $nn->gradient();
         if(!is_array($inputs)) {
@@ -796,12 +800,14 @@ abstract class AbstractModel implements Model
         $predicts = $model(...$inputs);
         $loss = $lossfunc($trues,$predicts);
         $loss = $K->scalar($loss->value());
-        if($this->accuracyFunction!=null) {
-            $accuracy = ($this->accuracyFunction)($trues,$predicts->value());
-        } else {
-            $accuracy = 0;
+        foreach($this->metrics as $name => $metric) {
+            if($name=='loss') {
+                $metric->immediateUpdate($loss);
+            } else {
+                $metric->update($trues,$predicts->value());
+            }
         }
-        return [$loss,$accuracy];
+        $callbacks->onTestBatchEnd($batchIndex,$this->metrics);
     }
 
     protected function predictStep($inputs,$options)

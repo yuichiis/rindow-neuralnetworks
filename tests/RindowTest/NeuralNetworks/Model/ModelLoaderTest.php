@@ -71,7 +71,7 @@ class Test extends TestCase
         $this->assertEquals($json,$model->toJson());
 
         $x = $mo->array([[1, 3], [1, 4], [2, 4], [3, 1], [4, 1], [4, 2]]);
-        $t = $mo->array([0, 0, 0, 1, 1, 1]);
+        $t = $mo->array([0, 0, 0, 1, 1, 1],dtype:NDArray::int32);
         $history = $model->fit($x,$t, epochs:100, verbose:0);
 
         $y = $model->predict($x);
@@ -92,9 +92,9 @@ class Test extends TestCase
         ]);
         $model->compile();
         $x = $mo->array([[1, 3], [1, 4], [2, 4], [3, 1], [4, 1], [4, 2]]);
-        $t = $mo->array([0, 0, 0, 1, 1, 1]);
+        $t = $mo->array([0, 0, 0, 1, 1, 1],dtype:NDArray::int32);
         $history = $model->fit($x,$t,epochs:100, verbose:0);
-        [$loss,$accuracy] = $model->evaluate($x,$t);
+        $evals = $model->evaluate($x,$t);
         $y = $model->predict($x);
 
         $model->save($this->filename);
@@ -102,9 +102,9 @@ class Test extends TestCase
         // load model
         $model = $nn->models()->loadModel($this->filename);
 
-        [$loss2,$accuracy2] = $model->evaluate($x,$t);
-        $this->assertLessThan(0.5,abs($loss-$loss2));
-        $this->assertLessThan(0.5,abs($accuracy-$accuracy2));
+        $evals2 = $model->evaluate($x,$t);
+        $this->assertLessThan(0.5,abs($evals['loss']-$evals2['loss']));
+        $this->assertLessThan(0.5,abs($evals['accuracy']-$evals2['accuracy']));
         $y2 = $model->predict($x);
         $this->assertLessThan(1e-7,$mo->la()->sum($mo->la()->square($mo->op($y,'-',$y2))));
         //$this->assertEquals($t->toArray(),$mo->argMax($y,axis:1)->toArray());
@@ -169,7 +169,7 @@ class Test extends TestCase
             optimizer:'adam',
         );
         $history = $model->fit($question,$answer,epochs:10, verbose:0);
-        [$loss,$accuracy] = $model->evaluate($question,$answer);
+        $evals = $model->evaluate($question,$answer);
         $y = $model->predict($question);
         $layers = $model->layers();
         $embvals = $layers[0]->getParams();
@@ -182,9 +182,9 @@ class Test extends TestCase
         // load model
         $model = $nn->models()->loadModel($this->filename);
 
-        [$loss2,$accuracy2] = $model->evaluate($question,$answer);
-        $this->assertLessThan(0.5,abs($loss-$loss2));
-        $this->assertLessThan(0.5,abs($accuracy-$accuracy2));
+        $evals2 = $model->evaluate($question,$answer);
+        $this->assertLessThan(0.5,abs($evals['loss']-$evals2['loss']));
+        $this->assertLessThan(0.5,abs($evals['accuracy']-$evals2['accuracy']));
 
         $layers1 = $model->layers();
         $embvals1 = $layers1[0]->getParams();
@@ -247,10 +247,10 @@ class Test extends TestCase
         ]);
         $model->compile();
         $x = $mo->array([[1, 3], [1, 4], [2, 4], [3, 1], [4, 1], [4, 2]]);
-        $t = $mo->array([0, 0, 0, 1, 1, 1]);
+        $t = $mo->array([0, 0, 0, 1, 1, 1],dtype:NDArray::int32);
         $history = $model->fit($x,$t, epochs:100, verbose:0);
         $y = $model->predict($x);
-        [$loss,$accuracy] = $model->evaluate($x,$t);
+        $evals = $model->evaluate($x,$t);
 
         $model->save($this->filename,$portable=true);
 
@@ -270,9 +270,9 @@ class Test extends TestCase
             $plt->show();
         }
 
-        [$loss2,$accuracy2] = $model->evaluate($x,$t);
-        $this->assertLessThan(0.5,abs($loss-$loss2));
-        $this->assertLessThan(0.5,abs($accuracy-$accuracy2));
+        $evals2 = $model->evaluate($x,$t);
+        $this->assertLessThan(0.5,abs($evals['loss']-$evals2['loss']));
+        $this->assertLessThan(0.5,abs($evals['accuracy']-$evals2['accuracy']));
         //$this->assertEquals($t->toArray(),$mo->argMax($y,axis:1)->toArray());
     }
 }

@@ -516,7 +516,7 @@ echo "Compile model...\n";
 $seq2seq->compile(
     loss:'sparse_categorical_crossentropy',
     optimizer:'adam',
-    metrics:['accuracy','loss'],
+    metrics:['loss','accuracy'],
 );
 $seq2seq->build([1,$inputLength], trues:[1,$outputLength]); // just for summary
 $seq2seq->summary();

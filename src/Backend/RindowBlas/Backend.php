@@ -68,7 +68,7 @@ class Backend
         return "[".implode(',',$shape)."]";
     }
 
-    public function dtypeToString($dtype) : string
+    public function dtypeToString(int $dtype) : string
     {
         $mo = $this->matrixOperator;
         return $mo->dtypeToString($dtype);

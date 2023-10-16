@@ -2,6 +2,7 @@
 namespace Rindow\NeuralNetworks\Builder;
 
 use Interop\Polite\Math\Matrix\NDArray;
+use Rindow\NeuralNetworks\Metric\ScalarMetric;
 use Rindow\NeuralNetworks\Metric\GenericMetric;
 use Rindow\NeuralNetworks\Metric\SparseCategoricalAccuracy;
 use Rindow\NeuralNetworks\Metric\CategoricalAccuracy;
@@ -18,9 +19,14 @@ class Metrics
         $this->backend = $backend;
     }
 
-    public function GenericMetric(callable $func)
+    public function ScalarMetric(string $name)
     {
-        return new GenericMetric($this->backend, $func);
+        return new ScalarMetric($this->backend, $name);
+    }
+
+    public function GenericMetric(callable $func, string $name=null)
+    {
+        return new GenericMetric($this->backend, $func, $name);
     }
 
     public function SparseCategoricalAccuracy(...$options)

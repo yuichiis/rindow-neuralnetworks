@@ -54,6 +54,6 @@ class Test extends TestCase
         } catch(\Throwable $e) {
             $error = $e->getMessage();
         }
-        $this->assertEquals("No applicable gradient found for source",$error);
+        $this->assertStringStartsWith("No applicable gradient found for source",$error);
     }
 }

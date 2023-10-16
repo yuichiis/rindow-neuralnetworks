@@ -51,11 +51,14 @@ class Test extends TestCase
         $metric->reset();
         $metric->update($t,$x);
         $accuracy = $metric->result();
-        echo "\n";
-        var_dump($accuracy);
-        var_dump(0.1275);
-        var_dump(abs(0.1275-$accuracy));
-        $this->assertLessThan(0.0001,abs(0.1275-$accuracy));
+        $this->assertLessThan(0.0001,abs(0.2441666-$accuracy));
+
+        $x = $K->array([[0, 1], [0, 0]]);
+        $t = $K->array([[1, 1], [0, 0]]);
+        $metric->reset();
+        $metric->update($t,$x);
+        $accuracy = $metric->result();
+        $this->assertLessThan(0.0001,abs(0.25-$accuracy));
     }
 
     public function testMultiBatch()
@@ -72,7 +75,7 @@ class Test extends TestCase
         $metric->reset();
         $metric->update($t,$x);
         $accuracy = $metric->result();
-        $this->assertLessThan(0.0001,abs(1-$accuracy));
+        $this->assertLessThan(0.0001,abs(0-$accuracy));
 
         /////////////////////////////////////
         $x = $K->array([
@@ -87,6 +90,6 @@ class Test extends TestCase
         $metric->reset();
         $metric->update($t,$x);
         $accuracy = $metric->result();
-        $this->assertLessThan(0.0001,abs(1-$accuracy));
+        $this->assertLessThan(0.0001,abs(0.010833332-$accuracy));
     }
 }
