@@ -911,28 +911,32 @@ abstract class AbstractModel implements Model
     public function saveWeights(&$modelWeights,$portable=null) : void
     {
         $K = $this->backend;
+        $mo = $K->localMatrixOperator();
         $modelWeights['weights'] = $modelWeights['weights'] ?? [];
         foreach($this->variables() as $idx => $weights) {
             $param = $weights->value();
             $param=$K->ndarray($param);
             if($portable)
                 $param = $this->converPortableSaveMode($param);
-            $modelWeights['weights'][$idx] = serialize($param);
+            $modelWeights['weights'][$idx] = $mo->serializeArray($param);
         }
         $optimizerWeights = $this->optimizer()->getWeights();
         $modelWeights['optimizerNumWeight'] = count($optimizerWeights);
         $modelWeights['optimizer'] = $modelWeights['optimizer'] ?? [];
         foreach ($optimizerWeights as $idx => $weights) {
             $weights=$K->ndarray($weights);
-            $modelWeights['optimizer'][$idx] = serialize($weights);
+            if($portable)
+                $weights = $this->converPortableSaveMode($weights);
+            $modelWeights['optimizer'][$idx] = $mo->serializeArray($weights);
         }
     }
     
     public function loadWeights($modelWeights) : void
     {
         $K = $this->backend;
+        $mo = $K->localMatrixOperator();
         foreach($this->variables() as $idx => $weights) {
-            $data = unserialize($modelWeights['weights'][$idx]);
+            $data = $mo->unserializeArray($modelWeights['weights'][$idx]);
             $data = $K->array($data);
             $weights->assign($K->copy($data));
         }
@@ -948,7 +952,7 @@ abstract class AbstractModel implements Model
         $optimizerNumWeight = $modelWeights['optimizerNumWeight'];
         $params = [];
         for($idx=0;$idx<$optimizerNumWeight;$idx++) {
-            $data = unserialize($modelWeights['optimizer'][$idx]);
+            $data = $mo->unserializeArray($modelWeights['optimizer'][$idx]);
             $data = $K->array($data);
             //$K->copy($data,$weights);
             $params[] = $data;

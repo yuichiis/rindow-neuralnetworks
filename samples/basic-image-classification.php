@@ -59,7 +59,7 @@ echo "dataset={$dataset}\n";
 echo "train=[".implode(',',$train_img->shape())."]\n";
 echo "test=[".implode(',',$test_img->shape())."]\n";
 
-if($shrink||!extension_loaded('rindow_openblas')) {
+if($shrink||!$mo->isAdvanced()) {
     // Shrink data
     $trainSize = 2000;
     $testSize  = 200;
@@ -98,6 +98,7 @@ echo "formating test images ...\n";
 $test_img  = formatingImage($mo,$test_img);
 $test_label = $mo->la()->astype($test_label,NDArray::int32);
 
+echo "device type: ".$nn->deviceType()."\n";
 $modelFilePath = __DIR__."/basic-image-classification-{$dataset}.model";
 
 if(file_exists($modelFilePath)) {

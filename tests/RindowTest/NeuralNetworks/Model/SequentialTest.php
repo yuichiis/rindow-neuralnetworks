@@ -833,14 +833,14 @@ class Test extends TestCase
 
     public function testFitConv1DandMaxPooling1D()
     {
-        if(extension_loaded('rindow_openblas')) {
+        $mo = $this->newMatrixOperator();
+        if($mo->isAdvanced()) {
             $num_of_filters=128;
             $epoch = 300;
         } else {
             $num_of_filters=16;
             $epoch = 50;
         }
-        $mo = $this->newMatrixOperator();
         $nn = $this->newNeuralNetworks($mo);
         $K = $nn->backend();
         $g = $nn->gradient();
@@ -902,14 +902,14 @@ class Test extends TestCase
 
     public function testFitConv2DandMaxPooling2D()
     {
-        if(extension_loaded('rindow_openblas')) {
+        $mo = $this->newMatrixOperator();
+        if($mo->isAdvanced()) {
             $num_of_filters=128;
             $epoch = 300;
         } else {
             $num_of_filters=8;
             $epoch = 30;
         }
-        $mo = $this->newMatrixOperator();
         $nn = $this->newNeuralNetworks($mo);
         $K = $nn->backend();
         $g = $nn->gradient();
@@ -971,14 +971,14 @@ class Test extends TestCase
 
     public function testFitConv3DandMaxPooling3D()
     {
-        if(extension_loaded('rindow_openblas')) {
+        $mo = $this->newMatrixOperator();
+        if($mo->isAdvanced()) {
             $num_of_filters=128;
             $epoch = 300;
         } else {
             $num_of_filters=8;
             $epoch = 20;
         }
-        $mo = $this->newMatrixOperator();
         $nn = $this->newNeuralNetworks($mo);
         $K = $nn->backend();
         $g = $nn->gradient();
@@ -1035,14 +1035,14 @@ class Test extends TestCase
 
     public function testFitConv1DandAveragePooling1D()
     {
-        if(extension_loaded('rindow_openblas')) {
+        $mo = $this->newMatrixOperator();
+        if($mo->isAdvanced()) {
             $num_of_filters=128;
             $epoch = 300;
         } else {
             $num_of_filters=16;
             $epoch = 50;
         }
-        $mo = $this->newMatrixOperator();
         $nn = $this->newNeuralNetworks($mo);
         $K = $nn->backend();
         $g = $nn->gradient();
@@ -1104,14 +1104,14 @@ class Test extends TestCase
 
     public function testFitConv2DandAveragePooling2D()
     {
-        if(extension_loaded('rindow_openblas')) {
+        $mo = $this->newMatrixOperator();
+        if($mo->isAdvanced()) {
             $num_of_filters=128;
             $epoch = 300;
         } else {
             $num_of_filters=8;
             $epoch = 30;
         }
-        $mo = $this->newMatrixOperator();
         $nn = $this->newNeuralNetworks($mo);
         $K = $nn->backend();
         $g = $nn->gradient();
@@ -1173,14 +1173,14 @@ class Test extends TestCase
 
     public function testFitConv3DandAveragePooling3D()
     {
-        if(extension_loaded('rindow_openblas')) {
+        $mo = $this->newMatrixOperator();
+        if($mo->isAdvanced()) {
             $num_of_filters=128;
             $epoch = 300;
         } else {
             $num_of_filters=8;
             $epoch = 20;
         }
-        $mo = $this->newMatrixOperator();
         $nn = $this->newNeuralNetworks($mo);
         $K = $nn->backend();
         $g = $nn->gradient();
@@ -1237,12 +1237,12 @@ class Test extends TestCase
 
     public function testFitEmbeding()
     {
-        if(extension_loaded('rindow_openblas')) {
+        $mo = $this->newMatrixOperator();
+        if($mo->isAdvanced()) {
             $epoch = 300;
         } else {
             $epoch = 50;
         }
-        $mo = $this->newMatrixOperator();
         $nn = $this->newNeuralNetworks($mo);
         $K = $nn->backend();
         $g = $nn->gradient();
@@ -1305,12 +1305,12 @@ class Test extends TestCase
 
     public function testFitSimpleRNN()
     {
-        if(extension_loaded('rindow_openblas')) {
+        $mo = $this->newMatrixOperator();
+        if($mo->isAdvanced()) {
             $epoch = 300;
         } else {
             $epoch = 100;
         }
-        $mo = $this->newMatrixOperator();
         $nn = $this->newNeuralNetworks($mo);
         $K = $nn->backend();
         $g = $nn->gradient();
@@ -1340,7 +1340,7 @@ class Test extends TestCase
             [9,8,7,6],
             [1,3,3,4],
             [5,4,3,2],
-        ]);
+        ],dtype:NDArray::int32);
         $t = $mo->array(
             [1,0,1,0],dtype:NDArray::int32
         );
@@ -1349,7 +1349,7 @@ class Test extends TestCase
             [1,1,1,4],
             [4,3,3,1],
             [9,3,3,2],
-        ]);
+        ],dtype:NDArray::int32);
         $v_t = $mo->array(
             [1,1,0,0],dtype:NDArray::int32
         );
@@ -1373,12 +1373,12 @@ class Test extends TestCase
 
     public function testFitSimpleRNNRetSeq()
     {
-        if(extension_loaded('rindow_openblas')) {
+        $mo = $this->newMatrixOperator();
+        if($mo->isAdvanced()) {
             $epoch = 300;
         } else {
             $epoch = 100;
         }
-        $mo = $this->newMatrixOperator();
         $nn = $this->newNeuralNetworks($mo);
         $K = $nn->backend();
         $g = $nn->gradient();
@@ -1409,7 +1409,7 @@ class Test extends TestCase
             [9,8,7,6],
             [1,3,3,4],
             [5,4,3,2],
-        ]);
+        ],dtype:NDArray::int32);
         $t = $mo->array([
             [0,1,2,9],
             [9,8,7,6],
@@ -1421,7 +1421,7 @@ class Test extends TestCase
             [1,1,1,4],
             [4,3,3,1],
             [9,3,3,2],
-        ]);
+        ],dtype:NDArray::int32);
         $v_t = $mo->array([
             [2,3,3,4],
             [1,1,1,4],
@@ -1454,12 +1454,12 @@ class Test extends TestCase
 
     public function testFitSimSimpleRNN()
     {
-        if(extension_loaded('rindow_openblas')) {
+        $mo = $this->newMatrixOperator();
+        if($mo->isAdvanced()) {
             $epoch = 300;
         } else {
             $epoch = 100;
         }
-        $mo = $this->newMatrixOperator();
         $nn = $this->newNeuralNetworks($mo);
         $K = $nn->backend();
         $g = $nn->gradient();
@@ -1491,7 +1491,7 @@ class Test extends TestCase
             [9],
             [1],
             [5],
-        ]);
+        ],dtype:NDArray::int32);
         $t = $mo->array(
             [0,9,1,5],dtype:NDArray::int32
         );
@@ -1500,7 +1500,7 @@ class Test extends TestCase
             [1],
             [4],
             [9],
-        ]);
+        ],dtype:NDArray::int32);
         $v_t = $mo->array(
             [2,1,4,9],dtype:NDArray::int32
         );
@@ -1523,12 +1523,12 @@ class Test extends TestCase
     }
     public function testFitLSTM()
     {
-        if(extension_loaded('rindow_openblas')) {
+        $mo = $this->newMatrixOperator();
+        if($mo->isAdvanced()) {
             $epoch = 300;
         } else {
             $epoch = 100;
         }
-        $mo = $this->newMatrixOperator();
         $nn = $this->newNeuralNetworks($mo);
         $K = $nn->backend();
         $g = $nn->gradient();
@@ -1554,7 +1554,7 @@ class Test extends TestCase
             [9,8,7,6],
             [1,3,3,4],
             [5,4,3,2],
-        ]);
+        ],dtype:NDArray::int32);
         $t = $mo->array(
             [1,0,1,0],dtype:NDArray::int32
         );
@@ -1563,7 +1563,7 @@ class Test extends TestCase
             [1,1,1,4],
             [4,3,3,1],
             [9,3,3,2],
-        ]);
+        ],dtype:NDArray::int32);
         $v_t = $mo->array(
             [1,1,0,0],dtype:NDArray::int32
         );
@@ -1586,12 +1586,12 @@ class Test extends TestCase
 
     public function testFitLSTMRetSeq()
     {
-        if(extension_loaded('rindow_openblas')) {
+        $mo = $this->newMatrixOperator();
+        if($mo->isAdvanced()) {
             $epoch = 300;
         } else {
             $epoch = 100;
         }
-        $mo = $this->newMatrixOperator();
         $nn = $this->newNeuralNetworks($mo);
         $K = $nn->backend();
         $g = $nn->gradient();
@@ -1618,7 +1618,7 @@ class Test extends TestCase
             [9,8,7,6],
             [1,3,3,4],
             [5,4,3,2],
-        ]);
+        ],dtype:NDArray::int32);
         $t = $mo->array([
             [0,1,2,9],
             [9,8,7,6],
@@ -1630,7 +1630,7 @@ class Test extends TestCase
             [1,1,1,4],
             [4,3,3,1],
             [9,3,3,2],
-        ]);
+        ],dtype:NDArray::int32);
         $v_t = $mo->array([
             [2,3,3,4],
             [1,1,1,4],
@@ -1656,12 +1656,12 @@ class Test extends TestCase
 
     public function testFitGRUDefault()
     {
-        if(extension_loaded('rindow_openblas')) {
+        $mo = $this->newMatrixOperator();
+        if($mo->isAdvanced()) {
             $epoch = 300;
         } else {
             $epoch = 100;
         }
-        $mo = $this->newMatrixOperator();
         $nn = $this->newNeuralNetworks($mo);
         $K = $nn->backend();
         $g = $nn->gradient();
@@ -1687,7 +1687,7 @@ class Test extends TestCase
             [9,8,7,6],
             [1,3,3,4],
             [5,4,3,2],
-        ]);
+        ],dtype:NDArray::int32);
         $t = $mo->array(
             [1,0,1,0],dtype:NDArray::int32
         );
@@ -1696,7 +1696,7 @@ class Test extends TestCase
             [1,1,1,4],
             [4,3,3,1],
             [9,3,3,2],
-        ]);
+        ],dtype:NDArray::int32);
         $v_t = $mo->array(
             [1,1,0,0],dtype:NDArray::int32
         );
@@ -1719,12 +1719,12 @@ class Test extends TestCase
 
     public function testFitGRUWithoutResetAfter()
     {
-        if(extension_loaded('rindow_openblas')) {
+        $mo = $this->newMatrixOperator();
+        if($mo->isAdvanced()) {
             $epoch = 300;
         } else {
             $epoch = 100;
         }
-        $mo = $this->newMatrixOperator();
         $nn = $this->newNeuralNetworks($mo);
         $K = $nn->backend();
         $g = $nn->gradient();
@@ -1751,7 +1751,7 @@ class Test extends TestCase
             [9,8,7,6],
             [1,3,3,4],
             [5,4,3,2],
-        ]);
+        ],dtype:NDArray::int32);
         $t = $mo->array(
             [1,0,1,0],dtype:NDArray::int32
         );
@@ -1760,7 +1760,7 @@ class Test extends TestCase
             [1,1,1,4],
             [4,3,3,1],
             [9,3,3,2],
-        ]);
+        ],dtype:NDArray::int32);
         $v_t = $mo->array(
             [1,1,0,0],dtype:NDArray::int32
         );
@@ -1783,12 +1783,12 @@ class Test extends TestCase
 
     public function testFitGRURetSeq()
     {
-        if(extension_loaded('rindow_openblas')) {
+        $mo = $this->newMatrixOperator();
+        if($mo->isAdvanced()) {
             $epoch = 300;
         } else {
             $epoch = 100;
         }
-        $mo = $this->newMatrixOperator();
         $nn = $this->newNeuralNetworks($mo);
         $K = $nn->backend();
         $g = $nn->gradient();
@@ -1819,7 +1819,7 @@ class Test extends TestCase
             [9,8,7,6],
             [1,3,3,4],
             [5,4,3,2],
-        ]);
+        ],dtype:NDArray::int32);
         $t = $mo->array([
             [0,1,2,9],
             [9,8,7,6],
@@ -1831,7 +1831,7 @@ class Test extends TestCase
             [1,1,1,4],
             [4,3,3,1],
             [9,3,3,2],
-        ]);
+        ],dtype:NDArray::int32);
         $v_t = $mo->array([
             [2,3,3,4],
             [1,1,1,4],
@@ -1864,12 +1864,12 @@ class Test extends TestCase
 
     public function testFitRepeatVector()
     {
-        if(extension_loaded('rindow_openblas')) {
+        $mo = $this->newMatrixOperator();
+        if($mo->isAdvanced()) {
             $epoch = 300;
         } else {
             $epoch = 50;
         }
-        $mo = $this->newMatrixOperator();
         $nn = $this->newNeuralNetworks($mo);
         $K = $nn->backend();
         $g = $nn->gradient();
@@ -1898,7 +1898,7 @@ class Test extends TestCase
             [9,8,7,6],
             [1,3,3,4],
             [5,4,3,2],
-        ]);
+        ],dtype:NDArray::int32);
         $t = $mo->array([
             [0,1,0],
             [1,0,1],
@@ -1910,7 +1910,7 @@ class Test extends TestCase
             [1,1,1,4],
             [4,3,3,1],
             [9,3,3,2],
-        ]);
+        ],dtype:NDArray::int32);
         $v_t = $mo->array([
             [0,1,0],
             [0,1,0],
@@ -1953,12 +1953,12 @@ class Test extends TestCase
 
     public function testSaveAndLoadWeightsNormal()
     {
-        if(extension_loaded('rindow_openblas')) {
+        $mo = $this->newMatrixOperator();
+        if($mo->isAdvanced()) {
             $epoch = 300;
         } else {
             $epoch = 50;
         }
-        $mo = $this->newMatrixOperator();
         $nn = $this->newNeuralNetworks($mo);
         $K = $nn->backend();
         $g = $nn->gradient();

@@ -49,21 +49,31 @@ if(!file_exists($savefilename)) {
     $savedata = [
         $tokenizer->save(),
         $classnames,
-        $train_inputs,$train_labels,
-        $test_inputs,$test_labels,
+        $mo->serializeArray([
+            $train_inputs,
+            $train_labels,
+            $test_inputs,
+            $test_labels,
+        ]),
     ];
     file_put_contents($savefilename,serialize($savedata));
 } else {
-    $savedata =  unserialize(file_get_contents($savefilename));
     [
         $tokenizer_data,
         $classnames,
+        $tensors,
         $train_inputs,$train_labels,
         $test_inputs,$test_labels,
-    ] = $savedata;
+    ] = unserialize(file_get_contents($savefilename));
     $tokenizer = $nn->data->TextClassifiedDataset($datasetdir.'/train')
                     ->getTokenizer();
     $tokenizer->load($tokenizer_data);
+    [
+        $train_inputs,
+        $train_labels,
+        $test_inputs,
+        $test_labels,
+    ] = $mo->unserializeArray($tensors);
 }
 $train_labels = $mo->la()->astype($train_labels,NDArray::float32);
 $test_labels = $mo->la()->astype($test_labels,NDArray::float32);
@@ -78,6 +88,7 @@ $val_labels = $train_labels[[$train_size,$total_size-1]];
 $train_inputs = $train_inputs[[0,$train_size-1]];
 $train_labels = $train_labels[[0,$train_size-1]];
 
+echo "device type: ".$nn->deviceType()."\n";
 $modelFilePath = __DIR__."/basic-text-classification.model";
 
 if(file_exists($modelFilePath)) {

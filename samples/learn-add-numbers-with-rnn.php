@@ -8,6 +8,10 @@ use Rindow\Math\Matrix\MatrixOperator;
 use Rindow\Math\Plot\Plot;
 use Rindow\NeuralNetworks\Builder\NeuralNetworks;
 
+use Rindow\Math\Matrix\NDArrayPhp;
+
+NDArrayPhp::$unserializeWarning = 1;
+
 $TRAINING_SIZE = 20000;
 $DIGITS = 3;
 $REVERSE = True;
@@ -138,10 +142,10 @@ class NumAdditionDataset
         }
         if(file_exists($path)){
             $pkl = file_get_contents($path);
-            $dataset = unserialize($pkl);
+            $dataset = $this->mo->unserializeArray($pkl);
         }else{
             $dataset = $this->generate();
-            $pkl = serialize($dataset);
+            $pkl = $this->mo->serializeArray($dataset);
             file_put_contents($path,$pkl);
         }
         return $dataset;
@@ -172,6 +176,7 @@ $y_val   = $answers[[$split_at,$corpus_size-1]];
 
 echo "train,test: ".$x_train->shape()[0].",".$x_val->shape()[0]."\n";
 
+echo "device type: ".$nn->deviceType()."\n";
 $modelFilePath = __DIR__."/learn-add-numbers-with-rnn.model";
 
 if(file_exists($modelFilePath)) {

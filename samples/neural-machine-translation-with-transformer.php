@@ -303,7 +303,8 @@ class PositionalEmbedding extends AbstractModel
         if(is_numeric($x)) {
             $x = $K->fill($y->shape(),$x,$y->dtype());
         }
-        return $K->exp($K->mul($y,$K->log($x)));
+        //return $K->exp($K->mul($y,$K->log($x)));
+        return $K->pow($x,$y);
     }
 
     protected function range(float $start, float $limit, float $delta=null, $dtype=null) : NDArray
@@ -1024,6 +1025,7 @@ $dataset = $nn->data->NDArrayDataset(
     tests:  $labelTensorTrain, batch_size: 1, shuffle: false
 );
 
+echo "device type: ".$nn->deviceType()."\n";
 $transformer = new Transformer(
     $nn->backend(),
     $nn,

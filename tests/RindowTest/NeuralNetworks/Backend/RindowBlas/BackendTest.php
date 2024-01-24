@@ -524,7 +524,7 @@ class Test extends TestCase
     {
         $mo = $this->newMatrixOperator();
         $K = $this->newBackend($mo);
-        $x = $K->array([0,1,2,3,0,1,2,3]);
+        $x = $K->array([0,1,2,3,0,1,2,3],dtype:NDArray::int32);
         $y = $K->oneHot($x,4); $K->finish();
         $this->assertEquals($y->toArray(),[
             [1,0,0,0],

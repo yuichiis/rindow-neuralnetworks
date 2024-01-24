@@ -69,6 +69,11 @@ class NeuralNetworks
         return $this->backend;
     }
 
+    public function deviceType()
+    {
+        return $this->backend->deviceType();
+    }
+
     public function models()
     {
         if($this->models==null) {

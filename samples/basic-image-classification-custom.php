@@ -35,7 +35,7 @@ echo "dataset={$dataset}\n";
 echo "train=[".implode(',',$train_img->shape())."]\n";
 echo "test=[".implode(',',$test_img->shape())."]\n";
 
-if($shrink||!extension_loaded('rindow_openblas')) {
+if($shrink||!$mo->isAdvanced()) {
     // Shrink data
     $trainSize = 2000;
     $testSize  = 200;
@@ -89,6 +89,8 @@ class ImageClassification extends AbstractModel
         return $outputs;
     }
 }
+
+echo "device type: ".$nn->deviceType()."\n";
 $model = new ImageClassification($nn->backend(),$nn);
 echo "creating model ...\n";
 $model->compile(

@@ -13,9 +13,6 @@ use Rindow\Math\Plot\Plot;
 use Rindow\NeuralNetworks\Builder\NeuralNetworks;
 
 
-/**
- * @requires extension rindow_openblas
- */
 class Test extends ORGTest
 {
     protected $plot = false;

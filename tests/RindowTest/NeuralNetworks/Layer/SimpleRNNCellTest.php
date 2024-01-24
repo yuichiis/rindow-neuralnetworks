@@ -267,7 +267,7 @@ class Test extends TestCase
 
         $x = $K->array([
             [1],
-        ]);
+        ],dtype:NDArray::int32);
         $states = [$K->zeros([1,3])];
         $object = new \stdClass();
         $x = $K->onehot($x->reshape([1]),$numClass=10)->reshape([1,10]);

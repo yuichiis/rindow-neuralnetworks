@@ -12,11 +12,18 @@ use RindowTest\NeuralNetworks\Backend\RindowBlas\BackendTest\Test as ORGTest;
 use Rindow\NeuralNetworks\Backend\RindowCLBlast\Backend;
 use Rindow\Math\Matrix\MatrixOperator;
 
-/**
-*   @requires extension rindow_clblast
-*/
 class Test extends ORGTest
 {
+    public function setUp() : void
+    {
+        parent::setUp();
+        $mo = new MatrixOperator();
+        if(!$mo->isAccelerated()) {
+            $this->markTestSkipped("The service is not Accelerated.");
+            return;
+        }
+    }
+
     public function newMatrixOperator()
     {
         return new MatrixOperator();

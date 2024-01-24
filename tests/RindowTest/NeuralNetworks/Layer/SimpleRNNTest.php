@@ -489,7 +489,7 @@ class Test extends TestCase
 
         $x = $K->array([
             [0,1,2,9],
-        ]);
+        ],dtype:NDArray::int32);
         $x = $K->onehot($x->reshape([4]),$numClass=10)->reshape([1,4,10]);
         $outputsVariable = $nn->with($tape=$g->GradientTape(),
             function() use ($layer,$x) {
@@ -524,7 +524,7 @@ class Test extends TestCase
 
         $x = $K->array([
             [0,1,2,9],
-        ]);
+        ],dtype:NDArray::int32);
         $x = $K->onehot($x->reshape([4]),$numClass=10)->reshape([1,4,10]);
         $outputsVariable = $nn->with($tape=$g->GradientTape(),
             function() use ($layer,$x) {

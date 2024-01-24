@@ -9,11 +9,18 @@ use Rindow\Math\Matrix\MatrixOperator;
 use Rindow\NeuralNetworks\Activation\FunctionFactory;
 use Interop\Polite\Math\Matrix\NDArray;
 
-/**
-*   @requires extension rindow_clblast
-*/
 class Test extends TestCase
 {
+    public function setUp() : void
+    {
+        parent::setUp();
+        $mo = new MatrixOperator();
+        if(!$mo->isAccelerated()) {
+            $this->markTestSkipped("The service is not Accelerated.");
+            return;
+        }
+    }
+
     public function newMatrixOperator()
     {
         return new MatrixOperator();

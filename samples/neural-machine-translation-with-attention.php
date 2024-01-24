@@ -497,6 +497,7 @@ echo "Target word dictionary: $targetVocabSize(".$targLang->numWords(true).")\n"
 echo "Input length: $inputLength\n";
 echo "Output length: $outputLength\n";
 
+echo "device type: ".$nn->deviceType()."\n";
 $seq2seq = new Seq2seq(
     $mo,
     $nn->backend(),

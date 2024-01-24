@@ -27,11 +27,12 @@ class Test extends TestCase
         $K = $nn->backend();
         $metric = $nn->metrics->SparseCategoricalAccuracy();
 
-        $x = $mo->array([
+        $x = $K->array($mo->array([
             [0.00000, 0.00000 , 1.00000],
             [0.99998, 0.00001 , 0.00001],
-        ]);
-        $t = $mo->array([2, 0],NDArray::int32);
+        ]));
+        $t = $K->array($mo->array([2, 0],NDArray::int32));
+        
         $copyx = $K->copy($x);
         $copyt = $K->copy($t);
 
@@ -41,10 +42,10 @@ class Test extends TestCase
         $this->assertEquals($copyx->toArray(),$x->toArray());
         $this->assertEquals($copyt->toArray(),$t->toArray());
 
-        $x = $mo->array([
+        $x = $K->array($mo->array([
             [0.00000, 0.00000 , 1.00000],
             [0.00001, 0.99998 , 0.00001],
-        ]);
+        ]));
         $metric->reset();
         $metric->update($t,$x);
         $accuracy = $metric->result();
@@ -68,16 +69,16 @@ class Test extends TestCase
         $this->assertLessThan(0.0001,abs(1-$accuracy));
 
         /////////////////////////////////////
-        $x = $mo->array([
+        $x = $K->array($mo->array([
             [[0.00000, 0.00000 , 1.00000],
              [0.99998, 0.00001 , 0.00001]],
             [[0.00000, 0.00000 , 1.00000],
              [0.99998, 0.00001 , 0.00001]],
-        ]);
-        $t = $mo->array([
+        ]));
+        $t = $K->array($mo->array([
             [2, 0],
             [2, 0],
-        ],NDArray::int32);
+        ],NDArray::int32));
 
         $metric->reset();
         $metric->update($t,$x);

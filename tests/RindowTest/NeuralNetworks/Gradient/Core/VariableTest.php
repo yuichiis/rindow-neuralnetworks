@@ -39,7 +39,7 @@ class Test extends TestCase
         $this->assertEquals([2],$a->shape());
         $this->assertEquals(1,$a->ndim());
         $this->assertEquals(0,$a->offset());
-        if(extension_loaded('rindow_openblas')) {
+        if($mo->isAdvanced()) {
             $this->assertInstanceof(Buffer::class,$a->buffer());
         } else {
             $this->assertInstanceof(\SplFixedArray::class,$a->buffer());

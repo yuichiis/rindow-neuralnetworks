@@ -119,7 +119,7 @@ class Test extends TestCase
 
         $REVERSE = True;
         $WORD_VECTOR = 16;
-        if(extension_loaded('rindow_openblas')) {
+        if($mo->isAdvanced()) {
             $UNITS = 128;
         } else {
             $UNITS = 16;
@@ -260,8 +260,12 @@ class Test extends TestCase
         $z = $model->predict($x);
         if($this->plot) {
             [$fig,$ax] = $plt->subplots(2);
-            $diff = $mo->f('abs',$mo->select($mo->op($y,'-',$z),$mo->arange($t->size()),$mo->zeros([$t->size()])));
-            $ax[0]->bar($mo->arange($diff->size()),$diff,null,null,'difference');
+            $diff = $mo->f('abs',$mo->select(
+                $mo->op($y,'-',$z),
+                $mo->arange($t->size(),dtype:NDArray::int32),
+                $mo->zeros([$t->size()],dtype:NDArray::int32)
+            ));
+            $ax[0]->bar($mo->arange($diff->size(),dtype:NDArray::int32),$diff,null,null,'difference');
             $ax[0]->legend();
             $ax[1]->plot($mo->array($history['loss']),null,null,'loss');
             $ax[1]->plot($mo->array($history['accuracy']),null,null,'accuracy');

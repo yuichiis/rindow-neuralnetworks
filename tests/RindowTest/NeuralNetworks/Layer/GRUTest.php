@@ -580,7 +580,7 @@ class Test extends TestCase
 
         $x = $K->array([
             [0,1,2,9],
-        ]);
+        ],dtype:NDArray::int32);
         $x = $K->onehot($x->reshape([4]),$numClass=10)->reshape([1,4,10]);
         $outputsVariable = $nn->with($tape=$g->GradientTape(),
             function() use ($layer,$x) {
@@ -615,7 +615,7 @@ class Test extends TestCase
 
         $x = $K->array([
             [0,1,2,9],
-        ]);
+        ],dtype:NDArray::int32);
         $x = $K->onehot($x->reshape([4]),$numClass=10)->reshape([1,4,10]);
         $outputsVariable = $nn->with($tape=$g->GradientTape(),
             function() use ($layer,$x) {
@@ -693,7 +693,7 @@ class Test extends TestCase
 
         $x = $mo->array([
             [0,1,2,9],
-        ]);
+        ],dtype:NDArray::int32);
         $x = $mo->la()->onehot($x->reshape([4]),$numClass=10)->reshape([1,4,10]);
         $outputs = $layer->forward($x);
         echo "outputs=".$mo->toString($outputs,'%5.3f',true);
@@ -739,7 +739,7 @@ class Test extends TestCase
 
         $x = $mo->array([
             [1],
-        ]);
+        ],dtype:NDArray::int32);
         $x = $mo->la()->onehot($x->reshape([1]),$numClass=10)->reshape([1,1,10]);
         $outputs = $layer->forward($x);
         echo "outputs=".$mo->toString($outputs,'%5.2f',true);

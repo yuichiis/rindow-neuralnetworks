@@ -52,6 +52,11 @@ class Backend
         return $this->matrixOperator;
     }
 
+    public function primaryLA()
+    {
+        return $this->la;
+    }
+
     public function localLA()
     {
         return $this->matrixOperator->laRawMode();
@@ -80,6 +85,11 @@ class Backend
     public function accelerated()
     {
         return $this->la->accelerated();
+    }
+
+    public function deviceType()
+    {
+        return implode(',',$this->la->deviceTypes());
     }
 
     public function epsilon()
@@ -515,10 +525,10 @@ class Backend
         return $this->la->increment($x, $b, $a);
     }
 
-    public function pow(NDArray $x, float $y)
+    public function pow(NDArray $x, float|NDArray $y, bool $trans=null)
     {
         $x = $this->la->copy($x);
-        return $this->la->pow($x,$y);
+        return $this->la->pow($x,$y,$trans);
     }
 
     public function square(NDArray $x)
@@ -613,8 +623,7 @@ class Backend
     public function notEqual($x,$y)
     {
         $z = $this->la->copy($y);
-        $this->la->equal($x,$z);
-        return $this->la->not($z);
+        return $this->la->notEqual($x,$z);
     }
 
     public function not($x)
