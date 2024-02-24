@@ -4,6 +4,7 @@ namespace Rindow\NeuralNetworks\Layer;
 use InvalidArgumentException;
 use Interop\Polite\Math\Matrix\NDArray;
 use Rindow\NeuralNetworks\Support\GenericUtils;
+use function Rindow\Math\Matrix\R;
 
 class GRUCell extends AbstractRNNCell
 {
@@ -145,12 +146,12 @@ class GRUCell extends AbstractRNNCell
             }
         }
         if(!$this->resetAfter) {
-            $this->r_kernel_z = $this->recurrentKernel[[0,$this->units-1]];
-            $this->r_kernel_r = $this->recurrentKernel[[$this->units,$this->units*2-1]];
-            $this->r_kernel_hh = $this->recurrentKernel[[$this->units*2,$this->units*3-1]];
-            $this->dR_kernel_z = $this->dRecurrentKernel[[0,$this->units-1]];
-            $this->dR_kernel_r = $this->dRecurrentKernel[[$this->units,$this->units*2-1]];
-            $this->dR_kernel_hh = $this->dRecurrentKernel[[$this->units*2,$this->units*3-1]];
+            $this->r_kernel_z = $this->recurrentKernel[R(0,$this->units)];
+            $this->r_kernel_r = $this->recurrentKernel[R($this->units,$this->units*2)];
+            $this->r_kernel_hh = $this->recurrentKernel[R($this->units*2,$this->units*3)];
+            $this->dR_kernel_z = $this->dRecurrentKernel[R(0,$this->units)];
+            $this->dR_kernel_r = $this->dRecurrentKernel[R($this->units,$this->units*2)];
+            $this->dR_kernel_hh = $this->dRecurrentKernel[R($this->units*2,$this->units*3)];
         }
         array_push($shape,$this->units);
         $this->outputShape = $shape;

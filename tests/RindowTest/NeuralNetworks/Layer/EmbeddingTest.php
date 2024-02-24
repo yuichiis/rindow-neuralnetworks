@@ -9,7 +9,7 @@ use Rindow\NeuralNetworks\Builder\NeuralNetworks;
 use Rindow\NeuralNetworks\Layer\Embedding;
 use Interop\Polite\Math\Matrix\NDArray;
 
-class Test extends TestCase
+class EmbeddingTest extends TestCase
 {
     public function newMatrixOperator()
     {

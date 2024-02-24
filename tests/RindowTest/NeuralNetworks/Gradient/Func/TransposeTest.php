@@ -7,7 +7,7 @@ use Rindow\NeuralNetworks\Builder\NeuralNetworks;
 use Interop\Polite\Math\Matrix\NDArray;
 use InvalidArgumentException;
 
-class Test extends TestCase
+class TransposeTest extends TestCase
 {
     public function newMatrixOperator()
     {

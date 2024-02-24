@@ -12,7 +12,7 @@ use Rindow\NeuralNetworks\Layer\Flatten;
 use Rindow\NeuralNetworks\Layer\Dropout;
 use Interop\Polite\Math\Matrix\Buffer;
 
-class Test extends TestCase
+class ModulesTest extends TestCase
 {
     public function newMatrixOperator()
     {

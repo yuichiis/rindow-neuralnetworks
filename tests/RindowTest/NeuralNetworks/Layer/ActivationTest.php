@@ -11,7 +11,7 @@ use Rindow\NeuralNetworks\Activation\Tanh;
 use Rindow\NeuralNetworks\Loss\SparseCategoricalCrossEntropy;
 use Rindow\NeuralNetworks\Builder\NeuralNetworks;
 
-class Test extends TestCase
+class ActivationTest extends TestCase
 {
     public function newMatrixOperator()
     {

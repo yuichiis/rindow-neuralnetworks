@@ -10,7 +10,7 @@ use Rindow\NeuralNetworks\Layer\Attention;
 use InvalidArgumentException;
 use WeakMap;
 
-class Test extends TestCase
+class AttentionTest extends TestCase
 {
     public function newMatrixOperator()
     {

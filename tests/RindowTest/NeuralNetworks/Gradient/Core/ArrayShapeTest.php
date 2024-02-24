@@ -8,7 +8,7 @@ use Rindow\NeuralNetworks\Gradient\Core\Variable;
 use Rindow\NeuralNetworks\Gradient\Core\ArrayShape;
 use Interop\Polite\Math\Matrix\Buffer;
 
-class Test extends TestCase
+class ArrayShapeTest extends TestCase
 {
     public function newMatrixOperator()
     {

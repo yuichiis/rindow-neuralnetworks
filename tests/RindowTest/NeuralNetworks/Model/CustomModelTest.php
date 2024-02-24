@@ -200,7 +200,7 @@ class TestMultiInputModel extends AbstractModel
     }
 }
 
-class Test extends TestCase
+class CustomModelTest extends TestCase
 {
     protected $filename;
     public function setUp() : void

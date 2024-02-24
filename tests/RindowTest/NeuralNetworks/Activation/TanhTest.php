@@ -7,7 +7,7 @@ use Rindow\Math\Matrix\MatrixOperator;
 use Rindow\NeuralNetworks\Activation\Tanh;
 use Rindow\NeuralNetworks\Builder\NeuralNetworks;
 
-class Test extends TestCase
+class TanhTest extends TestCase
 {
     public function newMatrixOperator()
     {

@@ -8,7 +8,7 @@ use Rindow\NeuralNetworks\Layer\BatchNormalization;
 use Rindow\NeuralNetworks\Builder\NeuralNetworks;
 
 
-class Test extends TestCase
+class BatchNormalizationTest extends TestCase
 {
     public function newMatrixOperator()
     {

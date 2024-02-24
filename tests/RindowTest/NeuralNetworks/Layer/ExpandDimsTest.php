@@ -8,7 +8,7 @@ use Rindow\NeuralNetworks\Builder\NeuralNetworks;
 use Rindow\NeuralNetworks\Layer\ExpandDims;
 use InvalidArgumentException;
 
-class Test extends TestCase
+class ExpandDimsTest extends TestCase
 {
     public function newMatrixOperator()
     {

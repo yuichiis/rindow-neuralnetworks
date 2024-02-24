@@ -184,7 +184,7 @@ class Logger
     }
 }
 
-class Test extends TestCase
+class GradientTapeTest extends TestCase
 {
     public function newMatrixOperator()
     {

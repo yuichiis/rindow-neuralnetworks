@@ -9,6 +9,7 @@ use Rindow\NeuralNetworks\Gradient\Core\ArrayShape;
 use Rindow\NeuralNetworks\Gradient\ArrayShape as ArrayShapeInterface;
 use Rindow\NeuralNetworks\Gradient\Scalar as ScalarInterface;
 use Interop\Polite\Math\Matrix\NDArray;
+use function Rindow\Math\Matrix\R;
 
 class Get extends AbstractFunction
 {
@@ -84,7 +85,7 @@ class Get extends AbstractFunction
             if($array->ndim()==0) {
                 throw new InvalidArgumentException("arg #1 must not be scalar.");
             } elseif($array->ndim()==1) {
-                $value = $array[[$offset,$offset]];
+                $value = $array[R($offset,$offset+1)];
                 $value = $K->ndarray($value->reshape([]));
                 $value = new Scalar($value);
             } else {
@@ -97,7 +98,7 @@ class Get extends AbstractFunction
             $count = count($array) + $count + 1;
         }
 
-        $value = $array[[$offset,$offset+$count-1]];
+        $value = $array[R($offset,$offset+$count)];
         return $value;
     }
 

@@ -8,7 +8,7 @@ use Rindow\NeuralNetworks\Loss\CategoricalCrossEntropy;
 use Rindow\NeuralNetworks\Builder\NeuralNetworks;
 use Interop\Polite\Math\Matrix\NDArray;
 
-class Test extends TestCase
+class CategoricalCrossEntropyTest extends TestCase
 {
     public function newMatrixOperator()
     {

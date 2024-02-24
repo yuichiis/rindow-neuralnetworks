@@ -8,7 +8,7 @@ use Rindow\Math\Matrix\MatrixOperator;
 use Rindow\Math\Plot\Plot;
 use Rindow\NeuralNetworks\Builder\NeuralNetworks;
 
-class Test extends TestCase
+class Cifar10Test extends TestCase
 {
     protected $plot = false;
     protected $pickleFile;

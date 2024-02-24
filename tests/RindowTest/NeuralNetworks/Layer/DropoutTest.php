@@ -8,7 +8,7 @@ use Rindow\NeuralNetworks\Layer\Dropout;
 use Rindow\NeuralNetworks\Builder\NeuralNetworks;
 
 
-class Test extends TestCase
+class DropoutTest extends TestCase
 {
     public function newMatrixOperator()
     {

@@ -137,7 +137,7 @@ class TestCustomSubModel extends AbstractModel
     }
 }
 
-class Test extends TestCase
+class SequentialTest extends TestCase
 {
     protected $plot = false;
 

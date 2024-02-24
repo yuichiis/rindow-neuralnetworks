@@ -8,7 +8,7 @@ use Rindow\NeuralNetworks\Builder\NeuralNetworks;
 use Rindow\NeuralNetworks\Layer\GlobalMaxPooling3D;
 use InvalidArgumentException;
 
-class Test extends TestCase
+class GlobalMaxPooling3DTest extends TestCase
 {
     public function newMatrixOperator()
     {

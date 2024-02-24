@@ -8,7 +8,7 @@ use Rindow\NeuralNetworks\Optimizer\RMSprop;
 use Rindow\NeuralNetworks\Builder\NeuralNetworks;
 use Rindow\NeuralNetworks\Optimizer\Schedule\InverseTimeDecay;
 
-class Test extends TestCase
+class RMSpropTest extends TestCase
 {
     public function newBackend($mo)
     {

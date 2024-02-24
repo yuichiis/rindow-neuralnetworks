@@ -7,7 +7,7 @@ use Rindow\NeuralNetworks\Backend\RindowBlas\Backend;
 use Rindow\NeuralNetworks\Layer\LayerNormalization;
 use Rindow\NeuralNetworks\Builder\NeuralNetworks;
 
-class Test extends TestCase
+class LayerNormalizationTest extends TestCase
 {
     public function newMatrixOperator()
     {

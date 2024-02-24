@@ -7,6 +7,7 @@ use Rindow\NeuralNetworks\Model\AbstractModel;
 use Rindow\Math\Matrix\MatrixOperator;
 use Rindow\Math\Plot\Plot;
 use Rindow\NeuralNetworks\Builder\NeuralNetworks;
+use function Rindow\Math\Matrix\R;
 
 use Rindow\Math\Matrix\NDArrayPhp;
 
@@ -169,10 +170,10 @@ echo "Total questions: ". $corpus_size."\n";
 
 # Explicitly set apart 10% for validation data that we never train over.
 $split_at = $corpus_size - (int)floor($corpus_size / 10);
-$x_train = $questions[[0,$split_at-1]];
-$x_val   = $questions[[$split_at,$corpus_size-1]];
-$y_train = $answers[[0,$split_at-1]];
-$y_val   = $answers[[$split_at,$corpus_size-1]];
+$x_train = $questions[R(0,$split_at)];
+$x_val   = $questions[R($split_at,$corpus_size)];
+$y_train = $answers[R(0,$split_at)];
+$y_val   = $answers[R($split_at,$corpus_size)];
 
 echo "train,test: ".$x_train->shape()[0].",".$x_val->shape()[0]."\n";
 

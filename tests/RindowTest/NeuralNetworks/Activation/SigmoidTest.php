@@ -8,7 +8,7 @@ use Rindow\NeuralNetworks\Activation\Sigmoid;
 use Rindow\NeuralNetworks\Builder\NeuralNetworks;
 
 
-class Test extends TestCase
+class SigmoidTest extends TestCase
 {
     public function newMatrixOperator()
     {

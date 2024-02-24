@@ -8,7 +8,7 @@ use Rindow\NeuralNetworks\Loss\MeanSquaredError;
 use Rindow\NeuralNetworks\Builder\NeuralNetworks;
 use Interop\Polite\Math\Matrix\NDArray;
 
-class Test extends TestCase
+class MeanSquaredErrorTest extends TestCase
 {
     public function newMatrixOperator()
     {

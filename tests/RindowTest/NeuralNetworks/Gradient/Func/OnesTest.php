@@ -8,7 +8,7 @@ use Rindow\NeuralNetworks\Builder\NeuralNetworks;
 use Rindow\NeuralNetworks\Gradient\Variable;
 use Rindow\NeuralNetworks\Gradient\Core\Scalar;
 
-class Test extends TestCase
+class OnesTest extends TestCase
 {
     public function newMatrixOperator()
     {

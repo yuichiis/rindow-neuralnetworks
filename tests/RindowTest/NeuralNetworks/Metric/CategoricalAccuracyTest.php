@@ -8,7 +8,7 @@ use Rindow\NeuralNetworks\Builder\NeuralNetworks;
 use Interop\Polite\Math\Matrix\NDArray;
 use Rindow\Math\Plot\Plot;
 
-class Test extends TestCase
+class CategoricalAccuracyTest extends TestCase
 {
     public function newMatrixOperator()
     {

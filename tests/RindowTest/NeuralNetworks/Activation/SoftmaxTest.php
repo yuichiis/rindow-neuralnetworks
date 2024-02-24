@@ -7,7 +7,7 @@ use Rindow\Math\Matrix\MatrixOperator;
 use Rindow\NeuralNetworks\Activation\Softmax;
 use Rindow\NeuralNetworks\Builder\NeuralNetworks;
 
-class Test extends TestCase
+class SoftmaxTest extends TestCase
 {
     public function newMatrixOperator()
     {

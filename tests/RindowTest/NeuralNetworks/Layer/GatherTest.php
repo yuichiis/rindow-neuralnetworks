@@ -8,7 +8,7 @@ use Rindow\NeuralNetworks\Builder\NeuralNetworks;
 use Rindow\NeuralNetworks\Layer\Gather;
 use InvalidArgumentException;
 
-class Test extends TestCase
+class GatherTest extends TestCase
 {
     public function newMatrixOperator()
     {

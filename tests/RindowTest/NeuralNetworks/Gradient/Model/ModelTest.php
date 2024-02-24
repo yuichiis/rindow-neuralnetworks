@@ -442,7 +442,7 @@ class TestGraphMode extends AbstractModel
     }
 }
 
-class Test extends TestCase
+class ModelTest extends TestCase
 {
     protected $plot = true;
 

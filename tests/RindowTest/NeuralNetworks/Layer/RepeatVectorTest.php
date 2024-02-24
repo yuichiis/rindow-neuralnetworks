@@ -9,7 +9,7 @@ use Rindow\NeuralNetworks\Builder\NeuralNetworks;
 use Rindow\NeuralNetworks\Layer\RepeatVector;
 use InvalidArgumentException;
 
-class Test extends TestCase
+class RepeatVectorTest extends TestCase
 {
     public function newMatrixOperator()
     {

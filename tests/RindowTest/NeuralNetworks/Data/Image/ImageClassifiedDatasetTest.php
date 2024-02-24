@@ -8,7 +8,7 @@ use Rindow\NeuralNetworks\Builder\NeuralNetworks;
 use Rindow\NeuralNetworks\Data\Image\ImageClassifiedDataset;
 use Rindow\Math\Plot\Plot;
 
-class Test extends TestCase
+class ImageClassifiedDatasetTest extends TestCase
 {
     public function getPlotConfig()
     {

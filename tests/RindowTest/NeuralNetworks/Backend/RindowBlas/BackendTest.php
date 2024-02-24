@@ -9,7 +9,7 @@ use Rindow\Math\Plot\Plot;
 use Rindow\NeuralNetworks\Backend\RindowBlas\Backend;
 use InvalidArgumentException;
 
-class Test extends TestCase
+class BackendTest extends TestCase
 {
     public function newMatrixOperator()
     {

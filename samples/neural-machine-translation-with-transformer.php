@@ -14,6 +14,7 @@ use Rindow\NeuralNetworks\Builder\NeuralNetworks;
 use Rindow\NeuralNetworks\Data\Sequence\Tokenizer;
 use Rindow\NeuralNetworks\Data\Sequence\Preprocessor;
 use Rindow\NeuralNetworks\Optimizer\Schedule\LearningRateSchedule;
+use function Rindow\Math\Matrix\R;
 
 # Download the file
 class EngFraDataset
@@ -58,6 +59,9 @@ class EngFraDataset
         }
         $this->console("Extract to:".$this->datasetDir.'/..'."\n");
         $files = [$memberfile];
+        if(!class_exists("ZipArchive")) {
+            throw new \Exception("Please configure the zip php-extension.");
+        }
         $zip = new ZipArchive();
         $zip->open($filePath);
         $zip->extractTo($this->datasetDir);
@@ -328,7 +332,7 @@ class PositionalEmbedding extends AbstractModel
         $y = $K->alloc([$count],$dtype);
         $d = $K->fill([1],$delta,$dtype);
         for($i=0; $i<$count; $i++) {
-            $K->update($y[[$i,$i]],$K->scale($i,$d));
+            $K->update($y[R($i,$i+1)],$K->scale($i,$d));
         }
         return $y;
     }
@@ -886,7 +890,7 @@ class Translator
 
         $start = $K->array([$this->start_voc_id],dtype:NDArray::int32);
         $output_array = $K->zeros([1,$this->max_out_length],dtype:NDArray::int32);
-        $K->copy($start,$output_array->reshape([$this->max_out_length])[[0,0]]);
+        $K->copy($start,$output_array->reshape([$this->max_out_length])[R(0,1)]);
         $this->transformer->setShapeInspection(false);
 
         for($i=0;$i<$this->max_out_length;$i++) {
@@ -901,7 +905,7 @@ class Translator
             # decoder as its input.
             $output = $output_array->reshape([$this->max_out_length]);
             if($i+1<$this->max_out_length) {
-                $K->copy($predicted_id,$output[[$i+1,$i+1]]);
+                $K->copy($predicted_id,$output[R($i+1,$i+2)]);
             }
             if($predicted_id[0] == $this->end_voc_id) {
                 break;
@@ -989,14 +993,14 @@ echo "Generating data...\n";
     = $dataset->loadData(null,$numExamples,$numWords);
 $valSize = intval(floor(count($inputTensor)/100));
 $trainSize = count($inputTensor)-$valSize;
-//$inputTensorTrain  = $inputTensor[[0,$trainSize-1]];
-//$targetTensorTrain = $targetTensor[[0,$trainSize-1]];
-//$inputTensorVal  = $inputTensor[[$trainSize,$valSize+$trainSize-1]];
-//$targetTensorVal = $targetTensor[[$trainSize,$valSize+$trainSize-1]];
-$inputTensorTrain  = $inputTensor[[0,$trainSize-1]];
-$targetTensorTrain = $targetTensor[[0,$trainSize-1]];
-$inputTensorVal  = $inputTensor[[$trainSize,$valSize+$trainSize-1]];
-$targetTensorVal = $targetTensor[[$trainSize,$valSize+$trainSize-1]];
+//$inputTensorTrain  = $inputTensor[R(0,$trainSize)];
+//$targetTensorTrain = $targetTensor[R(0,$trainSize)];
+//$inputTensorVal  = $inputTensor[R($trainSize,$valSize+$trainSize)];
+//$targetTensorVal = $targetTensor[R($trainSize,$valSize+$trainSize)];
+$inputTensorTrain  = $inputTensor[R(0,$trainSize)];
+$targetTensorTrain = $targetTensor[R(0,$trainSize)];
+$inputTensorVal  = $inputTensor[R($trainSize,$valSize+$trainSize)];
+$targetTensorVal = $targetTensor[R($trainSize,$valSize+$trainSize)];
 
 $labelTensorTrain = make_labels($mo->la(),$targetTensorTrain);
 $labelTensorVal = make_labels($mo->la(),$targetTensorVal);

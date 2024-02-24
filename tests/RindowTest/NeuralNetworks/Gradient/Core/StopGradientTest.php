@@ -185,7 +185,7 @@ class Logger
     }
 }
 
-class Test extends TestCase
+class StopGradientTest extends TestCase
 {
     public function newMatrixOperator()
     {

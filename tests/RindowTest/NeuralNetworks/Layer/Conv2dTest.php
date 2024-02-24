@@ -8,7 +8,7 @@ use Rindow\NeuralNetworks\Builder\NeuralNetworks;
 use Rindow\NeuralNetworks\Layer\Conv2D;
 use InvalidArgumentException;
 
-class Test extends TestCase
+class Conv2DTest extends TestCase
 {
     public function newMatrixOperator()
     {

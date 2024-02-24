@@ -5,6 +5,7 @@ use Rindow\Math\Matrix\MatrixOperator;
 use Rindow\Math\Plot\Plot;
 use Rindow\NeuralNetworks\Builder\NeuralNetworks;
 use Interop\Polite\Math\Matrix\NDArray;
+use function Rindow\Math\Matrix\R;
 
 $mo = new MatrixOperator();
 $nn = new NeuralNetworks($mo);
@@ -83,10 +84,10 @@ echo implode(',',$test_inputs->shape())."\n";
 echo implode(',',$test_labels->shape())."\n";
 $total_size = count($train_inputs);
 $train_size = (int)floor($total_size*0.9);
-$val_inputs = $train_inputs[[$train_size,$total_size-1]];
-$val_labels = $train_labels[[$train_size,$total_size-1]];
-$train_inputs = $train_inputs[[0,$train_size-1]];
-$train_labels = $train_labels[[0,$train_size-1]];
+$val_inputs = $train_inputs[R($train_size,$total_size)];
+$val_labels = $train_labels[R($train_size,$total_size)];
+$train_inputs = $train_inputs[R(0,$train_size)];
+$train_labels = $train_labels[R(0,$train_size)];
 
 echo "device type: ".$nn->deviceType()."\n";
 $modelFilePath = __DIR__."/basic-text-classification.model";

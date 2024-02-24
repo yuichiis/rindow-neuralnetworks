@@ -6,6 +6,7 @@ use RuntimeException;
 use Rindow\Math\Matrix\MatrixOperator;
 use Interop\Polite\Math\Matrix\NDArray;
 use PharData;
+use function Rindow\Math\Matrix\R;
 
 class Cifar10
 {
@@ -150,8 +151,8 @@ class Cifar10
         $labels_dataset = $labels_dataset->reshape([$labels_dataset->size(),1]);
         $offset = 0;
         foreach($filenames as $filename) {
-            $images = $image_dataset[[$offset,$offset+9999]];
-            $labels = $labels_dataset[[$offset,$offset+9999]];
+            $images = $image_dataset[R($offset,$offset+10000)];
+            $labels = $labels_dataset[R($offset,$offset+10000)];
             $this->convertImage(
                 $filename, $images, $labels
             );

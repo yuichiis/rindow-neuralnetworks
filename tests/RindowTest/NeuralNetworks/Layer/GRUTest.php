@@ -10,7 +10,7 @@ use InvalidArgumentException;
 use Interop\Polite\Math\Matrix\NDArray;
 use Rindow\NeuralNetworks\Activation\Tanh;
 
-class Test extends TestCase
+class GRUTest extends TestCase
 {
     public function newMatrixOperator()
     {

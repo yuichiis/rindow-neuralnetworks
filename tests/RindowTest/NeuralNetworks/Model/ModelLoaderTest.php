@@ -11,7 +11,7 @@ use Rindow\NeuralNetworks\Model\ModelLoader;
 use PDO;
 use Interop\Polite\Math\Matrix\NDArray;
 
-class Test extends TestCase
+class ModelLoaderTest extends TestCase
 {
     private $plot=true;
     private $filename;

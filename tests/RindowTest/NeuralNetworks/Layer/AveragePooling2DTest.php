@@ -8,7 +8,7 @@ use Rindow\NeuralNetworks\Builder\NeuralNetworks;
 use Rindow\NeuralNetworks\Layer\AveragePooling2D;
 use InvalidArgumentException;
 
-class Test extends TestCase
+class AveragePooling2DTest extends TestCase
 {
     public function newMatrixOperator()
     {

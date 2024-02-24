@@ -8,7 +8,7 @@ use Rindow\NeuralNetworks\Gradient\Core\Variable;
 use Interop\Polite\Math\Matrix\NDArray;
 use Interop\Polite\Math\Matrix\Buffer;
 
-class Test extends TestCase
+class VariableTest extends TestCase
 {
     public function newMatrixOperator()
     {

@@ -10,7 +10,7 @@ use Rindow\NeuralNetworks\Builder\NeuralNetworks;
 use Rindow\NeuralNetworks\Layer\GRUCell;
 use Rindow\NeuralNetworks\Activation\Tanh;
 
-class Test extends TestCase
+class GRUCellTest extends TestCase
 {
     public function newMatrixOperator()
     {

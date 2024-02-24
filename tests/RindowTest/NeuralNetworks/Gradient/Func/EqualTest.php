@@ -6,7 +6,7 @@ use Rindow\Math\Matrix\MatrixOperator;
 use Rindow\NeuralNetworks\Builder\NeuralNetworks;
 use Interop\Polite\Math\Matrix\NDArray;
 
-class Test extends TestCase
+class EqualTest extends TestCase
 {
     public function newMatrixOperator()
     {

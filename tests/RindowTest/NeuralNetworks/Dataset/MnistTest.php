@@ -1,7 +1,7 @@
 <?php
 namespace RindowTest\NeuralNetworks\Dataset\MnistTest;
 
-if(class_exists('RindowTest\NeuralNetworks\Dataset\MnistTest\Test')) {
+if(class_exists('RindowTest\NeuralNetworks\Dataset\MnistTest\MnistTest')) {
     return;
 }
 
@@ -12,7 +12,7 @@ use Rindow\Math\Matrix\MatrixOperator;
 use Rindow\Math\Plot\Plot;
 use Rindow\NeuralNetworks\Builder\NeuralNetworks;
 
-class Test extends TestCase
+class MnistTest extends TestCase
 {
     protected $plot = false;
     protected $pickleFilename = '/rindow/nn/datasets/mnist/mnist.pkl';

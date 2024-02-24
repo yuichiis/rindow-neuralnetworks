@@ -9,7 +9,7 @@ use Rindow\NeuralNetworks\Builder\NeuralNetworks;
 use Rindow\NeuralNetworks\Layer\Concatenate;
 use InvalidArgumentException;
 
-class Test extends TestCase
+class ConcatenateTest extends TestCase
 {
     public function newMatrixOperator()
     {

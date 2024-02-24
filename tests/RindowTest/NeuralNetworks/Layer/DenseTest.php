@@ -8,7 +8,7 @@ use Rindow\Math\Matrix\MatrixOperator;
 use Rindow\NeuralNetworks\Builder\NeuralNetworks;
 use Rindow\NeuralNetworks\Layer\Dense;
 
-class Test extends TestCase
+class DenseTest extends TestCase
 {
     public function newMatrixOperator()
     {

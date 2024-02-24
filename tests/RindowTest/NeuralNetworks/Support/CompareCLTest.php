@@ -9,7 +9,7 @@ use Rindow\Math\Matrix\MatrixOperator;
 use Rindow\NeuralNetworks\Activation\FunctionFactory;
 use Interop\Polite\Math\Matrix\NDArray;
 
-class Test extends TestCase
+class CompareCLTest extends TestCase
 {
     public function setUp() : void
     {

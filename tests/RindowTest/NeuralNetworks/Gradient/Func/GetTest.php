@@ -9,7 +9,7 @@ use Rindow\NeuralNetworks\Gradient\ArrayShape;
 use Rindow\NeuralNetworks\Gradient\Scalar;
 use Rindow\NeuralNetworks\Gradient\Variable;
 
-class Test extends TestCase
+class GetTest extends TestCase
 {
     public function newMatrixOperator()
     {

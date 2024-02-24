@@ -5,6 +5,7 @@ use Rindow\Math\Matrix\MatrixOperator;
 use Rindow\Math\Plot\Plot;
 use Rindow\NeuralNetworks\Builder\NeuralNetworks;
 use Interop\Polite\Math\Matrix\NDArray;
+use function Rindow\Math\Matrix\R;
 
 $mo = new MatrixOperator();
 $nn = new NeuralNetworks($mo);
@@ -40,10 +41,10 @@ if($shrink||!$mo->isAdvanced()) {
     $trainSize = 2000;
     $testSize  = 200;
     echo "Shrink data ...\n";
-    $train_img = $train_img[[0,$trainSize-1]];
-    $train_label = $train_label[[0,$trainSize-1]];
-    $test_img = $test_img[[0,$testSize-1]];
-    $test_label = $test_label[[0,$testSize-1]];
+    $train_img = $train_img[R(0,$trainSize)];
+    $train_label = $train_label[R(0,$trainSize)];
+    $test_img = $test_img[R(0,$testSize)];
+    $test_label = $test_label[R(0,$testSize)];
     echo "Shrink train=[".implode(',',$train_img->shape())."]\n";
     echo "Shrink test=[".implode(',',$test_img->shape())."]\n";
 }
@@ -118,8 +119,8 @@ if(file_exists($modelFilePath)) {
     $plt->title($dataset);
 }
 
-$images = $test_img[[0,7]];
-$labels = $test_label[[0,7]];
+$images = $test_img[R(0,8)];
+$labels = $test_label[R(0,8)];
 $predicts = $model->predict($images);
 // for from_logits
 $predicts = $nn->backend->array($predicts);

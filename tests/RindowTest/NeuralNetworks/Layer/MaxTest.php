@@ -8,7 +8,7 @@ use Rindow\NeuralNetworks\Builder\NeuralNetworks;
 use Rindow\NeuralNetworks\Layer\Max;
 use InvalidArgumentException;
 
-class Test extends TestCase
+class MaxTest extends TestCase
 {
     public function newMatrixOperator()
     {

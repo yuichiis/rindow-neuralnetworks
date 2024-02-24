@@ -11,6 +11,7 @@ use Rindow\NeuralNetworks\Backend\RindowBlas\Backend;
 use Rindow\NeuralNetworks\Builder\NeuralNetworks;
 use Rindow\NeuralNetworks\Data\Sequence\Tokenizer;
 use Rindow\NeuralNetworks\Data\Sequence\Preprocessor;
+use function Rindow\Math\Matrix\R;
 
 # Download the file
 class EngFraDataset
@@ -55,6 +56,9 @@ class EngFraDataset
         }
         $this->console("Extract to:".$this->datasetDir.'/..'."\n");
         $files = [$memberfile];
+        if(!class_exists("ZipArchive")) {
+            throw new RuntimeException("Please configure the zip php-extension.");
+        }
         $zip = new ZipArchive();
         $zip->open($filePath);
         $zip->extractTo($this->datasetDir);
@@ -474,10 +478,10 @@ echo "Generating data...\n";
     = $dataset->loadData(null,$numExamples,$numWords);
 $valSize = intval(floor(count($inputTensor)/10));
 $trainSize = count($inputTensor)-$valSize;
-$inputTensorTrain  = $inputTensor[[0,$trainSize-1]];
-$targetTensorTrain = $targetTensor[[0,$trainSize-1]];
-$inputTensorVal  = $inputTensor[[$trainSize,$valSize+$trainSize-1]];
-$targetTensorVal = $targetTensor[[$trainSize,$valSize+$trainSize-1]];
+$inputTensorTrain  = $inputTensor[R(0,$trainSize)];
+$targetTensorTrain = $targetTensor[R(0,$trainSize)];
+$inputTensorVal  = $inputTensor[R($trainSize,$valSize+$trainSize)];
+$targetTensorVal = $targetTensor[R($trainSize,$valSize+$trainSize)];
 
 $inputLength  = $inputTensor->shape()[1];
 $outputLength = $targetTensor->shape()[1];
