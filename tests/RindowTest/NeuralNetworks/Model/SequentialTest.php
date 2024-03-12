@@ -1235,7 +1235,7 @@ class SequentialTest extends TestCase
         }
     }
 
-    public function testFitEmbeding()
+    public function testFitEmbedding()
     {
         $mo = $this->newMatrixOperator();
         if($mo->isAdvanced()) {

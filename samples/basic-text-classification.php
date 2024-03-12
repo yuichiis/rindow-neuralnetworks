@@ -63,8 +63,6 @@ if(!file_exists($savefilename)) {
         $tokenizer_data,
         $classnames,
         $tensors,
-        $train_inputs,$train_labels,
-        $test_inputs,$test_labels,
     ] = unserialize(file_get_contents($savefilename));
     $tokenizer = $nn->data->TextClassifiedDataset($datasetdir.'/train')
                     ->getTokenizer();
