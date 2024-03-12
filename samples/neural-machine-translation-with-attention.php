@@ -2,7 +2,6 @@
 require __DIR__.'/../vendor/autoload.php';
 
 use Interop\Polite\Math\Matrix\NDArray;
-use Rindow\NeuralNetworks\Layer\AbstractRNNLayer;
 use Rindow\NeuralNetworks\Model\AbstractModel;
 use Rindow\NeuralNetworks\Gradient\Variable;
 use Rindow\Math\Matrix\MatrixOperator;
@@ -171,7 +170,6 @@ class Encoder extends AbstractModel
     protected $rnn;
 
     public function __construct(
-        $backend,
         $builder,
         int $vocabSize,
         int $wordVectSize,
@@ -179,7 +177,7 @@ class Encoder extends AbstractModel
         int $inputLength
         )
     {
-        parent::__construct($backend,$builder);
+        parent::__construct($builder);
         $this->vocabSize = $vocabSize;
         $this->wordVectSize = $wordVectSize;
         $this->units = $units;
@@ -232,7 +230,6 @@ class Decoder extends AbstractModel
     protected $attentionScores;
 
     public function __construct(
-        $backend,
         $builder,
         int $vocabSize,
         int $wordVectSize,
@@ -241,7 +238,6 @@ class Decoder extends AbstractModel
         int $targetLength
         )
     {
-        $this->backend = $backend;
         $this->vocabSize = $vocabSize;
         $this->wordVectSize = $wordVectSize;
         $this->units = $units;
@@ -325,9 +321,8 @@ class Seq2seq extends AbstractModel
         $plt=null
         )
     {
-        parent::__construct($backend,$builder);
+        parent::__construct($builder);
         $this->encoder = new Encoder(
-            $backend,
             $builder,
             $inputVocabSize,
             $wordVectSize,
@@ -335,7 +330,6 @@ class Seq2seq extends AbstractModel
             $inputLength
         );
         $this->decoder = new Decoder(
-            $backend,
             $builder,
             $targetVocabSize,
             $wordVectSize,
@@ -345,7 +339,6 @@ class Seq2seq extends AbstractModel
         );
         $this->out = $builder->layers()->Activation('softmax');
         $this->mo = $mo;
-        $this->backend = $backend;
         $this->startVocId = $startVocId;
         $this->endVocId = $endVocId;
         $this->inputLength = $inputLength;

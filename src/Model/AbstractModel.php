@@ -6,6 +6,7 @@ use UnexpectedValueException;
 use LogicException;
 use ReflectionClass;
 use ArrayAccess;
+use Rindow\NeuralNetworks\Builder\Builder;
 use Rindow\NeuralNetworks\Optimizer\Optimizer;
 use Rindow\NeuralNetworks\Layer\Layer;
 use Rindow\NeuralNetworks\Activation\Softmax;
@@ -46,10 +47,10 @@ abstract class AbstractModel implements Model
     protected $weights;
     protected $callOptions;
 
-    public function __construct(object $backend,object $builder,$hda=null)
+    public function __construct(Builder $builder,$hda=null)
     {
-        $this->backend = $backend;
         $this->builder = $builder;
+        $this->backend = $builder->backend();
         if($hda===null) {
             $this->hda = $builder->utils()->HDA();
         } else {

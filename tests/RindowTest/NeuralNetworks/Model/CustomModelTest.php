@@ -5,9 +5,7 @@ use PHPUnit\Framework\TestCase;
 use Rindow\Math\Matrix\MatrixOperator;
 use Rindow\NeuralNetworks\Backend\RindowBlas\Backend;
 use Rindow\NeuralNetworks\Builder\NeuralNetworks;
-use Rindow\NeuralNetworks\Model\ModelLoader;
 use Rindow\NeuralNetworks\Model\AbstractModel;
-use Rindow\NeuralNetworks\Layer\AbstractLayer;
 use Rindow\NeuralNetworks\Layer\Flatten;
 use Rindow\NeuralNetworks\Layer\Dense;
 use Interop\Polite\Math\Matrix\NDArray;
@@ -19,14 +17,13 @@ class TestModel extends AbstractModel
     protected $custom;
     protected $fc;
 
-    public function __construct($backend,$builder)
+    public function __construct($builder)
     {
         parent::__construct(
-            $backend,
             $builder,
             $builder->utils()->HDA());
         $this->flatten = $builder->layers()->Flatten(input_shape:[5]);
-        $this->custom = new TestSubModel($backend,$builder);
+        $this->custom = new TestSubModel($builder);
         $this->fc = $builder->layers()->Dense(
             10,
             activation:'softmax'
@@ -61,9 +58,9 @@ class TestModel extends AbstractModel
 class TestSubModel extends AbstractModel
 {
     protected $fc;
-    public function __construct($backend,$builder)
+    public function __construct($builder)
     {
-        $this->backend = $backend;
+        parent::__construct($builder);
         $this->fc = $builder->layers()->Dense(5);
     }
 
@@ -99,10 +96,9 @@ class TestRNNModel extends AbstractModel
     protected $dense;
     protected $activation;
 
-    public function __construct($backend,$builder)
+    public function __construct($builder)
     {
         parent::__construct(
-            $backend,
             $builder,
             $builder->utils()->HDA());
         $this->embed0 = $builder->layers->Embedding(
@@ -172,10 +168,9 @@ class TestMultiInputModel extends AbstractModel
     protected $inp2;
     protected $concat;
     protected $fc;
-    public function __construct($backend,$builder)
+    public function __construct($builder)
     {
         parent::__construct(
-            $backend,
             $builder,
             $builder->utils()->HDA());
         $this->inp1 = $builder->layers()->Flatten(input_shape:[2]);
@@ -249,7 +244,7 @@ class CustomModelTest extends TestCase
         $K = $this->newBackend($nn);
         $g = $nn->gradient();
 
-        $model = new TestModel($K,$nn);
+        $model = new TestModel($nn);
 
         $train = $mo->random()->randn([10,5]);
         $label = $mo->arange(10);
@@ -291,7 +286,7 @@ class CustomModelTest extends TestCase
         $nn = $this->newNeuralNetworks($mo);
         $K = $this->newBackend($nn);
 
-        $model = new TestRNNModel($K,$nn);
+        $model = new TestRNNModel($nn);
         $inputs = $mo->array(
             [[1, 3, 3], [1, 4, 3], [2, 4, 4], [3, 1, 4], [4, 1, 4], [4, 2, 2]],
             NDArray::int32
@@ -324,7 +319,7 @@ class CustomModelTest extends TestCase
         $nn = $this->newNeuralNetworks($mo);
         $backend = $this->newBackend($nn);
 
-        $model = new TestModel($backend,$nn);
+        $model = new TestModel($nn);
 
         $train = $mo->random()->randn([10,5]);
         $label = $mo->arange(10);
@@ -352,7 +347,7 @@ class CustomModelTest extends TestCase
         $nn = $this->newNeuralNetworks($mo);
         $backend = $this->newBackend($nn);
 
-        $model = new TestModel($backend,$nn);
+        $model = new TestModel($nn);
         $train = $mo->random()->randn([10,5]);
         $label = $mo->arange(10);
         $val_train = $mo->random()->randn([10,5]);
@@ -377,7 +372,7 @@ class CustomModelTest extends TestCase
         $nn = $this->newNeuralNetworks($mo);
         $backend = $this->newBackend($nn);
 
-        $model = new TestRNNModel($backend,$nn);
+        $model = new TestRNNModel($nn);
         $inputs = $mo->array(
             [[1, 3, 3], [1, 4, 3], [2, 4, 4], [3, 1, 4], [4, 1, 4], [4, 2, 2]],
             NDArray::int32
@@ -415,7 +410,7 @@ class CustomModelTest extends TestCase
         $nn = $this->newNeuralNetworks($mo);
         $backend = $this->newBackend($nn);
 
-        $model = new TestRNNModel($backend,$nn);
+        $model = new TestRNNModel($nn);
         $inputs = $mo->array(
             [[1, 3, 3], [1, 4, 3], [2, 4, 4], [3, 1, 4], [4, 1, 4], [4, 2, 2]],
             NDArray::int32
@@ -448,7 +443,7 @@ class CustomModelTest extends TestCase
         $nn = $this->newNeuralNetworks($mo);
         $backend = $this->newBackend($nn);
 
-        $origModel = new TestModel($backend,$nn);
+        $origModel = new TestModel($nn);
 
         // before build
         $model = clone $origModel;
@@ -499,7 +494,7 @@ class CustomModelTest extends TestCase
         $nn = $this->newNeuralNetworks($mo);
         $backend = $this->newBackend($nn);
 
-        $origModel = new TestRNNModel($backend,$nn);
+        $origModel = new TestRNNModel($nn);
 
         $model = clone $origModel;
         $origModel->compile(
@@ -561,7 +556,7 @@ class CustomModelTest extends TestCase
         $nn = $this->newNeuralNetworks($mo);
         $backend = $this->newBackend($nn);
 
-        $model = new TestMultiInputModel($backend,$nn);
+        $model = new TestMultiInputModel($nn);
         $model->compile(numInputs:2);
         //$model->summary();
         $a = $mo->zeros([3,2]);
@@ -582,7 +577,7 @@ class CustomModelTest extends TestCase
         $K = $nn->backend();
         $g = $nn->gradient();
 
-        $model = new TestModel($K,$nn);
+        $model = new TestModel($nn);
 
         
         $model->build([1,5]);

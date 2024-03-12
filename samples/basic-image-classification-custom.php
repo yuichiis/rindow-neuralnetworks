@@ -70,11 +70,10 @@ class ImageClassification extends AbstractModel
     protected $dense1;
     protected $dense2;
     public function __construct(
-        $backend,
         $builder
         )
     {
-        parent::__construct($backend,$builder);
+        parent::__construct($builder);
         $this->dense1 = $builder->layers->Dense($units=128,
             input_shape:[(int)array_product([28,28,1])],
             kernel_initializer:'he_normal',

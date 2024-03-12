@@ -53,7 +53,7 @@ class ModelLoaderTest extends TestCase
         $mo = new MatrixOperator();
         $backend = $this->newBackend($mo);
         $nn = new NeuralNetworks($mo,$backend);
-        $loader = new ModelLoader($backend,$nn);
+        $loader = new ModelLoader($nn);
 
         $model = $nn->models()->Sequential([
             $nn->layers()->Dense($units=128,input_shape:[2]),

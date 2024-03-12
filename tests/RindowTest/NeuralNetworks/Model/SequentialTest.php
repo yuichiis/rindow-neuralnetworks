@@ -5,7 +5,6 @@ use PHPUnit\Framework\TestCase;
 use Rindow\Math\Matrix\MatrixOperator;
 use Rindow\NeuralNetworks\Backend\RindowBlas\Backend;
 use Rindow\NeuralNetworks\Builder\NeuralNetworks;
-use Rindow\NeuralNetworks\Model\ModelLoader;
 use Rindow\NeuralNetworks\Model\AbstractModel;
 use Rindow\NeuralNetworks\Layer\Dense;
 use Rindow\NeuralNetworks\Callback\AbstractCallback;
@@ -99,9 +98,9 @@ class TestFilter implements DatasetFilter
 class TestCustomModel extends AbstractModel
 {
     protected $seq;
-    public function __construct($backend,$builder,$seq)
+    public function __construct($builder,$seq)
     {
-        parent::__construct($backend,$builder);
+        parent::__construct($builder);
         $this->seq = $seq;
     }
 
@@ -117,9 +116,9 @@ class TestCustomSubModel extends AbstractModel
     protected Variable $param1;
     protected Layer $sublayer;
 
-    public function __construct($backend,$builder)
+    public function __construct($builder)
     {
-        parent::__construct($backend,$builder);
+        parent::__construct($builder);
         $g = $builder->gradient();
         $this->param1 = $g->Variable([0,0]);
         $this->sublayer = $builder->layers->Dense(10);
@@ -1962,7 +1961,6 @@ class SequentialTest extends TestCase
         $nn = $this->newNeuralNetworks($mo);
         $K = $nn->backend();
         $g = $nn->gradient();
-        $loader = new ModelLoader($K,$nn);
 
         $model = $nn->models()->Sequential([
             $nn->layers()->Dense($units=128,input_shape:[2]),
@@ -1990,7 +1988,7 @@ class SequentialTest extends TestCase
 
         // ****************************************************
         // new model from config and load weights
-        $model = $loader->modelFromConfig($config);
+        $model = $nn->Models->modelFromConfig($config);
         $model->loadWeights($weights);
 
         $logs2 = $model->evaluate($x,$t);
@@ -2093,7 +2091,7 @@ class SequentialTest extends TestCase
         $seq = $nn->models->Sequential();
         $seq->add($nn->layers->Dense(2,
             input_shape:[3],activation:'softmax'));
-        $model = new TestCustomModel($K,$nn,$seq);
+        $model = new TestCustomModel($nn,$seq);
         $model->compile();
         //$model->summary();
         $parms = $model->trainableVariables();
@@ -2117,8 +2115,8 @@ class SequentialTest extends TestCase
         $g = $nn->gradient();
 
         $seq = $nn->models->Sequential();
-        $seq->add(new TestCustomSubModel($K,$nn));
-        $seq->add(new TestCustomSubModel($K,$nn));
+        $seq->add(new TestCustomSubModel($nn));
+        $seq->add(new TestCustomSubModel($nn));
         // Raw data
         $x = $K->array([[2],[3]]);
         $y = $seq($x);

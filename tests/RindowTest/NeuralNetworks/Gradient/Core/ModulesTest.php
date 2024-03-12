@@ -38,10 +38,10 @@ class ModulesTest extends TestCase
         $g = $nn->gradient();
 
         $shape = new Modules();
-        $class = new class ($K,$nn) extends AbstractModel {
+        $class = new class ($nn) extends AbstractModel {
             protected $l;
-            public function __construct($K,$nn) {
-                parent::__construct($K,$nn);
+            public function __construct($nn) {
+                parent::__construct($nn);
                 $this->l = $nn->gradient()->Modules([
                     $nn->layers->Dense(2),
                     $nn->layers->Dense(2),

@@ -4,6 +4,7 @@ namespace Rindow\NeuralNetworks\Model;
 use InvalidArgumentException;
 use UnexpectedValueException;
 use LogicException;
+use Rindow\NeuralNetworks\Builder\Builder;
 use Rindow\NeuralNetworks\Gradient\Module;
 use Rindow\NeuralNetworks\Gradient\Variable;
 use Rindow\NeuralNetworks\Layer\Layer;
@@ -14,9 +15,9 @@ class Sequential extends AbstractModel
 {
     protected $layers = [];
 
-    public function __construct(object $backend,object $builder,$hda,array $layers=null)
+    public function __construct(Builder $builder,$hda,array $layers=null)
     {
-        parent::__construct($backend,$builder,$hda);
+        parent::__construct($builder,$hda);
         if($layers!==null) {
             foreach ($layers as $layer) {
                 $this->add($layer);

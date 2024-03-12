@@ -265,7 +265,6 @@ class PositionalEmbedding extends AbstractModel
         $maximumPositionEncoding = $maximumPositionEncoding ?? 256;
         $this->gradient = $builder->gradient();
         $nn = $builder;
-        $K = $this->backend;
         $g = $this->gradient;
 
         $this->embedding = $nn->layers->Embedding(
@@ -379,10 +378,9 @@ class EncoderLayer extends AbstractModel
         float $dropout_rate=0.1)
     {
         parent::__construct($builder);
-        $backend = $this->backend();
         $this->gradient = $builder->gradient();
 
-        $this->mha = new MultiHeadAttention($backend,$builder,$wordVectSize, $num_heads);
+        $this->mha = new MultiHeadAttention($builder,$wordVectSize, $num_heads);
         $this->dropout1 = $builder->layers->Dropout($dropout_rate);
         $this->layernorm1 = $builder->layers->LayerNormalization(epsilon:1e-6);
 
@@ -432,7 +430,6 @@ class Encoder extends AbstractModel
         )
         {
         parent::__construct($builder);
-        $backend = $this->backend();
         $this->gradient = $builder->Gradient();
         $this->embedding = new PositionalEmbedding(
             $builder,
@@ -503,14 +500,13 @@ class DecoderLayer extends AbstractModel
         )
     {
         parent::__construct($builder);
-        $backend = $this->backend();
         $this->gradient = $builder->Gradient();
     
-        $this->mha1 = new MultiHeadAttention($backend,$builder,$wordVectSize, $num_heads);
+        $this->mha1 = new MultiHeadAttention($builder,$wordVectSize, $num_heads);
         $this->dropout1 = $builder->layers->Dropout($dropout_rate);
         $this->layernorm1 = $builder->layers->LayerNormalization(epsilon:1e-6);
 
-        $this->mha2 = new MultiHeadAttention($backend,$builder,$wordVectSize, $num_heads);
+        $this->mha2 = new MultiHeadAttention($builder,$wordVectSize, $num_heads);
         $this->dropout2 = $builder->layers->Dropout($dropout_rate);
         $this->layernorm2 = $builder->layers->LayerNormalization(epsilon:1e-6);
 
@@ -600,7 +596,6 @@ class Decoder extends AbstractModel
         NDArray $padding_mask,
         ) : array
     {
-        $K = $this->backend;
         $this->attentionScores = [];
     
         $x = $this->embedding->forward($inputs);  # (batch_size, target_seq_len, wordVectSize)

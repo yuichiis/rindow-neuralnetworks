@@ -2,8 +2,6 @@
 require __DIR__.'/../vendor/autoload.php';
 
 use Interop\Polite\Math\Matrix\NDArray;
-use Rindow\NeuralNetworks\Layer\AbstractRNNLayer;
-use Rindow\NeuralNetworks\Model\AbstractModel;
 use Rindow\Math\Matrix\MatrixOperator;
 use Rindow\Math\Plot\Plot;
 use Rindow\NeuralNetworks\Builder\NeuralNetworks;

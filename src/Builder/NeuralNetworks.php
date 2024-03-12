@@ -8,7 +8,7 @@ use Rindow\NeuralNetworks\Support\Control\Execute;
 use Rindow\NeuralNetworks\Support\Control\Context;
 use LogicException;
 
-class NeuralNetworks
+class NeuralNetworks implements Builder
 {
     protected $backendClasses = [
         'rindowblas' => RindowBlasBackend::class,
@@ -77,7 +77,7 @@ class NeuralNetworks
     public function models()
     {
         if($this->models==null) {
-            $this->models = new Models($this->backend,$this);
+            $this->models = new Models($this);
         }
         return $this->models;
     }
