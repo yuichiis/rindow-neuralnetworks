@@ -2000,12 +2000,11 @@ class SequentialTest extends TestCase
         $this->assertCount(6,$model->trainableVariables());
         $variables = $model->variables();
 
-        $la = $mo->la();
+        $la = $K->localLA();
         foreach(array_map(null,$variables,$origVariables) as [$v,$origV]) {
             $v = $K->ndarray($v);
             $origV = $K->ndarray($origV);
-            $diff = $la->max($la->square($la->axpy($v,$la->copy($origV),-1)));
-            $this->assertEquals(0,$diff);
+            $this->assertTrue($la->isclose($v,$origV));
         }
 
         //// orig object check
@@ -2039,8 +2038,7 @@ class SequentialTest extends TestCase
             foreach(array_map(null,$ly->getParams(),$origLy->getParams()) as [$v,$origV]) {
                 $v = $K->ndarray($v);
                 $origV = $K->ndarray($origV);
-                $diff = $la->max($la->square($la->axpy($v,$la->copy($origV),-1)));
-                $this->assertEquals(0,$diff);
+                $this->assertTrue($la->isclose($v,$origV));
             }
         }
         $diff = $la->max($la->square($la->axpy($origY,$la->copy($y),-1)));

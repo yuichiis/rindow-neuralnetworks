@@ -212,11 +212,11 @@ class AttentionTest extends TestCase
         $queryMask = $K->array([ // (2,3)
             [true,true, false],
             [true,false,false],
-        ]);
+        ],dtype:NDArray::bool);
         $valueMask = $K->array([ // (2,5)
             [true,true,false,false,false],
             [true,true,true, true, false],
-        ]);
+        ],dtype:NDArray::bool);
         $inputs = [$query,$value];
         $copyInputs = [$K->copy($query),$K->copy($value)];
         [$outputsVariable,$scores] = $nn->with($tape=$g->GradientTape(),

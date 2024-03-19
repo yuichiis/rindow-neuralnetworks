@@ -346,6 +346,7 @@ class CustomModelTest extends TestCase
         $mo = $this->newMatrixOperator();
         $nn = $this->newNeuralNetworks($mo);
         $backend = $this->newBackend($nn);
+        $la = $backend->localLA();
 
         $model = new TestModel($nn);
         $train = $mo->random()->randn([10,5]);
@@ -359,10 +360,14 @@ class CustomModelTest extends TestCase
 
         foreach ($model->trainableVariables() as $key => $var) {
             $value = $var->value();
-            $this->assertEquals($value->toArray(),$weightsOriginal['layers'][$key]->toArray());
+            $value = $backend->ndarray($value);
+            $orig = $backend->ndarray($weightsOriginal['layers'][$key]);
+            $this->assertTrue($la->isclose($value,$orig));
         }
         foreach ($model->optimizer()->getWeights() as $key => $value) {
-            $this->assertEquals($value->toArray(),$weightsOriginal['optimizer'][$key]->toArray());
+            $value = $backend->ndarray($value);
+            $orig = $backend->ndarray($weightsOriginal['optimizer'][$key]);
+            $this->assertTrue($la->isclose($value,$orig));
         }
     }
 
@@ -371,6 +376,7 @@ class CustomModelTest extends TestCase
         $mo = $this->newMatrixOperator();
         $nn = $this->newNeuralNetworks($mo);
         $backend = $this->newBackend($nn);
+        $la = $backend->localLA();
 
         $model = new TestRNNModel($nn);
         $inputs = $mo->array(
@@ -430,10 +436,14 @@ class CustomModelTest extends TestCase
 
         foreach ($model->trainableVariables() as $key => $var) {
             $value = $var->value();
-            $this->assertEquals($value->toArray(),$weightsOriginal['layers'][$key]->toArray());
+            $value = $backend->ndarray($value);
+            $orig = $backend->ndarray($weightsOriginal['layers'][$key]);
+            $this->assertTrue($la->isclose($value,$orig));
         }
         foreach ($model->optimizer()->getWeights() as $key => $value) {
-            $this->assertEquals($value->toArray(),$weightsOriginal['optimizer'][$key]->toArray());
+            $value = $backend->ndarray($value);
+            $orig = $backend->ndarray($weightsOriginal['optimizer'][$key]);
+            $this->assertTrue($la->isclose($value,$orig));
         }
     }
 
