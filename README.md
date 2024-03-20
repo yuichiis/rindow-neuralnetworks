@@ -63,6 +63,8 @@ Prebuilt binaries:
 - Rindow-matlib: https://github.com/rindow/rindow-matlib/releases
 - OpenBLAS: https://github.com/xianyi/OpenBLAS/releases
 
+Please set up according to your environment. Click [here](https://github.com/rindow/rindow-math-matrix-matlibffi) for detailed instructions.
+
 ```shell
 $ composer require rindow/rindow-math-matlibffi
 ```
