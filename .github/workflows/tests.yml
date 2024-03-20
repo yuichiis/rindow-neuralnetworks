@@ -28,4 +28,4 @@ jobs:
           php_version: ${{ matrix.php }}
           php_extensions: pdo_sqlite gd
         env:
-          TRAVIS_PHP_VERSION: true
+          PLOT_RENDERER_SKIP: true
