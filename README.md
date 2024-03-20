@@ -10,7 +10,7 @@ Status:
 Rindow Neural Network Library is a high-level neural network library for deep learning.
 
 Overview
-----
+--------
 
 Like Keras in Python, you can easily write network models in PHP.
 
@@ -19,20 +19,20 @@ Website:
 - Rindow Neural Networks: https://rindow.github.io/neuralnetworks
 
 Speeding up
------
+-----------
 
 The external libraries rindow-matlib and OpenBLAS can be used to perform calculations at speeds close to CPU versions of TensorFlow.
 Models trained on laptops are available on popular web hosting.
 Deep learning is also available on popular PHP web hosting services.
 
 GPU acceleration
---------------------
+----------------
 It supports GPU acceleration using OpenCL.
 You can also use GPUs other than n-vidia if they support OpenCL. It can also be used with an integrated GPU installed in your laptop.
 
 
 Linked library
---------------------
+--------------
 - Rindow Math Matrix: Scientific calculation library
 - Rindow Matlib: A fast matrix calculation library suitable for machine learning
 - OpenBLAS: Fast Matrix Arithmetic Library
@@ -47,7 +47,7 @@ Required environment
 - For PHP 7.x environments, use Release 1.x.
 
 Install
---------------------
+-------
 
 Please install using Composer.
 ```shell
@@ -80,7 +80,7 @@ For example, change memory_limit in php.ini as follows.
 memory_limit = 8G
 
 Model description
---------------------
+-----------------
 The sample directory provides source code for simple image learning.
 
 Please run as follows:
@@ -100,7 +100,7 @@ If done correctly, a graph of the learning process will be displayed.
 
 
 GPU/OpenCL support
---------------------
+------------------
 Please download the binary.
 - CLBlast: https://github.com/CNugteren/CLBlast/releases
 
