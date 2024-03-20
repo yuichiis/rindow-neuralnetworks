@@ -14,11 +14,8 @@
     },
     "suggest": {
         "rindow/rindow-math-plot": "when visualize machine learning results",
-        "ext-pdo_sqlite": "for save model",
-        "rindow-math-buffer-ffi": "1.0.0 strongly recommended for speed",
-        "rindow-openblas-ffi": "1.0.0 strongly recommended for speed",
-        "rindow-opencl-ffi": "1.0.0 GPU/OpenCL support",
-        "rindow-clblast-ffi": "1.0.0 GPU/OpenCL support"
+        "rindow/rindow-math-matrix-matlibffi": "~2.0.0",
+        "ext-pdo_sqlite": "for save model"
     },
     "autoload": {
         "psr-4": {
