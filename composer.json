@@ -9,7 +9,7 @@
         "rindow/rindow-math-matrix": "~2.0.0"
     },
     "require-dev": {
-        "rindow/rindow-math-plot": "~1.0.8",
+        "rindow/rindow-math-plot": "~1.0.9",
         "ext-pdo_sqlite": "*"
     },
     "suggest": {
