@@ -1022,7 +1022,6 @@ $dataset = $nn->data->NDArrayDataset(
 
 echo "device type: ".$nn->deviceType()."\n";
 $transformer = new Transformer(
-    $nn->backend(),
     $nn,
     $num_layers,
     $wordVectSize,      // d_model,
