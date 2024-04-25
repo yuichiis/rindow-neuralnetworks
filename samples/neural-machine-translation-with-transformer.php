@@ -382,7 +382,7 @@ class EncoderLayer extends AbstractModel
         $backend = $this->backend();
         $this->gradient = $builder->gradient();
 
-        $this->mha = new MultiHeadAttention($backend,$builder,$wordVectSize, $num_heads);
+        $this->mha = new MultiHeadAttention($builder,$wordVectSize, $num_heads);
         $this->dropout1 = $builder->layers->Dropout($dropout_rate);
         $this->layernorm1 = $builder->layers->LayerNormalization(epsilon:1e-6);
 
@@ -506,11 +506,11 @@ class DecoderLayer extends AbstractModel
         $backend = $this->backend();
         $this->gradient = $builder->Gradient();
     
-        $this->mha1 = new MultiHeadAttention($backend,$builder,$wordVectSize, $num_heads);
+        $this->mha1 = new MultiHeadAttention($builder,$wordVectSize, $num_heads);
         $this->dropout1 = $builder->layers->Dropout($dropout_rate);
         $this->layernorm1 = $builder->layers->LayerNormalization(epsilon:1e-6);
 
-        $this->mha2 = new MultiHeadAttention($backend,$builder,$wordVectSize, $num_heads);
+        $this->mha2 = new MultiHeadAttention($builder,$wordVectSize, $num_heads);
         $this->dropout2 = $builder->layers->Dropout($dropout_rate);
         $this->layernorm2 = $builder->layers->LayerNormalization(epsilon:1e-6);
 
@@ -1027,7 +1027,6 @@ $dataset = $nn->data->NDArrayDataset(
 
 echo "device type: ".$nn->deviceType()."\n";
 $transformer = new Transformer(
-    $nn->backend(),
     $nn,
     $num_layers,
     $wordVectSize,      // d_model,

@@ -61,7 +61,7 @@ Please set up an external library.
 
 Prebuilt binaries:
 - Rindow-matlib: https://github.com/rindow/rindow-matlib/releases
-- OpenBLAS: https://github.com/xianyi/OpenBLAS/releases
+- OpenBLAS: https://github.com/OpenMathLib/OpenBLAS/releases
 
 Please set up according to your environment. Click [here](https://github.com/rindow/rindow-math-matrix-matlibffi) for detailed instructions.
 
