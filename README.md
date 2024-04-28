@@ -49,6 +49,14 @@ Required environment
 Install
 -------
 
+> Click [here](https://rindow.github.io/neuralnetworks/install.html) for detailed instructions.
+
+Please prepare in advance:
+
+- Install php-cli, php-gd, and php-sqlite3 in advance using the method appropriate for each operating system.
+- Install composer
+
+
 Please install using Composer.
 ```shell
 $ composer require rindow/rindow-neuralnetworks
