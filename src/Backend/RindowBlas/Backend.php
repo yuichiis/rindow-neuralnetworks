@@ -878,6 +878,15 @@ class Backend
         return $this->la->gather($source,$indices,axis:$axis);
     }
 
+    public function gatherND(
+        NDArray $params,
+        NDArray $indices,
+        int $batchDims=null
+        ) : NDArray
+    {
+        return $this->la->gatherND($params,$indices,batchDims:$batchDims);
+    }
+
     public function scatter(
         NDArray $indices,
         NDArray $values,
@@ -887,6 +896,16 @@ class Backend
         ) : NDArray
     {
         return $this->la->scatter($indices,$values,$numClass,axis:$axis,output:$target);
+    }
+
+    public function scatterND(
+        NDArray $indices,
+        NDArray $updates,
+        array $shape,
+        int $batchDims=null,
+        ) : NDArray
+    {
+        return $this->la->scatterND($indices,$updates,$shape,batchDims:$batchDims);
     }
 
     public function scatterAdd(

@@ -978,6 +978,7 @@ $num_heads =8;
 
 $mo = new MatrixOperator();
 $nn = new NeuralNetworks($mo);
+$g = $nn->gradient();
 $pltConfig = [];
 $plt = new Plot($pltConfig,$mo);
 
@@ -1054,7 +1055,11 @@ $transformer->compile(
     metrics:['loss'=>'loss','accuracy'=>$accuracyFunc],
 );
 
-$transformer->build([1,$inputLength], [1,$outputLength], trues:[1,$outputLength]); // just for summary
+$transformer->build(
+    $g->ArraySpec([1,$inputLength],dtype:NDArray::int32),
+    $g->ArraySpec([1,$outputLength],dtype:NDArray::int32),
+    trues:$g->ArraySpec([1,$outputLength],dtype:NDArray::int32)
+); // just for summary
 $transformer->summary();
 
 $modelFilePath = __DIR__."/neural-machine-translation-with-transformer.model";

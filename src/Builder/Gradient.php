@@ -5,6 +5,8 @@ use Interop\Polite\Math\Matrix\NDArray;
 use Rindow\NeuralNetworks\Gradient\Variable as VariableIF;
 use Rindow\NeuralNetworks\Gradient\Module;
 use Rindow\NeuralNetworks\Gradient\ArrayShape;
+use Rindow\NeuralNetworks\Gradient\ArraySpec;
+use Rindow\NeuralNetworks\Gradient\Core\ArraySpec as ArraySpecImpl;
 use Rindow\NeuralNetworks\Gradient\Core\Variable as VariableImpl;
 use Rindow\NeuralNetworks\Gradient\Core\Modules;
 use Rindow\NeuralNetworks\Gradient\Core\GradientTape;
@@ -70,6 +72,15 @@ class Gradient
             $variables[] = new VariableImpl($this->backend,$value,...$options);
         }
         return $variables;
+    }
+
+    public function ArraySpec(
+        ArrayShape|array $shape,
+        int $dtype=null,
+        string $name=null,
+    ) : ArraySpec
+    {
+        return new ArraySpecImpl($shape,$dtype,$name);
     }
 
     /**

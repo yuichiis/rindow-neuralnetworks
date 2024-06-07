@@ -101,7 +101,7 @@ class EmbeddingTest extends TestCase
         $inputs = $K->array([
             [0,1,2],
             [3,2,1],
-        ]);
+        ],dtype:NDArray::int32);
 
         $kernel = $K->array($mo->arange(4*5,null,null,NDArray::float32)->reshape([4,5]));
         $layer->build($g->Variable($inputs),

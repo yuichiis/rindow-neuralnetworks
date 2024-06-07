@@ -33,10 +33,20 @@ class EngFraDataset
         $this->preprocessor = new Preprocessor($mo);
     }
 
-    protected function getDatasetDir()
+    protected function getRindowDatesetDir() : string
     {
-        return sys_get_temp_dir().'/rindow/nn/datasets/fra-eng';
+        $dataDir = getenv('RINDOW_NEURALNETWORKS_DATASETS');
+        if(!$dataDir) {
+            $dataDir = sys_get_temp_dir().'/rindow/nn/datasets';
+        }
+        return $dataDir;
     }
+
+    protected function getDatasetDir() : string
+    {
+        return $this->getRindowDatesetDir().'/fra-eng';
+    }
+
 
     protected function download($filename)
     {
@@ -459,6 +469,7 @@ $units=1024;
 
 $mo = new MatrixOperator();
 $nn = new NeuralNetworks($mo);
+$g = $nn->gradient();
 $pltConfig = [];
 $plt = new Plot($pltConfig,$mo);
 
@@ -514,7 +525,11 @@ $seq2seq->compile(
     optimizer:'adam',
     metrics:['loss','accuracy'],
 );
-$seq2seq->build([1,$inputLength], trues:[1,$outputLength]); // just for summary
+
+$seq2seq->build(
+    $g->ArraySpec([1,$inputLength],dtype:NDArray::int32),
+    trues:$g->ArraySpec([1,$outputLength],dtype:NDArray::int32)
+); // just for summary
 $seq2seq->summary();
 
 $modelFilePath = __DIR__."/neural-machine-translation-with-attention.model";

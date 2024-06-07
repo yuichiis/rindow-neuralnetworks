@@ -21,7 +21,21 @@ class Cifar10Test extends TestCase
             return;
         }
         $this->plot = true;
-        $this->pickleFile = sys_get_temp_dir().'/rindow/nn/datasets/cifar-10-batches-bin/cifar10.pkl';
+        $this->pickleFile = $this->getDatasetDir().'/cifar10.pkl';
+    }
+
+    protected function getRindowDatesetDir() : string
+    {
+        $dataDir = getenv('RINDOW_NEURALNETWORKS_DATASETS');
+        if(!$dataDir) {
+            $dataDir = sys_get_temp_dir().'/rindow/nn/datasets';
+        }
+        return $dataDir;
+    }
+
+    protected function getDatasetDir() : string
+    {
+        return $this->getRindowDatesetDir().'/cifar-10-batches-bin';
     }
 
     public function getPlotConfig()

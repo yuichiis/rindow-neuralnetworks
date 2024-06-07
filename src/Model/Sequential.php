@@ -6,10 +6,11 @@ use UnexpectedValueException;
 use Rindow\NeuralNetworks\Builder\Builder;
 use Rindow\NeuralNetworks\Gradient\Module;
 use Rindow\NeuralNetworks\Gradient\Variable;
+use Rindow\NeuralNetworks\Gradient\Core\ArrayShape;
+use Rindow\NeuralNetworks\Gradient\Core\ArraySpec;
 use Rindow\NeuralNetworks\Layer\Layer;
 use Rindow\NeuralNetworks\Support\HDA\HDAFactory;
 use Interop\Polite\Math\Matrix\NDArray;
-
 
 class Sequential extends AbstractModel
 {
@@ -139,7 +140,8 @@ class Sequential extends AbstractModel
             $first = $this->layers[0];
             $inputShape = $first->inputShape();
             array_unshift($inputShape,1);
-            $this->build($inputShape);
+            $inputSpec = new ArraySpec($inputShape,dtype:$first->inputDtype());
+            $this->build($inputSpec);
         }
         parent::summary();
     }

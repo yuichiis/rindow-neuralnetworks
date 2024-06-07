@@ -39,9 +39,23 @@ class Cifar10
         $this->saveFile = $this->datasetDir . "/cifar10.pkl";
     }
 
+    public function datasetDir() : string
+    {
+        return $this->datasetDir;
+    }
+
+    protected function getRindowDatesetDir() : string
+    {
+        $dataDir = getenv('RINDOW_NEURALNETWORKS_DATASETS');
+        if(!$dataDir) {
+            $dataDir = sys_get_temp_dir().'/rindow/nn/datasets';
+        }
+        return $dataDir;
+    }
+
     protected function getDatasetDir() : string
     {
-        return sys_get_temp_dir().'/rindow/nn/datasets/cifar-10-batches-bin';
+        return $this->getRindowDatesetDir().'/cifar-10-batches-bin';
     }
 
     protected function console(string $message) : void

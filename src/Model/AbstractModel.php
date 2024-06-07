@@ -21,6 +21,7 @@ use Rindow\NeuralNetworks\Data\Dataset\NDArrayDataset;
 use Rindow\NeuralNetworks\Gradient\Variable;
 use Rindow\NeuralNetworks\Gradient\Module;
 use Rindow\NeuralNetworks\Gradient\GraphFunction;
+use Rindow\NeuralNetworks\Gradient\ArraySpec;
 use Rindow\NeuralNetworks\Gradient\Core\GradientTape;
 use Rindow\NeuralNetworks\Support\HDA\HDAFactory;
 use Interop\Polite\Math\Matrix\NDArray;
@@ -875,7 +876,7 @@ abstract class AbstractModel implements Model
         return $predicts->value();
     }
 
-    public function build(array|NDArray|Variable ...$inputShapes) : void
+    public function build(array|NDArray|Variable|ArraySpec ...$inputShapes) : void
     {
         if($this->built) {
             return;
@@ -884,7 +885,12 @@ abstract class AbstractModel implements Model
         $nn = $this->builder;
         $inputs = [];
         foreach($inputShapes as $idx => $inputShape) {
-            if(is_array($inputShape)) {
+            if($inputShape instanceof ArraySpec) {
+                $inputs[$idx] = $nn->gradient()->Variable($K->zeros(
+                    $inputShape->shape()->toArray(),
+                    dtype:$inputShape->dtype()
+                ));
+            } elseif(is_array($inputShape)) {
                 $inputs[$idx] = $nn->gradient()->Variable($K->zeros($inputShape));
             } else {
                 $inputs[$idx] = $inputShape;

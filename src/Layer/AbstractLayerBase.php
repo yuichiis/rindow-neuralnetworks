@@ -39,6 +39,7 @@ abstract class AbstractLayerBase implements Layer
     protected bool $training = false;
     /** @var array<string,bool> $callOptions */
     protected array $callOptions = [];
+    protected ?int $inputDtype=null;
 
     public function __construct(object $backend)
     {
@@ -203,6 +204,11 @@ abstract class AbstractLayerBase implements Layer
     public function inputShape() : array
     {
         return $this->inputShape;
+    }
+
+    public function inputDtype() : ?int
+    {
+        return $this->inputDtype;
     }
 
     public function outputShape() : array

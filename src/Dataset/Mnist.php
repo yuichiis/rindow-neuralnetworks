@@ -34,9 +34,23 @@ class Mnist
         $this->saveFile = $this->datasetDir . "/mnist.pkl";
     }
 
+    public function datasetDir() : string
+    {
+        return $this->datasetDir;
+    }
+
+    protected function getRindowDatesetDir() : string
+    {
+        $dataDir = getenv('RINDOW_NEURALNETWORKS_DATASETS');
+        if(!$dataDir) {
+            $dataDir = sys_get_temp_dir().'/rindow/nn/datasets';
+        }
+        return $dataDir;
+    }
+
     protected function getDatasetDir() : string
     {
-        return sys_get_temp_dir().'/rindow/nn/datasets/mnist';
+        return $this->getRindowDatesetDir().'/mnist';
     }
 
     protected function console(string $message) : void
@@ -114,7 +128,6 @@ class Mnist
 
         if(file_exists($filePath))
             return;
-
         $this->console("Downloading " . $filename . " ... ");
         copy($this->urlBase.$filename, $filePath);
         $this->console("Done\n");
