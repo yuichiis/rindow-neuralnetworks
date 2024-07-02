@@ -255,14 +255,14 @@ abstract class AbstractLayerBase implements Layer
         if(!is_array($shape)) {
             return strval($shape);
         }
-        $string = '[';
+        $string = '(';
         foreach($shape as $value) {
-            if($string!='[') {
+            if($string!='(') {
                 $string .= ',';
             }
             $string .= $this->shapeToString($value);
         }
-        $string .= ']';
+        $string .= ')';
         return $string;
     }
 

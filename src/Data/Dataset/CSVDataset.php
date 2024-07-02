@@ -129,9 +129,9 @@ class CSVDataset implements IteratorAggregate,Dataset
             $choiceItem = $la->alloc([1],NDArray::int32);
             $la->zeros($choiceItem);
         }
-        $inputs = $la->gather($inputs,$choiceItem);
+        $inputs = $la->gatherb($inputs,$choiceItem);
         if($tests!==null) {
-            $tests  = $la->gather($tests,$choiceItem);
+            $tests  = $la->gatherb($tests,$choiceItem);
         }
         return [$inputs,$tests];
     }

@@ -74,6 +74,9 @@ class Gradient
         return $variables;
     }
 
+    /**
+     * @param ArrayShape|array<int> $shape
+     */
     public function ArraySpec(
         ArrayShape|array $shape,
         int $dtype=null,

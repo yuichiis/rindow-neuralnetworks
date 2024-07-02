@@ -4,6 +4,7 @@ namespace Rindow\NeuralNetworks\Model;
 use Interop\Polite\Math\Matrix\NDArray;
 use Rindow\NeuralNetworks\Gradient\Variable;
 use Rindow\NeuralNetworks\Gradient\Module;
+use Rindow\NeuralNetworks\Gradient\ArraySpec;
 use Rindow\NeuralNetworks\Data\Dataset\Dataset;
 use Rindow\NeuralNetworks\Callback\Callback;
 use Rindow\NeuralNetworks\Callback\Broadcaster;
@@ -72,9 +73,9 @@ interface Model extends Module
     ) : NDArray;
 
     /**
-     * @param array<int>|NDArray|Variable ...$inputShapes
+     * @param array<int>|NDArray|Variable|ArraySpec ...$inputShapes
      */
-    public function build(array|NDArray|Variable ...$inputShapes) : void;
+    public function build(array|NDArray|Variable|ArraySpec ...$inputShapes) : void;
 
     /**
      * @param array<mixed,mixed> $modelWeights

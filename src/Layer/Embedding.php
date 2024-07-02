@@ -101,68 +101,137 @@ class Embedding extends AbstractLayer
         ];
     }
 
-    /**
-     * inputs:  [batch,len]
-     * kernel:  [inputDim,outputDim] (numClass=inputDim)
-     * outputs: [batch,len,outputDim]
-     */
+
     protected function call(NDArray $inputs, bool $training=null) : NDArray
     {
+        // inputs:  [batch,len]
+        // kernel:  [inputDim,outputDim] (numClass=inputDim)
+        // outputs: [batch,len,outputDim]
+
         $K = $this->backend;
         $container = $this->container();
         $container->originalShape = $inputs->shape();
-        $container->inputs = $inputs;
+        $inputs = $inputs->reshape([$inputs->size()]);
+        $container->reshapedInputs = $inputs;
 
-        $inputs = $inputs->reshape([$inputs->size(),1]);
-        // gatherND(
-        //  params:  [p0=inputDim,  k=outputDim]   <= kernel
-        //  indices: [n=batch*len,  indexDepth=1]  <= inputs
-        //  outputs: [n=batch*len,  k=outputDim]   <= outputs
-        //  batchDims: 0
-        //)
-        $outputs = $K->gatherND($this->kernel,$inputs);
-        $container->flattenOutputsShape = $outputs->shape();
+        // gatherbAdd version
+        // kernel:  [inputDim,outputDim]          (numClass=inputDim, len=outputDim)
+        // inputs:  [batch,len]                   (n=batch*len)
+        // outputs: [batch,len,outputDim]         (n=batch*len, len=outputDim)
+        $outputs = $K->gatherb(
+            $this->kernel,                  // params
+            $inputs,                        // indices
+            axis:0,
+            batchDims:0,
+            detailDepth:1,
+            indexDepth:1,
+        );
+        $container->reshapedOutputsShape = $outputs->shape();
         $shape = $container->originalShape;
-        array_push($shape,$this->outputDim);
-        return $outputs->reshape($shape);
+        array_push($shape,$this->kernel->shape()[1]);
+        $outputs = $outputs->reshape($shape);
+
+        //// gatherND version
+        //$inputs = $inputs->reshape([$inputs->size(),1]);
+        //// gatherND(
+        ////  params:  [p0=inputDim,  k=outputDim]   <= kernel
+        ////  indices: [n=batch*len,  indexDepth=1]  <= inputs
+        ////  outputs: [n=batch*len,  k=outputDim]   <= outputs
+        ////  batchDims: 0
+        ////)
+        //$outputs = $K->gatherND($this->kernel,$inputs);
+        //$container->flattenOutputsShape = $outputs->shape();
+        //$shape = $container->originalShape;
+        //array_push($shape,$this->outputDim);
+        //$outputs =$outputs->reshape($shape);
+
+        return $outputs;
     }
 
-    /**
-     * dOutputs: [batch,len,outputDim]          (m=batch*len, k=outputDim)
-     * inputs:   [batch,len]                    (m=batch*len)
-     * scatter:  [batch,len,inputDim,outputDim] (m=batch*len, numClass=inputDim, k=outputDim)
-     * kernel:   [inputDim,outputDim]
-     */
     protected function differentiate(NDArray $dOutputs) : NDArray
     {
+        // dOutputs: [batch,len,outputDim]          (m=batch*len, k=outputDim)
+        // inputs:   [batch,len]                    (m=batch*len)
+        // kernel:   [inputDim,outputDim]
+   
         $K = $this->backend;
         $container = $this->container();
-        // dKernel[m=1,x[m,n],k] += dOutputs[m=1,n,k];
-        // dKernel[x[n],k] += dOutputs[n,k];
 
-        // === ScatterAdd edition ===
-        // dKernel[x[batch],k] += dOutputs[batch,k];
-        // $dOutputs = $dOutputs->reshape($container->flattenOutputsShape);
-        // $K->clear($this->dKernel);
-        // $K->scatterAdd($this->dKernel,$container->inputs, $dOutputs);
-        //
+        // scatterbAdd version
+        // inputs:  [batch,len]                   (n=batch*len)
+        // dOutputs: [batch,len,outputDim]        (n=batch*len, len=outputDim)
+        // kernel:  [inputDim,outputDim]          (numClass=inputDim, len=outputDim)
         // === Scatter and ReduceSum edition ===
         // tmp[m,x[m,n=1],k] = dOutputs[m,n=1,k];
         // dKernel[numClass,k] = reduceSum(tmp[m,numClass,k],axis=0);
         // [batch,len]
-        $indicesShape = $container->originalShape;
-        array_push($indicesShape,1);
-        $inputs = $container->inputs->reshape($indicesShape);
-        // scatterND(
-        //  indices: [m=batch, n=len, 1]
-        //  updates: [m=batch, n=len, k=outputDim]
-        //  outputs: [m=batch, p0=inputDim, k=outputDim]
-        //  batchDims: 1
-        // )
-        $shape = array_merge([$container->originalShape[0]],$this->kernel->shape());
-        $dKernel = $K->scatterND($inputs, $dOutputs, shape:$shape, batchDims:1);
-        $dKernel = $K->sum($dKernel,axis:0,output:$this->dKernel);
+        $dOutputs = $dOutputs->reshape($container->reshapedOutputsShape);
+        $K->clear($this->dKernel);
+        $K->scatterbAdd(
+            $container->reshapedInputs, // indices
+            $dOutputs,                  // updates
+            $this->dKernel->shape(),    // shape
+            axis:0,
+            batchDims:0,
+            detailDepth:1,
+            indexDepth:1,
+            outputs:$this->dKernel
+        );
+        
+        //// scatterNDAdd version
+        //// dOutputs: [batch,len,outputDim]          (m=batch*len, k=outputDim)
+        //// inputs:   [batch,len]                    (m=batch*len)
+        //// scatter:  [batch,len,inputDim,outputDim] (m=batch*len, numClass=inputDim, k=outputDim)
+        //// kernel:   [inputDim,outputDim]
+        //// === Scatter and ReduceSum edition ===
+        //// tmp[m,x[m,n=1],k] = dOutputs[m,n=1,k];
+        //// dKernel[numClass,k] = reduceSum(tmp[m,numClass,k],axis=0);
+        //// [batch,len]
+        //$n = (int)array_product($container->originalShape);
+        //$outputDim = $this->kernel->shape()[1];
+        //$inputs = $container->inputs->reshape([$n,1]);
+        //$dOutputs = $dOutputs->reshape([$n,$outputDim]);
+        //$shape = $this->kernel->shape();
+        //// scatterNDAdd(
+        ////  indices: [m=1, n=batch*len, 1]
+        ////  updates: [m=1, n=batch*len, k=outputDim]
+        ////  outputs: [m=1, p0=inputDim, k=outputDim]
+        ////  batchDims: 0
+        //// )
+        //$K->clear($this->dKernel);
+        //$K->scatterNDAdd($inputs, $dOutputs, shape:$shape, batchDims:0,outputs:$this->dKernel);
 
-        return $container->inputs->reshape($container->originalShape);//dummy
+        return $K->zeros(
+            $container->originalShape,
+            dtype:$container->reshapedInputs->dtype()
+        );//dummy
     }
+
+
+    //protected function call(NDArray $inputs, bool $training=null) : NDArray
+    //{
+    //    $K = $this->backend;
+    //    $container = $this->container();
+    //    $container->originalShape = $inputs->shape();
+    //    $container->inputs = $inputs;
+    //    $inputs = $inputs->reshape([$inputs->size()]);
+    //    $outputs = $K->gather($this->kernel,$inputs);
+    //    $container->flattenOutputsShape = $outputs->shape();
+    //    $shape = $container->originalShape;
+    //    array_push($shape,$this->outputDim);
+    //    return $outputs->reshape($shape);
+    //}
+//
+    //protected function differentiate(NDArray $dOutputs) : NDArray
+    //{
+    //    $K = $this->backend;
+    //    $container = $this->container();
+    //    $inputs = $container->inputs;
+    //    $dOutputs = $dOutputs->reshape($container->flattenOutputsShape);
+    //    $inputs = $inputs->reshape([$inputs->size()]);
+    //    $K->clear($this->dKernel);
+    //    $K->scatterAdd($this->dKernel,$inputs, $dOutputs);
+    //    return $container->inputs->reshape($container->originalShape);//dummy
+    //}
+
 }

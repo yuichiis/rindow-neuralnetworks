@@ -153,11 +153,11 @@ class NDArrayDataset implements IteratorAggregate,Dataset
                 $orgInputs = $inputs;
                 $inputs = [];
                 foreach ($orgInputs as $key => $value) {
-                    $inputs[] = $la->gather($value,$choiceItem);
+                    $inputs[] = $la->gatherb($value,$choiceItem);
                 }
                 unset($orgInputs);
                 if($tests!==null) {
-                    $tests  = $la->gather($tests,$choiceItem);
+                    $tests  = $la->gatherb($tests,$choiceItem);
                 }
             }
             if(!$this->multiInputs) {

@@ -11,6 +11,9 @@ class ArraySpec implements ArraySpecInterface
     protected int $dtype=NDArray::float32;
     protected ?string $name=null;
 
+    /**
+     * @param array<int>|ArrayShapeInterface $shape
+     */
     public function __construct(
         ArrayShapeInterface|array $shape,
         int $dtype=null,

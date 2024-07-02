@@ -98,7 +98,7 @@ class LSTMCellTest extends TestCase
             );
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Input shape is inconsistent: defined as [3] but [4] given in LSTMCell');
+        $this->expectExceptionMessage('Input shape is inconsistent: defined as (3) but (4) given in LSTMCell');
         $layer->build([4]);
     }
 

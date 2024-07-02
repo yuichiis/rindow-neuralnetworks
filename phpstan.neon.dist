@@ -10,8 +10,6 @@ parameters:
 		-
 			message: "#Call to an undefined method Rindow\\\\NeuralNetworks\\\\Gradient\\\\Variable::value\\(\\)#"
 		-
-			message: "#^Call to an undefined method .*Rindow\\\\NeuralNetworks\\\\Model\\\\Model::forward\\(\\)#"
-		-
 			message: "#^Method Rindow\\\\NeuralNetworks\\\\Model\\\\Sequential::call\\(\\)#"
 			path: src/Model/Sequential.php
 		-
@@ -23,3 +21,11 @@ parameters:
 			message: "#^Function Rindow\\\\Math\\\\Matrix\\\\R not found#"
 		-
 			message: "#^Used function Rindow\\\\Math\\\\Matrix\\\\R not found#"
+		-
+			message: "#^Call to an undefined method .*Rindow\\\\NeuralNetworks\\\\Layer\\\\Layer::forward\\(\\)#"
+		-
+			message: "#^Call to an undefined method .*Rindow\\\\NeuralNetworks\\\\Layer\\\\Layer::inputDtype\\(\\)#"
+
+
+#		-
+#			message: "#^Call to an undefined method .*Rindow\\\\NeuralNetworks\\\\Model\\\\Model::forward\\(\\)#"

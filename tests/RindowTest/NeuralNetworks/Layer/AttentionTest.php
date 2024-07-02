@@ -96,7 +96,7 @@ class AttentionTest extends TestCase
         ];
     
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Input shape is inconsistent: defined as [[3,2],[4,2]] but [[5,2],[4,2]] given in Attention');
+        $this->expectExceptionMessage('Input shape is inconsistent: defined as ((3,2),(4,2)) but ((5,2),(4,2)) given in Attention');
         $layer->build($inputs);
     }
 

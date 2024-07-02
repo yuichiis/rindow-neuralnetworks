@@ -804,6 +804,75 @@ class BackendTest extends TestCase
         $this->assertEquals($trues->toArray(),$b->toArray());
     }
 
+    public function testGatherb()
+    {
+        $mo = $this->newMatrixOperator();
+        $K = $this->newBackend($mo);
+
+        // 1D by 1D
+        $a = $K->array([10,11,12,13,14,15,16,17,18,19]);
+        $x = $K->array([3,2,1,1],dtype:NDArray::int32);
+        $b = $K->gatherb($a,$x); $K->finish();
+        $this->assertEquals([4],$b->shape()); // replace axis0
+        $this->assertEquals([13,12,11,11],$b->toArray());
+
+        // axis = 0
+        // detailDepth = 2
+        // indexDepth = 0
+        // params:(numClass(4),inner(3))
+        // indices:(inner(3))
+        // 1D indices
+        $a = $K->array([
+            [ 0, 0, 3],
+            [ 0, 0, 4],
+            [ 0, 2, 0],
+            [ 1, 0, 0]]);
+        $x = $K->array([3,2,1],dtype:NDArray::int32);
+        $b = $K->gatherb($a,$x,axis:0,detailDepth:2,indexDepth:0);  $K->finish();
+        $this->assertEquals([4,3],$a->shape());
+        $this->assertEquals([3],$x->shape());
+        $this->assertEquals([3],$b->shape()); // reduction axis0
+        $this->assertEquals([1,2,4],$b->toArray()); // reduction axis0
+    }
+
+    public function testScatterbAdd()
+    {
+        $mo = $this->newMatrixOperator();
+        $K = $this->newBackend($mo);
+
+        // 1D by 1D
+        $x = $K->array([3,2,1,4],dtype:NDArray::int32); // Must not be duplicated
+        $a = $K->array([13,12,11,14]);
+        $b = $K->ones([10]);  $K->finish();
+        $shape = [10];
+        $K->scatterbAdd($x,$a,$shape,outputs:$b);  $K->finish();
+        $this->assertEquals([4],$x->shape());
+        $this->assertEquals([4],$a->shape());
+        $this->assertEquals([10],$b->shape()); // replace axis0
+        $trues = $K->array([1,12,13,14,15,1,1,1,1,1]);
+        //echo $mo->toString($b,null,true)."\n";
+        $this->assertEquals($trues->toArray(),$b->toArray());
+
+        //
+        // axis = 0
+        //
+        //  1D inputs
+        $x = $K->array([3,2,0],dtype:NDArray::int32);
+        $a = $K->array([1,2,3],dtype:NDArray::float32);
+        $b = $K->ones([4,3]); $K->finish();
+        $shape = [4,3];
+        $K->scatterbAdd($x,$a,$shape,axis:0,detailDepth:2,indexDepth:0,outputs:$b); $K->finish();
+        $this->assertEquals([3],$x->shape());
+        $this->assertEquals([3],$a->shape());
+        $this->assertEquals([4,3],$b->shape()); // insert axis0
+        $trues = $K->array([
+            [ 1, 1, 4],
+            [ 1, 1, 1],
+            [ 1, 3, 1],
+            [ 2, 1, 1]]);
+        $this->assertEquals($trues->toArray(),$b->toArray());
+    }
+
     public function testSlice()
     {
         $mo = $this->newMatrixOperator();
@@ -1190,7 +1259,7 @@ class BackendTest extends TestCase
         $y = $K->array([
             [0.0, 0.0, 1.0, 0.0, 0.0],
         ]);
-        $t = $K->array([2]);
+        $t = $K->array([2],dtype:NDArray::int32);
         $this->assertTrue($K->equalTest(
             0.0,$K->scalar($K->sparseCategoricalCrossEntropy($t,$y))));
 

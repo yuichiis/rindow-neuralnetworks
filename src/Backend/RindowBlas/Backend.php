@@ -84,7 +84,7 @@ class Backend
      */
     public function shapeToString(array $shape) : string
     {
-        return "[".implode(',',$shape)."]";
+        return "(".implode(',',$shape).")";
     }
 
     public function dtypeToString(int $dtype) : string
@@ -878,15 +878,6 @@ class Backend
         return $this->la->gather($source,$indices,axis:$axis);
     }
 
-    public function gatherND(
-        NDArray $params,
-        NDArray $indices,
-        int $batchDims=null
-        ) : NDArray
-    {
-        return $this->la->gatherND($params,$indices,batchDims:$batchDims);
-    }
-
     public function scatter(
         NDArray $indices,
         NDArray $values,
@@ -898,16 +889,6 @@ class Backend
         return $this->la->scatter($indices,$values,$numClass,axis:$axis,output:$target);
     }
 
-    public function scatterND(
-        NDArray $indices,
-        NDArray $updates,
-        array $shape,
-        int $batchDims=null,
-        ) : NDArray
-    {
-        return $this->la->scatterND($indices,$updates,$shape,batchDims:$batchDims);
-    }
-
     public function scatterAdd(
         NDArray $target,
         NDArray $indices,
@@ -916,6 +897,79 @@ class Backend
         ) : NDArray
     {
         return $this->la->scatterAdd($indices,$values,$target,axis:$axis);
+    }
+
+    public function gatherb(
+        NDArray $params,
+        NDarray $indices,
+        int $axis=null,
+        int $batchDims=null,
+        int $detailDepth=null,
+        int $indexDepth=null,
+        NDArray $outputs=null,
+        ) : NDArray
+    {
+        return $this->la->gatherb(
+            $params,
+            $indices,
+            axis:$axis,
+            batchDims:$batchDims,
+            detailDepth:$detailDepth,
+            indexDepth:$indexDepth,
+            outputs:$outputs,
+        );
+    }
+
+    /**
+     * @param array<int> $shape
+     */
+    public function scatterb(
+        NDarray $indices,
+        NDArray $updates,
+        array $shape,
+        int $axis=null,
+        int $batchDims=null,
+        int $detailDepth=null,
+        int $indexDepth=null,
+        NDArray $outputs=null,
+        ) : NDArray
+    {
+        return $this->la->scatterb(
+            $indices,
+            $updates,
+            $shape,
+            axis:$axis,
+            batchDims:$batchDims,
+            detailDepth:$detailDepth,
+            indexDepth:$indexDepth,
+            outputs:$outputs,
+        );
+    }
+
+    /**
+     * @param array<int> $shape
+     */
+    public function scatterbAdd(
+        NDarray $indices,
+        NDArray $updates,
+        array $shape,
+        int $axis=null,
+        int $batchDims=null,
+        int $detailDepth=null,
+        int $indexDepth=null,
+        NDArray $outputs=null,
+        ) : NDArray
+    {
+        return $this->la->scatterbAdd(
+            $indices,
+            $updates,
+            $shape,
+            axis:$axis,
+            batchDims:$batchDims,
+            detailDepth:$detailDepth,
+            indexDepth:$indexDepth,
+            outputs:$outputs,
+        );
     }
 
     /**
@@ -1648,7 +1702,7 @@ class Backend
             // d max
             //dx = dy * onehot(argMax(x))
             $argMax = $this->la->reduceArgMax(
-                $status->cols,axis:1);
+                $status->cols,axis:1,dtype:NDArray::int32);
             // argMax.shape == [batches*outshape*channels]
             /*
             $dCols = $this->la->onehot(
@@ -1661,13 +1715,34 @@ class Backend
                 $dOutputs,$dCols,$trans=true);
             */
             // dOutputs.shape == [batches*outshape*channels]
-            $dCols = $this->la->scatter(
+            //var_dump($argMax->shape());
+            //var_dump([$dOutputs->size()]);
+            //var_dump($status->poolSize);
+            //$dCols = $this->la->scatter(
+            //    $argMax,
+            //    $dOutputs->reshape([$dOutputs->size()]),
+            //    array_product($status->poolSize),
+            //    axis:1
+            //);
+            //var_dump($dCols->shape());
+            //// dCols.shape == [batches*outshape*channels, filtersize]
+            //
+
+            $flatOutputsShape = $dOutputs->size();
+            $shape = [$flatOutputsShape, (int)array_product($status->poolSize)];
+            //echo "===================\n";
+            //echo "(".implode(',',$argMax->shape()).")\n";
+            //echo "(".implode(',',[$flatOutputsShape]).")\n";
+            //echo "(".implode(',',$shape).")\n";
+            //echo "===================\n";
+            $dCols = $this->la->scatterb(
                 $argMax,
-                $dOutputs->reshape([$dOutputs->size()]),
-                array_product($status->poolSize),
-                axis:1
+                $dOutputs->reshape([$flatOutputsShape]),
+                $shape,
+                batchDims:1,
+                //detailDepth:3,
+                //indexDepth:0,
             );
-            // dCols.shape == [batches*outshape*channels, filtersize]
         }
 
         $dInputs = $this->zeros(
@@ -1828,8 +1903,11 @@ class Backend
         }
 
         // losses = -1.0 * sum-k(T-nk * log(Y-nk))
+        //$loss = $la->scal(-1,$la->log($la->increment(   // loss = -1.0 * log( xx + eps )
+        //    $la->gather($predicts,$trues,axis:1),       // xx = predicts * onehot(trues)
+        //    $this->epsilon)));
         $loss = $la->scal(-1,$la->log($la->increment(   // loss = -1.0 * log( xx + eps )
-            $la->gather($predicts,$trues,axis:1),       // xx = predicts * onehot(trues)
+            $la->gatherb($predicts,$trues,batchDims:1),       // xx = predicts * onehot(trues)
             $this->epsilon)));
         if($reduction=='none') {
             return $loss;

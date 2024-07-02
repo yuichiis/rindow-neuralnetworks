@@ -15,7 +15,7 @@ use Interop\Polite\Math\Matrix\NDArray;
 class Sequential extends AbstractModel
 {
     /**
-     * @var array<Model|Layer> $layers;
+     * @var array<Layer> $layers;
      */
     protected $layers = [];
 
@@ -55,15 +55,16 @@ class Sequential extends AbstractModel
      */
     public function layers() : array
     {
-        $layers = [];
-        foreach($this->layers as $module) {
-            if($module instanceof Layer) {
-                $layers[] = $module;
-            } else {
-                $layers = array_merge($layers,$module->layers());
-            }
-        }
-        return $layers;
+        //$layers = [];
+        //foreach($this->layers as $module) {
+        //    if($module instanceof Layer) {
+        //        $layers[] = $module;
+        //    } else {
+        //        $layers = array_merge($layers,$module->layers());
+        //    }
+        //}
+        //return $layers;
+        return $this->layers;
     }
 
     /**

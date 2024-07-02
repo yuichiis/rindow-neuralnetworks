@@ -101,7 +101,7 @@ class SimpleRNNCellTest extends TestCase
             );
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Input shape is inconsistent: defined as [3] but [4] given in SimpleRNNCell');
+        $this->expectExceptionMessage('Input shape is inconsistent: defined as (3) but (4) given in SimpleRNNCell');
         $layer->build([4]);
     }
 

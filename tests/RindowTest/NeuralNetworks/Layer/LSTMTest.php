@@ -109,7 +109,7 @@ class LSTMTest extends TestCase
 
         $inputs = [$g->Variable($K->zeros([1,5,4]))];
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Input shape is inconsistent: defined as [5,3] but [5,4] given in LSTM');
+        $this->expectExceptionMessage('Input shape is inconsistent: defined as (5,3) but (5,4) given in LSTM');
         $layer->build($inputs);
     }
 

@@ -112,7 +112,7 @@ class Backend
      */
     public function shapeToString(array $shape) : string
     {
-        return "[".implode(',',$shape)."]";
+        return "(".implode(',',$shape).")";
     }
 
     public function dtypeToString(int $dtype) : string
@@ -935,6 +935,79 @@ class Backend
         return $this->la->scatterAdd($indices,$values,$target,$axis);
     }
 
+    public function gatherb(
+        NDArray $params,
+        NDarray $indices,
+        int $axis=null,
+        int $batchDims=null,
+        int $detailDepth=null,
+        int $indexDepth=null,
+        NDArray $outputs=null,
+        ) : NDArray
+    {
+        return $this->la->gatherb(
+            $params,
+            $indices,
+            axis:$axis,
+            batchDims:$batchDims,
+            detailDepth:$detailDepth,
+            indexDepth:$indexDepth,
+            outputs:$outputs,
+        );
+    }
+
+    /**
+     * @param array<int> $shape
+     */
+    public function scatterb(
+        NDarray $indices,
+        NDArray $updates,
+        array $shape,
+        int $axis=null,
+        int $batchDims=null,
+        int $detailDepth=null,
+        int $indexDepth=null,
+        NDArray $outputs=null,
+        ) : NDArray
+    {
+        return $this->la->scatterb(
+            $indices,
+            $updates,
+            $shape,
+            axis:$axis,
+            batchDims:$batchDims,
+            detailDepth:$detailDepth,
+            indexDepth:$indexDepth,
+            outputs:$outputs,
+        );
+    }
+
+    /**
+     * @param array<int> $shape
+     */
+    public function scatterbAdd(
+        NDarray $indices,
+        NDArray $updates,
+        array $shape,
+        int $axis=null,
+        int $batchDims=null,
+        int $detailDepth=null,
+        int $indexDepth=null,
+        NDArray $outputs=null,
+        ) : NDArray
+    {
+        return $this->la->scatterbAdd(
+            $indices,
+            $updates,
+            $shape,
+            axis:$axis,
+            batchDims:$batchDims,
+            detailDepth:$detailDepth,
+            indexDepth:$indexDepth,
+            outputs:$outputs,
+        );
+    }
+
     /**
      * @param array<int> $begin
      * @param array<int> $size
@@ -1702,11 +1775,27 @@ class Backend
             $this->la->multiply(
                 $dOutputs,$dCols,$trans=true);
             */
-            $dCols = $this->la->scatter(
+            //$dCols = $this->la->scatter(
+            //    $argMax,
+            //    $dOutputs->reshape([$dOutputs->size()]),
+            //    array_product($status->poolSize),
+            //    $axis=1
+            //);
+
+            $flatOutputsShape = $dOutputs->size();
+            $shape = [$flatOutputsShape, (int)array_product($status->poolSize)];
+            //echo "===================\n";
+            //echo "(".implode(',',$argMax->shape()).")\n";
+            //echo "(".implode(',',[$flatOutputsShape]).")\n";
+            //echo "(".implode(',',$shape).")\n";
+            //echo "===================\n";
+            $dCols = $this->la->scatterb(
                 $argMax,
-                $dOutputs->reshape([$dOutputs->size()]),
-                array_product($status->poolSize),
-                $axis=1
+                $dOutputs->reshape([$flatOutputsShape]),
+                $shape,
+                batchDims:1,
+                //detailDepth:3,
+                //indexDepth:0,
             );
         }
 
@@ -1873,8 +1962,11 @@ class Backend
         }
 
         // losses = -1.0 * sum-k(T-nk * log(Y-nk))
+        //$loss = $la->scal(-1,$la->log($la->increment(   // loss = -1.0 * log( xx + eps )
+        //    $la->gather($predicts,$trues,axis:1),       // xx = predicts * onehot(trues)
+        //    $this->epsilon)));
         $loss = $la->scal(-1,$la->log($la->increment(   // loss = -1.0 * log( xx + eps )
-            $la->gather($predicts,$trues,axis:1),       // xx = predicts * onehot(trues)
+            $la->gatherb($predicts,$trues,batchDims:1),       // xx = predicts * onehot(trues)
             $this->epsilon)));
         if($reduction=='none') {
             return $loss;
