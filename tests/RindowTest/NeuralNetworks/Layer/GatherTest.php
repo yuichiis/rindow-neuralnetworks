@@ -135,6 +135,10 @@ class GatherTest extends TestCase
         // forward
         //
         //  batch size 2
+        //  params  = (batches,3)
+        //  indices = (batches)
+        //  outputs = (batches)
+        //
         $sources = $K->array([
             [1,2,3],
             [4,3,2],
@@ -166,14 +170,17 @@ class GatherTest extends TestCase
         //
         // backward
         //
-        // 2 batch
+        //  batch size 2
+        //  dOutputs = (batches)
+        //  indices  = (batches)
+        //  dInputs  = (batches,3)
+        //
         $dOutputs = $K->array([
             2,
             3,
         ]);
 
-        $copydOutputs = $K->copy(
-            $dOutputs);
+        $copydOutputs = $K->copy($dOutputs);
         [$dSources,$dIndexes] = $outputsVariable->creator()->backward([$dOutputs]);
         // 2 batch
         $this->assertEquals([2],$dOutputs->shape());
