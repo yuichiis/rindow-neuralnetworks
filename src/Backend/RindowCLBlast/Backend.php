@@ -236,7 +236,13 @@ class Backend
             $nodeNum = [array_shift($tmpShape)];
             $nodeNum[] = array_product($tmpShape);
         }
-        [$fanIn,$fanOut]=$nodeNum;
+        if($nodeNum===null) {
+            [$fanIn,$fanOut]=[1,1];
+        } elseif(count($nodeNum)==1) {
+            [$fanIn,$fanOut]=[$nodeNum[0],$nodeNum[0]];
+        } else {
+            [$fanIn,$fanOut]=$nodeNum;
+        }
         $scale = 1/max(($fanIn+$fanOut)/2.0, 1.0);
         $limit = sqrt(3*$scale);
         $kernel = $this->la->randomUniform($shape,-$limit,$limit);
