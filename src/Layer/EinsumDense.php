@@ -135,6 +135,7 @@ class EinsumDense extends AbstractLayer
 
     protected string $equation;
     protected array $partial_output_shape;
+    protected array $full_output_shape;
     protected ?string $bias_axes;
     protected ?int $lora_rank;
     protected bool $lora_enabled;
@@ -198,6 +199,8 @@ class EinsumDense extends AbstractLayer
         $biasInitializer = $this->biasInitializer;
 
         $inputShape = $this->normalizeInputShape($variable);
+        //echo "einsum inputShape arg=(".implode(',',$inputShape).")\n";
+        //echo "einsum partial_output_shape arg=(".implode(',',$this->partial_output_shape).")\n";
 
         [
             $kernel_shape,
@@ -213,7 +216,7 @@ class EinsumDense extends AbstractLayer
         );
         $this->dInputsBackwardEquation  = $backward_dinput_equation;
         $this->dKernelBackwardEquation  = $backward_dkernel_equation;
-        # $this->full_output_shape = $full_output_shape;
+        $this->full_output_shape = $full_output_shape;
         # `self._int8_build` needs `self.input_spec`
         # $this->input_spec = new InputSpec(ndim:count($input_shape));
         # We use `self._dtype_policy` to check to avoid issues in torch dynamo
@@ -310,7 +313,7 @@ class EinsumDense extends AbstractLayer
         return $this->kernel;
     }
     
-    private function compute_output_shape() : array
+    public function compute_output_shape() : array
     {
         return $this->full_output_shape;
     }
@@ -577,6 +580,8 @@ class EinsumDense extends AbstractLayer
         array $output_shape
     ) : array
     {
+        //echo "equation=$equation\n";
+        //echo "einsum analyze_einsum_string output_shape arg=(".implode(',',$output_shape).")\n";
         //$dot_replaced_string = $re->sub("\.\.\.", "0", $equation);
         $dot_replaced_string = str_replace("...", "0", $equation);
         # This is the case where no ellipses are present in the string.
@@ -592,14 +597,19 @@ class EinsumDense extends AbstractLayer
             $bias_axes = str_split($bias_axes);
         }
         if($split_string) {
-            $backward_dinput_script  = $split_string[3].','.$split_string[2].'->'.$split_string[1];
-            $backward_dkernel_script = $split_string[3].','.$split_string[1].'->'.$split_string[2];
-            return array_merge(
-                $this->analyze_split_string(
-                    $split_string, $bias_axes, $input_shape, $output_shape
-                ),
-                [$backward_dinput_script,$backward_dkernel_script]
+            [$dmy,$input_chrs,$weight_chrs,$output_chrs] = $split_string;
+            if(count($input_shape)+1!=strlen($input_chrs)) {
+                throw new InvalidArgumentException('Unmatch rank of input_shape and input spec in equation');
+            }
+            if(count($output_shape)+1!=strlen($output_chrs)) {
+                throw new InvalidArgumentException('Unmatch rank of output_shape and output spec in equation');
+            }
+            $results = $this->analyze_split_string(
+                $split_string, $bias_axes, $input_shape, $output_shape
             );
+            $backward_dinput_script  = "{$output_chrs},{$weight_chrs}->{$input_chrs}";
+            $backward_dkernel_script = "{$output_chrs},{$input_chrs}->{$weight_chrs}";
+            return array_merge($results,[$backward_dinput_script,$backward_dkernel_script]);
         }
     
         # This is the case where ellipses are present on the left.
@@ -612,14 +622,13 @@ class EinsumDense extends AbstractLayer
             $split_string
         );
         if($split_string) {
-            $backward_dinput_script  = '...'.$split_string[3].','.$split_string[2].'->'.'...'.$split_string[1];
-            $backward_dkernel_script = '...'.$split_string[3].','.'...'.$split_string[1].'->'.$split_string[2];
-            return array_merge(
-                $this->analyze_split_string(
-                    $split_string, $bias_axes, $input_shape, $output_shape, $left_elided=true
-                ),
-                [$backward_dinput_script,$backward_dkernel_script]
+            [$dmy,$input_chrs,$weight_chrs,$output_chrs] = $split_string;
+            $results = $this->analyze_split_string(
+                $split_string, $bias_axes, $input_shape, $output_shape, $left_elided=true
             );
+            $backward_dinput_script  = "...{$output_chrs},{$weight_chrs}->...{$input_chrs}";
+            $backward_dkernel_script = "...{$output_chrs},...{$input_chrs}->{$weight_chrs}";
+            return array_merge($results,[$backward_dinput_script,$backward_dkernel_script]);
         }
     
         # This is the case where ellipses are present on the right.
@@ -632,14 +641,13 @@ class EinsumDense extends AbstractLayer
             $split_string
         );
         if($split_string) {
-            $backward_dinput_script  = $split_string[3].'...'.','.$split_string[2].'->'.$split_string[1].'...';
-            $backward_dkernel_script = $split_string[3].'...'.','.$split_string[1].'...'.'->'.$split_string[2];
-            return array_merge(
-                $this->analyze_split_string(
-                    $split_string, $bias_axes, $input_shape, $output_shape
-                ),
-                [$backward_dinput_script,$backward_dkernel_script]
+            [$dmy,$input_chrs,$weight_chrs,$output_chrs] = $split_string;
+            $results = $this->analyze_split_string(
+                $split_string, $bias_axes, $input_shape, $output_shape
             );
+            $backward_dinput_script  = "{$output_chrs}...,{$weight_chrs}->{$input_chrs}...";
+            $backward_dkernel_script = "{$output_chrs}...,{$input_chrs}...->{$weight_chrs}";
+            return array_merge($results,[$backward_dinput_script,$backward_dkernel_script]);
         }
     
         throw new InvalidArgumentException(
@@ -656,23 +664,26 @@ class EinsumDense extends AbstractLayer
         array $split_string,
         ?array $bias_axes,
         ?array $input_shape,
-        array|int $output_shape,
+        array $output_shape,
         bool $left_elided=null
     ) : array
     {
+        //echo "einsum analyze_split_string input_shape arg=(".implode(',',$input_shape).")\n";
+        //echo "einsum analyze_split_string output_shape arg=(".implode(',',$output_shape).")\n";
         $left_elided ??= false;
         $input_spec = str_split($split_string[1]);
         $weight_spec = str_split($split_string[2]);
         $output_spec = str_split($split_string[3]);
 
         array_unshift($input_shape, 1);  // add batch shape
+        //echo "input_shape rank=".count($input_shape)."\n";
+        //echo "input_spec rank=".count($input_spec)."\n";
         $elided = count($input_shape) - count($input_spec);
 
-        if(is_int($output_shape)) {
-            $output_shape = [$output_shape];
-        }
-    
         array_unshift($output_shape, $input_shape[0]);
+        //echo "einsum analyze_split_string output_shape array_unshift=(".implode(',',$output_shape).")\n";
+        //echo "elided=";var_dump($elided);
+        //echo "left_elided=";var_dump($left_elided);
         if($elided > 0 && $left_elided) {
             $top = array_shift($output_shape);
             for($i=1; $i<$elided; $i++) {
@@ -687,6 +698,7 @@ class EinsumDense extends AbstractLayer
                 array_push($output_shape,$input_shape[$i]);
             }
         }
+        //echo "einsum analyze_split_string output_shape format=(".implode(',',$output_shape).")\n";
 
         if($left_elided) {
             # If we have beginning dimensions elided, we need to use negative
@@ -713,8 +725,8 @@ class EinsumDense extends AbstractLayer
             if(in_array($dim,$output_dim_map)) {
                 $output_shape_at_dim = $output_shape[$output_dim_map[$dim]];
                 if(
-                    $output_shape_at_dim !==null &&
-                    $output_shape_at_dim != $input_shape_at_dim
+                    $output_shape_at_dim !==null &&             // NOT free dim
+                    $output_shape_at_dim != $input_shape_at_dim // fixed dim
                 ) {
                     throw new InvalidArgumentException(
                         "Input shape and output shape do not match at shared ".
