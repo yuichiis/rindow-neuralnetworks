@@ -83,9 +83,16 @@ abstract class AbstractLayer extends AbstractLayerBase implements SequentialLaye
      */
     public function _rawCall(array $inputs,array $options) : array
     {
-        $training = $options['training'] ?? null;
-        $outputs = $this->call($inputs[0],training:$training);
+        //$training = $options['training'] ?? null;
+        //$outputs = $this->call($inputs[0],training:$training);
+        $outputs = $this->call($inputs[0], ...$options);
         return [$outputs];
+    }
+
+    public function _rawDifferentiate(array $dOutputs) : array
+    {
+        $results = $this->differentiate($dOutputs[0]);
+        return [$results];
     }
 
     public function __clone()

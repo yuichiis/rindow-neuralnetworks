@@ -255,7 +255,9 @@ class EinsumDense extends AbstractLayer
         if($this->kernel===null) {
             if($sampleWeights) {
                 $this->kernel = $sampleWeights[0];
-                $this->bias = $sampleWeights[1];
+                if($this->useBias) {
+                    $this->bias = $sampleWeights[1];
+                }
             } else {
                 $this->kernel = $kernelInitializer(
                     $kernel_shape,

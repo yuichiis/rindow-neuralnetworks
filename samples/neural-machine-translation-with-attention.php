@@ -281,7 +281,7 @@ class Decoder extends AbstractModel
 
         $contextVector = $this->attention->forward(
             [$rnnSequence,$encOutputs],
-            mask:[null,$inputMask],
+            masks:[null,$inputMask],
             returnAttentionScores:$returnAttentionScores,
         );
         if(is_array($contextVector)) {

@@ -102,115 +102,135 @@ class MultiHeadAttentionTest extends TestCase
         $this->assertEquals($expected_output_shape,$layer->outputShape());
     }
 
-    public function testInitializeWithReturnAttentionScores()
+    /**
+    * @dataProvider providerDefaultInitialize
+    */
+    public function testSetInputShape($params)
     {
+        extract($params);
         $mo = $this->newMatrixOperator();
         $nn = $this->newNeuralNetworks($mo);
         $K = $nn->backend();
         $g = $nn->gradient();
-        $layer = new Attention($K, input_shapes:[[3,2],[4,2]]);
+        $batch_size = array_shift($query_shape);
+        array_shift($value_shape);
+        $layer = new MultiHeadAttention(
+            $K,
+            $num_heads, // num_heads
+            $key_dim,   // key_dim
+            value_dim:$value_dim,
+            use_bias:$use_bias,
+        );
         $inputs = [
-            $g->Variable($K->zeros([1,3,2])),
-            $g->Variable($K->zeros([1,4,2])),
+            $g->Variable($K->zeros(array_merge([$batch_size],$query_shape))),
+            $g->Variable($K->zeros(array_merge([$batch_size],$value_shape))),
         ];
-
-        $shapes = $layer->build($inputs);
-        $params = $layer->getParams();
-        $this->assertCount(0,$params);
-
-        $grads = $layer->getGrads();
-        $this->assertCount(0,$grads);
-
-        $this->assertEquals([3,2],$layer->outputShape());
-    }
-
-    public function testSetInputShape()
-    {
-        $mo = $this->newMatrixOperator();
-        $nn = $this->newNeuralNetworks($mo);
-        $K = $nn->backend();
-        $g = $nn->gradient();
-        $layer = new Attention($K, input_shapes:[[3,2],[4,2]]);
-        $inputs = [
-            $g->Variable($K->zeros([1,3,2])),
-            $g->Variable($K->zeros([1,4,2])),
-        ];
-        // [batch,3,2],[batch,4,2]
         $layer->build($inputs);
-        // [batch,3,4]
-        $this->assertEquals([3,2],$layer->outputShape());
+        array_shift($expected_output_shape);
+        $this->assertEquals($expected_output_shape,$layer->outputShape());
     }
 
     public function testUnmatchSpecifiedInputShape()
     {
+        $num_heads = 2;
+        $key_dim = 5;
+        $query_shape = [2, 8, 16];
+        $value_shape = [2, 4, 16];
+
         $mo = $this->newMatrixOperator();
         $nn = $this->newNeuralNetworks($mo);
         $K = $nn->backend();
         $g = $nn->gradient();
-        $layer = new Attention($K, input_shapes:[[3,2],[4,2]]);
+        $batch_size = array_shift($query_shape);
+        array_shift($value_shape);
+        $layer = new MultiHeadAttention(
+            $K,
+            $num_heads, // num_heads
+            $key_dim,   // key_dim
+            input_shapes:[
+                [8, 32], // query_shape
+                [8, 16], // value_shape
+            ],
+        );
         $inputs = [
-            $g->Variable($K->zeros([1,5,2])),
-            $g->Variable($K->zeros([1,4,2])),
+            $g->Variable($K->zeros(array_merge([$batch_size],$query_shape))),
+            $g->Variable($K->zeros(array_merge([$batch_size],$value_shape))),
         ];
     
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Input shape is inconsistent: defined as ((3,2),(4,2)) but ((5,2),(4,2)) given in Attention');
+        $this->expectExceptionMessage('Input shape is inconsistent: defined as ((8,32),(8,16)) but ((8,16),(4,16)) given in MultiHeadAttention');
         $layer->build($inputs);
     }
 
     public function testNormalForwardAndBackward()
     {
+        $num_heads = 8;
+        $key_dim = 4;
+        $full_query_shape = [2, 6, 16];
+        $full_value_shape = [2, 7, 16];
+
         $mo = $this->newMatrixOperator();
         $nn = $this->newNeuralNetworks($mo);
         $K = $nn->backend();
         $g = $nn->gradient();
-        $layer = new Attention($K);
+        $layer = new MultiHeadAttention(
+            $K,
+            $num_heads, // num_heads
+            $key_dim,   // key_dim
+            kernel_initializer:'ones',
+            bias_initializer:'zeros',
+        );
         $inputs = [
-            $g->Variable($K->zeros([2,2,3])),
-            $g->Variable($K->zeros([2,4,3])),
+            $g->Variable($K->zeros($full_query_shape)),
+            $g->Variable($K->zeros($full_value_shape)),
         ];
+        [$batches,$tSeq,$dim] = $full_query_shape;
+        [$batches,$sSeq,$dim] = $full_value_shape;
 
-        $layer->build($inputs);
+        $layer->build($inputs,
+            //sampleWeights:[
+            //    $K->ones([$num_heads,  $key_dim, $dim]),    // query_dense/kernel
+            //    $K->zeros([$num_heads, $key_dim]),          // query_dense/bias
+            //    $K->ones([$num_heads,  $key_dim, $dim]),    // key_dense/kernel
+            //    $K->zeros([$num_heads, $key_dim]),          // key_dense/bias
+            //    $K->ones([$num_heads,  $key_dim, $dim]),    // value_dense/kernel
+            //    $K->zeros([$num_heads, $key_dim]),          // value_dense/bias
+            //    $K->ones([$num_heads,  $key_dim, $dim]),    // output_dense/kernel
+            //    $K->zeros([$dim]),                          // output_dense/bias
+            //]
+        );
 
         //
         // forward
         //
         //  batch size 2
-        $query = $K->array([
-            [[1,0,0],[0,1,0]],
-            [[1,0,0],[0,1,0]],
-        ]);
-        $value = $K->array([
-            [[1,0,0],[0,1,0],[0,0,1],[0,0,0]],
-            [[1,0,0],[0,1,0],[0,0,1],[0,0,0]],
-        ]);
+        $query = $g->Variable($K->ones($full_query_shape));
+        $value = $g->Variable($K->ones($full_value_shape));
         $inputs = [$query,$value];
         $copyInputs = [$K->copy($query),$K->copy($value)];
         [$outputsVariable,$scores] = $nn->with($tape=$g->GradientTape(),
             function() use ($layer,$inputs) {
-                [$outputsVariable,$scores] = $layer->forward($inputs,
-                                returnAttentionScores:true);
+                [$outputsVariable,$scores] = $layer->forward(
+                    $inputs,
+                    training:true,
+                    returnAttentionScores:true,
+                );
                 return [$outputsVariable,$scores];
             }
         );
         $outputs = $K->ndarray($outputsVariable);
         //
-        $this->assertEquals([2,2,4],$scores->shape());
-        $this->assertEquals([2,2,3],$outputs->shape());
+        $this->assertEquals([$batches, $num_heads, $tSeq, $sSeq],$scores->shape());
+        $this->assertEquals([$batches, $tSeq, $dim],$outputs->shape());
         $this->assertEquals($copyInputs[0]->toArray(),$inputs[0]->toArray());
         $this->assertEquals($copyInputs[1]->toArray(),$inputs[1]->toArray());
         $this->assertTrue($mo->la()->isclose(
-            $mo->la()->softmax($mo->array([
-                [1,0,0,0],[0,1,0,0],
-                [1,0,0,0],[0,1,0,0],
-            ])),
-            $K->ndarray($scores->reshape([4,4]))));
+            $K->fill([2,8,6,7],0.14285715),
+            $K->ndarray($scores)));
         $this->assertTrue($mo->la()->isclose(
-            $mo->array([
-                [[0.475367,0.174878,0.174878],[0.174878,0.475367,0.174878]],
-                [[0.475367,0.174878,0.174878],[0.174878,0.475367,0.174878]],
-            ]),
-            $K->ndarray($outputs)));
+            $K->fill($full_query_shape,512),
+            $K->ndarray($outputs)
+        ));
         //
         // backward
         //

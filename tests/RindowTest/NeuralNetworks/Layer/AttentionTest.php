@@ -221,7 +221,7 @@ class AttentionTest extends TestCase
         $copyInputs = [$K->copy($query),$K->copy($value)];
         [$outputsVariable,$scores] = $nn->with($tape=$g->GradientTape(),
             function() use ($layer,$inputs,$queryMask,$valueMask) {
-                [$outputsVariable,$scores] = $layer->forward($inputs, mask:[$queryMask,$valueMask],
+                [$outputsVariable,$scores] = $layer->forward($inputs, masks:[$queryMask,$valueMask],
                                 returnAttentionScores:true);
                 return [$outputsVariable,$scores];
             }
@@ -326,7 +326,7 @@ class AttentionTest extends TestCase
         $copyInputs = [$K->copy($query),$K->copy($value)];
         [$outputsVariable,$scores] = $nn->with($tape=$g->GradientTape(),
             function() use ($layer,$inputs,$queryMask,$valueMask) {
-                [$outputsVariable,$scores] = $layer->forward($inputs, mask:[$queryMask,$valueMask],
+                [$outputsVariable,$scores] = $layer->forward($inputs, masks:[$queryMask,$valueMask],
                                 returnAttentionScores:true);
                 return [$outputsVariable,$scores];
             }
@@ -432,7 +432,7 @@ class AttentionTest extends TestCase
         $copyInputs = [$K->copy($query),$K->copy($value)];
         [$outputsVariable,$scores] = $nn->with($tape=$g->GradientTape(),
             function() use ($layer,$inputs,$queryMask,$valueMask) {
-                [$outputsVariable,$scores] = $layer->forward($inputs, mask:[$queryMask,$valueMask],
+                [$outputsVariable,$scores] = $layer->forward($inputs, masks:[$queryMask,$valueMask],
                                 returnAttentionScores:true);
                 return [$outputsVariable,$scores];
             }
@@ -499,7 +499,7 @@ class AttentionTest extends TestCase
         //
         [$outputsVariable,$scores] = $nn->with($tape=$g->GradientTape(),
             function() use ($layer,$inputs,$queryMask,$valueMask) {
-                [$outputsVariable,$scores] = $layer->forward($inputs, mask:[$queryMask,null],
+                [$outputsVariable,$scores] = $layer->forward($inputs, masks:[$queryMask,null],
                                 returnAttentionScores:true);
                 return [$outputsVariable,$scores];
             }
@@ -532,7 +532,7 @@ class AttentionTest extends TestCase
         //
         [$outputsVariable,$scores] = $nn->with($tape=$g->GradientTape(),
             function() use ($layer,$inputs,$queryMask,$valueMask) {
-                [$outputsVariable,$scores] = $layer->forward($inputs, mask:[null,$valueMask],
+                [$outputsVariable,$scores] = $layer->forward($inputs, masks:[null,$valueMask],
                                 returnAttentionScores:true);
                 return [$outputsVariable,$scores];
             }
