@@ -165,7 +165,7 @@ abstract class AbstractLoss implements Loss
     protected function flattenShapesForSparse(NDArray $trues, NDArray $predicts) : array
     {
         $origTrueShape = $trues->shape();
-        $origPredictsShape = $trues->shape();
+        $origPredictsShape = $predicts->shape();
 
         $batchShape = $predicts->shape();
         $feature = array_pop($batchShape);

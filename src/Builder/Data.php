@@ -3,6 +3,7 @@ namespace Rindow\NeuralNetworks\Builder;
 
 use Interop\Polite\Math\Matrix\NDArray;
 use Rindow\NeuralNetworks\Data\Dataset\NDArrayDataset;
+use Rindow\NeuralNetworks\Data\Dataset\SequentialDataset;
 use Rindow\NeuralNetworks\Data\Dataset\CSVDataset;
 use Rindow\NeuralNetworks\Data\Dataset\ClassifiedDirectoryDataset;
 use Rindow\NeuralNetworks\Data\Image\ImageFilter;
@@ -38,6 +39,11 @@ class Data
     public function NDArrayDataset(array|NDArray $inputs, mixed ...$options) : object
     {
         return new NDArrayDataset($this->matrixOperator, $inputs, ...$options);
+    }
+
+    public function SequentialDataset(iterable $inputs, mixed ...$options) : object
+    {
+        return new SequentialDataset($this->matrixOperator, $inputs, ...$options);
     }
 
     public function CSVDataset(string $path, mixed ...$options) : object

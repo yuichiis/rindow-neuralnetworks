@@ -3,8 +3,6 @@ namespace Rindow\NeuralNetworks\Dataset;
 
 use LogicException;
 use RuntimeException;
-use Traversable;
-use IteratorAggregate;
 use Rindow\Math\Matrix\MatrixOperator;
 use Interop\Polite\Math\Matrix\NDArray;
 use PharData;
@@ -12,8 +10,6 @@ use function Rindow\Math\Matrix\R;
 
 class Cifar10
 {
-    const DATA_BATCH_SIZE = 10000;
-    const NUM_OF_DATA_FILE = 5;
     protected object $matrixOperator;
     protected string $baseUrl = 'https://www.cs.toronto.edu/~kriz/';
     protected string $downloadFile = 'cifar-10-binary.tar.gz';
@@ -40,7 +36,7 @@ class Cifar10
         if(!file_exists($this->datasetDir)) {
             @mkdir($this->datasetDir,0777,true);
         }
-        $this->saveFile = $this->datasetDir . "/test_batch_labels.pkl";
+        $this->saveFile = $this->datasetDir . "/cifar10.pkl";
     }
 
     public function datasetDir() : string
@@ -67,19 +63,23 @@ class Cifar10
         fwrite(STDERR,$message);
     }
 
-    public function loadData(string $filePath=null) : array
+    /**
+     * @return array{array{NDArray,NDArray},array{NDArray,NDArray}}
+     */
+    public function loadData(string $filePath=null)
     {
         $mo = $this->matrixOperator;
         if($filePath===null) {
             $filePath = $this->saveFile;
         }
-        if(!file_exists($filePath)) {
-            $this->downloadFiles();
-            $this->convertNDArray();
+        if(file_exists($filePath)) {
+            $dataset = $this->loadPickle($filePath);
+        } else {
+            $dataset = $this->getFiles($filePath);
         }
 
-        $dataset = $this->loadPickles();
-        return $dataset;
+        return [[$dataset['train_images'], $dataset['train_labels']],
+                [$dataset['test_images'],  $dataset['test_labels']]];
     }
 
     public function cleanPickle(string $filePath=null) : void
@@ -87,65 +87,37 @@ class Cifar10
         if($filePath===null) {
             $filePath = $this->saveFile;
         }
-        $filenames = $this->keyFiles;
-        foreach($filenames as $filename) {
-            $filePath = $this->datasetDir.'/'.basename($filename,'.bin');
-            unlink($filePath.'_images.pkl');
-            unlink($filePath.'_labels.pkl');
-        }
+        unlink($this->saveFile);
     }
 
     /**
      * @return array<string,NDArray>
      */
-    protected function loadPickles() : array
+    protected function loadPickle(string $filePath) : array
     {
-        $filenames = $this->keyFiles;
-        $testFiles = [array_pop($filenames)];
-
-        $train = $this->createIterator($filenames);
-        $test = $this->createIterator($testFiles);
-        return [$train,$test];
+        $this->console("Loading pickle file ...");
+        $data = file_get_contents($filePath);
+        if(!$data)
+            throw new LogicException('read error: '.$this->saveFile);
+        $dataset = $this->matrixOperator->unserializeArray($data);
+        unset($data);
+        $this->console("Done!\n");
+        return $dataset;
     }
 
-    protected function createIterator($filenames) : iterable
+    /**
+     * @return array<string,NDArray>
+     */
+    protected function getFiles(string $filePath) : array
     {
-        $iter = new class (
-            $this->matrixOperator, $filenames, $this->datasetDir
-            ) implements IteratorAggregate
-        {
-            protected object $matrixOperator;
-            protected array $filenames;
-            protected string $datasetDir;
-            public function __construct(object $mo, array $filenames, string $datasetDir)
-            {
-                $this->matrixOperator = $mo;
-                $this->filenames = $filenames;
-                $this->datasetDir = $datasetDir;
-            }
-
-            public function getIterator(): Traversable
-            {
-                $filenames = $this->filenames;
-                foreach($filenames as $filename) {
-                    $filePath = $this->datasetDir."/".basename($filename,'.bin');
-                    $data = file_get_contents($filePath.'_images.pkl');
-                    if(!$data) {
-                        throw new LogicException('read error: '.$filePath.'_images.pkl');
-                    }
-                    $images = $this->matrixOperator->unserializeArray($data);
-                    unset($data);
-                    $data = file_get_contents($filePath.'_labels.pkl');
-                    if(!$data) {
-                        throw new LogicException('read error: '.$filePath.'_labels.pkl');
-                    }
-                    $labels = $this->matrixOperator->unserializeArray($data);
-                    unset($data);
-                    yield [$images,$labels];
-                }
-            }
-        };
-        return $iter;
+        $this->downloadFiles();
+        $dataset = $this->convertNDArray();
+        $this->console("Creating pickle file ...");
+        //with open(save_file, 'wb') as f:
+        //    pickle.dump(dataset, f, -1)
+        file_put_contents($filePath,$this->matrixOperator->serializeArray($dataset));
+        $this->console("Done!\n");
+        return $dataset;
     }
 
     public function downloadFiles() : void
@@ -163,7 +135,7 @@ class Cifar10
             $this->console("Done\n");
         }
 
-        if(file_exists($this->datasetDir.'/test_batch.bin')){
+        if(file_exists($this->datasetDir.'/data_batch_1.bin')){
             return;
         }
         $this->console("Extract to:".$this->datasetDir.'/..'."\n");
@@ -176,24 +148,27 @@ class Cifar10
         $this->console("Done\n");
     }
 
-    protected function convertNDArray() : void
+    /**
+     * @return array<string,NDArray>
+     */
+    protected function convertNDArray() : array
     {
         $mo = $this->matrixOperator;
-
         $filenames = $this->keyFiles;
         $testFiles = [array_pop($filenames)];
-
-        $batches = self::DATA_BATCH_SIZE;
+        $dataset['train_images'] = $mo->zeros([50000,32,32,3],NDArray::uint8);
+        $dataset['train_labels'] = $mo->zeros([50000],NDArray::uint8);
         $this->convertDataset(
             $filenames,
-            $batches,
-        );
-
-        $batches = self::DATA_BATCH_SIZE;
+            $dataset['train_images'],
+            $dataset['train_labels']);
+        $dataset['test_images'] = $mo->zeros([10000,32,32,3],NDArray::uint8);
+        $dataset['test_labels'] = $mo->zeros([10000],NDArray::uint8);
         $this->convertDataset(
             $testFiles,
-            $batches,
-        );
+            $dataset['test_images'],
+            $dataset['test_labels']);
+        return $dataset;
     }
 
     /**
@@ -201,31 +176,34 @@ class Cifar10
      */
     protected function convertDataset(
         array $filenames,
-        int $batches,
+        NDArray $image_dataset,
+        NDArray $labels_dataset
         ) : void
     {
-        $mo = $this->matrixOperator;
-        $images = $mo->zeros([$batches,32,32,3],NDArray::uint8);
-        $labels = $mo->zeros([$batches],NDArray::uint8);
+        $shape = $image_dataset->shape();
+        $rows = array_shift($shape);
+        $size = array_product($shape);
+        $image_dataset = $image_dataset->reshape([$rows,$size]);
+        $labels_dataset = $labels_dataset->reshape([$labels_dataset->size(),1]);
+        $offset = 0;
         foreach($filenames as $filename) {
-            $pklname = basename($filename,'.bin');
+            $images = $image_dataset[R($offset,$offset+10000)];
+            $labels = $labels_dataset[R($offset,$offset+10000)];
             $this->convertImage(
-                $filename, $pklname, $images, $labels
+                $filename, $images, $labels
             );
+            $offset += 10000;
         }
     }
 
     protected function convertImage(
         string $filename,
-        string $pklname,
         NDArray $images,
         NDArray $labels
         ) : void
     {
         $mo = $this->matrixOperator;
         $filePath = $this->datasetDir."/".$filename;
-        $labelPath = $this->datasetDir."/".$pklname."_labels.pkl";
-        $imagePath = $this->datasetDir."/".$pklname."_images.pkl";
         $imageSize = array_product($this->imageShape);
 
         $this->console("Converting ".$filename." to NDArray ...");
@@ -237,23 +215,21 @@ class Cifar10
         $j=0;
         while(true){
             $label = fread($f,1);
-            if($label===false||$label=='') {
+            if($label===false||$label=='')
                 break;
-            }
             if($labels->size()<=$p){
                 throw new RuntimeException('label buffer overflow');
             }
             $this->unpackLabel(
                 $label,
-                $labels[[$p,$p+1]]);
+                $labels[$p]);
             $red = fread($f,1024);
             $green = fread($f,1024);
             $blue = fread($f,1024);
             if($red===false||
                 $green===false||
-                $blue===false) {
+                $blue===false)
                 break;
-            }
             $this->unpackImage(
                 $red,$green,$blue,
                 $images[$p]);
@@ -265,9 +241,7 @@ class Cifar10
             }
         }
         fclose($f);
-        $this->console("\nCreating pickle file ...");
-        file_put_contents($labelPath,$this->matrixOperator->serializeArray($labels));
-        file_put_contents($imagePath,$this->matrixOperator->serializeArray($images));
+
         $this->console("Done\n");
     }
 
@@ -291,7 +265,6 @@ class Cifar10
         NDArray $buffer
         ) : void
     {
-        $buffer = $buffer->reshape([$buffer->size()]);
         $red = unpack("C*",$reddata);
         $green = unpack("C*",$greendata);
         $blue = unpack("C*",$bluedata);

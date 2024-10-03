@@ -153,7 +153,8 @@ if(file_exists($modelFilePath)) {
     );
     $model->summary();
     echo "training model ...\n";
-    $train_dataset = $nn->data->ImageDataGenerator($train_img,
+    $train_dataset = $nn->data->ImageDataGenerator(
+        $train_img,
         tests:$train_label,
         batch_size:$batch_size,
         shuffle:true,
