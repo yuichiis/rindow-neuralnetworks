@@ -6,6 +6,7 @@ use Rindow\NeuralNetworks\Data\Dataset\NDArrayDataset;
 use Rindow\NeuralNetworks\Data\Dataset\SequentialDataset;
 use Rindow\NeuralNetworks\Data\Dataset\CSVDataset;
 use Rindow\NeuralNetworks\Data\Dataset\ClassifiedDirectoryDataset;
+use Rindow\NeuralNetworks\Data\Dataset\Dataset;
 use Rindow\NeuralNetworks\Data\Image\ImageFilter;
 use Rindow\NeuralNetworks\Data\Image\ImageClassifiedDataset;
 use Rindow\NeuralNetworks\Data\Sequence\TextClassifiedDataset;
@@ -56,7 +57,7 @@ class Data
         return new ImageFilter($this->matrixOperator, ...$options);
     }
 
-    public function ImageDataGenerator(NDArray $inputs, mixed ...$options) : object
+    public function ImageDataGenerator(Dataset|NDArray $dataset, mixed ...$options) : object
     {
         $data_format = $options['data_format'] ?? null;
         $height_shift = $options['height_shift'] ?? null;
@@ -76,8 +77,11 @@ class Data
             vertical_flip: $vertical_flip,
             horizontal_flip: $horizontal_flip,
         );
-        $options['filter'] = $filter;
-        return new NDArrayDataset($this->matrixOperator, $inputs, ...$options);
+        if($dataset instanceof NDArray) {
+            $dataset = new NDArrayDataset($this->matrixOperator, $dataset, ...$options);
+        }
+        $dataset->setFilter($filter);
+        return $dataset;
     }
 
     public function ClassifiedDirectoryDataset(string $path, mixed ...$options) : object

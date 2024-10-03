@@ -29,36 +29,6 @@ if(isset($argv[3])&&$argv[3]) {
     $shrink = true;
 }
 
-// flatten images and normalize
-function formatingImage($mo,$train_img) {
-    $dataSize = $train_img->shape()[0];
-    $imageSize = $train_img[0]->size();
-    $train_img = $train_img->reshape([$dataSize,$imageSize]);
-    return $mo->scale(1.0/255.0,$mo->astype($train_img,NDArray::float32));
-}
-$inputsFilter = new class ($mo) implements DatasetFilter
-{
-    protected object $mo;
-    public function __construct(object $mo) {
-        $this->mo = $mo;
-    }
-    public function translate(
-        iterable $img,
-        iterable $label=null,
-        array $options=null) : array
-    {
-        $la = $this->mo->la();
-        $dataSize = $img->shape()[0];
-        $imageSize = $img[0]->size();
-        $img = $img->reshape([$dataSize,$imageSize]);
-        return [
-            $this->mo->scale(1.0/255.0,$this->mo->astype($img,NDArray::float32)),
-            $this->mo->la()->astype($label,NDArray::int32),
-        ];
-    }
-};
-
-
 echo "dataset={$dsname}\n";
 switch($dsname) {
     case 'mnist': {
@@ -88,6 +58,29 @@ switch($dsname) {
         exit(1);
     }
 }
+
+$inputsFilter = new class ($mo) implements DatasetFilter
+{
+    protected object $mo;
+    public function __construct(object $mo) {
+        $this->mo = $mo;
+    }
+    public function translate(
+        iterable $img,
+        iterable $label=null,
+        array $options=null) : array
+    {
+        $la = $this->mo->la();
+        $dataSize = $img->shape()[0];
+        $imageSize = $img[0]->size();
+        $img = $img->reshape([$dataSize,$imageSize]);
+        return [
+            $this->mo->scale(1.0/255.0,$this->mo->astype($img,NDArray::float32)),
+            $this->mo->la()->astype($label,NDArray::int32),
+        ];
+    }
+};
+
 
 //echo "slice images ...\n";
 //$samples = 1000;
