@@ -82,16 +82,6 @@ $inputsFilter = new class ($mo) implements DatasetFilter
 };
 
 
-//echo "slice images ...\n";
-//$samples = 1000;
-//$testSamples = (int)min(ceil($samples/10),count($test_img));
-//$train_img = $train_img[R(0,$samples)];
-//$train_label = $train_label[R(0,$samples)];
-//$test_img = $test_img[R(0,$testSamples)];
-//$test_label = $test_label[R(0,$testSamples)];
-//echo "Truncated train=[".implode(',',$train_img->shape())."]\n";
-//echo "Truncated test=[".implode(',',$test_img->shape())."]\n";
-
 switch($dsname) {
     case 'mnist': 
     case 'fashion': {
