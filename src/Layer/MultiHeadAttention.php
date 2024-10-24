@@ -619,6 +619,12 @@ class MultiHeadAttention extends AbstractAttentionLayer
         );
         return [$attention_output, $attention_scores];
     }
+
+    private function compute_differ_attention(
+    )
+    {
+
+    }
     
     protected function call( 
         array $inputs,
@@ -677,7 +683,10 @@ class MultiHeadAttention extends AbstractAttentionLayer
     
     protected function differentiate(NDArray $dOutputs) : array
     {
-        $DAttention_output = $this->output_dense->_rawDifferentiate($dOutputs);
+        $dAttention_output = $this->output_dense->_rawDifferentiate([$dOutputs])[0];
+        [$query, $key, $value, $attention_mask, $training] = $this->compute_differ_attention(
+            $attention_output, $attention_scores
+        );
     }
 
     /*

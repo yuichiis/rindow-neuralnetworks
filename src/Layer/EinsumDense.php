@@ -327,6 +327,9 @@ class EinsumDense extends AbstractLayer
         $container->inputs = $inputs;
         $outputs = $K->einsum($this->equation, $inputs, $this->kernel());
         if($this->useBias) {
+            echo "useBias in forward\n";
+            echo "outputs=(".implode(',',$outputs->shape()).")\n";
+            echo "bias=(".implode(',',$this->bias->shape()).")\n";
             $K->update_add($outputs,$this->bias);
         }
         if($this->activation) {
@@ -349,7 +352,10 @@ class EinsumDense extends AbstractLayer
         $dKernel = $K->einsum($this->dKernelBackwardEquation, $dOutputs, $container->inputs);
         $K->copy($dKernel,$this->dKernel);
         if($this->useBias) {
-            $K->sum($dOutputs, axis:0, output:$this->dBias);
+            $shape = $dOutputs->shape();
+            $bshape = array_pop($shape);
+            $dOutputsFlat = $dOutputs->reshape([(int)array_product($shape),$bshape]);
+            $K->sum($dOutputsFlat, axis:0, output:$this->dBias);
         }
 
         return $dInputs;
