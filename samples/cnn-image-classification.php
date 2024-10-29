@@ -11,6 +11,7 @@ use function Rindow\Math\Matrix\R;
 $mo = new MatrixOperator();
 $nn = new NeuralNetworks($mo);
 $plt = new Plot(null,$mo);
+//$nn->backend()->primaryLA()->setProfiling(true);
 
 
 $dsname='mnist';
@@ -23,7 +24,7 @@ if(isset($argv[1])&&$argv[1]) {
     $dsname=$argv[1];
 }
 if(isset($argv[2])&&$argv[2]) {
-    $epochs = $argv[3];
+    $epochs = $argv[2];
 }
 if(isset($argv[3])&&$argv[3]) {
     $shrink = true;
@@ -199,7 +200,7 @@ if(file_exists($modelFilePath)) {
     echo "training model ...\n";
     $history = $model->fit(
         $dataset,
-        epochs:5,
+        epochs:$epochs,
         validation_data:$val_dataset);
     $model->save($modelFilePath,$portable=true);
     $plt->plot($mo->array($history['accuracy']),null,null,'accuracy');
@@ -237,3 +238,5 @@ foreach ($predicts as $i => $predict) {
 }
 
 $plt->show();
+
+//$nn->backend()->primaryLA()->profilingReport();
