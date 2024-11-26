@@ -112,6 +112,77 @@ class Attention extends AbstractAttentionLayer
         ];
     }
 
+    /**
+     * @param array<Variable> $inputs
+     * @param array<Variable> $mask
+     * @return array<Variable>|Variable
+     */
+    public function forward(
+        array $inputs, 
+        Variable|bool $training=null, 
+        Variable|bool $returnAttentionScores=null,
+        array $masks=null,
+        )
+    {
+        //$outputs = null;
+        if(!is_array($inputs)) {
+            throw new InvalidArgumentException('inputs must be list of Variable');
+        }
+        [$inputs,$rawInputs]     = $this->packAndUnpackVariables($this->backend,$inputs);
+        $options = [];
+        [$training,$rawTraining] = $this->packAndUnpackVariable($this->backend,$training,unbackpropagatable:true);
+        [$returnAttentionScores,$rawReturnAttentionScores] = $this->packAndUnpackVariable($this->backend,$returnAttentionScores,unbackpropagatable:true);
+        $options['training'] = $training;
+        $options['returnAttentionScores'] = $returnAttentionScores;
+        $rawMasks = null;
+        if($masks) {
+            if(count($masks)!=2) {
+                throw new InvalidArgumentException('mask must be list of the two of masks as queryMask and valueMask');
+            }
+            [$masks,$rawMasks] = $this->packAndUnpackVariables($this->backend,$masks,unbackpropagatable:true);
+            $options['queryMask'] = $masks[0];
+            $options['valueMask'] = $masks[1];
+        }
+        if(!$this->built) {
+            $this->build($inputs);
+            $this->built = true;
+        }
+        $options = $this->cleanNullValue($options);
+        
+        $numOfOutputs = $this->numOfOutputs($options);
+        $session = $this->preGradientProcessOnSession($inputs,$options);
+        $session->begin();
+        try {
+            $this->assertInputShapes($rawInputs,'forward');
+            $this->unbackpropagatables = null;
+            $rawOutputs = $this->call(
+                $rawInputs, 
+                training:$rawTraining, 
+                returnAttentionScores:$rawReturnAttentionScores,
+                masks:$rawMasks,
+                );
+            if($returnAttentionScores){
+                $this->assertOutputShape($rawOutputs[0],'forward');
+                $this->assertScoresShape($rawOutputs[1],'forward');
+            } else {
+                $this->assertOutputShape($rawOutputs,'forward');
+            }
+        } finally{
+            $session->end();
+        }
+        if($numOfOutputs==1) {
+            $rawOutputs = [$rawOutputs];
+        }
+        $outputs = $this->postGradientProcessOnSession(
+            $this->backend, $session,$inputs,
+            $rawOutputs,$this->unbackpropagatables);
+        if($numOfOutputs==1) {
+            return $outputs[0];
+        } else {
+            return $outputs;
+        }
+    }
+
     protected function expandMask(NDArray $sourceMask,NDArray $target) : NDArray
     {
         $K = $this->backend;

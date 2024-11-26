@@ -2368,6 +2368,22 @@ class Backend
         return [$dInputs, $states_t];
     }
 
+    public function cumsum(
+        NDArray $inputs,
+        int $axis=null,
+        bool $exclusive=null,
+        bool $reverse=null,
+        NDArray $outputs=null,
+    ) : NDArray
+    {
+        return $this->la->cumsum(
+            $inputs,
+            axis:$axis,
+            exclusive:$exclusive,
+            reverse:$reverse,
+            outputs:$outputs,
+        );
+    }
 
     public function equalTest(mixed $a, mixed $b) : bool
     {

@@ -81,4 +81,51 @@ class SoftmaxTest extends TestCase
         $this->assertTrue(
             $this->verifyGradient($mo,$K,$activation,$inputs));
     }
+
+    public function testMask()
+    {
+        $mo = $this->newMatrixOperator();
+        $K = $this->newBackend($mo);
+        $activation = new Softmax($K);
+
+        $states = new \stdClass();
+        $x = $mo->ones([2,3,4]);
+        $mask = $mo->array([
+            [1,0,0,0],
+            [1,1,0,0],
+            [1,1,1,0],
+        ]);
+        $copyX = $mo->copy($x);
+        $x = $K->array($x);
+        $y = $activation->forward($states,$x,mask:$mask);
+        $y = $K->ndarray($y);
+        $x = $K->ndarray($x);
+        $this->assertEquals($copyX->toArray(),$x->toArray());
+        $this->assertEquals($x->shape(),$y->shape());
+        $this->assertTrue($mo->la()->isclose(
+            $mo->ones([3]),
+            $mo->sum($y,axis:1)
+        ));
+
+        $dout = $mo->array([
+            [-0.5,-0.25,0.0,0.25,0.5],
+            [-0.5,-0.25,0.0,0.25,0.5],
+            [-0.5,-0.25,0.0,0.25,0.5],
+        ]);
+        $copydout = $mo->copy($dout);
+        $dout = $K->array($dout);
+        $dx = $activation->backward($states,$dout);
+        $dx = $K->ndarray($dx);
+        $dout = $K->ndarray($dout);
+        $this->assertEquals($dout->shape(),$dx->shape());
+        $this->assertEquals($copydout->toArray(),$dout->toArray());
+
+        $inputs = $K->array([
+            [-20.0,-15.0,0.0,5.0,10.0],
+            [-10.0,-0.5,0.0,0.5,10.0],
+            [-10.0,-0.5,0.0,0.5,10.0],
+        ]);
+        $this->assertTrue(
+            $this->verifyGradient($mo,$K,$activation,$inputs));
+    }
 }

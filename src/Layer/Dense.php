@@ -175,8 +175,9 @@ class Dense extends AbstractLayer
 
         // update params
         $K->gemm($container->inputs, $dOutputs,1.0,0.0,$this->dKernel,true,false);
-        if($this->useBias)
+        if($this->useBias) {
             $K->sum($dOutputs, axis:0,output:$this->dBias);
+        }
 
         return $dInputs->reshape($container->origInputsShape);
     }

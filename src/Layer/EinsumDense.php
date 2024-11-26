@@ -327,9 +327,9 @@ class EinsumDense extends AbstractLayer
         $container->inputs = $inputs;
         $outputs = $K->einsum($this->equation, $inputs, $this->kernel());
         if($this->useBias) {
-            echo "useBias in forward\n";
-            echo "outputs=(".implode(',',$outputs->shape()).")\n";
-            echo "bias=(".implode(',',$this->bias->shape()).")\n";
+            //echo "useBias in forward in EinsumDense\n";
+            //echo "outputs=(".implode(',',$outputs->shape()).")\n";
+            //echo "bias=(".implode(',',$this->bias->shape()).")\n";
             $K->update_add($outputs,$this->bias);
         }
         if($this->activation) {
@@ -352,10 +352,11 @@ class EinsumDense extends AbstractLayer
         $dKernel = $K->einsum($this->dKernelBackwardEquation, $dOutputs, $container->inputs);
         $K->copy($dKernel,$this->dKernel);
         if($this->useBias) {
-            $shape = $dOutputs->shape();
-            $bshape = array_pop($shape);
-            $dOutputsFlat = $dOutputs->reshape([(int)array_product($shape),$bshape]);
-            $K->sum($dOutputsFlat, axis:0, output:$this->dBias);
+            $biasFlatSize = (int)array_product($this->dBias->shape());
+            $dOutputsFlatSize = (int)array_product($dOutputs->shape());
+            $dOutputsFlat = $dOutputs->reshape([intdiv($dOutputsFlatSize,$biasFlatSize),$biasFlatSize]);
+            $dBiasFlat = $this->dBias->reshape([$biasFlatSize]);
+            $K->sum($dOutputsFlat, axis:0, output:$dBiasFlat);
         }
 
         return $dInputs;
@@ -580,6 +581,14 @@ class EinsumDense extends AbstractLayer
 
     /*
         """Analyzes an einsum string to determine the required weight shape."""
+
+        return [
+            $kernel_shape,
+            $bias_shape,
+            $full_output_shape,
+            $backward_dinput_equation,
+            $backward_dkernel_equation
+        ]
     */
     private function analyze_einsum_string(
         string $equation,

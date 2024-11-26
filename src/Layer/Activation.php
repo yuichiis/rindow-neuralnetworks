@@ -38,12 +38,12 @@ class Activation extends AbstractLayer
         ];
     }
 
-    protected function call(NDArray $inputs, bool $training=null, NDArray $mask=null) : NDArray
+    protected function call(NDArray $inputs, bool $training=null, ...$kargs) : NDArray
     {
         $outputs = $inputs;
         if($this->activation) {
             $container = $this->container();
-            $outputs = $this->activation->forward($container,$outputs,$training);
+            $outputs = $this->activation->forward($container,$outputs,$training, ...$kargs);
         }
         return $outputs;
     }

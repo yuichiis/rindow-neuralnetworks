@@ -420,6 +420,7 @@ class Backend
         return $x;
     }
 
+/*
     public function add(NDArray $x, NDArray $y) : NDArray
     {
         $la = $this->la;
@@ -460,29 +461,92 @@ class Backend
             return $y;
         }
     }
-
-    public function mul(NDArray $x, NDArray $y) : NDArray
+*/
+    public function add(NDArray $x, NDArray $y, bool $trans=null) : NDArray
     {
         $la = $this->la;
-        if($x->ndim() < $y->ndim()) {
-            $y = $la->copy($y);
-            return $la->multiply($x,$y);
+        if(!$trans) {
+            $ndimX = $x->ndim();
+            $ndimY = $y->ndim();
+            if($ndimX == $ndimY) {
+                $x = $la->copy($x,$la->alloc($y->shape(),$x->dtype()));
+                $la->axpy($y,$x);
+                return $x;
+            } elseif($ndimX < $ndimY) {
+                $x = $la->duplicate($x,null,null,$la->alloc($y->shape(),$x->dtype()));
+                $la->axpy($y,$x);
+                return $x;
+            } else {
+                $y = $la->duplicate($y,null,null,$la->alloc($x->shape(),$y->dtype()));
+                $la->axpy($x,$y);
+                return $y;
+            }
         } else {
             $x = $la->copy($x);
-            return $la->multiply($y,$x);
+            return $la->add($y, $x, alpha:1, trans:$trans);
         }
     }
 
-    public function div(NDArray $x, NDArray $y) : NDArray
+    public function sub(NDArray $x, NDArray $y, bool $trans=null) : NDArray
     {
         $la = $this->la;
-        $y = $la->copy($y);
-        $la->reciprocal($y);
-        if($x->ndim() < $y->ndim()) {
-            return $la->multiply($x,$y);
+        if(!$trans) {
+            $ndimX = $x->ndim();
+            $ndimY = $y->ndim();
+            if($ndimX == $ndimY) {
+                $x = $la->copy($x,$la->alloc($y->shape(),$x->dtype()));
+                $la->axpy($y,$x,-1.0);
+                return $x;
+            } elseif($ndimX < $ndimY) {
+                $x = $la->duplicate($x,null,null,$la->alloc($y->shape(),$x->dtype()));
+                $la->axpy($y,$x,-1.0);
+                return $x;
+            } else {
+                $y = $la->duplicate($y,null,null,$la->alloc($x->shape(),$y->dtype()));
+                $la->increment($y,0,-1);
+                $la->axpy($x,$y);
+                return $y;
+            }
         } else {
             $x = $la->copy($x);
-            return $la->multiply($y,$x);
+            return $la->add($y, $x, alpha:-1, trans:$trans);
+        }
+    }
+
+    public function mul(NDArray $x, NDArray $y, bool $trans=null) : NDArray
+    {
+        $la = $this->la;
+        if(!$trans) {
+            if($x->ndim() < $y->ndim()) {
+                $y = $la->copy($y);
+                return $la->multiply($x,$y);
+            } else {
+                $x = $la->copy($x);
+                return $la->multiply($y,$x);
+            }
+        } else {
+            $x = $la->copy($x);
+            return $la->multiply($y,$x,trans:$trans);
+        }
+    }
+
+    public function div(NDArray $x, NDArray $y, bool $trans=null) : NDArray
+    {
+        $la = $this->la;
+        if(!$trans) {
+            $y = $la->copy($y);
+            $la->reciprocal($y);
+            if($x->ndim() < $y->ndim()) {
+                return $la->multiply($x,$y);
+            } else {
+                $x = $la->copy($x);
+                return $la->multiply($y,$x);
+            }
+        } else {
+            $x = $la->copy($x);
+            $y = $la->copy($y);
+            $la->reciprocal($y);
+            return $la->multiply($y,$x,trans:$trans);
         }
     }
 
@@ -2314,6 +2378,22 @@ class Backend
         return [$dInputs, $states_t];
     }
 
+    public function cumsum(
+        NDArray $inputs,
+        int $axis=null,
+        bool $exclusive=null,
+        bool $reverse=null,
+        NDArray $outputs=null,
+    ) : NDArray
+    {
+        return $this->la->cumsum(
+            $inputs,
+            axis:$axis,
+            exclusive:$exclusive,
+            reverse:$reverse,
+            outputs:$outputs,
+        );
+    }
 
     public function einsum(
         string $equation,

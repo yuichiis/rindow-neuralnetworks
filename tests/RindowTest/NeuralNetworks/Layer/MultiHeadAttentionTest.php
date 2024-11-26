@@ -242,29 +242,138 @@ class MultiHeadAttentionTest extends TestCase
         $dInputs = $outputsVariable->creator()->backward([$dOutputs]);
         // 2 batch
         $this->assertCount(2,$dInputs);
-        $this->assertEquals([2,2,3],$dInputs[0]->shape());
-        $this->assertEquals([2,4,3],$dInputs[1]->shape());
+        //echo "dQuery: ".$mo->shapeToString($dInputs[0]->shape())."\n";
+        //echo "dValue: ".$mo->shapeToString($dInputs[1]->shape())."\n";
+        $this->assertEquals($full_query_shape,$dInputs[0]->shape());
+        $this->assertEquals($full_value_shape,$dInputs[1]->shape());
         $this->assertEquals($copydOutputs->toArray(),$dOutputs->toArray());
+    }
+
+    /*
+    public function test_compute_causal_mask()
+    {
+        $num_heads = 8;
+        $key_dim = 4;
+        $full_query_shape = [2, 6, 16];
+        $full_value_shape = [2, 7, 16];
+        
+        $mo = $this->newMatrixOperator();
+        $nn = $this->newNeuralNetworks($mo);
+        $K = $nn->backend();
+        $g = $nn->gradient();
+        $layer = new MultiHeadAttention(
+            $K,
+            $num_heads, // num_heads
+            $key_dim,   // key_dim
+            kernel_initializer:'ones',
+            bias_initializer:'zeros',
+        );
+        $inputs = [
+            $g->Variable($K->zeros($full_query_shape)),
+            $g->Variable($K->zeros($full_value_shape)),
+        ];
+        [$batches,$tSeq,$dim] = $full_query_shape;
+        [$batches,$sSeq,$dim] = $full_value_shape;
+        $layer->build($inputs);
+
+
+        $query = $inputs[0];
+        $value = $inputs[1];
+        $causal_mask = $layer->compute_causal_mask(
+            $query,
+            $value,
+        );
+        echo "causal_mask=".$mo->shapeToString($causal_mask->shape())."\n";
+        echo $mo->toString($causal_mask,indent:true)."\n";
+    }
+    */
+
+    public function testCausalMask()
+    {
+        $num_heads = 8;
+        $key_dim = 4;
+        $full_query_shape = [2, 6, 16];
+        $full_value_shape = [2, 7, 16];
+
+        $mo = $this->newMatrixOperator();
+        $nn = $this->newNeuralNetworks($mo);
+        $K = $nn->backend();
+        $g = $nn->gradient();
+        $layer = new MultiHeadAttention(
+            $K,
+            $num_heads, // num_heads
+            $key_dim,   // key_dim
+            kernel_initializer:'ones',
+            bias_initializer:'zeros',
+        );
+        $inputs = [
+            $g->Variable($K->zeros($full_query_shape)),
+            $g->Variable($K->zeros($full_value_shape)),
+        ];
+        [$batches,$tSeq,$dim] = $full_query_shape;
+        [$batches,$sSeq,$dim] = $full_value_shape;
+
+        $layer->build($inputs,
+            //sampleWeights:[
+            //    $K->ones([$num_heads,  $key_dim, $dim]),    // query_dense/kernel
+            //    $K->zeros([$num_heads, $key_dim]),          // query_dense/bias
+            //    $K->ones([$num_heads,  $key_dim, $dim]),    // key_dense/kernel
+            //    $K->zeros([$num_heads, $key_dim]),          // key_dense/bias
+            //    $K->ones([$num_heads,  $key_dim, $dim]),    // value_dense/kernel
+            //    $K->zeros([$num_heads, $key_dim]),          // value_dense/bias
+            //    $K->ones([$num_heads,  $key_dim, $dim]),    // output_dense/kernel
+            //    $K->zeros([$dim]),                          // output_dense/bias
+            //]
+        );
+
+        //
+        // forward
+        //
+        //  batch size 2
+        $query = $g->Variable($K->ones($full_query_shape));
+        $value = $g->Variable($K->ones($full_value_shape));
+        $inputs = [$query,$value];
+        $copyInputs = [$K->copy($query),$K->copy($value)];
+        [$outputsVariable,$scores] = $nn->with($tape=$g->GradientTape(),
+            function() use ($layer,$inputs) {
+                [$outputsVariable,$scores] = $layer->forward(
+                    $inputs,
+                    training:true,
+                    returnAttentionScores:true,
+                    useCausalMask:true,
+                );
+                return [$outputsVariable,$scores];
+            }
+        );
+        $outputs = $K->ndarray($outputsVariable);
+        //
+        $this->assertEquals([$batches, $num_heads, $tSeq, $sSeq],$scores->shape());
+        $this->assertEquals([$batches, $tSeq, $dim],$outputs->shape());
+        $this->assertEquals($copyInputs[0]->toArray(),$inputs[0]->toArray());
+        $this->assertEquals($copyInputs[1]->toArray(),$inputs[1]->toArray());
         $this->assertTrue($mo->la()->isclose(
-            $mo->array([
-                [[0.08313105, 0.0305822 , 0.0305822],
-                 [0.0305822 , 0.08313105, 0.0305822]],
-                [[0.08313105, 0.0305822 , 0.0305822],
-                 [0.0305822 , 0.08313105, 0.0305822]],
-            ]),
-            $K->ndarray($dInputs[0])));
+            $K->fill([2,8,6,7],0.14285715),
+            $K->ndarray($scores)));
         $this->assertTrue($mo->la()->isclose(
-            $mo->array([
-                [[0.73337567, 0.68082684, 0.65024465],
-                 [0.68082684, 0.73337567, 0.65024465],
-                 [0.38033763, 0.38033763, 0.34975544],
-                 [0.20545992, 0.20545992, 0.34975544]],
-                [[0.73337567, 0.68082684, 0.65024465],
-                 [0.68082684, 0.73337567, 0.65024465],
-                 [0.38033763, 0.38033763, 0.34975544],
-                 [0.20545992, 0.20545992, 0.34975544]],
-            ]),
-            $K->ndarray($dInputs[1])));
+            $K->fill($full_query_shape,512),
+            $K->ndarray($outputs)
+        ));
+        //
+        // backward
+        //
+        // 2 batch
+        $dOutputs = $K->ones($outputs->shape());
+
+        $copydOutputs = $K->copy(
+            $dOutputs);
+        $dInputs = $outputsVariable->creator()->backward([$dOutputs]);
+        // 2 batch
+        $this->assertCount(2,$dInputs);
+        //echo "dQuery: ".$mo->shapeToString($dInputs[0]->shape())."\n";
+        //echo "dValue: ".$mo->shapeToString($dInputs[1]->shape())."\n";
+        $this->assertEquals($full_query_shape,$dInputs[0]->shape());
+        $this->assertEquals($full_value_shape,$dInputs[1]->shape());
+        $this->assertEquals($copydOutputs->toArray(),$dOutputs->toArray());
     }
 
     public function testMaskBoth()
