@@ -181,8 +181,8 @@ class MultiHeadAttentionTest extends TestCase
             bias_initializer:'zeros',
         );
         $inputs = [
-            $g->Variable($K->zeros($full_query_shape)),
-            $g->Variable($K->zeros($full_value_shape)),
+            $g->Variable($K->ones($full_query_shape)),
+            $g->Variable($K->ones($full_value_shape)),
         ];
         [$batches,$tSeq,$dim] = $full_query_shape;
         [$batches,$sSeq,$dim] = $full_value_shape;
@@ -206,16 +206,20 @@ class MultiHeadAttentionTest extends TestCase
         //  batch size 2
         $query = $g->Variable($K->ones($full_query_shape));
         $value = $g->Variable($K->ones($full_value_shape));
+        $salt = $mo->la()->range(array_product($full_query_shape),dtype:NDArray::float32)
+                ->reshape($full_query_shape);
+        $salt = $g->Variable($salt);
         $inputs = [$query,$value];
         $copyInputs = [$K->copy($query),$K->copy($value)];
-        [$outputsVariable,$scores] = $nn->with($tape=$g->GradientTape(),
-            function() use ($layer,$inputs) {
+        [$outputsVariable,$scores,$resultValiable] = $nn->with($tape=$g->GradientTape(),
+            function() use ($g,$layer,$inputs,$salt) {
                 [$outputsVariable,$scores] = $layer->forward(
                     $inputs,
                     training:true,
                     returnAttentionScores:true,
                 );
-                return [$outputsVariable,$scores];
+                $resultValiable = $g->mul($outputsVariable,$salt);
+                return [$outputsVariable,$scores,$resultValiable];
             }
         );
         $outputs = $K->ndarray($outputsVariable);
@@ -225,9 +229,10 @@ class MultiHeadAttentionTest extends TestCase
         $this->assertEquals($copyInputs[0]->toArray(),$inputs[0]->toArray());
         $this->assertEquals($copyInputs[1]->toArray(),$inputs[1]->toArray());
         $this->assertTrue($mo->la()->isclose(
-            $K->fill([2,8,6,7],0.14285715),
+            $K->fill([2,8,6,7], 0.14285715),
             $K->ndarray($scores)));
         $this->assertTrue($mo->la()->isclose(
+            //$K->mul($salt,$K->fill($full_query_shape,512)),
             $K->fill($full_query_shape,512),
             $K->ndarray($outputs)
         ));
@@ -235,10 +240,19 @@ class MultiHeadAttentionTest extends TestCase
         // backward
         //
         // 2 batch
-        $dOutputs = $K->ones($outputs->shape());
+        $dResultValiable = $K->ones($resultValiable->shape());
+        //$dOutputs = $salt;
+        [$dOutputs,$dSalt] = $resultValiable->creator()->backward([$dResultValiable]);
+        $this->assertEquals($outputsVariable->shape(),$dOutputs->shape());
+        $this->assertEquals($resultValiable->shape(),$dSalt->shape());
+        $this->assertTrue($mo->la()->isclose(
+            $dOutputs,$salt
+        ));
+        $this->assertTrue($mo->la()->isclose(
+            $dSalt,$outputs
+        ));
 
-        $copydOutputs = $K->copy(
-            $dOutputs);
+        $copydOutputs = $K->copy($dOutputs);
         $dInputs = $outputsVariable->creator()->backward([$dOutputs]);
         // 2 batch
         $this->assertCount(2,$dInputs);
@@ -247,46 +261,40 @@ class MultiHeadAttentionTest extends TestCase
         $this->assertEquals($full_query_shape,$dInputs[0]->shape());
         $this->assertEquals($full_value_shape,$dInputs[1]->shape());
         $this->assertEquals($copydOutputs->toArray(),$dOutputs->toArray());
+
+        echo $mo->toString($dInputs[0],indent:true)."\n";
+        $this->assertTrue($mo->la()->isclose(
+            $dInputs[0],
+            $K->array([
+                [[-0.125, -0.125, -0.125, -0.125, -0.125, -0.125, -0.125, -0.125, -0.125, -0.125,
+            -0.125, -0.125, -0.125, -0.125, -0.125, -0.125],
+                 [ 0.0,     0.0,     0.0,     0.0,     0.0,     0.0,     0.0,     0.0,     0.0,     0.0,
+                   0.0,     0.0,     0.0,     0.0,     0.0,     0.0,   ],
+                 [-1.0,    -1.0,    -1.0,    -1.0,    -1.0,    -1.0,    -1.0,    -1.0,    -1.0,    -1.0,
+                  -1.0,    -1.0,    -1.0,    -1.0,    -1.0,    -1.0,   ],
+                 [ 0.0,     0.0,     0.0,     0.0,     0.0,     0.0,     0.0,     0.0,     0.0,     0.0,
+                   0.0,     0.0,     0.0,     0.0,     0.0,     0.0,   ],
+                 [ 0.0,     0.0,     0.0,     0.0,     0.0,     0.0,     0.0,     0.0,     0.0,     0.0,
+                   0.0,     0.0,     0.0,     0.0,     0.0,     0.0,   ],
+                 [-2.0,    -2.0,    -2.0,    -2.0,    -2.0,    -2.0,    -2.0,    -2.0,    -2.0,    -2.0,
+                  -2.0,    -2.0,    -2.0,    -2.0,    -2.0,    -2.0,   ]],
+               
+                [[-2.0,    -2.0,    -2.0,    -2.0,    -2.0,    -2.0,    -2.0,    -2.0,    -2.0,    -2.0,
+                  -2.0,    -2.0,    -2.0,    -2.0,    -2.0,    -2.0,   ],
+                 [-4.0,    -4.0,    -4.0,    -4.0,    -4.0,    -4.0,    -4.0,    -4.0,    -4.0,    -4.0,
+                  -4.0,    -4.0,    -4.0,    -4.0,    -4.0,    -4.0,   ],
+                 [ 0.0,     0.0,     0.0,     0.0,     0.0,     0.0,     0.0,     0.0,     0.0,     0.0,
+                   0.0,     0.0,     0.0,     0.0,     0.0,     0.0,   ],
+                 [ 0.0,     0.0,     0.0,     0.0,     0.0,     0.0,     0.0,     0.0,     0.0,     0.0,
+                   0.0,     0.0,     0.0,     0.0,     0.0,     0.0,   ],
+                 [ 0.0,     0.0,     0.0,     0.0,     0.0,     0.0,     0.0,     0.0,     0.0,     0.0,
+                   0.0,     0.0,     0.0,     0.0,     0.0,     0.0,   ],
+                 [ 0.0,     0.0,     0.0,     0.0,     0.0,     0.0,     0.0,     0.0,     0.0,     0.0,
+                   0.0,     0.0,     0.0,     0.0,     0.0,     0.0,   ]]
+            ])            
+        ));
+
     }
-
-    /*
-    public function test_compute_causal_mask()
-    {
-        $num_heads = 8;
-        $key_dim = 4;
-        $full_query_shape = [2, 6, 16];
-        $full_value_shape = [2, 7, 16];
-        
-        $mo = $this->newMatrixOperator();
-        $nn = $this->newNeuralNetworks($mo);
-        $K = $nn->backend();
-        $g = $nn->gradient();
-        $layer = new MultiHeadAttention(
-            $K,
-            $num_heads, // num_heads
-            $key_dim,   // key_dim
-            kernel_initializer:'ones',
-            bias_initializer:'zeros',
-        );
-        $inputs = [
-            $g->Variable($K->zeros($full_query_shape)),
-            $g->Variable($K->zeros($full_value_shape)),
-        ];
-        [$batches,$tSeq,$dim] = $full_query_shape;
-        [$batches,$sSeq,$dim] = $full_value_shape;
-        $layer->build($inputs);
-
-
-        $query = $inputs[0];
-        $value = $inputs[1];
-        $causal_mask = $layer->compute_causal_mask(
-            $query,
-            $value,
-        );
-        echo "causal_mask=".$mo->shapeToString($causal_mask->shape())."\n";
-        echo $mo->toString($causal_mask,indent:true)."\n";
-    }
-    */
 
     public function testCausalMask()
     {
@@ -351,13 +359,37 @@ class MultiHeadAttentionTest extends TestCase
         $this->assertEquals([$batches, $tSeq, $dim],$outputs->shape());
         $this->assertEquals($copyInputs[0]->toArray(),$inputs[0]->toArray());
         $this->assertEquals($copyInputs[1]->toArray(),$inputs[1]->toArray());
+        //echo $mo->shapeToString($scores->shape())."\n";
+        //echo $mo->toString($K->ndarray($scores),format:'%8.4f',indent:true)."\n";
+        //echo $mo->shapeToString($outputs->shape())."\n";
+        //echo $mo->toString($K->ndarray($outputs),format:'%8.1f',indent:true)."\n";
+
         $this->assertTrue($mo->la()->isclose(
-            $K->fill([2,8,6,7],0.14285715),
-            $K->ndarray($scores)));
-        $this->assertTrue($mo->la()->isclose(
-            $K->fill($full_query_shape,512),
-            $K->ndarray($outputs)
+            $K->ndarray($outputs),
+            $K->scale(512,$K->ones($full_query_shape))
         ));
+
+        $sc = $mo->array([
+                [  1.00000000,  0.00000000,  0.00000000,  0.00000000,  0.00000000,  0.00000000,  0.0000],
+                [  0.50000000,  0.50000000,  0.00000000,  0.00000000,  0.00000000,  0.00000000,  0.0000],
+                [  0.33333334,  0.33333334,  0.33333334,  0.00000000,  0.00000000,  0.00000000,  0.0000],
+                [  0.25000000,  0.25000000,  0.25000000,  0.25000000,  0.00000000,  0.00000000,  0.0000],
+                [  0.20000000,  0.20000000,  0.20000000,  0.20000000,  0.20000000,  0.00000000,  0.0000],
+                [  0.16666667,  0.16666667,  0.16666667,  0.16666667,  0.16666667,  0.16666667,  0.0000]
+        ]);
+        //echo $mo->shapeToString($sc->shape())."\n";
+        $sc = $mo->la()->repeat($sc,$num_heads,axis:0);
+        $sc = $mo->la()->repeat($sc,$batches,axis:0);
+        //echo $mo->toString($sc,format:'%8.4f',indent:true)."\n";
+        //echo $mo->shapeToString($sc->shape())."\n";
+        //echo $mo->shapeToString($scores->shape())."\n";
+        $this->assertEquals($sc->shape(),$scores->shape());
+        $this->assertTrue($mo->la()->isclose(
+            $K->ndarray($scores),
+            $sc,
+        ));
+
+
         //
         // backward
         //

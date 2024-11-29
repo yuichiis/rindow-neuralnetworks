@@ -552,15 +552,15 @@ class MultiHeadAttention extends AbstractAttentionLayer
             # key_attention_dims>)
             echo "attention_scores=(".implode(',',$attention_scores->shape()).")\n";
             echo "attention_mask=(".implode(',',$attention_mask->shape()).")\n";
-            $mask_expansion_axis = -count($this->attention_axes) * 2 - 1;
-            echo "mask_expansion_axis=".$mask_expansion_axis."\n";
-            $n = $attention_scores->ndim() - $attention_mask->ndim();
-            for($i=0;$i<$n;++$i) {
-                $attention_mask = $K->expandDims(
-                    $attention_mask, axis:$mask_expansion_axis
-                );
-            }
-            echo "expanded_attention_mask=(".implode(',',$attention_mask->shape()).")\n";
+            //$mask_expansion_axis = -count($this->attention_axes) * 2 - 1;
+            //echo "mask_expansion_axis=".$mask_expansion_axis."\n";
+            //$n = $attention_scores->ndim() - $attention_mask->ndim();
+            //for($i=0;$i<$n;++$i) {
+            //    $attention_mask = $K->expandDims(
+            //        $attention_mask, axis:$mask_expansion_axis
+            //    );
+            //}
+            //echo "expanded_attention_mask=(".implode(',',$attention_mask->shape()).")\n";
 
         }
         $results = $this->softmax_layer->_rawCall(
@@ -884,26 +884,28 @@ class MultiHeadAttention extends AbstractAttentionLayer
     {
         $K = $this->backend;
         $auto_mask = null;
-        if($query_mask) {
-            $query_mask = $K->cast($query_mask, NDArray::bool);
-            # B = batch size, T = max query length
-            $auto_mask = $K->expand_dims($query_mask, -1);  # shape is [B, T, 1]
-        }
-        if($value_mask) {
-            $value_mask = $K->cast($value_mask, NDArray::bool);
-            # B = batch size, S == max value length
-            $mask = $K->expand_dims($value_mask, -2);  # shape is [B, 1, S]
-            $auto_mask = ($auto_mask===null) ? $mask : ($auto_mask & $mask);
-        }
-        if($key_mask) {
-            $key_mask = $K->cast($key_mask, NDArray::bool);
-            # B == batch size, S == max key length == max value length
-            $mask = $K->expand_dims($key_mask, -2);  # shape is [B, 1, S]
-            $auto_mask = ($auto_mask===null) ? $mask : ($auto_mask & $mask);
-        }
+        //if($query_mask) {
+        //    $query_mask = $K->cast($query_mask, NDArray::bool);
+        //    # B = batch size, T = max query length
+        //    $auto_mask = $K->expand_dims($query_mask, -1);  # shape is [B, T, 1]
+        //}
+        //if($value_mask) {
+        //    $value_mask = $K->cast($value_mask, NDArray::bool);
+        //    # B = batch size, S == max value length
+        //    $mask = $K->expand_dims($value_mask, -2);  # shape is [B, 1, S]
+        //    $auto_mask = ($auto_mask===null) ? $mask : ($auto_mask & $mask);
+        //}
+        //if($key_mask) {
+        //    $key_mask = $K->cast($key_mask, NDArray::bool);
+        //    # B == batch size, S == max key length == max value length
+        //    $mask = $K->expand_dims($key_mask, -2);  # shape is [B, 1, S]
+        //    $auto_mask = ($auto_mask===null) ? $mask : ($auto_mask & $mask);
+        //}
         if($useCausalMask) {
-            # the shape of the causal mask is [1, T, S]
+            #original <the shape of the causal mask is [1, T, S]>
+            #rindow<the shape of the causal mask is [T, S]>
             $mask = $this->compute_causal_mask($query, $value);
+            echo "causal-mask".$K->localMatrixOperator()->shapeToString($mask->shape()).": ".$K->localMatrixOperator()->toString($mask,indent:true)."\n";
             $auto_mask = ($auto_mask===null) ? $mask : ($auto_mask & $mask);
         }
         if($auto_mask) {
@@ -941,13 +943,13 @@ class MultiHeadAttention extends AbstractAttentionLayer
     */
     private function compute_causal_mask(
         NDArray $query,
-        NDArray $value=None
+        NDArray $value=null
     ) : NDArray
     {
         $K = $this->backend;
         $q_seq_length = $query->shape()[1];
         $v_seq_length = ($value===null) ? $q_seq_length : $value->shape()[1];
-        $ones_mask = $K->ones([1, $q_seq_length, $v_seq_length],dtype:NDArray::float32);
+        $ones_mask = $K->ones([$q_seq_length, $v_seq_length],dtype:NDArray::float32);
         $row_index = $K->cumsum($ones_mask, axis:-2);
         $col_index = $K->cumsum($ones_mask, axis:-1);
         $mask = $K->sub($row_index, $col_index);
