@@ -191,6 +191,11 @@ class EinsumDense extends AbstractLayer
         $this->allocateWeights($this->useBias?2:1);
         $this->setActivation($activation);
     }
+
+    public function getEquation() : string
+    {
+        return $this->equation;
+    }
     
     public function build(mixed $variable=null, array $sampleWeights=null) : void
     {

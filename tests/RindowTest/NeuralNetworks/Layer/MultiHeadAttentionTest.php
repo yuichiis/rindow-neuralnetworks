@@ -180,9 +180,21 @@ class MultiHeadAttentionTest extends TestCase
             kernel_initializer:'ones',
             bias_initializer:'zeros',
         );
+        $query = $g->Variable($K->ones($full_query_shape));
+        $value = $g->Variable($K->ones($full_value_shape));
+        #$query = $g->Variable($K->increment(
+        #        $K->scale(0.5, $K->array($mo->la()->range(array_product($full_query_shape),dtype:NDArray::float32)
+        #        ->reshape($full_query_shape))),
+        #    1,
+        #));
+        #$value = $g->Variable($K->increment(
+        #        $K->scale(0.2, $K->array($mo->la()->range(array_product($full_value_shape),dtype:NDArray::float32)
+        #        ->reshape($full_value_shape))),
+        #    1,
+        #));
         $inputs = [
-            $g->Variable($K->ones($full_query_shape)),
-            $g->Variable($K->ones($full_value_shape)),
+            $query,
+            $value,
         ];
         [$batches,$tSeq,$dim] = $full_query_shape;
         [$batches,$sSeq,$dim] = $full_value_shape;
@@ -204,12 +216,14 @@ class MultiHeadAttentionTest extends TestCase
         // forward
         //
         //  batch size 2
-        $query = $g->Variable($K->ones($full_query_shape));
-        $value = $g->Variable($K->ones($full_value_shape));
+        //echo "query: ".$mo->toString($query,indent:true)."\n";
+        //////////////echo "key: ".$mo->toString($key,indent:true)."\n";
+        //echo "value: ".$mo->toString($value,indent:true)."\n";
+
+
         $salt = $mo->la()->range(array_product($full_query_shape),dtype:NDArray::float32)
                 ->reshape($full_query_shape);
         $salt = $g->Variable($salt);
-        $inputs = [$query,$value];
         $copyInputs = [$K->copy($query),$K->copy($value)];
         [$outputsVariable,$scores,$resultValiable] = $nn->with($tape=$g->GradientTape(),
             function() use ($g,$layer,$inputs,$salt) {
@@ -223,6 +237,8 @@ class MultiHeadAttentionTest extends TestCase
             }
         );
         $outputs = $K->ndarray($outputsVariable);
+        //echo 'outputs:'.$mo->toString($outputs,indent:true)."\n";
+        //echo 'scores:'.$mo->toString($scores,indent:true)."\n";
         //
         $this->assertEquals([$batches, $num_heads, $tSeq, $sSeq],$scores->shape());
         $this->assertEquals([$batches, $tSeq, $dim],$outputs->shape());
@@ -241,7 +257,6 @@ class MultiHeadAttentionTest extends TestCase
         //
         // 2 batch
         $dResultValiable = $K->ones($resultValiable->shape());
-        //$dOutputs = $salt;
         [$dOutputs,$dSalt] = $resultValiable->creator()->backward([$dResultValiable]);
         $this->assertEquals($outputsVariable->shape(),$dOutputs->shape());
         $this->assertEquals($resultValiable->shape(),$dSalt->shape());
@@ -262,7 +277,7 @@ class MultiHeadAttentionTest extends TestCase
         $this->assertEquals($full_value_shape,$dInputs[1]->shape());
         $this->assertEquals($copydOutputs->toArray(),$dOutputs->toArray());
 
-        echo $mo->toString($dInputs[0],indent:true)."\n";
+        //echo "dQuery: ".$mo->toString($dInputs[0],indent:true)."\n";
         $this->assertTrue($mo->la()->isclose(
             $dInputs[0],
             $K->array([

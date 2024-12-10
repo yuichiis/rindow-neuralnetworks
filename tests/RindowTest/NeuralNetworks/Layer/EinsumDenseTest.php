@@ -394,10 +394,19 @@ class EinsumDenseTest extends TestCase
             $K, $equation, $output_shape,
             input_shape: $input_shape,
             bias_axes: $bias_axes,
+            kernel_initializer:'ones',
+            bias_initializer:'zeros',
         );
 
         // 3 input x 4 minibatch
-        $inputs = $K->ones(array_merge([4],$input_shape));
+        //$inputs = $K->ones(array_merge([4],$input_shape));
+        $inputs = $K->array([
+            [0.1, 0.2, 0.5],
+            [0.1, 0.2, 0.5],
+            [0.1, 0.2, 0.5],
+            [0.1, 0.2, 0.5],
+        ]);
+        $full_output_shape = array_merge([4],$output_shape);
 
         $layer->build($g->Variable($inputs),
             //sampleWeights:[
@@ -409,29 +418,36 @@ class EinsumDenseTest extends TestCase
         $this->assertEquals(2,count($params));
         $this->assertEquals([3,2],$params[0]->shape());
         $this->assertEquals([2],$params[1]->shape());
-        $K->copy($K->array([[0.1, 0.2], [0.1, 0.1], [0.2, 0.2]]),$params[0]); // kernel
-        $K->copy($K->array([0.5, 0.1]),$params[1]); // bias
+        //$K->copy($K->array([[0.1, 0.2], [0.1, 0.1], [0.2, 0.2]]),$params[0]); // kernel
+        //$K->copy($K->array([0.5, 0.1]),$params[1]); // bias
 
         //
         // forward
         //
         $copyInputs = $K->copy($inputs);
         $inputs = $K->array($inputs);
-        $outputsVariable = $nn->with($tape=$g->GradientTape(),
-            function() use ($layer,$inputs) {
+        $salt = $mo->la()->range(array_product($full_output_shape),dtype:NDArray::float32)
+                ->reshape($full_output_shape);
+        $salt = $g->Variable($salt);
+        [$outputsVariable, $resultValiable] = $nn->with($tape=$g->GradientTape(),
+            function() use ($g,$layer,$inputs,$salt) {
                 $outputsVariable = $layer->forward($inputs);
-                return $outputsVariable;
+                $resultValiable = $g->mul($outputsVariable,$salt);
+                return [$outputsVariable, $resultValiable];
             }
         );
         $outputs = $K->ndarray($outputsVariable);
         $inputs = $K->ndarray($inputs);
+        #echo "inputs: ".$mo->toString($inputs,indent:true)."\n";
+        #echo "outputs: ".$mo->toString($outputs,indent:true)."\n";
+
         // 2 output x 4 batch
         $this->assertEquals([4,2],$outputs->shape());
         $this->assertTrue($fn->isclose($mo->array([
-                [0.9, 0.6],
-                [0.9, 0.6],
-                [0.9, 0.6],
-                [0.9, 0.6],
+                [0.8, 0.8],
+                [0.8, 0.8],
+                [0.8, 0.8],
+                [0.8, 0.8],
             ]),$outputs
         ));
         $this->assertEquals($copyInputs->toArray(),$inputs->toArray());
@@ -440,25 +456,30 @@ class EinsumDenseTest extends TestCase
         // backward
         //
         // 2 output x 4 batch
-        $dOutputs = $mo->array([
-            [1.0, 1.0],
-            [1.0, 1.0],
-            [1.0, 1.0],
-            [1.0, 1.0],
-        ]);
-        $copydOutputs = $mo->copy($dOutputs);
-        $dOutputs = $K->array($dOutputs);
+        $dResultValiable = $K->ones($resultValiable->shape());
+        //$dOutputs = $salt;
+        [$dOutputs,$dSalt] = $resultValiable->creator()->backward([$dResultValiable]);
+        $this->assertEquals($outputsVariable->shape(),$dOutputs->shape());
+        $this->assertEquals($resultValiable->shape(),$dSalt->shape());
+        $this->assertTrue($mo->la()->isclose(
+            $dOutputs,$salt
+        ));
+        $this->assertTrue($mo->la()->isclose(
+            $dSalt,$outputs
+        ));
+        $copydOutputs = $K->copy($dOutputs);
         [$dInputs] = $outputsVariable->creator()->backward([$dOutputs]);
         $dInputs = $K->ndarray($dInputs);
         $dOutputs = $K->ndarray($dOutputs);
+        #echo "dInputs: ".$mo->toString($dInputs,indent:true)."\n";
         // 3 input x 4 batch
         $this->assertEquals([4,3],$dInputs->shape());
         $this->assertTrue($fn->isclose($mo->array([
-                [0.3, 0.2, 0.4],
-                [0.3, 0.2, 0.4],
-                [0.3, 0.2, 0.4],
-                [0.3, 0.2, 0.4],
-            ]),$dInputs
+                [1.0, 1.0 ,1.0],
+                [5.0, 5.0 ,5.0],
+                [9.0, 9.0 ,9.0],
+                [13.0, 13.0, 13.0]
+            ]), $dInputs
         ));
         $this->assertEquals($copydOutputs->toArray(),$dOutputs->toArray());
     }

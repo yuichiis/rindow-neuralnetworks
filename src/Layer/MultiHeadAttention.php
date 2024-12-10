@@ -239,7 +239,7 @@ class MultiHeadAttention extends AbstractAttentionLayer
         $common_args = $this->get_common_args();
         //echo "common_args=";
         //var_dump($common_args);
-        //echo "query_einsum=$einsum_equation\n";                 // ab.c,c.de->ab.de    =>  gemm(x,y)
+        echo "query_einsum=$einsum_equation\n";                 // ab.c,c.de->ab.de    =>  gemm(x,y)
         $this->query_dense = new EinsumDense(
             $this->backend,
             $einsum_equation,
@@ -272,7 +272,7 @@ class MultiHeadAttention extends AbstractAttentionLayer
         [$einsum_equation, $bias_axes, $output_rank] = $this->build_proj_equation(
             $key_rank, bound_dims:1, output_dims:2
         );
-        //echo "key_einsum=$einsum_equation\n";                   // ab.c,c.de->ab.de    =>  gemm(x,y)
+        echo "key_einsum=$einsum_equation\n";                   // ab.c,c.de->ab.de    =>  gemm(x,y)
         //echo "common_args=";
         //var_dump($common_args);
         $this->key_dense = new EinsumDense(
@@ -307,7 +307,7 @@ class MultiHeadAttention extends AbstractAttentionLayer
         [$einsum_equation, $bias_axes, $output_rank] = $this->build_proj_equation(
             $value_rank, bound_dims:1, output_dims:2
         );
-        //echo "value_einsum=$einsum_equation\n";                 // ab.c,c.de->ab.de    =>  gemm(x,y)
+        echo "value_einsum=$einsum_equation\n";                 // ab.c,c.de->ab.de    =>  gemm(x,y)
         //echo "common_args=";
         //var_dump($common_args);
         $this->value_dense = new EinsumDense(
@@ -481,7 +481,7 @@ class MultiHeadAttention extends AbstractAttentionLayer
         // kernel:  (numHeads, valueDim, Dim)
         // output:  ((Batch), (TargetSeq), Dim)
 
-        //echo "output_einsum=$einsum_equation\n";        //  abcd,cde->abe
+        echo "output_einsum=$einsum_equation\n";        //  abcd,cde->abe
         return new EinsumDense(
             $this->backend,
             $einsum_equation,
@@ -523,6 +523,8 @@ class MultiHeadAttention extends AbstractAttentionLayer
             $this->backward_combine_value_equation,
             $attn_scores_rank,
         ] = $this->build_attention_equation($rank, attn_axes:$this->attention_axes);
+        echo "dot_product_equation: ".$this->dot_product_equation."\n";
+        echo "combine_equation: ".$this->combine_equation."\n";
         //echo "attn_scores_rank=$attn_scores_rank\n";
         $norm_axes = range(
             $attn_scores_rank - count($this->attention_axes), $attn_scores_rank-1
@@ -644,6 +646,12 @@ class MultiHeadAttention extends AbstractAttentionLayer
     ) : array
     {
         $K = $this->backend;
+        $mo = $this->backend->localMatrixOperator();
+
+        //echo "query: ".$mo->toString($query,indent:true)."\n";
+        //echo "key: ".$mo->toString($key,indent:true)."\n";
+        //echo "value: ".$mo->toString($value,indent:true)."\n";
+
         $dValue = $K->einsum($this->backward_combine_value_equation, $dAttention_output, $final_attn_scores);
         $dScores = $K->einsum($this->backward_combine_scores_equation, $dAttention_output, $value);
 
@@ -656,13 +664,17 @@ class MultiHeadAttention extends AbstractAttentionLayer
         //echo "combine_dScore_equation: ".$this->backward_combine_scores_equation."\n";
         //echo "value=(".implode(',',$value->shape()).")\n";
         //echo "dOutput=(".implode(',',$dAttention_output->shape()).")\n";
-        //echo "dScores=(".implode(',',$dScores->shape()).")\n";
+        echo "dScores=(".implode(',',$dScores->shape()).")\n";
 
         $dScores = $K->dSoftmax($dScores, $final_attn_scores);
 
+        //echo "dot_product_equation: ".$this->dot_product_equation."\n";
+        //echo "backward_dot_product_key_equation: ".$this->backward_dot_product_key_equation."\n";
+        //echo "backward_dot_product_query_equation: ".$this->backward_dot_product_query_equation."\n";
         $dKey = $K->einsum($this->backward_dot_product_key_equation, $dScores, $query);
         $dQuery = $K->einsum($this->backward_dot_product_query_equation, $dScores, $key);
 
+        //echo "inverse_sqrt_key_dim: ".$this->inverse_sqrt_key_dim."\n";
         $dQuery = $K->scale(
             $this->inverse_sqrt_key_dim,
             $dQuery,
@@ -758,6 +770,8 @@ class MultiHeadAttention extends AbstractAttentionLayer
     ) : NDArray|array
     {
         $K = $this->backend;
+        $mo = $this->backend->localMatrixOperator();
+
         $container = $this->container();
         $query = $inputs[0] ?? null;
         $value = $inputs[1] ?? null;
@@ -781,6 +795,14 @@ class MultiHeadAttention extends AbstractAttentionLayer
                 useCausalMask:$useCausalMask,
         );
     
+        echo "query equation: ". $this->query_dense->getEquation()."\n";
+        echo "key equation: ". $this->key_dense->getEquation()."\n";
+        echo "value equation: ". $this->value_dense->getEquation()."\n";
+        echo "output equation: ". $this->output_dense->getEquation()."\n";
+        //echo "query before dense: ".$mo->toString($query,indent:true)."\n";
+        //echo "key: ".$mo->toString($key,indent:true)."\n";
+        //echo "value: ".$mo->toString($value,indent:true)."\n";
+
         #   N = `num_attention_heads`
         #   H = `size_per_head`
         # `query` = [B, T, N ,H]
@@ -792,12 +814,18 @@ class MultiHeadAttention extends AbstractAttentionLayer
         # `value` = [B, S, N, H]
         $value = $this->value_dense->_rawCall([$value],['training'=>$training])[0];
     
+        //echo "query after dense: ".$mo->toString($query,indent:true)."\n";
+        //echo "key: ".$mo->toString($key,indent:true)."\n";
+        //echo "value: ".$mo->toString($value,indent:true)."\n";
+
         [$attention_output, $attention_scores] = $this->compute_attention(
                 $query, $key, $value, $attention_mask, $training
         );
         $container->attention_output = $attention_output;
 
+        echo "attention_output before dense: ".$mo->toString($attention_output,indent:true)."\n";
         $attention_output = $this->output_dense->_rawCall([$attention_output],['training'=>$training])[0];
+        echo "attention_output after dense: ".$mo->toString($attention_output,indent:true)."\n";
 
         $container->attention_mask = $attention_mask;
         $container->training = $training;
@@ -805,6 +833,12 @@ class MultiHeadAttention extends AbstractAttentionLayer
         $container->key = $key;
         $container->value = $value;
         $container->attention_scores = $attention_scores;
+
+        $mo = $this->backend->localMatrixOperator();
+
+        //echo "query: ".$mo->toString($query,indent:true)."\n";
+        //echo "key: ".$mo->toString($key,indent:true)."\n";
+        //echo "value: ".$mo->toString($value,indent:true)."\n";
 
         if($returnAttentionScores) {
             return [$attention_output, $attention_scores];
@@ -814,9 +848,12 @@ class MultiHeadAttention extends AbstractAttentionLayer
     
     protected function differentiate(NDArray $dOutputs) : array
     {
+        $mo = $this->backend->localMatrixOperator();
+        //echo "dOutputs: ".$mo->toString($dOutputs,indent:true)."\n";
         $container = $this->container();
 
         $dAttention_output = $this->output_dense->_rawDifferentiate([$dOutputs])[0];
+        #echo "dAttention_output: ".$mo->toString($dAttention_output,indent:true)."\n";
 
         [$dQuery, $dKey, $dValue] = $this->compute_differntiate_attention(
             $dAttention_output,
@@ -829,9 +866,15 @@ class MultiHeadAttention extends AbstractAttentionLayer
             $container->training
         );
 
+        echo "============================================\n";
+        echo "dQuery before dense->df(): ".$mo->toString($dQuery,indent:true)."\n";
+
         $dValue = $this->value_dense->_rawDifferentiate([$dValue])[0];
         $dQuery = $this->query_dense->_rawDifferentiate([$dQuery])[0];
         $dKey   = $this->key_dense->_rawDifferentiate([$dKey])[0];
+
+        #echo "============================================\n";
+        #echo "dQuery after dense->df(): ".$mo->toString($dQuery,indent:true)."\n";
 
         $results = [$dQuery, $dValue];
         if(!$container->sameKey) {
@@ -1199,7 +1242,7 @@ class MultiHeadAttention extends AbstractAttentionLayer
             array_slice($input_shape,0,($output_rank - count($known_last_dims))),
             $known_last_dims
         );
-        //echo "output_shape=(".implode(',',$output_shape).")\n";
+        echo "output_shape=(".implode(',',$output_shape).")\n";
         return $output_shape;
     }
 }
