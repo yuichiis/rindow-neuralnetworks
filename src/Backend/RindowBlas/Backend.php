@@ -1203,7 +1203,8 @@ class Backend
         } else {
             $orig = $shape = $X->shape();
             $inputDim = array_pop($shape);
-            $X = $X->reshape([(int)array_product($shape),$inputDim]);
+            $batches = (int)array_product($shape);
+            $X = $X->reshape([$batches,$inputDim]);
             $y = $la->softmax($la->copy($X));
             return $y->reshape($orig);
         }
@@ -1235,19 +1236,20 @@ class Backend
         }
 
         // softmax:  yk      = exp(ak) / sumj(exp(aj))
-        // dsoftmax: dyk/daj =  yk * (1 - yj): j=k , -yk * yj : j!=k
-        //                   =  yk * (I(kj) - yj)  ; I(kj) -> 1:k=j, 0:k!=j
-        //                   =
+        // dsoftmax: dyk/daj = [  yk * (1 - yj) : j=k,
+        //                       -yk * yj       : j!=k ]
+        //                   =  yk * (I(kj) - yj)  ; [ I(kj) -> 1:k=j,
+        //                                                      0:k!=j ]
 
         // dx = (y * dy) - sum(y * dy) * y
         $dx = $la->multiply($outputs, $la->copy($dOutputs));
         $shape = $orgShape = $dx->shape();
-        $n = array_pop($shape);
-        $m = (int)array_product($shape);
-        $dx = $dx->reshape([$m,$n]);
+        $inputDim = array_pop($shape);
+        $batches = (int)array_product($shape);
+        $dx = $dx->reshape([$batches,$inputDim]);
         $dInputs = $la->axpy(
             $la->multiply($la->reduceSum($dx, axis:-1),
-                                $la->copy($outputs->reshape([$m,$n])),$trans=true),$dx,-1.0);
+                                $la->copy($outputs->reshape([$batches,$inputDim])),$trans=true),$dx,-1.0);
         //$dInputs = $this->la->scal(1/$dOutputs->shape()[0],$dInputs);
         return $dInputs->reshape($orgShape);
     }

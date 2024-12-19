@@ -552,8 +552,8 @@ class MultiHeadAttention extends AbstractAttentionLayer
             # The expand dim happens starting from the `num_heads` dimension,
             # (<batch_dims>, num_heads, <query_attention_dims,
             # key_attention_dims>)
-            echo "attention_scores=(".implode(',',$attention_scores->shape()).")\n";
-            echo "attention_mask=(".implode(',',$attention_mask->shape()).")\n";
+            //echo "attention_scores=(".implode(',',$attention_scores->shape()).")\n";
+            //echo "attention_mask=(".implode(',',$attention_mask->shape()).")\n";
             //$mask_expansion_axis = -count($this->attention_axes) * 2 - 1;
             //echo "mask_expansion_axis=".$mask_expansion_axis."\n";
             //$n = $attention_scores->ndim() - $attention_mask->ndim();
@@ -602,6 +602,7 @@ class MultiHeadAttention extends AbstractAttentionLayer
     ) : array
     {
         $K = $this->backend;
+        $mo = $this->backend->localMatrixOperator();
         # Note: Applying scalar multiply at the smaller end of einsum improves
         # XLA performance, but may introduce slight numeric differences in
         # the Transformer attention head.    
@@ -614,9 +615,12 @@ class MultiHeadAttention extends AbstractAttentionLayer
         # attention scores.
         $attention_scores = $K->einsum($this->dot_product_equation, $key, $query);
     
+        #echo "attention_scores: ".$mo->toString($attention_scores,format:'%10.7e',indent:true)."\n";
         $attention_scores = $this->masked_softmax(
             $attention_scores, $attention_mask, $training
         );
+        #echo "softmax_attention_scores: ".$mo->toString($attention_scores,format:'%10.7e',indent:true)."\n";
+        
         # This is actually dropping out entire tokens to attend to, which might
         # seem a bit unusual, but is taken from the original Transformer paper.
         if($this->dropout!==null) {
@@ -664,9 +668,14 @@ class MultiHeadAttention extends AbstractAttentionLayer
         //echo "combine_dScore_equation: ".$this->backward_combine_scores_equation."\n";
         //echo "value=(".implode(',',$value->shape()).")\n";
         //echo "dOutput=(".implode(',',$dAttention_output->shape()).")\n";
-        echo "dScores=(".implode(',',$dScores->shape()).")\n";
+        //echo "dSoftmax_scores=(".implode(',',$dScores->shape()).")\n";
+        //echo ": ".$mo->toString($dScores,indent:true)."\n";
 
-        $dScores = $K->dSoftmax($dScores, $final_attn_scores);
+        //$dScores = $K->dSoftmax($dScores, $final_attn_scores);
+        $dScores = $this->softmax_layer->_rawDifferentiate([$dScores])[0];
+
+        //echo "dScores=(".implode(',',$dScores->shape()).")";
+        //echo ": ".$mo->toString($dScores,format:'%10.7e',indent:true)."\n";
 
         //echo "dot_product_equation: ".$this->dot_product_equation."\n";
         //echo "backward_dot_product_key_equation: ".$this->backward_dot_product_key_equation."\n";
@@ -806,7 +815,9 @@ class MultiHeadAttention extends AbstractAttentionLayer
         #   N = `num_attention_heads`
         #   H = `size_per_head`
         # `query` = [B, T, N ,H]
+        //echo "query: ".$mo->toString($query,indent:true)."\n";
         $query = $this->query_dense->_rawCall([$query],['training'=>$training])[0];
+        //echo "query_: ".$mo->toString($query,format:'%14.7f',indent:true)."\n";
     
         # `key` = [B, S, N, H]
         $key = $this->key_dense->_rawCall([$key],['training'=>$training])[0];
@@ -823,9 +834,9 @@ class MultiHeadAttention extends AbstractAttentionLayer
         );
         $container->attention_output = $attention_output;
 
-        echo "attention_output before dense: ".$mo->toString($attention_output,indent:true)."\n";
+        //echo "attention_output before dense: ".$mo->toString($attention_output,indent:true)."\n";
         $attention_output = $this->output_dense->_rawCall([$attention_output],['training'=>$training])[0];
-        echo "attention_output after dense: ".$mo->toString($attention_output,indent:true)."\n";
+        //echo "attention_output after dense: ".$mo->toString($attention_output,indent:true)."\n";
 
         $container->attention_mask = $attention_mask;
         $container->training = $training;
@@ -833,8 +844,6 @@ class MultiHeadAttention extends AbstractAttentionLayer
         $container->key = $key;
         $container->value = $value;
         $container->attention_scores = $attention_scores;
-
-        $mo = $this->backend->localMatrixOperator();
 
         //echo "query: ".$mo->toString($query,indent:true)."\n";
         //echo "key: ".$mo->toString($key,indent:true)."\n";
@@ -853,7 +862,7 @@ class MultiHeadAttention extends AbstractAttentionLayer
         $container = $this->container();
 
         $dAttention_output = $this->output_dense->_rawDifferentiate([$dOutputs])[0];
-        #echo "dAttention_output: ".$mo->toString($dAttention_output,indent:true)."\n";
+        //echo "dAttention_output: ".$mo->toString($dAttention_output,indent:true)."\n";
 
         [$dQuery, $dKey, $dValue] = $this->compute_differntiate_attention(
             $dAttention_output,
@@ -866,15 +875,15 @@ class MultiHeadAttention extends AbstractAttentionLayer
             $container->training
         );
 
-        echo "============================================\n";
-        echo "dQuery before dense->df(): ".$mo->toString($dQuery,indent:true)."\n";
+        //echo "============================================\n";
+        //echo "dQuery before dense->df(): ".$mo->toString($dQuery,indent:true)."\n";
 
         $dValue = $this->value_dense->_rawDifferentiate([$dValue])[0];
         $dQuery = $this->query_dense->_rawDifferentiate([$dQuery])[0];
         $dKey   = $this->key_dense->_rawDifferentiate([$dKey])[0];
 
-        #echo "============================================\n";
-        #echo "dQuery after dense->df(): ".$mo->toString($dQuery,indent:true)."\n";
+        //echo "============================================\n";
+        //echo "dQuery after dense->df(): ".$mo->toString($dQuery,indent:true)."\n";
 
         $results = [$dQuery, $dValue];
         if(!$container->sameKey) {

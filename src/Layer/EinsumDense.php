@@ -264,9 +264,11 @@ class EinsumDense extends AbstractLayer
                     $this->bias = $sampleWeights[1];
                 }
             } else {
+                $fan_in = (int)array_product($this->inputShape);
+                $fan_out = (int)array_product($this->partial_output_shape);
                 $this->kernel = $kernelInitializer(
                     $kernel_shape,
-                    $kernel_shape);
+                    [$fan_in,$fan_out]);
                 if($this->useBias) {
                     $this->bias = $biasInitializer(
                         $bias_shape);

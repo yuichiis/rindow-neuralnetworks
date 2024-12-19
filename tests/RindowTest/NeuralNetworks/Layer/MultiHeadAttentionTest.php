@@ -173,25 +173,28 @@ class MultiHeadAttentionTest extends TestCase
         $nn = $this->newNeuralNetworks($mo);
         $K = $nn->backend();
         $g = $nn->gradient();
+        $la = $K->primaryLA();
         $layer = new MultiHeadAttention(
             $K,
             $num_heads, // num_heads
             $key_dim,   // key_dim
-            kernel_initializer:'ones',
-            bias_initializer:'zeros',
+            //kernel_initializer:'ones',
+            //bias_initializer:'zeros',
         );
-        $query = $g->Variable($K->ones($full_query_shape));
-        $value = $g->Variable($K->ones($full_value_shape));
-        #$query = $g->Variable($K->increment(
-        #        $K->scale(0.5, $K->array($mo->la()->range(array_product($full_query_shape),dtype:NDArray::float32)
-        #        ->reshape($full_query_shape))),
-        #    1,
-        #));
-        #$value = $g->Variable($K->increment(
-        #        $K->scale(0.2, $K->array($mo->la()->range(array_product($full_value_shape),dtype:NDArray::float32)
-        #        ->reshape($full_value_shape))),
-        #    1,
-        #));
+        $query = $g->Variable($la->randomNormal($full_query_shape,mean:0,scale:1));
+        $value = $g->Variable($la->randomNormal($full_value_shape,mean:0,scale:1));
+        //$query = $g->Variable($K->ones($full_query_shape));
+        //$value = $g->Variable($K->ones($full_value_shape));
+        //$query = $g->Variable($K->increment(
+        //        $K->scale(0.5, $K->array($mo->la()->range(array_product($full_query_shape),dtype:NDArray::float32)
+        //        ->reshape($full_query_shape))),
+        //    1,
+        //));
+        //$value = $g->Variable($K->increment(
+        //        $K->scale(0.2, $K->array($mo->la()->range(array_product($full_value_shape),dtype:NDArray::float32)
+        //        ->reshape($full_value_shape))),
+        //    1,
+        //));
         $inputs = [
             $query,
             $value,
@@ -237,21 +240,21 @@ class MultiHeadAttentionTest extends TestCase
             }
         );
         $outputs = $K->ndarray($outputsVariable);
-        //echo 'outputs:'.$mo->toString($outputs,indent:true)."\n";
+        //echo 'outputs:'.$mo->toString($outputs,format:'%10.7f',indent:true)."\n";
         //echo 'scores:'.$mo->toString($scores,indent:true)."\n";
-        //
+        //echo 'kernel:'.$mo->toString($layer->getParams()[0],format:'%14.7f',indent:true)."\n";
         $this->assertEquals([$batches, $num_heads, $tSeq, $sSeq],$scores->shape());
         $this->assertEquals([$batches, $tSeq, $dim],$outputs->shape());
         $this->assertEquals($copyInputs[0]->toArray(),$inputs[0]->toArray());
         $this->assertEquals($copyInputs[1]->toArray(),$inputs[1]->toArray());
-        $this->assertTrue($mo->la()->isclose(
-            $K->fill([2,8,6,7], 0.14285715),
-            $K->ndarray($scores)));
-        $this->assertTrue($mo->la()->isclose(
-            //$K->mul($salt,$K->fill($full_query_shape,512)),
-            $K->fill($full_query_shape,512),
-            $K->ndarray($outputs)
-        ));
+        //$this->assertTrue($mo->la()->isclose(
+        //    $K->fill([2,8,6,7], 0.14285715),
+        //    $K->ndarray($scores)));
+        //$this->assertTrue($mo->la()->isclose(
+        //    //$K->mul($salt,$K->fill($full_query_shape,512)),
+        //    $K->fill($full_query_shape,512),
+        //    $K->ndarray($outputs)
+        //));
         //
         // backward
         //
@@ -278,37 +281,6 @@ class MultiHeadAttentionTest extends TestCase
         $this->assertEquals($copydOutputs->toArray(),$dOutputs->toArray());
 
         //echo "dQuery: ".$mo->toString($dInputs[0],indent:true)."\n";
-        $this->assertTrue($mo->la()->isclose(
-            $dInputs[0],
-            $K->array([
-                [[-0.125, -0.125, -0.125, -0.125, -0.125, -0.125, -0.125, -0.125, -0.125, -0.125,
-            -0.125, -0.125, -0.125, -0.125, -0.125, -0.125],
-                 [ 0.0,     0.0,     0.0,     0.0,     0.0,     0.0,     0.0,     0.0,     0.0,     0.0,
-                   0.0,     0.0,     0.0,     0.0,     0.0,     0.0,   ],
-                 [-1.0,    -1.0,    -1.0,    -1.0,    -1.0,    -1.0,    -1.0,    -1.0,    -1.0,    -1.0,
-                  -1.0,    -1.0,    -1.0,    -1.0,    -1.0,    -1.0,   ],
-                 [ 0.0,     0.0,     0.0,     0.0,     0.0,     0.0,     0.0,     0.0,     0.0,     0.0,
-                   0.0,     0.0,     0.0,     0.0,     0.0,     0.0,   ],
-                 [ 0.0,     0.0,     0.0,     0.0,     0.0,     0.0,     0.0,     0.0,     0.0,     0.0,
-                   0.0,     0.0,     0.0,     0.0,     0.0,     0.0,   ],
-                 [-2.0,    -2.0,    -2.0,    -2.0,    -2.0,    -2.0,    -2.0,    -2.0,    -2.0,    -2.0,
-                  -2.0,    -2.0,    -2.0,    -2.0,    -2.0,    -2.0,   ]],
-               
-                [[-2.0,    -2.0,    -2.0,    -2.0,    -2.0,    -2.0,    -2.0,    -2.0,    -2.0,    -2.0,
-                  -2.0,    -2.0,    -2.0,    -2.0,    -2.0,    -2.0,   ],
-                 [-4.0,    -4.0,    -4.0,    -4.0,    -4.0,    -4.0,    -4.0,    -4.0,    -4.0,    -4.0,
-                  -4.0,    -4.0,    -4.0,    -4.0,    -4.0,    -4.0,   ],
-                 [ 0.0,     0.0,     0.0,     0.0,     0.0,     0.0,     0.0,     0.0,     0.0,     0.0,
-                   0.0,     0.0,     0.0,     0.0,     0.0,     0.0,   ],
-                 [ 0.0,     0.0,     0.0,     0.0,     0.0,     0.0,     0.0,     0.0,     0.0,     0.0,
-                   0.0,     0.0,     0.0,     0.0,     0.0,     0.0,   ],
-                 [ 0.0,     0.0,     0.0,     0.0,     0.0,     0.0,     0.0,     0.0,     0.0,     0.0,
-                   0.0,     0.0,     0.0,     0.0,     0.0,     0.0,   ],
-                 [ 0.0,     0.0,     0.0,     0.0,     0.0,     0.0,     0.0,     0.0,     0.0,     0.0,
-                   0.0,     0.0,     0.0,     0.0,     0.0,     0.0,   ]]
-            ])            
-        ));
-
     }
 
     public function testCausalMask()

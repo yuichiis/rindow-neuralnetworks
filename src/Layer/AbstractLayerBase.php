@@ -375,4 +375,17 @@ abstract class AbstractLayerBase implements Layer
     {
         return isset($this->callOptions[$name]);
     }
+
+    /**
+     * @param array<NDArray>|NDArray $inputs
+     * @param array<NDArray>|NDArray $previousMask
+     * @return array<NDArray>|NDArray
+     */
+    public function computeMask(
+        array|NDArray $inputs,
+        array|NDArray $previousMask
+        ) : array|NDArray
+    {
+        return $previousMask;
+    }
 }

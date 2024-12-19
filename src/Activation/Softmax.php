@@ -9,9 +9,13 @@ class Softmax extends AbstractActivation
     protected function call(NDArray $inputs, bool $training=null, NDArray $mask=null) : NDArray
     {
         $K = $this->backend;
-        if(!$mask) {
+        if($mask===null) {
+            //echo "No mask\n";
+            //echo "inputs=".$K->localMatrixOperator()->shapeToString($inputs->shape())."\n";
+            //echo $K->localMatrixOperator()->toString($inputs,indent:true)."\n";
             $outputs = $K->softmax($inputs);
             $this->states->outputs = $outputs;
+            //echo "outputs=".$K->localMatrixOperator()->shapeToString($outputs->shape())."\n";
             return $outputs;
         }
         //
@@ -97,6 +101,11 @@ class Softmax extends AbstractActivation
     protected function differentiate(NDArray $dOutputs) : NDArray
     {
         $K = $this->backend;
-        return $K->dSoftmax($dOutputs, $this->states->outputs);
+        //echo "dsoftmax:dOutputs=".$K->localMatrixOperator()->shapeToString($dOutputs->shape())."\n";
+        //echo $K->localMatrixOperator()->toString($dOutputs,indent:true)."\n";
+        //echo "outputs=".$K->localMatrixOperator()->toString($this->states->outputs,'%10.7e',indent:true)."\n";
+        $dInputs = $K->dSoftmax($dOutputs, $this->states->outputs);
+        //echo "dInputs=".$K->localMatrixOperator()->toString($dInputs,'%10.7e',indent:true)."\n";
+        return $dInputs;
     }
 }

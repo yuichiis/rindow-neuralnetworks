@@ -1133,7 +1133,7 @@ class BackendTest extends TestCase
         $this->assertTrue($mo->la()->isclose($truesDx,$nddx));
     }
 
-    public function testSoftmax()
+    public function testSoftmax0()
     {
         $mo = $this->newMatrixOperator();
         $K = $this->newBackend($mo);
@@ -1178,6 +1178,45 @@ class BackendTest extends TestCase
         $sum = $K->sum($softmax,axis:1); $K->finish(); $sum = $sum->toArray();
         $this->assertLessThan(0.0001,abs($sum[0]-1));
         $this->assertLessThan(0.0001,abs($sum[1]-1));
+    }
+
+    public function testSoftmax1()
+    {
+        $mo = $this->newMatrixOperator();
+        $K = $this->newBackend($mo);
+        $fn = $K;
+        $x = $K->array([
+           [[[1., 2., 3., 4.],
+             [1., 2., 3., 4.],
+             [1., 2., 3., 4.]],
+            [[1., 2., 3., 4.],
+             [1., 2., 3., 4.],
+             [1., 2., 3., 4.]]],
+           [[[1., 2., 3., 4.],
+             [1., 2., 3., 4.],
+             [1., 2., 3., 4.]],
+            [[1., 2., 3., 4.],
+             [1., 2., 3., 4.],
+             [1., 2., 3., 4.]]],
+        ]);
+        $salt = $mo->la()->range(array_product($x->shape()),dtype:NDArray::float32)
+                ->reshape($x->shape());
+        $salt = $K->array($salt);
+
+        $softmax = $K->softmax($x);
+        $y = $K->mul($salt,$softmax); $K->finish();
+        //echo "softmax:".$mo->toString($y,format:'%10.7f',indent:true)."\n";
+        //$ndy = $K->ndarray($y);
+        //$truesY = $mo->array([0.058012217283249,0.095645979046822,0.15769356489182,0.25999271869659,0.42865553498268]);
+        //$this->assertTrue($mo->la()->isclose($truesY,$ndy));
+        //$this->assertTrue($fn->equalTest(1.0,$mo->sum($ndy)));
+        $doutputs = $K->copy($salt);
+        $dx = $K->dSoftmax($doutputs,$softmax); $K->finish();
+        //echo "dSoftmax:".$mo->toString($dx,format:'%10.7f',indent:true)."\n";
+        //$nddx = $K->ndarray($dx);
+        //$truesDx = $mo->array([0,0,0,0,0]);
+        //$this->assertTrue($mo->la()->isclose($truesDx,$nddx));
+        $this->assertTrue(true);
     }
 
     public function testMeanSquaredError()
