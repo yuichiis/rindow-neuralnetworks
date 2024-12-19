@@ -27,13 +27,13 @@ class Embedding extends AbstractLayer
         int $outputDim,
         int $input_length=null,
         string|callable $kernel_initializer=null,
+        bool $mask_zero=null,
         string $name=null,
     )
     {
         // defaults
-        $input_length = $input_length ?? null;
-        $kernel_initializer = $kernel_initializer ?? 'random_uniform';
-        $name = $name ?? null;
+        $kernel_initializer ??= 'random_uniform';
+        $mask_zero ??= false;
         
         parent::__construct($backend);
         $K = $backend;
@@ -45,6 +45,7 @@ class Embedding extends AbstractLayer
         $this->outputDim = $outputDim;
         $this->kernelInitializer = $K->getInitializer($kernel_initializer);
         $this->kernelInitializerName = $this->toStringName($kernel_initializer);
+        $this->maskZero = $mask_zero;
         $this->initName($name,'embedding');
         $this->allocateWeights(1);
     }
@@ -207,6 +208,19 @@ class Embedding extends AbstractLayer
         );//dummy
     }
 
+    public function computeMask(
+        array|NDArray $inputs,
+        array|NDArray $previousMask
+        ) : array|NDArray
+    {
+        if(!$this->maskZero) {
+            return $previousMask;
+        }
+        if(!($inputs instanceof NDArray)) {
+            throw new InvalidArgumentException('inputs must be NDArray');
+        }
+        return $previousMask;
+    }
 
     //protected function call(NDArray $inputs, bool $training=null) : NDArray
     //{
