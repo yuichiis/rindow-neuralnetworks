@@ -747,6 +747,7 @@ class MultiHeadAttention extends AbstractAttentionLayer
                 attention_mask:$attention_mask,
                 useCausalMask:$rawUseCausalMask,
             );
+            $rawOutputs = $this->makeMultiMaskedValues($rawInputs, $rawOutputs);
             if($returnAttentionScores){
                 $this->assertOutputShape($rawOutputs[0],'forward');
                 $this->assertScoresShape($rawOutputs[1],'forward');

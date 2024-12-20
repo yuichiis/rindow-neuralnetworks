@@ -6,6 +6,7 @@ use Rindow\Math\Matrix\MatrixOperator;
 use Rindow\Math\Matrix\Drivers\Service;
 use Rindow\NeuralNetworks\Builder\NeuralNetworks;
 use Rindow\NeuralNetworks\Gradient\Core\MaskedNDArray;
+use Rindow\NeuralNetworks\Gradient\MaskedNDArray as MaskedNDArrayInterface;
 use Interop\Polite\Math\Matrix\NDArray;
 use Interop\Polite\Math\Matrix\Buffer;
 
@@ -26,6 +27,11 @@ class MaskedNDArrayTest extends TestCase
         return $nn->backend();
     }
 
+    protected function maskedValue(NDArray $value, NDArray $mask) : MaskedNDArrayInterface
+    {
+        return new MaskedNDArray($value,$mask);
+    }
+
     public function testVariableNormal()
     {
         $mo = $this->newMatrixOperator();
@@ -34,7 +40,7 @@ class MaskedNDArrayTest extends TestCase
 
         $value = $K->array([1,2,3,4], NDArray::float32);
         $mask = $K->array([true,false,true,false], NDArray::bool);
-        $a = $K->maskedValue($value,$mask);
+        $a = $this->maskedValue($value,$mask);
         $b = $K->array([2,3,4,5], NDArray::float32);
 
         $c = $K->add($a,$b);
@@ -53,7 +59,7 @@ class MaskedNDArrayTest extends TestCase
 
         $value = $K->array([[1,2],[3,4]], NDArray::float32);
         $mask = $K->array([[true,false],[true,false]], NDArray::bool);
-        $a = $K->maskedValue($value,$mask);
+        $a = $this->maskedValue($value,$mask);
 
         $this->assertEquals([2,2], $a->shape());
         $this->assertEquals(2,   $a->ndim());
@@ -74,7 +80,7 @@ class MaskedNDArrayTest extends TestCase
 
         $value = $K->array([[1,2],[3,4]], NDArray::float32);
         $mask = $K->array([[true,false],[true,false]], NDArray::bool);
-        $a = $K->maskedValue($value,$mask);
+        $a = $this->maskedValue($value,$mask);
 
         $this->assertEquals(2, $a->count());
         $this->assertInstanceOf(Service::class, $a->service());
@@ -88,7 +94,7 @@ class MaskedNDArrayTest extends TestCase
 
         $value = $K->array([1,2,3,4], NDArray::float32);
         $mask = $K->array([true,false,true,false], NDArray::bool);
-        $a = $K->maskedValue($value,$mask);
+        $a = $this->maskedValue($value,$mask);
 
         $c = clone $a;
         $this->assertEquals(MaskedNDArray::class, get_class($c));

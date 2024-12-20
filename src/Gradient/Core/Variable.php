@@ -10,6 +10,7 @@ use Interop\Polite\Math\Matrix\NDArray;
 use Rindow\NeuralNetworks\Gradient\Variable as VariableInterface;
 use Rindow\NeuralNetworks\Gradient\ArrayShape as ArrayShapeInterface;
 use Rindow\NeuralNetworks\Gradient\Scalar as ScalarInterface;
+use Rindow\NeuralNetworks\Gradient\MaskedNDArray as MaskedNDArrayInterface;
 
 
 class Variable implements VariableInterface
@@ -56,9 +57,12 @@ class Variable implements VariableInterface
         if($value instanceof NDArray) {
             if($reference) {
                 $this->value = $value;
-            } else {                                        // Copying NDArray before
-                $this->value = $K->copy($K->array($value)); // translate from NDArray to NDArrayCL
-            }                                               // if Backend is OpenCL.
+            } else {                                            // Copying NDArray before
+                $this->value = $K->copy($K->array($value));     // translate from NDArray to NDArrayCL
+                if($value instanceof MaskedNDArrayInterface) {  // if Backend is OpenCL.
+                    $this->value = new MaskedNDArray($this->value,$value->mask());
+                }
+            }
         } elseif(is_bool($value)) {
             $this->value = $value;
         } elseif(is_array($value)||is_numeric($value)) {
@@ -72,16 +76,6 @@ class Variable implements VariableInterface
         }
         $this->mask = $mask;
         $this->undetermined = false;
-    }
-
-    public function mask() : NDArray
-    {
-        return $this->mask;
-    }
-
-    public function setMask(NDArray $mask) : void
-    {
-        $this->mask = $mask;
     }
 
     public function isTrainable() : bool

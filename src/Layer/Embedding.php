@@ -14,6 +14,7 @@ class Embedding extends AbstractLayer
     protected mixed $kernelInitializer;
     protected ?string $kernelInitializerName;
     protected ?int $inputDtype=NDArray::int32;
+    protected bool $maskZero;
 
     protected ?NDArray $kernel=null;
     protected NDArray $dKernel;
@@ -210,16 +211,18 @@ class Embedding extends AbstractLayer
 
     public function computeMask(
         array|NDArray $inputs,
-        array|NDArray $previousMask
-        ) : array|NDArray
+        array|NDArray|null $previousMask
+        ) : array|NDArray|null
     {
+        $K = $this->backend;
         if(!$this->maskZero) {
             return $previousMask;
         }
         if(!($inputs instanceof NDArray)) {
             throw new InvalidArgumentException('inputs must be NDArray');
         }
-        return $previousMask;
+        $mask = $K->cast($inputs,NDArray::bool);
+        return $mask;
     }
 
     //protected function call(NDArray $inputs, bool $training=null) : NDArray

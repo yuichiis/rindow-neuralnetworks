@@ -9,6 +9,7 @@ use Rindow\NeuralNetworks\Activation\FunctionFactory;
 use Rindow\NeuralNetworks\Activation\Activation as ActivationInterface;
 use Rindow\NeuralNetworks\Gradient\Core\Variable;
 use Rindow\NeuralNetworks\Layer\Embedding;
+use Rindow\NeuralNetworks\Gradient\MaskedNDArray;
 
 /**
  *
@@ -383,9 +384,47 @@ abstract class AbstractLayerBase implements Layer
      */
     public function computeMask(
         array|NDArray $inputs,
-        array|NDArray $previousMask
-        ) : array|NDArray
+        array|NDArray|null $previousMask
+        ) : array|NDArray|null
     {
-        return $previousMask;
+        return null;
+    }
+
+    public function makeSingleMaskedValue(NDArray $input, NDArray $output) : NDArray
+    {
+        $prevMask = null;
+        if($input instanceof MaskedNDArray) {
+            $prevMask = $input->mask();
+        }
+        $mask = $this->computeMask($input,$prevMask);
+        if($mask!=null) {
+            $output = $this->maskedValue($output,$mask);
+        }
+        return $output;
+    }
+
+    public function makeMultiMaskedValues(array $inputs, array $outputs) : array
+    {
+        $prevMasks = [];
+        foreach($inputs as $value) {
+            $mask = null;
+            if($value instanceof MaskedNDArray) {
+                $mask = $value->mask();
+            }
+            $prevMasks[] = $mask;
+        }
+        $masks = $this->computeMask($inputs,$prevMasks);
+        $values = [];
+        if($masks!=null) {
+            foreach(array_map(null,$outputs,$masks) as [$value,$mask]) {
+                if($mask!=null) {
+                    $value = $this->maskedValue($value,$mask);
+                }
+                $values[] = $value;
+            }
+        } else {
+            $values = $outputs;
+        }
+        return $values;
     }
 }

@@ -3,7 +3,6 @@ namespace Rindow\NeuralNetworks\Backend\RindowBlas;
 
 use Interop\Polite\Math\Matrix\NDArray;
 use Rindow\NeuralNetworks\Gradient\Variable;
-use Rindow\NeuralNetworks\Gradient\Core\MaskedNDArray;
 use InvalidArgumentException;
 use stdClass;
 
@@ -138,11 +137,6 @@ class Backend
             $ndarray = $ndarray->value();
         }
         return $ndarray;
-    }
-
-    public function maskedValue(NDArray $value, NDArray $mask) : NDArray
-    {
-        return new MaskedNDArray($value,$mask);
     }
 
     /**

@@ -7,6 +7,7 @@ use Interop\Polite\Math\Matrix\NDArray;
 use Rindow\NeuralNetworks\Gradient\Core\GradientTape;
 use Rindow\NeuralNetworks\Gradient\Core\GradientUtils;
 use Rindow\NeuralNetworks\Gradient\Variable;
+use Rindow\NeuralNetworks\Gradient\MaskedNDArray;
 
 /**
  *
@@ -314,6 +315,7 @@ abstract class AbstractRNNLayer extends AbstractLayerBase implements RNNLayer
             unset($tmpRawInputs);
             unset($rawInitialStates);
             $rawOutputs = $this->call($rawInputs,training:$rawTraining);
+            $rawOutputs = $this->makeMultiMaskedValues($rawInputs, $rawOutputs);
             $rawStates = $rawOutputs;
             $tmpRawOutputs = array_shift($rawStates);
             if(count($rawStates)>0) {
@@ -348,7 +350,19 @@ abstract class AbstractRNNLayer extends AbstractLayerBase implements RNNLayer
     {
         $training = $options['training'] ?? false;
         $results = $this->call($inputs,training:$training);
-        return $results;
+        $values = $this->makeMultiMaskedValues($inputs, $results);
+        return $values;
+    }
+
+    public function computeMask(
+        array|NDArray $inputs,
+        array|NDArray|null $previousMask
+        ) : array|NDArray|null
+    {
+        if(!$this->returnSequences) {
+            return null;
+        }
+        return $previousMask;
     }
 
     public function __clone()

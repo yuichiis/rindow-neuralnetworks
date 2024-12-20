@@ -7,6 +7,8 @@ use stdClass;
 use ArrayAccess;
 use Interop\Polite\Math\Matrix\NDArray;
 use Rindow\NeuralNetworks\Gradient\Variable as VariableInterface;
+use Rindow\NeuralNetworks\Gradient\Core\MaskedNDArray;
+use Rindow\NeuralNetworks\Gradient\MaskedNDArray as MaskedNDArrayInterface;
 
 trait GradientUtils
 {
@@ -235,4 +237,10 @@ trait GradientUtils
             }
         }
     }
+
+    protected function maskedValue(NDArray $value, NDArray $mask) : MaskedNDArrayInterface
+    {
+        return new MaskedNDArray($value,$mask);
+    }
+
 }

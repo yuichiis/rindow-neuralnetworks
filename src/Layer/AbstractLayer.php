@@ -7,6 +7,7 @@ use Interop\Polite\Math\Matrix\NDArray;
 use Rindow\NeuralNetworks\Gradient\Variable;
 use Rindow\NeuralNetworks\Gradient\Core\GradientTape;
 use Rindow\NeuralNetworks\Gradient\Core\GradientUtils;
+use Rindow\NeuralNetworks\Gradient\MaskedNDArray;
 
 /**
  *
@@ -65,13 +66,15 @@ abstract class AbstractLayer extends AbstractLayerBase implements SequentialLaye
         try {
             $this->assertInputShape($rawInputs,'forward');
             $rawOutputs = $this->call($rawInputs, training:$rawTraining);
+            $rawOutputs = $this->makeSingleMaskedValue($rawInputs, $rawOutputs);
             $this->assertOutputShape($rawOutputs,'forward');
         } finally {
             $session->end();
         }
 
         $outputs = $this->postGradientProcessOnSession(
-            $this->backend, $session, [$inputs], [$rawOutputs]);
+            $this->backend, $session, [$inputs], [$rawOutputs]
+        );
         return $outputs[0];
     }
 
@@ -85,8 +88,18 @@ abstract class AbstractLayer extends AbstractLayerBase implements SequentialLaye
     {
         //$training = $options['training'] ?? null;
         //$outputs = $this->call($inputs[0],training:$training);
-        $outputs = $this->call($inputs[0], ...$options);
-        return [$outputs];
+        $input = $inputs[0];
+        $output = $this->call($input, ...$options);
+        $output = $this->makeSingleMaskedValue($input, $output);
+        return [$output];
+    }
+
+    public function computeMask(
+        array|NDArray $inputs,
+        array|NDArray|null $previousMask
+        ) : array|NDArray|null
+    {
+        return $previousMask;
     }
 
     public function _rawDifferentiate(array $dOutputs) : array

@@ -6,6 +6,7 @@ use ArrayAccess;
 use Interop\Polite\Math\Matrix\NDArray;
 use Rindow\NeuralNetworks\Gradient\Core\GradientUtils;
 use Rindow\NeuralNetworks\Gradient\Variable;
+use Rindow\NeuralNetworks\Gradient\MaskedNDArray;
 
 abstract class AbstractMultiInputLayer extends AbstractLayerBase
 {
@@ -114,12 +115,13 @@ abstract class AbstractMultiInputLayer extends AbstractLayerBase
         try {
             $this->assertInputShapes($inputs,'forward');
             $rawOutputs = $this->call($rawInputs,$rawTraining);
-            $this->assertOutputShape($rawOutputs,'forward');
+            $rawOutputs = $this->makeMultiMaskedValues($rawInputs, [$rawOutputs]);
+            $this->assertOutputShape($rawOutputs[0],'forward');
         } finally {
             $session->end();
         }
         $outputs = $this->postGradientProcessOnSession(
-            $this->backend, $session, $inputs, [$rawOutputs]);
+            $this->backend, $session, $inputs, $rawOutputs);
         return $outputs[0];
     }
 
@@ -132,7 +134,17 @@ abstract class AbstractMultiInputLayer extends AbstractLayerBase
     public function _rawCall(array $inputs,array $options) : array
     {
         $training = $options['training'] ?? null;
-        $outputs = $this->call($inputs, training:$training);
-        return [$outputs];
+        $outputs = [$this->call($inputs, training:$training)];
+
+        $values = $this->makeMultiMaskedValues($inputs, $outputs);
+        return $values;
+    }
+
+    public function computeMask(
+        array|NDArray $inputs,
+        array|NDArray|null $previousMask
+        ) : array|NDArray|null
+    {
+        return null;
     }
 }

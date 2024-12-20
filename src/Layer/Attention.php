@@ -160,7 +160,8 @@ class Attention extends AbstractAttentionLayer
                 training:$rawTraining, 
                 returnAttentionScores:$rawReturnAttentionScores,
                 masks:$rawMasks,
-                );
+            );
+            $rawOutputs = $this->makeMultiMaskedValues($rawInputs, $rawOutputs);
             if($returnAttentionScores){
                 $this->assertOutputShape($rawOutputs[0],'forward');
                 $this->assertScoresShape($rawOutputs[1],'forward');

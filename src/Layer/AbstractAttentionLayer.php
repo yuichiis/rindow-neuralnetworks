@@ -8,6 +8,8 @@ use Rindow\NeuralNetworks\Support\GenericUtils;
 use Rindow\NeuralNetworks\Gradient\Variable;
 use Rindow\NeuralNetworks\Gradient\Core\GradientTape;
 use Rindow\NeuralNetworks\Gradient\Core\GradientUtils;
+use Rindow\NeuralNetworks\Gradient\MaskedNDArray;
+
 
 /**
  *
@@ -192,7 +194,8 @@ abstract class AbstractAttentionLayer extends AbstractLayerBase
                 training:$rawTraining, 
                 returnAttentionScores:$rawReturnAttentionScores,
                 masks:$rawMasks,
-                );
+            );
+            $rawOutputs = $this->makeMultiMaskedValues($rawInputs, $rawOutputs);
             if($returnAttentionScores){
                 $this->assertOutputShape($rawOutputs[0],'forward');
                 $this->assertScoresShape($rawOutputs[1],'forward');
@@ -223,6 +226,7 @@ abstract class AbstractAttentionLayer extends AbstractLayerBase
      */
     public function _rawCall(array $inputs,array $options) : array
     {
+        $K = $this->backward;
         $training = $options['training'] ?? null;
         $queryMask = $options['queryMask'] ?? null;
         $valueMask = $options['valueMask'] ?? null;
@@ -240,7 +244,7 @@ abstract class AbstractAttentionLayer extends AbstractLayerBase
         if(!is_array($outputs)) {
             $outputs = [$outputs];
         }
-        return $outputs;
+        $values = $this->makeMultiMaskedValues($inputs, $outputs);
+        return $values;
     }
-
 }
