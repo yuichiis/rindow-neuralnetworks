@@ -226,7 +226,6 @@ abstract class AbstractAttentionLayer extends AbstractLayerBase
      */
     public function _rawCall(array $inputs,array $options) : array
     {
-        $K = $this->backward;
         $training = $options['training'] ?? null;
         $queryMask = $options['queryMask'] ?? null;
         $valueMask = $options['valueMask'] ?? null;

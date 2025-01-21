@@ -120,14 +120,15 @@ class SimpleRNNCell extends AbstractRNNCell
 
         $calcState->inputs = $inputs;
         $calcState->prev_h = $prev_h;
-        return [$outputs,[$outputs]];
+        return [$outputs];
     }
 
-    protected function differentiate(NDArray $dOutputs, array $dStates, object $calcState) : array
+    protected function differentiate(array $dStates, object $calcState) : array
     {
         $K = $this->backend;
-        $dNext_h = $dStates[0];
-        $dOutputs = $K->add($dOutputs,$dNext_h);
+        $dOutputs = $dStates[0];
+        // this merging move to rnnBackward in backend.
+        // $dOutputs = $K->add($dOutputs,$dNext_h);
         if($this->activation) {
             $dOutputs = $this->activation->backward($calcState->activation,$dOutputs);
         }

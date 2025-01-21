@@ -550,6 +550,12 @@ class Backend
         }
     }
 
+    public function masking(NDArray $mask, NDArray $a, bool $trans=null) : NDArray
+    {
+        $la = $this->la;
+        return $la->masking($mask,$la->copy($a),trans:$trans);
+    }
+
     public function reciprocal(
         NDArray $x,
         float $beta=null,
@@ -2260,6 +2266,22 @@ class Backend
         }
     }
 
+    public function rnnGetTimestepMask(
+        ?NDArray $mask,int $step) : ?NDArray
+    {
+        if($mask==null) {
+            return null;
+        }
+        if($mask->ndim()!=2){
+            throw new InvalidArgumentException('mask must be 2D');
+        }
+        [$batch,$steps] = $mask->shape();
+        $mask = $this->la->slice(
+            $mask,
+            [0,$step],[-1,1]
+        );
+        return $mask->reshape([$batch]);
+    }
 
     public function rnnGetTimestep(
         NDArray $source,int $step) : NDArray
@@ -2302,31 +2324,57 @@ class Backend
         array $initialStates,
         bool $training=null,
         NDArray $outputs=null,
-        bool $goBackwards=null
+        bool $goBackwards=null,
+        NDArray $mask=null,
     ) : array
     {
         $inputLength = $inputs->shape()[1];
-        $states_t = $initialStates;
+        $prev_states_t = $initialStates;
         $calcStates = [];
         $tm = range(0,$inputLength-1);
         if($goBackwards){
             $tm = array_reverse($tm);
         }
+        if($mask) {
+            if($mask->dtype()==NDArray::bool) {
+                $mask = $this->cast($mask,$inputs->dtype());
+            }
+        }
         $outputs_t = null;
         foreach($tm as $t){
             $calcState = new stdClass();
             $calcStates[$t] = $calcState;
-            [$outputs_t, $states_t] = $stepFunction(
+            $next_states_t = $stepFunction(
                 $this->rnnGetTimestep($inputs, $t),
-                $states_t,training:$training,calcState:$calcState);
+                $prev_states_t,
+                training:$training,
+                calcState:$calcState,
+            );
+            if($mask) {
+                $mask_t = $this->rnnGetTimestepMask($mask, $t);
+                $not_mask_t = $this->not($mask_t);
+                foreach (array_map(null,$next_states_t,$prev_states_t) as [$next_st_t,$prev_st_t]) {
+                    $next_st_t = $this->mul($next_st_t,$mask_t,trans:true);
+                    $next_st_t = $this->add($next_st_t,$this->mul($prev_st_t,$not_mask_t,trans:true));
+                    $tmp_next_states_t[] = $next_st_t;
+                }
+                $next_states_t = $tmp_next_states_t;
+                unset($next_st_t);
+                unset($prev_st_t);
+                unset($tmp_next_states_t);
+                unset($mask_t);
+                unset($not_mask_t);
+            }
+            $outputs_t = $next_states_t[0];
             if($outputs){
                 $this->rnnSetTimestep($outputs,$t,$outputs_t);
             }
+            $prev_states_t = $next_states_t;
         }
         if($outputs===null){
             $outputs=$outputs_t;
         }
-        return [$outputs, $states_t, $calcStates];
+        return [$outputs, $next_states_t, $calcStates];
     }
 
     /**
@@ -2340,7 +2388,8 @@ class Backend
         array $dStates,
         array $calcStates,
         NDArray $dInputs,
-        bool $goBackwards=null
+        bool $goBackwards=null,
+        NDArray $mask=null,
     ) : array
     {
         $ndim = $dOutputs->ndim();
@@ -2361,8 +2410,13 @@ class Backend
         if(!$goBackwards){
             $tm = array_reverse($tm);
         }
+        if($mask) {
+            if($mask->dtype()==NDArray::bool) {
+                $mask = $this->cast($mask,$dInputs->dtype());
+            }
+        }
         $doutputs_t = null;
-        $states_t = $dStates;
+        $dstates_t = $dStates;
         foreach($tm as $t){
             if($return_sequences){
                 $doutputs_t = $this->rnnGetTimestep($dOutputs, $t);
@@ -2374,10 +2428,23 @@ class Backend
                 }
             }
             $calcState = $calcStates[$t];
-            [$inputs_t, $states_t] = $stepFunction($doutputs_t, $states_t,$calcState);
+            $dstates_t[0] = $this->add($dstates_t[0], $doutputs_t);
+            if($mask) {
+                $mask_t = $this->rnnGetTimestepMask($mask, $t);
+                $tmp_dstates_t = [];
+                foreach($dstates_t as $dst_t) {
+                    $dst_t = $this->mul($dst_t, $mask_t, trans:true);
+                    $tmp_dstates_t[] = $dst_t;
+                }
+                $dstates_t = $tmp_dstates_t;
+            }
+            [$inputs_t, $dstates_t] = $stepFunction(
+                $dstates_t,
+                $calcState,
+            );
             $this->rnnSetTimestep($dInputs,$t,$inputs_t);
         }
-        return [$dInputs, $states_t];
+        return [$dInputs, $dstates_t];
     }
 
     public function cumsum(

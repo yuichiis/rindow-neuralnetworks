@@ -390,6 +390,15 @@ abstract class AbstractLayerBase implements Layer
         return null;
     }
 
+    public function retrieveSingleMask(NDArray $input) : ?NDArray
+    {
+        $prevMask = null;
+        if($input instanceof MaskedNDArray) {
+            $prevMask = $input->mask();
+        }
+        return $prevMask;
+    }
+
     public function makeSingleMaskedValue(NDArray $input, NDArray $output) : NDArray
     {
         $prevMask = null;
@@ -401,6 +410,22 @@ abstract class AbstractLayerBase implements Layer
             $output = $this->maskedValue($output,$mask);
         }
         return $output;
+    }
+
+    /**
+     * @param array<NDArray> $inputs
+     */
+    public function retrieveMultiMasks(array $inputs) : array
+    {
+        $prevMasks = [];
+        foreach ($inputs as $input) {
+            if($input instanceof MaskedNDArray) {
+                $prevMasks[] = $input->mask();
+            } else {
+                $prevMasks[] = null;
+            }
+        }
+        return $prevMasks;
     }
 
     public function makeMultiMaskedValues(array $inputs, array $outputs) : array

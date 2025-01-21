@@ -517,6 +517,12 @@ class Backend
         }
     }
 
+    public function masking(NDArray $mask, NDArray $a, bool $trans=null) : NDArray
+    {
+        $la = $this->la;
+        return $la->masking($mask,$la->copy($a),trans:$trans);
+    }
+
     public function reciprocal(
         NDArray $x,
         float $beta=null,

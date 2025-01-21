@@ -3,6 +3,7 @@ namespace Rindow\NeuralNetworks\Layer;
 
 use InvalidArgumentException;
 use Interop\Polite\Math\Matrix\NDArray;
+use Rindow\NeuralNetworks\Gradient\Variable;
 
 class Attention extends AbstractAttentionLayer
 {
@@ -142,6 +143,13 @@ class Attention extends AbstractAttentionLayer
             [$masks,$rawMasks] = $this->packAndUnpackVariables($this->backend,$masks,unbackpropagatable:true);
             $options['queryMask'] = $masks[0];
             $options['valueMask'] = $masks[1];
+        } else {
+            if(count($inputs)<2) {
+                throw new InvalidArgumentException('inputs must be a list of two or more NDArrays.');
+            }
+            $rawMasks = $this->retrieveMultiMasks($rawInputs);
+            $options['queryMask'] = $rawMasks[0];
+            $options['valueMask'] = $rawMasks[1];
         }
         if(!$this->built) {
             $this->build($inputs);
@@ -161,7 +169,10 @@ class Attention extends AbstractAttentionLayer
                 returnAttentionScores:$rawReturnAttentionScores,
                 masks:$rawMasks,
             );
-            $rawOutputs = $this->makeMultiMaskedValues($rawInputs, $rawOutputs);
+            $rawOutputs[0] = $this->makeSingleMaskedValue($rawInputs[0], $rawOutputs[0]);
+            if($returnAttentionScores) {
+                $rawOutputs[1] = $this->makeSingleMaskedValue($rawInputs[0], $rawOutputs[1]);
+            }
             if($returnAttentionScores){
                 $this->assertOutputShape($rawOutputs[0],'forward');
                 $this->assertScoresShape($rawOutputs[1],'forward');

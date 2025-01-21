@@ -159,7 +159,12 @@ class GRUCell extends AbstractRNNCell
         ];
     }
 
-    protected function call(NDArray $inputs, array $states, bool $training=null, object $calcState=null) : array
+    protected function call(
+        NDArray $inputs,
+        array $states,
+        bool $training=null,
+        object $calcState=null
+        ) : array
     {
         $K = $this->backend;
         $prev_h = $states[0];
@@ -250,14 +255,18 @@ class GRUCell extends AbstractRNNCell
         } else {
             $calcState->x_r_prev_r = $x_r_prev_r;
         }
-        return [$next_h,[$next_h]];
+        return [$next_h];
     }
 
-    protected function differentiate(NDArray $dOutputs, array $dStates, object $calcState) : array
+    protected function differentiate(
+        array $dStates,
+        object $calcState
+        ) : array
     {
         $K = $this->backend;
         $dNext_h = $dStates[0];
-        $dNext_h = $K->add($dOutputs,$dNext_h);
+        // this merging move to rnnBackward in backend.
+        // $dNext_h = $K->add($dOutputs,$dNext_h);
 
         // forward:
         //  next_h = z * prev_h + (1-z) * hh

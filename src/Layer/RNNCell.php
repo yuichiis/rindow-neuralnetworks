@@ -25,7 +25,6 @@ interface RNNCell extends Layer
      * @return array<NDArray>
      */
     public function backward(
-        NDArray $dOutputs,
         array $dStates,
         object $calcState
     ) : array;

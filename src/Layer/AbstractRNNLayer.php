@@ -173,7 +173,11 @@ abstract class AbstractRNNLayer extends AbstractLayerBase implements RNNLayer
      * @param array<NDArray> $inputs
      * @return array<NDArray>
      */
-    protected function call(array $inputs,bool $training=null) : array
+    protected function call(
+        array $inputs,
+        bool $training=null,
+        NDArray $mask=null,
+        ) : array
     {
         $K = $this->backend;
         $container = $this->container();
@@ -212,10 +216,12 @@ abstract class AbstractRNNLayer extends AbstractLayerBase implements RNNLayer
             $initialStates,
             training:$training,
             outputs:$outputs,
-            goBackwards:$this->goBackwards
+            goBackwards:$this->goBackwards,
+            mask:$mask,
         );
         $container->calcStates = $calcStates;
         $container->origInputsShape = $inputs->shape();
+        $container->mask = $mask;
         if($this->stateful) {
             $this->initialStates = $states; // the statefull variable is not in container
         }
@@ -255,7 +261,8 @@ abstract class AbstractRNNLayer extends AbstractLayerBase implements RNNLayer
             $dNextStates,
             $container->calcStates,
             $dInputs,
-            $this->goBackwards
+            $this->goBackwards,
+            $container->mask,
         );
         $container->calcStates = null;
         if($container->enableInitialStates) {
@@ -282,7 +289,8 @@ abstract class AbstractRNNLayer extends AbstractLayerBase implements RNNLayer
     final public function forward(
         object $inputs,
         Variable|bool $training=null,
-        array $initialStates=null
+        array $initialStates=null,
+        NDArray $mask=null,
         ) : NDArray|array
     {
         $inputs = [$inputs];
@@ -314,8 +322,11 @@ abstract class AbstractRNNLayer extends AbstractLayerBase implements RNNLayer
             }
             unset($tmpRawInputs);
             unset($rawInitialStates);
-            $rawOutputs = $this->call($rawInputs,training:$rawTraining);
-            $rawOutputs = $this->makeMultiMaskedValues($rawInputs, $rawOutputs);
+            if($mask===null) {
+                $mask = $this->retrieveSingleMask($rawInputs[0]);
+            }
+            $rawOutputs = $this->call($rawInputs,training:$rawTraining,mask:$mask);
+            $rawOutputs[0] = $this->makeSingleMaskedValue($rawInputs[0], $rawOutputs[0]);
             $rawStates = $rawOutputs;
             $tmpRawOutputs = array_shift($rawStates);
             if(count($rawStates)>0) {
