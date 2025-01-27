@@ -13,6 +13,9 @@ class Softmax extends AbstractActivation
             //echo "No mask\n";
             //echo "inputs=".$K->localMatrixOperator()->shapeToString($inputs->shape())."\n";
             //echo $K->localMatrixOperator()->toString($inputs,indent:true)."\n";
+            //
+            // Yk = exp(Ak + C') / sum(exp(Ai + C'))
+            //
             $outputs = $K->softmax($inputs);
             $this->states->outputs = $outputs;
             //echo "outputs=".$K->localMatrixOperator()->shapeToString($outputs->shape())."\n";
@@ -20,6 +23,9 @@ class Softmax extends AbstractActivation
         }
         //
         // masked softmax
+        //
+        // inputs = (batchs, seq, size)
+        // mask   = (batchs, seq)
         //
         $ndim = $mask->ndim();
         $orignalInputShape = $inputs->shape();
@@ -40,7 +46,7 @@ class Softmax extends AbstractActivation
         //echo $K->localMatrixOperator()->toString($mask,indent:true)."\n";
         //echo "mask=".$K->localMatrixOperator()->shapeToString($mask->shape())."\n";
         //$outputs = $K->softmax($inputs);
-        $nums = $K->sum($mask,axis:1);
+        //$nums = $K->sum($mask,axis:1);
         //echo "nums=".$K->localMatrixOperator()->shapeToString($nums->shape())."\n";
         //echo $K->localMatrixOperator()->toString($nums,indent:true)."\n";
         $inputs = $K->mul($inputs,$mask);
@@ -54,6 +60,10 @@ class Softmax extends AbstractActivation
         //return exp_x / tf.reduce_sum(exp_x, axis=-1, keepdims=True)
 
         ////////////////
+        //
+        // C(m) = reduce_max(m,n)
+        // Y(m,n) = exp(A(m,n) + C') / sum(exp(Ai + C'))
+        //
         // inputs = inputs * mask
         // max = reduce_max(inputs)
         // exp_diff = exp(inputs-max)
@@ -72,6 +82,9 @@ class Softmax extends AbstractActivation
         [$rows,$cols] = $inputShape;
         $inputs = $inputs->reshape([$batches*$rows,$cols]);
         //echo "flat_inputs=".$K->localMatrixOperator()->shapeToString($inputs->shape())."\n";
+        //
+        // expDiff = exp(inputs-max(inputs,axis=-1))
+        //
         $maxes = $K->max($inputs,axis:-1);
         //echo "maxes=".$K->localMatrixOperator()->shapeToString($maxes->shape())."\n";
         //echo $K->localMatrixOperator()->ToString($maxes,indent:true)."\n";
@@ -79,9 +92,15 @@ class Softmax extends AbstractActivation
         $expDiff = $expDiff->reshape([$batches,$rows,$cols]);
         //echo "expDiff=".$K->localMatrixOperator()->shapeToString($maxes->shape())."\n";
         //echo $K->localMatrixOperator()->ToString($expDiff,'%3.3f',indent:true)."\n";
+        //
+        // expDiff *= mask
+        //
         $expDiff = $K->mul($expDiff,$mask);
         //echo "musked_expDiff=".$K->localMatrixOperator()->shapeToString($maxes->shape())."\n";
         //echo $K->localMatrixOperator()->ToString($expDiff,'%3.3f',indent:true)."\n";
+        //
+        // sumExp = sum(expDiff, axis=-1)
+        //
         $sumExp = $K->sum($expDiff,axis:-1);
         $expDiff = $expDiff->reshape([$batches*$rows,$cols]);
         $sumExp = $sumExp->reshape([$batches*$rows]);
@@ -89,6 +108,9 @@ class Softmax extends AbstractActivation
         //echo $K->localMatrixOperator()->ToString($expDiff,'%3.3f',indent:true)."\n";
         //echo "sumExp=".$K->localMatrixOperator()->shapeToString($sumExp->shape())."\n";
         //echo $K->localMatrixOperator()->ToString($sumExp,'%3.3f',indent:true)."\n";
+        //
+        // outputs = expDiff / sumExp
+        //
         $outputs = $K->div($expDiff, $sumExp, trans:true);
         //echo "outputs=".$K->localMatrixOperator()->shapeToString($outputs->shape())."\n";
         //echo $K->localMatrixOperator()->ToString($outputs,'%3.3f',indent:true)."\n";

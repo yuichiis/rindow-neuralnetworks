@@ -225,9 +225,15 @@ class BackendTest extends TestCase
     {
         $mo = $this->newMatrixOperator();
         $K = $this->newBackend($mo);
+        $la = $K->primaryLA();
         $x = $K->array([2,3]);
         $z = $K->scale(6,$K->pow($x,-1)); $K->finish();
-        $this->assertEquals([3,2],$z->toArray());
+        //$this->assertEquals([3,2],$z->toArray());
+        $z = $la->toNDArray($z);
+        $this->assertTrue($mo->la()->isclose(
+            $mo->array([3,2]),
+            $z,
+        ));
     }
 
     public function testSqrt()

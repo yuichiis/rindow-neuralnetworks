@@ -23,7 +23,7 @@ abstract class AbstractAttentionLayer extends AbstractLayerBase
         array $inputs,
         bool $training=null,
         bool $returnAttentionScores=null,
-        array $masks=null,
+        array $mask=null,
     ) : NDArray|array;
 
     /**
@@ -155,7 +155,7 @@ abstract class AbstractAttentionLayer extends AbstractLayerBase
         array $inputs, 
         Variable|bool $training=null, 
         Variable|bool $returnAttentionScores=null,
-        array $masks=null,
+        array $mask=null,
         )
     {
         //$outputs = null;
@@ -168,14 +168,14 @@ abstract class AbstractAttentionLayer extends AbstractLayerBase
         [$returnAttentionScores,$rawReturnAttentionScores] = $this->packAndUnpackVariable($this->backend,$returnAttentionScores,unbackpropagatable:true);
         $options['training'] = $training;
         $options['returnAttentionScores'] = $returnAttentionScores;
-        $rawMasks = null;
-        if($masks) {
-            if(count($masks)!=2) {
+        $rawMask = null;
+        if($mask) {
+            if(count($mask)!=2) {
                 throw new InvalidArgumentException('mask must be list of the two of masks as queryMask and valueMask');
             }
-            [$masks,$rawMasks] = $this->packAndUnpackVariables($this->backend,$masks,unbackpropagatable:true);
-            $options['queryMask'] = $masks[0];
-            $options['valueMask'] = $masks[1];
+            [$mask,$rawMask] = $this->packAndUnpackVariables($this->backend,$mask,unbackpropagatable:true);
+            $options['queryMask'] = $mask[0];
+            $options['valueMask'] = $mask[1];
         }
         if(!$this->built) {
             $this->build($inputs);
@@ -193,9 +193,9 @@ abstract class AbstractAttentionLayer extends AbstractLayerBase
                 $rawInputs, 
                 training:$rawTraining, 
                 returnAttentionScores:$rawReturnAttentionScores,
-                masks:$rawMasks,
+                mask:$rawMask,
             );
-            $rawOutputs = $this->makeMultiMaskedValues($rawInputs, $rawOutputs);
+            $rawOutputs[0] = $this->makeSingleMaskedValue($rawInputs[0], $rawOutputs[0]);
             if($returnAttentionScores){
                 $this->assertOutputShape($rawOutputs[0],'forward');
                 $this->assertScoresShape($rawOutputs[1],'forward');
@@ -230,20 +230,30 @@ abstract class AbstractAttentionLayer extends AbstractLayerBase
         $queryMask = $options['queryMask'] ?? null;
         $valueMask = $options['valueMask'] ?? null;
         $mask = null;
-        if($queryMask) {
+        if($queryMask!==null || $valueMask!==null) {
             $mask = [$queryMask,$valueMask];
+        } else {
+            $mask = $this->retrieveMultiMasks($inputs);
         }
         $returnAttentionScores = $options['returnAttentionScores'] ?? null;
         $outputs = $this->call(
             $inputs,
             training:$training,
             returnAttentionScores:$returnAttentionScores,
-            masks:$mask,
+            mask:$mask,
         );
         if(!is_array($outputs)) {
             $outputs = [$outputs];
         }
-        $values = $this->makeMultiMaskedValues($inputs, $outputs);
-        return $values;
+        $outputs[0] = $this->makeSingleMaskedValue($inputs[0], $outputs[0]);
+        return $outputs;
+    }
+
+    public function computeMask(
+        array|NDArray $inputs,
+        array|NDArray|null $previousMask
+        ) : array|NDArray|null
+    {
+        return $previousMask;
     }
 }

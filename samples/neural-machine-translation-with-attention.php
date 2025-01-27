@@ -192,7 +192,8 @@ class Encoder extends AbstractModel
         $this->units = $units;
         $this->embedding = $builder->layers()->Embedding(
             $vocabSize,$wordVectSize,
-            input_length:$inputLength
+            input_length:$inputLength,
+            mask_zero:true,
         );
         $this->rnn = $builder->layers()->GRU(
             $units,
@@ -254,7 +255,8 @@ class Decoder extends AbstractModel
         $this->targetLength = $targetLength;
         $this->embedding = $builder->layers()->Embedding(
             $vocabSize, $wordVectSize,
-            input_length:$targetLength
+            input_length:$targetLength,
+            mask_zero:true,
         );
         $this->rnn = $builder->layers()->GRU($units,
             return_state:true,return_sequences:true,
@@ -281,7 +283,7 @@ class Decoder extends AbstractModel
 
         $contextVector = $this->attention->forward(
             [$rnnSequence,$encOutputs],
-            masks:[null,$inputMask],
+            //masks:[null,$inputMask],
             returnAttentionScores:$returnAttentionScores,
         );
         if(is_array($contextVector)) {

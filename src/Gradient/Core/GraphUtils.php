@@ -29,10 +29,10 @@ trait GraphUtils
             $func = array_pop($funcs);
             $pipeline[] = $func;
             $args = array_merge($func->inputs(),array_values($func->options()));
-            foreach($args as $input) {
+            foreach($args as $idx=>$input) {
                 if(!is_a($input,Variable::class)) {
                     $typename = is_object($input) ? get_class($input) : gettype($input);
-                    throw new InvalidArgumentException("Invalid Argument for constant on ".$func->name().". gives $typename.");
+                    throw new InvalidArgumentException("Invalid Argument #{$idx} for constant on ".$func->name().". gives $typename. it must be 'Variable'");
                 }
                 $creator = $input->creator();
                 if($creator!=null) {

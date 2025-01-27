@@ -550,10 +550,22 @@ class Backend
         }
     }
 
-    public function masking(NDArray $mask, NDArray $a, bool $trans=null) : NDArray
+    public function masking(
+        NDArray $mask,
+        NDArray $a,
+        float $fill=null,
+        int $batchDims=null,
+        int $axis=null,
+        ) : NDArray
     {
         $la = $this->la;
-        return $la->masking($mask,$la->copy($a),trans:$trans);
+        return $la->masking(
+            $mask,
+            $la->copy($a),
+            fill:$fill,
+            batchDims:$batchDims,
+            axis:$axis,
+        );
     }
 
     public function reciprocal(
@@ -602,6 +614,24 @@ class Backend
         bool $trans=null) : NDArray
     {
         return $this->la->multiply($magnifications,$x,$trans);
+    }
+
+    public function update_masking(
+        NDArray $a,
+        NDArray $mask,
+        float $fill=null,
+        int $batchDims=null,
+        int $axis=null,
+        ) : NDArray
+    {
+        $la = $this->la;
+        return $la->masking(
+            $mask,
+            $a,
+            fill:$fill,
+            batchDims:$batchDims,
+            axis:$axis,
+        );
     }
 
     public function scale(float $a, NDArray $x) : NDArray
@@ -2335,11 +2365,11 @@ class Backend
         if($goBackwards){
             $tm = array_reverse($tm);
         }
-        if($mask) {
-            if($mask->dtype()==NDArray::bool) {
-                $mask = $this->cast($mask,$inputs->dtype());
-            }
-        }
+        //if($mask) {
+        //    if($mask->dtype()==NDArray::bool) {
+        //        $mask = $this->cast($mask,$inputs->dtype());
+        //    }
+        //}
         $outputs_t = null;
         foreach($tm as $t){
             $calcState = new stdClass();
@@ -2354,8 +2384,13 @@ class Backend
                 $mask_t = $this->rnnGetTimestepMask($mask, $t);
                 $not_mask_t = $this->not($mask_t);
                 foreach (array_map(null,$next_states_t,$prev_states_t) as [$next_st_t,$prev_st_t]) {
-                    $next_st_t = $this->mul($next_st_t,$mask_t,trans:true);
-                    $next_st_t = $this->add($next_st_t,$this->mul($prev_st_t,$not_mask_t,trans:true));
+                    //$next_st_t = $this->mul($next_st_t,$mask_t,trans:true);
+                    //$next_st_t = $this->add($next_st_t,$this->mul($prev_st_t,$not_mask_t,trans:true));
+                    $next_st_t = $this->masking($mask_t,$next_st_t,batchDims:$mask_t->ndim(),axis:$next_st_t->ndim());
+                    $next_st_t = $this->add(
+                        $next_st_t,
+                        $this->masking($not_mask_t,$prev_st_t,batchDims:$not_mask_t->ndim(),axis:$prev_st_t->ndim())
+                    );
                     $tmp_next_states_t[] = $next_st_t;
                 }
                 $next_states_t = $tmp_next_states_t;
@@ -2410,11 +2445,12 @@ class Backend
         if(!$goBackwards){
             $tm = array_reverse($tm);
         }
-        if($mask) {
-            if($mask->dtype()==NDArray::bool) {
-                $mask = $this->cast($mask,$dInputs->dtype());
-            }
-        }
+        //if($mask) {
+        //    if($mask->dtype()==NDArray::bool) {
+        //        $mask = $this->cast($mask,$dInputs->dtype());
+        //    }
+        //}
+
         $doutputs_t = null;
         $dstates_t = $dStates;
         foreach($tm as $t){
@@ -2433,7 +2469,8 @@ class Backend
                 $mask_t = $this->rnnGetTimestepMask($mask, $t);
                 $tmp_dstates_t = [];
                 foreach($dstates_t as $dst_t) {
-                    $dst_t = $this->mul($dst_t, $mask_t, trans:true);
+                    //$dst_t = $this->mul($dst_t, $mask_t, trans:true);
+                    $dst_t = $this->masking($mask_t, $dst_t, batchDims:$mask_t->ndim(),axis:$dst_t->ndim());
                     $tmp_dstates_t[] = $dst_t;
                 }
                 $dstates_t = $tmp_dstates_t;

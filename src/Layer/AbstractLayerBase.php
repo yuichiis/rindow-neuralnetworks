@@ -430,25 +430,18 @@ abstract class AbstractLayerBase implements Layer
 
     public function makeMultiMaskedValues(array $inputs, array $outputs) : array
     {
-        $prevMasks = [];
-        foreach($inputs as $value) {
-            $mask = null;
-            if($value instanceof MaskedNDArray) {
-                $mask = $value->mask();
-            }
-            $prevMasks[] = $mask;
-        }
+        $prevMasks = array_map(
+            fn($in)=>is_a($in,MaskedNDArray::class)?$in->mask():null,
+            $inputs
+        );
         $masks = $this->computeMask($inputs,$prevMasks);
-        $values = [];
-        if($masks!=null) {
-            foreach(array_map(null,$outputs,$masks) as [$value,$mask]) {
-                if($mask!=null) {
-                    $value = $this->maskedValue($value,$mask);
-                }
-                $values[] = $value;
-            }
-        } else {
+        if($masks==null) {
             $values = $outputs;
+        } else {
+            $values = array_map(
+                fn($out,$mask)=>($mask==null)?$out:$this->maskedValue($out,$mask),
+                $outputs,$masks
+            );
         }
         return $values;
     }

@@ -77,7 +77,7 @@ class Cifar10Test extends TestCase
         if($this->plot) {
             foreach($train as [$img,$label]) {
                 $this->assertEquals([10000,32, 32, 3],$img->shape());
-                $this->assertEquals([10000,1],$label->shape());
+                $this->assertEquals([10000],$label->shape());
                 [$figure, $axes] = $plt->subplots(5,7);
                 for($i=0;$i<count($axes);$i++) {
                     $axes[$i]->setAspect('equal');
@@ -88,7 +88,7 @@ class Cifar10Test extends TestCase
             }
             foreach($test as [$img,$label]) {
                 $this->assertEquals([10000,32, 32, 3],$img->shape());
-                $this->assertEquals([10000,1],$label->shape());
+                $this->assertEquals([10000],$label->shape());
                 [$figure, $axes] = $plt->subplots(5,7);
                 for($i=0;$i<count($axes);$i++) {
                     $axes[$i]->setAspect('equal');
@@ -127,7 +127,7 @@ class Cifar10Test extends TestCase
         if($this->plot) {
             foreach($train as [$img,$label]) {
                 $this->assertEquals([10000,32, 32, 3],$img->shape());
-                $this->assertEquals([10000,1],$label->shape());
+                $this->assertEquals([10000],$label->shape());
                 [$figure, $axes] = $plt->subplots(5,7);
                 for($i=0;$i<count($axes);$i++) {
                     $axes[$i]->setAspect('equal');
@@ -138,7 +138,7 @@ class Cifar10Test extends TestCase
             }
             foreach($test as [$img,$label]) {
                 $this->assertEquals([10000,32, 32, 3],$img->shape());
-                $this->assertEquals([10000,1],$label->shape());
+                $this->assertEquals([10000],$label->shape());
                 [$figure, $axes] = $plt->subplots(5,7);
                 for($i=0;$i<count($axes);$i++) {
                     $axes[$i]->setAspect('equal');
@@ -169,7 +169,7 @@ class Cifar10Test extends TestCase
         $i = 0;
         foreach($train as [$img,$label]) {
             $this->assertEquals([10000,32, 32, 3],$img->shape());
-            $this->assertEquals([10000,1],$label->shape());
+            $this->assertEquals([10000],$label->shape());
             $i++;
         }
         $this->assertEquals(5,$i);
@@ -177,7 +177,7 @@ class Cifar10Test extends TestCase
         $i = 0;
         foreach($test as [$img,$label]) {
             $this->assertEquals([10000,32, 32, 3],$img->shape());
-            $this->assertEquals([10000,1],$label->shape());
+            $this->assertEquals([10000],$label->shape());
             $i++;
         }
         $this->assertEquals(1,$i);
@@ -186,7 +186,7 @@ class Cifar10Test extends TestCase
         $i = 0;
         foreach($train as [$img,$label]) {
             $this->assertEquals([10000,32, 32, 3],$img->shape());
-            $this->assertEquals([10000,1],$label->shape());
+            $this->assertEquals([10000],$label->shape());
             $i++;
         }
         $this->assertEquals(5,$i);
@@ -194,7 +194,7 @@ class Cifar10Test extends TestCase
         $i = 0;
         foreach($test as [$img,$label]) {
             $this->assertEquals([10000,32, 32, 3],$img->shape());
-            $this->assertEquals([10000,1],$label->shape());
+            $this->assertEquals([10000],$label->shape());
             $i++;
         }
         $this->assertEquals(1,$i);
