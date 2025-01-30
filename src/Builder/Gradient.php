@@ -27,14 +27,15 @@ use Rindow\NeuralNetworks\Gradient\Func\ClipByValue;
 use Rindow\NeuralNetworks\Gradient\Func\Equal;
 use Rindow\NeuralNetworks\Gradient\Func\NotEqual;
 use Rindow\NeuralNetworks\Gradient\Func\Cast;
-use Rindow\NeuralNetworks\Gradient\Func\ZerosLike;
 use Rindow\NeuralNetworks\Gradient\Func\Reshape;
 use Rindow\NeuralNetworks\Gradient\Func\Transpose;
 use Rindow\NeuralNetworks\Gradient\Func\Shape;
 use Rindow\NeuralNetworks\Gradient\Func\Get;
 use Rindow\NeuralNetworks\Gradient\Func\Scale;
 use Rindow\NeuralNetworks\Gradient\Func\Zeros;
+use Rindow\NeuralNetworks\Gradient\Func\ZerosLike;
 use Rindow\NeuralNetworks\Gradient\Func\Ones;
+use Rindow\NeuralNetworks\Gradient\Func\OnesLike;
 use Rindow\NeuralNetworks\Gradient\Func\Bandpart;
 use Rindow\NeuralNetworks\Gradient\Func\Increment;
 use Rindow\NeuralNetworks\Gradient\Func\Greater;
@@ -246,6 +247,12 @@ class Gradient
     public function zerosLike(NDArray $x) : NDArray 
     {
         $func = new ZerosLike($this->backend);
+        return $func($x);
+    }
+
+    public function onesLike(NDArray $x) : NDArray 
+    {
+        $func = new OnesLike($this->backend);
         return $func($x);
     }
 

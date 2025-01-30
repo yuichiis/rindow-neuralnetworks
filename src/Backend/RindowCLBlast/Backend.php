@@ -850,7 +850,7 @@ class Backend
             if($dtype==null || $dtype==NDArray::int32 || $dtype==NDArray::uint32) {
                 return $la->reduceArgMax($x,axis:$axis,keepdims:$keepdims,dtype:$dtype);
             }
-            $argMax32 = $la->reduceArgMax($x,axis:$axis,keepdims:$keepdims,dtype:NDArray::uint32);
+            $argMax32 = $la->reduceArgMax($x,axis:$axis,keepdims:$keepdims,dtype:NDArray::int32);
             $argMax = $la->alloc($argMax32->shape(),$dtype);
             return $la->astype($argMax32,$dtype,$argMax);
         }

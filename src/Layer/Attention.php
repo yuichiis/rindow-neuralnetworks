@@ -327,8 +327,8 @@ class Attention extends AbstractAttentionLayer
         if(isset($container->queryMask)) {
             $queryMask = $container->queryMask;
             if(!$this->doNotExpandMask) { // Broadcasting 
-                // queryMask = [batch_size*Tq]
-                // vector = [batch_size, Tq, dim] => [dim, batch_size, Tq]
+                // queryMask = [batch_size, Tq]
+                // vector = [batch_size, Tq, dim]
                 $dOutputs = $K->masking($queryMask,$dOutputs,batchDims:$queryMask->ndim(),axis:$dOutputs->ndim());
             } else {
                 $dOutputs = $K->masking($queryMask,$dOutputs);

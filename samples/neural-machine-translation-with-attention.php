@@ -347,7 +347,7 @@ class Seq2seq extends AbstractModel
             $inputLength,
             $outputLength
         );
-        $this->out = $builder->layers()->Activation('softmax');
+        //$this->out = $builder->layers()->Activation('softmax');
         $this->mo = $mo;
         $this->startVocId = $startVocId;
         $this->endVocId = $endVocId;
@@ -364,7 +364,7 @@ class Seq2seq extends AbstractModel
         $inputMask = $this->encoder->computeMask($inputs);
         [$outputs,$dmyStatus] = $this->decoder->forward(
             $trues,initialStates:$states, encOutputs:$encOutputs, inputMask:$inputMask);
-        $outputs = $this->out->forward($outputs);
+        //$outputs = $this->out->forward($outputs);
         return $outputs;
     }
 
@@ -461,8 +461,85 @@ class Seq2seq extends AbstractModel
     }
 }
 
-$numExamples=20000;#30000
-$numWords=1024;#null;
+class CustomLossFunction
+{
+    protected $loss_object;
+    protected $gradient;
+    protected $nn;
+
+    public function __construct($nn)
+    {
+        $this->nn = $nn;
+        $this->gradient = $nn->gradient();
+        $this->loss_object = $nn->losses->SparseCategoricalCrossentropy(
+            from_logits:true, reduction:'none'
+        );
+        //$this->loss_object = $nn->losses->SparseCategoricalCrossentropy(from_logits:true);
+    }
+
+    public function __invoke(NDArray $label, NDArray $pred) : NDArray
+    {
+        $mo = $this->nn->backend()->localMatrixOperator();
+        $g = $this->gradient;
+        $loss = $this->loss_object->forward($label, $pred);
+        //echo "label=".$mo->shapeToString($label->shape())."\n";
+        //echo "pred=".$mo->shapeToString($pred->shape())."\n";
+        //echo "loss=".$mo->shapeToString($loss->shape())."\n";
+        //return $loss;
+
+        $mask = $g->cast($g->cast($label,dtype:NDArray::bool),dtype:NDArray::float32);
+        //echo "mask=".$mo->shapeToString($loss->shape())."\n";
+        //echo "".$mo->toString($mask,indent:true)."\n";
+        
+        $loss = $g->mul($loss,$mask);
+        $n = $g->reduceSum($mask);      // scalar in NDArray
+        $loss = $g->reduceSum($loss);   // scalar in NDArray
+        $loss = $g->div($loss,$n);
+        return $loss;
+    }
+}
+
+class CustomAccuracy
+{
+    protected $backend;
+    protected $nn;
+    protected $gradient;
+
+    public function __construct($nn)
+    {
+        $this->backend = $nn->backend();
+        $this->nn = $nn;
+    }
+
+    public function __invoke($label, $pred)
+    {
+        $mo = $this->nn->backend()->localMatrixOperator();
+        $K = $this->backend;
+        $pred = $K->argMax($pred, axis:-1);  // convert to token id from predicts
+
+        $match = $K->equal($label, $pred);   // compare to trues (int32 == int32) 
+        $mask = $K->cast($label,dtype:NDArray::bool); // make mask
+        $match = $K->cast($match,dtype:NDArray::float32);
+        $match = $K->masking($mask,$match); // masking matching results
+
+        //echo "match=".$mo->shapeToString($match->shape())."\n";
+        //echo "mask=".$mo->shapeToString($mask->shape())."\n";
+        //echo "match=".$mo->toString($match,indent:true)."\n";
+        //echo "mask=".$mo->toString($mask,indent:true)."\n";
+        $sumMatch = $K->scalar($K->sum($match));
+        $n = $K->scalar($K->sum($mask));
+        if($n==0) {
+            $accuracy = 0;
+        } else {
+            $accuracy = $sumMatch/$n;
+        }
+        return $accuracy;
+    }
+}
+
+
+$numExamples=50000;#20000;#30000
+$numWords=null;#1024;#null;
 $epochs = 10;
 $batchSize = 64;
 $wordVectSize=256;
@@ -520,12 +597,16 @@ $seq2seq = new Seq2seq(
     $targLang->wordToIndex('<end>'),
     $plt
 );
+$lossFunc = new CustomLossFunction($nn);
+$accuracyFunc = new CustomAccuracy($nn);
 
 echo "Compile model...\n";
 $seq2seq->compile(
-    loss:'sparse_categorical_crossentropy',
+    loss:$lossFunc,
+//    loss:'sparse_categorical_crossentropy',
     optimizer:'adam',
-    metrics:['loss','accuracy'],
+    metrics:['loss'=>'loss','accuracy'=>$accuracyFunc],
+//    metrics:['loss'=>'loss','accuracy'=>'accuracy'],
 );
 
 $seq2seq->build(

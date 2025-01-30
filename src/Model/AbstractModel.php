@@ -35,7 +35,7 @@ abstract class AbstractModel implements Model
     protected ?Optimizer $optimizer;
     /** @var array<Metric> */
     protected array $metrics = [];
-    protected ?Loss $lossFunction;
+    protected mixed $lossFunction;
     protected bool $built = false;
     protected bool $shapeInspection = true;
     protected bool $backupShapeInspection;

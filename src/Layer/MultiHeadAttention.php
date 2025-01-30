@@ -552,8 +552,9 @@ class MultiHeadAttention extends AbstractAttentionLayer
             # The expand dim happens starting from the `num_heads` dimension,
             # (<batch_dims>, num_heads, <query_attention_dims,
             # key_attention_dims>)
-            //echo "attention_scores=(".implode(',',$attention_scores->shape()).")\n";
-            //echo "attention_mask=(".implode(',',$attention_mask->shape()).")\n";
+            echo "attention_scores=(".implode(',',$attention_scores->shape()).")\n";
+            echo "attention_mask=(".implode(',',$attention_mask->shape()).")\n";
+            //echo "attention_mask".$K->localMatrixOperator()->shapeToString($attention_mask->shape()).": ".$K->localMatrixOperator()->toString($attention_mask,indent:true)."\n";
             //$mask_expansion_axis = -count($this->attention_axes) * 2 - 1;
             //echo "mask_expansion_axis=".$mask_expansion_axis."\n";
             //$n = $attention_scores->ndim() - $attention_mask->ndim();
@@ -563,10 +564,9 @@ class MultiHeadAttention extends AbstractAttentionLayer
             //    );
             //}
             //echo "expanded_attention_mask=(".implode(',',$attention_mask->shape()).")\n";
-
+            $attention_scores = $K->masking($attention_mask,$attention_scores,fill:-1e9,axis:-$attention_mask->ndim());
         }
-        $results = $this->softmax_layer->_rawCall(
-            [$attention_scores], ['training'=>$training, 'mask'=>$attention_mask]);
+        $results = $K->softmax($attention_scores);
         return $results[0];
     }
 
@@ -615,6 +615,7 @@ class MultiHeadAttention extends AbstractAttentionLayer
         # attention scores.
         $attention_scores = $K->einsum($this->dot_product_equation, $key, $query);
     
+        //echo "attention_mask".$K->localMatrixOperator()->shapeToString($attention_mask->shape()).": ".$K->localMatrixOperator()->toString($attention_mask,indent:true)."\n";
         #echo "attention_scores: ".$mo->toString($attention_scores,format:'%10.7e',indent:true)."\n";
         $attention_scores = $this->masked_softmax(
             $attention_scores, $attention_mask, $training
@@ -635,7 +636,7 @@ class MultiHeadAttention extends AbstractAttentionLayer
         $attention_output = $K->einsum(
             $this->combine_equation, $final_attn_scores, $value
         );
-        return [$attention_output, $attention_scores];
+        return [$attention_output, $attention_scores, ];
     }
 
     private function compute_differntiate_attention(
@@ -644,7 +645,7 @@ class MultiHeadAttention extends AbstractAttentionLayer
         $key,
         $value,
         $attention_output,
-        $final_attn_scores,
+        $attention_scores,
         $attention_mask,
         $training,
     ) : array
@@ -660,7 +661,7 @@ class MultiHeadAttention extends AbstractAttentionLayer
         $dScores = $K->einsum($this->backward_combine_scores_equation, $dAttention_output, $value);
 
         //echo "combine_equation: ".$this->combine_equation."\n";
-        //echo "final_attn_scores=(".implode(',',$final_attn_scores->shape()).")\n";
+        //echo "attention_scores=(".implode(',',$attention_scores->shape()).")\n";
         //echo "value=(".implode(',',$value->shape()).")\n";
         //echo "attention_output=(".implode(',',$attention_output->shape()).")\n";
         //echo "dAttention_output=(".implode(',',$dAttention_output->shape()).")\n";
@@ -671,8 +672,8 @@ class MultiHeadAttention extends AbstractAttentionLayer
         //echo "dSoftmax_scores=(".implode(',',$dScores->shape()).")\n";
         //echo ": ".$mo->toString($dScores,indent:true)."\n";
 
-        //$dScores = $K->dSoftmax($dScores, $final_attn_scores);
-        $dScores = $this->softmax_layer->_rawDifferentiate([$dScores])[0];
+        $dScores = $K->dSoftmax($dScores, $attention_scores);
+        //$dScores = $this->softmax_layer->_rawDifferentiate([$dScores])[0];
 
         //echo "dScores=(".implode(',',$dScores->shape()).")";
         //echo ": ".$mo->toString($dScores,format:'%10.7e',indent:true)."\n";
@@ -812,6 +813,7 @@ class MultiHeadAttention extends AbstractAttentionLayer
         //echo "query before dense: ".$mo->toString($query,indent:true)."\n";
         //echo "key: ".$mo->toString($key,indent:true)."\n";
         //echo "value: ".$mo->toString($value,indent:true)."\n";
+        //echo "attention_mask".$K->localMatrixOperator()->shapeToString($attention_mask->shape()).": ".$K->localMatrixOperator()->toString($attention_mask,indent:true)."\n";
 
         #   N = `num_attention_heads`
         #   H = `size_per_head`
@@ -958,7 +960,7 @@ class MultiHeadAttention extends AbstractAttentionLayer
             #original <the shape of the causal mask is [1, T, S]>
             #rindow<the shape of the causal mask is [T, S]>
             $mask = $this->compute_causal_mask($query, $value);
-            echo "causal-mask".$K->localMatrixOperator()->shapeToString($mask->shape()).": ".$K->localMatrixOperator()->toString($mask,indent:true)."\n";
+            //echo "causal-mask".$K->localMatrixOperator()->shapeToString($mask->shape()).": ".$K->localMatrixOperator()->toString($mask,indent:true)."\n";
             $auto_mask = ($auto_mask===null) ? $mask : ($auto_mask & $mask);
         }
         if($auto_mask) {
@@ -1002,11 +1004,18 @@ class MultiHeadAttention extends AbstractAttentionLayer
         $K = $this->backend;
         $q_seq_length = $query->shape()[1];
         $v_seq_length = ($value===null) ? $q_seq_length : $value->shape()[1];
-        $ones_mask = $K->ones([$q_seq_length, $v_seq_length],dtype:NDArray::float32);
-        $row_index = $K->cumsum($ones_mask, axis:-2);
-        $col_index = $K->cumsum($ones_mask, axis:-1);
-        $mask = $K->sub($row_index, $col_index);
-        return $K->greaterEqual($mask, 0);
+        $ones_mask = $K->ones([$q_seq_length, $v_seq_length],dtype:NDArray::bool);
+        return $K->bandpart($ones_mask,-1,0);
+        //$row_index = $K->cumsum($ones_mask, axis:-2);
+        //echo "======row_index======\n";
+        //echo $K->localMatrixOperator()->toString($row_index,indent:true)."\n";
+        //$col_index = $K->cumsum($ones_mask, axis:-1);
+        //echo "======col_index======\n";
+        //echo $K->localMatrixOperator()->toString($col_index,indent:true)."\n";
+        //$mask = $K->sub($row_index, $col_index);
+        //echo "======sub======\n";
+        //echo $K->localMatrixOperator()->toString($mask,indent:true)."\n";
+        //return $K->greaterEqual($mask, 0);
     }
     
     private function compute_output_shape(
