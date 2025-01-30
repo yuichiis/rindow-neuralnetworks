@@ -9,7 +9,10 @@ use Interop\Polite\Math\Matrix\NDArray;
 class Mnist
 {
     protected object $matrixOperator;
-    protected string $urlBase = 'http://yann.lecun.com/exdb/mnist/';
+    // Unable to download from original site.
+    // http://yann.lecun.com/exdb/mnist/'
+    // Redirecting download to alternative mirror site.
+    protected string $urlBase = 'https://storage.googleapis.com/cvdf-datasets/mnist/';
     /** @var array<string,string> $keyFiles */
     protected $keyFiles = [
         'train_images'=>'train-images-idx3-ubyte.gz',
