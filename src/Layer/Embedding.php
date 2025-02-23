@@ -11,8 +11,8 @@ class Embedding extends AbstractLayer
     protected ?int $inputLength;
     protected int $inputDim;
     protected int $outputDim;
-    protected mixed $kernelInitializer;
-    protected ?string $kernelInitializerName;
+    protected mixed $embeddingsInitializer;
+    protected ?string $embeddingsInitializerName;
     protected ?int $inputDtype=NDArray::int32;
     protected bool $maskZero;
 
@@ -27,13 +27,13 @@ class Embedding extends AbstractLayer
         int $inputDim,
         int $outputDim,
         int $input_length=null,
-        string|callable $kernel_initializer=null,
+        string|callable $embeddings_initializer=null,
         bool $mask_zero=null,
         string $name=null,
     )
     {
         // defaults
-        $kernel_initializer ??= 'random_uniform';
+        $embeddings_initializer ??= 'random_uniform';
         $mask_zero ??= false;
         
         parent::__construct($backend);
@@ -44,8 +44,8 @@ class Embedding extends AbstractLayer
         $this->inputLength = $input_length;
         $this->inputDim = $inputDim;
         $this->outputDim = $outputDim;
-        $this->kernelInitializer = $K->getInitializer($kernel_initializer);
-        $this->kernelInitializerName = $this->toStringName($kernel_initializer);
+        $this->embeddingsInitializer = $K->getInitializer($embeddings_initializer);
+        $this->embeddingsInitializerName = $this->toStringName($embeddings_initializer);
         $this->maskZero = $mask_zero;
         $this->initName($name,'embedding');
         $this->allocateWeights(1);
@@ -54,7 +54,7 @@ class Embedding extends AbstractLayer
     public function build(mixed $variable=null, array $sampleWeights=null) : void
     {
         $K = $this->backend;
-        $kernelInitializer = $this->kernelInitializer;
+        $embeddingsInitializer = $this->embeddingsInitializer;
 
         $inputShape = $this->normalizeInputShape($variable);
         if(count($inputShape)!=1) {
@@ -65,7 +65,7 @@ class Embedding extends AbstractLayer
             if($sampleWeights) {
                 $this->kernel = $sampleWeights[0];
             } else {
-                $this->kernel = $kernelInitializer(
+                $this->kernel = $embeddingsInitializer(
                     [$this->inputDim,$this->outputDim],
                     [$this->inputDim,$this->outputDim]
                 );
@@ -98,7 +98,7 @@ class Embedding extends AbstractLayer
             'outputDim' => $this->outputDim,
             'options' => [
                 'input_length'=>$this->inputLength,
-                'kernel_initializer' => $this->kernelInitializerName,
+                'embeddings_initializer' => $this->embeddingsInitializerName,
             ]
         ];
     }

@@ -147,78 +147,6 @@ abstract class AbstractAttentionLayer extends AbstractLayerBase
     }
 
     /**
-     * @param array<Variable> $inputs
-     * @param array<Variable> $mask
-     * @return array<Variable>|Variable
-     */
-    public function forward(
-        array $inputs, 
-        Variable|bool $training=null, 
-        Variable|bool $returnAttentionScores=null,
-        array $mask=null,
-        )
-    {
-        //$outputs = null;
-        if(!is_array($inputs)) {
-            throw new InvalidArgumentException('inputs must be list of Variable');
-        }
-        [$inputs,$rawInputs]     = $this->packAndUnpackVariables($this->backend,$inputs);
-        $options = [];
-        [$training,$rawTraining] = $this->packAndUnpackVariable($this->backend,$training,unbackpropagatable:true);
-        [$returnAttentionScores,$rawReturnAttentionScores] = $this->packAndUnpackVariable($this->backend,$returnAttentionScores,unbackpropagatable:true);
-        $options['training'] = $training;
-        $options['returnAttentionScores'] = $returnAttentionScores;
-        $rawMask = null;
-        if($mask) {
-            if(count($mask)!=2) {
-                throw new InvalidArgumentException('mask must be list of the two of masks as queryMask and valueMask');
-            }
-            [$mask,$rawMask] = $this->packAndUnpackVariables($this->backend,$mask,unbackpropagatable:true);
-            $options['queryMask'] = $mask[0];
-            $options['valueMask'] = $mask[1];
-        }
-        if(!$this->built) {
-            $this->build($inputs);
-            $this->built = true;
-        }
-        $options = $this->cleanNullValue($options);
-        
-        $numOfOutputs = $this->numOfOutputs($options);
-        $session = $this->preGradientProcessOnSession($inputs,$options);
-        $session->begin();
-        try {
-            $this->assertInputShapes($rawInputs,'forward');
-            $this->unbackpropagatables = null;
-            $rawOutputs = $this->call(
-                $rawInputs, 
-                training:$rawTraining, 
-                returnAttentionScores:$rawReturnAttentionScores,
-                mask:$rawMask,
-            );
-            $rawOutputs[0] = $this->makeSingleMaskedValue($rawInputs[0], $rawOutputs[0]);
-            if($returnAttentionScores){
-                $this->assertOutputShape($rawOutputs[0],'forward');
-                $this->assertScoresShape($rawOutputs[1],'forward');
-            } else {
-                $this->assertOutputShape($rawOutputs,'forward');
-            }
-        } finally{
-            $session->end();
-        }
-        if($numOfOutputs==1) {
-            $rawOutputs = [$rawOutputs];
-        }
-        $outputs = $this->postGradientProcessOnSession(
-            $this->backend, $session,$inputs,
-            $rawOutputs,$this->unbackpropagatables);
-        if($numOfOutputs==1) {
-            return $outputs[0];
-        } else {
-            return $outputs;
-        }
-    }
-
-    /**
      * Call from SessionFunc in compiled graph
      * @param array<NDArray> $inputs
      * @param array<string,mixed> $options
@@ -229,9 +157,13 @@ abstract class AbstractAttentionLayer extends AbstractLayerBase
         $training = $options['training'] ?? null;
         $queryMask = $options['queryMask'] ?? null;
         $valueMask = $options['valueMask'] ?? null;
+        $keyMask   = $options['keyMask'] ?? null;
         $mask = null;
-        if($queryMask!==null || $valueMask!==null) {
+        if($queryMask!==null || $valueMask!==null || $keyMask!==null) {
             $mask = [$queryMask,$valueMask];
+            if($keyMask!==null) {
+                $mask[] = $keyMask;
+            }
         } else {
             $mask = $this->retrieveMultiMasks($inputs);
         }

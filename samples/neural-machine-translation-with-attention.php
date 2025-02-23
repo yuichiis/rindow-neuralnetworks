@@ -4,6 +4,7 @@ require __DIR__.'/../vendor/autoload.php';
 use Interop\Polite\Math\Matrix\NDArray;
 use Rindow\NeuralNetworks\Model\AbstractModel;
 use Rindow\NeuralNetworks\Gradient\Variable;
+use Rindow\NeuralNetworks\Gradient\MaskedNDArray;
 use Rindow\Math\Matrix\MatrixOperator;
 use Rindow\Math\Plot\Plot;
 use Rindow\NeuralNetworks\Backend\RindowBlas\Backend;
@@ -215,13 +216,6 @@ class Encoder extends AbstractModel
         
         return [$outputs, $states];
     }
-
-    public function computeMask($inputs)
-    {
-        $g = $this->builder->gradient();
-        $mask = $g->notEqual($inputs,$g->zerosLike($inputs));
-        return $mask;
-    }
 }
 
 class Decoder extends AbstractModel
@@ -271,7 +265,6 @@ class Decoder extends AbstractModel
         object $inputs,
         array $initialStates=null,
         Variable $encOutputs=null,
-        Variable $inputMask=null,
         bool $returnAttentionScores=null,
         ) : array
     {
@@ -283,7 +276,6 @@ class Decoder extends AbstractModel
 
         $contextVector = $this->attention->forward(
             [$rnnSequence,$encOutputs],
-            //masks:[null,$inputMask],
             returnAttentionScores:$returnAttentionScores,
         );
         if(is_array($contextVector)) {
@@ -361,9 +353,8 @@ class Seq2seq extends AbstractModel
     {
         $K = $this->backend;
         [$encOutputs,$states] = $this->encoder->forward($inputs);
-        $inputMask = $this->encoder->computeMask($inputs);
         [$outputs,$dmyStatus] = $this->decoder->forward(
-            $trues,initialStates:$states, encOutputs:$encOutputs, inputMask:$inputMask);
+            $trues,initialStates:$states, encOutputs:$encOutputs);
         //$outputs = $this->out->forward($outputs);
         return $outputs;
     }

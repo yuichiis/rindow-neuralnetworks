@@ -580,6 +580,7 @@ class Backend
         NDArray $a,
         NDArray $mask,
         float $fill=null,
+        int $mode=null,
         int $batchDims=null,
         int $axis=null,
         ) : NDArray
@@ -589,6 +590,7 @@ class Backend
             $mask,
             $a,
             fill:$fill,
+            mode:$mode,
             batchDims:$batchDims,
             axis:$axis,
         );
@@ -1275,7 +1277,7 @@ class Backend
         //$dInputs = $la->axpy($mul2,$dx,-1.0);
         //$dInputs = $this->la->scal(1/$dOutputs->shape()[0],$dInputs);
 
-        // dx = (y * dy) - sum(y * dy) * y
+        // dx = sum(y * dy) *  - y(y * dy)
         $dx = $la->multiply($outputs, $la->copy($dOutputs));
         $shape = $orgShape = $dx->shape();
         $n = array_pop($shape);
@@ -1283,7 +1285,11 @@ class Backend
         $dx = $dx->reshape([$m,$n]);
         $dInputs = $la->axpy(
             $la->multiply($la->reduceSum($dx, axis:1),
-                                $la->copy($outputs->reshape([$m,$n])),$trans=true),$dx,-1.0);
+                $la->copy($outputs->reshape([$m,$n])),$trans=true
+            ),
+            $dx,
+            -1.0
+        );
         //$dInputs = $this->la->scal(1/$dOutputs->shape()[0],$dInputs);
         return $dInputs->reshape($orgShape);
     }

@@ -137,18 +137,18 @@ class EinsumDense extends AbstractLayer
     protected array $partial_output_shape;
     protected array $full_output_shape;
     protected ?string $bias_axes;
-    protected ?int $lora_rank;
-    protected bool $lora_enabled;
+    //protected ?int $lora_rank;
+    //protected bool $lora_enabled;
     protected string $dInputsBackwardEquation;
     protected string $dKernelBackwardEquation;
     
     //protected $inputs;
 
     //"""Quantization-related (int8 and float8) methods"""
-    private string $QUANTIZATION_MODE_ERROR_TEMPLATE = 
-        "Invalid quantization mode. Expected one of ".
-        "{dtype_policies.QUANTIZATION_MODES}. ".
-        "Received: quantization_mode={mode}";
+    //private string $QUANTIZATION_MODE_ERROR_TEMPLATE = 
+    //    "Invalid quantization mode. Expected one of ".
+    //    "{dtype_policies.QUANTIZATION_MODES}. ".
+    //    "Received: quantization_mode={mode}";
 
     public function __construct(
         object $backend,
@@ -163,7 +163,7 @@ class EinsumDense extends AbstractLayer
         //string|object $bias_regularizer=null,
         //string|object $kernel_constraint=null,
         //string|object $bias_constraint=null,
-        int $lora_rank=null,
+        //int $lora_rank=null,
         string $name=null,
         //**kwargs,
     )
@@ -185,8 +185,8 @@ class EinsumDense extends AbstractLayer
         $this->biasInitializer   = $K->getInitializer($bias_initializer);
         $this->kernelInitializerName = $this->toStringName($kernel_initializer);
         $this->biasInitializerName = $this->toStringName($bias_initializer);
-        $this->lora_rank = $lora_rank;
-        $this->lora_enabled = false;
+        //$this->lora_rank = $lora_rank;
+        //$this->lora_enabled = false;
         $this->initName($name,'einsumdense');
         $this->allocateWeights($this->useBias?2:1);
         $this->setActivation($activation);
@@ -276,9 +276,9 @@ class EinsumDense extends AbstractLayer
             }
         }
         $this->built = true;
-        if($this->lora_rank) {
-            $this->enable_lora($this->lora_rank);
-        }
+        //if($this->lora_rank) {
+        //    $this->enable_lora($this->lora_rank);
+        //}
         $this->dKernel = $K->zerosLike($this->kernel);
         if($this->useBias) {
             $this->dBias = $K->zerosLike($this->bias);
@@ -314,11 +314,11 @@ class EinsumDense extends AbstractLayer
                 "You must build the layer before accessing `kernel`."
             );
         }
-        if($this->lora_enabled) {
-            return $K->add($this->kernel, $K->matmul(
-                $this->lora_kernel_a, $this->lora_kernel_b
-            ));
-        }
+        //if($this->lora_enabled) {
+        //    return $K->add($this->kernel, $K->matmul(
+        //        $this->lora_kernel_a, $this->lora_kernel_b
+        //    ));
+        //}
         return $this->kernel;
     }
     
@@ -369,50 +369,50 @@ class EinsumDense extends AbstractLayer
         return $dInputs;
     }
 
-    private function enable_lora(
-        int $rank,
-        string|object $a_initializer=null,
-        string|object $b_initializer=null
-    ) : void
-    {
-        $a_initializer ??= "he_uniform";
-        $b_initializer ??= "zeros";
-        if($this->kernel_constraint) {
-            throw new InvalidArgumentException(
-                "Lora is incompatible with kernel constraints. ".
-                "In order to enable lora on this layer, remove the ".
-                "`kernel_constraint` argument."
-            );
-        }
-        if(!$this->built) {
-            throw new InvalidArgumentException(
-                "Cannot enable lora on a layer that isn't yet built."
-            );
-        }
-        if($this->lora_enabled) {
-            throw new InvalidArgumentException(
-                "lora is already enabled. ".
-                "This can only be done once per layer."
-            );
-        }
-        $this->tracker->unlock();
-        $this->lora_kernel_a = $this->add_weight(
-            name:"lora_kernel_a",
-            shape:[array_merge($this->kernel()->shape()[R(null,-1)],[$rank])],
-            initializer:$K->getInitializers($a_initializer),
-            //regularizer:$this->kernel_regularizer,
-        );
-        $this->lora_kernel_b = $this->add_weight(
-            name:"lora_kernel_b",
-            shape:[$rank, $this->kernel()->shape()[-1]],
-            initializer:$K->getInitializers($b_initializer),
-            //regularizer:$this->kernel_regularizer,
-        );
-        $this->kernel->trainable = false;
-        $this->tracker->lock();
-        $this->lora_enabled = true;
-        $this->lora_rank = $rank;
-    }
+    //private function enable_lora(
+    //    int $rank,
+    //    string|object $a_initializer=null,
+    //    string|object $b_initializer=null
+    //) : void
+    //{
+    //    $a_initializer ??= "he_uniform";
+    //    $b_initializer ??= "zeros";
+    //    if($this->kernel_constraint) {
+    //        throw new InvalidArgumentException(
+    //            "Lora is incompatible with kernel constraints. ".
+    //            "In order to enable lora on this layer, remove the ".
+    //            "`kernel_constraint` argument."
+    //        );
+    //    }
+    //    if(!$this->built) {
+    //        throw new InvalidArgumentException(
+    //            "Cannot enable lora on a layer that isn't yet built."
+    //        );
+    //    }
+    //    if($this->lora_enabled) {
+    //        throw new InvalidArgumentException(
+    //            "lora is already enabled. ".
+    //            "This can only be done once per layer."
+    //        );
+    //    }
+    //    $this->tracker->unlock();
+    //    $this->lora_kernel_a = $this->add_weight(
+    //        name:"lora_kernel_a",
+    //        shape:[array_merge($this->kernel()->shape()[R(null,-1)],[$rank])],
+    //        initializer:$K->getInitializers($a_initializer),
+    //        //regularizer:$this->kernel_regularizer,
+    //    );
+    //    $this->lora_kernel_b = $this->add_weight(
+    //        name:"lora_kernel_b",
+    //        shape:[$rank, $this->kernel()->shape()[-1]],
+    //        initializer:$K->getInitializers($b_initializer),
+    //        //regularizer:$this->kernel_regularizer,
+    //    );
+    //    $this->kernel->trainable = false;
+    //    $this->tracker->lock();
+    //    $this->lora_enabled = true;
+    //    $this->lora_rank = $rank;
+    //}
     
     public function save_own_variables(array $store) : void
     {
@@ -422,8 +422,8 @@ class EinsumDense extends AbstractLayer
         }
         # The keys of the `store` will be saved as determined because the
         # default ordering will change after quantization
-        [$kernel_value, $kernel_scale] = $this->get_kernel_with_merged_lora();
-        $target_variables = [$kernel_value];
+        //[$kernel_value, $kernel_scale] = $this->get_kernel_with_merged_lora();
+        $target_variables = [$this->kernel]; // [$kernel_value];
         if($this->bias) {
             $target_variables->append($this->bias);
         }
@@ -451,9 +451,9 @@ class EinsumDense extends AbstractLayer
     
     private function load_own_variables($store) : void
     {
-        if(!$this->lora_enabled) {
-            $this->check_load_own_variables($store);
-        }
+        //if(!$this->lora_enabled) {
+        //    $this->check_load_own_variables($store);
+        //}
         # Do nothing if the layer isn't yet built
         if(!$this->built) {
             return;
@@ -484,10 +484,10 @@ class EinsumDense extends AbstractLayer
         foreach($target_variables as $i => $variable) {
             $variable->assign($store[strval($i)]);
         }
-        if($this->lora_enabled) {
-            $this->lora_kernel_a->assign($K->zeros($this->lora_kernel_a->shape()));
-            $this->lora_kernel_b->assign($K->zeros($this->lora_kernel_b->shape()));
-        }
+        //if($this->lora_enabled) {
+        //    $this->lora_kernel_a->assign($K->zeros($this->lora_kernel_a->shape()));
+        //    $this->lora_kernel_b->assign($K->zeros($this->lora_kernel_b->shape()));
+        //}
     }
 
     public function get_config() : array
@@ -505,9 +505,9 @@ class EinsumDense extends AbstractLayer
             //"kernel_constraint"=>$this->kernel_constraint_name,
             //"bias_constraint"=>$this->bias_constraint_name,
         ];
-        if($this->lora_rank){
-            $config["lora_rank"] = $this->lora_rank;
-        }
+        //if($this->lora_rank){
+        //    $config["lora_rank"] = $this->lora_rank;
+        //}
         return $config;
     }
     
@@ -549,42 +549,42 @@ class EinsumDense extends AbstractLayer
         }
     }
     
-    private function get_kernel_with_merged_lora() : array
-    {
-        #if($this->dtype_policy instanceof QuantizedDTypePolicy) {
-        #    $kernel_value = $this->kernel;
-        #    $kernel_scale = $this->kernel_scale;
-        #    if($this->lora_enabled) {
-        #        # Dequantize & quantize to merge lora weights into int8 kernel
-        #        # Note that this is a lossy compression
-        #        $kernel_value = $K->divide($kernel_value, $kernel_scale);
-        #        $kernel_value = $K->add(
-        #            $kernel_value,
-        #            $K->matmul($lora_kernel_a, $lora_kernel_b),
-        #        );
-        #        [$kernel_value, $kernel_scale] = $K->abs_max_quantize(
-        #            $kernel_value, axis:$this->kernel_reduced_axes
-        #        );
-        #        $kernel_scale = $K->transpose(
-        #            $kernel_scale, $this->kernel_transpose_axes
-        #        );
-        #        if($this->kernel_expand_axes) {
-        #            $kernel_scale = $K->expand_dims(
-        #                $kernel_scale, axis:$this->kernel_expand_axes
-        #            );
-        #        }
-        #        if($this->kernel_squeeze_axes) {
-        #            $kernel_scale = $K->squeeze(
-        #                $kernel_scale, axis:$this->kernel_squeeze_axes
-        #            );
-        #        }
-        #    }
-        #} else {
-            $kernel_value = $this->kernel;
-            $kernel_scale = null;
-        #}
-        return [$kernel_value, $kernel_scale];
-    }
+    //private function get_kernel_with_merged_lora() : array
+    //{
+    //    #if($this->dtype_policy instanceof QuantizedDTypePolicy) {
+    //    #    $kernel_value = $this->kernel;
+    //    #    $kernel_scale = $this->kernel_scale;
+    //    #    if($this->lora_enabled) {
+    //    #        # Dequantize & quantize to merge lora weights into int8 kernel
+    //    #        # Note that this is a lossy compression
+    //    #        $kernel_value = $K->divide($kernel_value, $kernel_scale);
+    //    #        $kernel_value = $K->add(
+    //    #            $kernel_value,
+    //    #            $K->matmul($lora_kernel_a, $lora_kernel_b),
+    //    #        );
+    //    #        [$kernel_value, $kernel_scale] = $K->abs_max_quantize(
+    //    #            $kernel_value, axis:$this->kernel_reduced_axes
+    //    #        );
+    //    #        $kernel_scale = $K->transpose(
+    //    #            $kernel_scale, $this->kernel_transpose_axes
+    //    #        );
+    //    #        if($this->kernel_expand_axes) {
+    //    #            $kernel_scale = $K->expand_dims(
+    //    #                $kernel_scale, axis:$this->kernel_expand_axes
+    //    #            );
+    //    #        }
+    //    #        if($this->kernel_squeeze_axes) {
+    //    #            $kernel_scale = $K->squeeze(
+    //    #                $kernel_scale, axis:$this->kernel_squeeze_axes
+    //    #            );
+    //    #        }
+    //    #    }
+    //    #} else {
+    //        $kernel_value = $this->kernel;
+    //        $kernel_scale = null;
+    //    #}
+    //    return [$kernel_value, $kernel_scale];
+    //}
 
     /*
         """Analyzes an einsum string to determine the required weight shape."""
@@ -628,12 +628,12 @@ class EinsumDense extends AbstractLayer
             if(count($output_shape)+1!=strlen($output_chrs)) {
                 throw new InvalidArgumentException('Unmatch rank of output_shape and output spec in equation');
             }
-            $results = $this->analyze_split_string(
+            $shapes = $this->analyze_split_string(
                 $split_string, $bias_axes, $input_shape, $output_shape
             );
-            $backward_dinput_script  = "{$output_chrs},{$weight_chrs}->{$input_chrs}";
-            $backward_dkernel_script = "{$output_chrs},{$input_chrs}->{$weight_chrs}";
-            return array_merge($results,[$backward_dinput_script,$backward_dkernel_script]);
+            $backward_dinput_equation  = "{$output_chrs},{$weight_chrs}->{$input_chrs}";
+            $backward_dkernel_equation = "{$output_chrs},{$input_chrs}->{$weight_chrs}";
+            return array_merge($shapes,[$backward_dinput_equation,$backward_dkernel_equation]);
         }
     
         # This is the case where ellipses are present on the left.
@@ -647,12 +647,12 @@ class EinsumDense extends AbstractLayer
         );
         if($split_string) {
             [$dmy,$input_chrs,$weight_chrs,$output_chrs] = $split_string;
-            $results = $this->analyze_split_string(
+            $shapes = $this->analyze_split_string(
                 $split_string, $bias_axes, $input_shape, $output_shape, $left_elided=true
             );
-            $backward_dinput_script  = "...{$output_chrs},{$weight_chrs}->...{$input_chrs}";
-            $backward_dkernel_script = "...{$output_chrs},...{$input_chrs}->{$weight_chrs}";
-            return array_merge($results,[$backward_dinput_script,$backward_dkernel_script]);
+            $backward_dinput_equation  = "...{$output_chrs},{$weight_chrs}->...{$input_chrs}";
+            $backward_dkernel_equation = "...{$output_chrs},...{$input_chrs}->{$weight_chrs}";
+            return array_merge($shapes,[$backward_dinput_equation,$backward_dkernel_equation]);
         }
     
         # This is the case where ellipses are present on the right.
@@ -666,12 +666,12 @@ class EinsumDense extends AbstractLayer
         );
         if($split_string) {
             [$dmy,$input_chrs,$weight_chrs,$output_chrs] = $split_string;
-            $results = $this->analyze_split_string(
+            $shapes = $this->analyze_split_string(
                 $split_string, $bias_axes, $input_shape, $output_shape
             );
-            $backward_dinput_script  = "{$output_chrs}...,{$weight_chrs}->{$input_chrs}...";
-            $backward_dkernel_script = "{$output_chrs}...,{$input_chrs}...->{$weight_chrs}";
-            return array_merge($results,[$backward_dinput_script,$backward_dkernel_script]);
+            $backward_dinput_equation  = "{$output_chrs}...,{$weight_chrs}->{$input_chrs}...";
+            $backward_dkernel_equation = "{$output_chrs}...,{$input_chrs}...->{$weight_chrs}";
+            return array_merge($shapes,[$backward_dinput_equation,$backward_dkernel_equation]);
         }
     
         throw new InvalidArgumentException(

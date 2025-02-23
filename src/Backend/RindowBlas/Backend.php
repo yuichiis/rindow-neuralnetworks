@@ -554,6 +554,7 @@ class Backend
         NDArray $mask,
         NDArray $a,
         float $fill=null,
+        int $mode=null,
         int $batchDims=null,
         int $axis=null,
         ) : NDArray
@@ -563,6 +564,7 @@ class Backend
             $mask,
             $la->copy($a),
             fill:$fill,
+            mode:$mode,
             batchDims:$batchDims,
             axis:$axis,
         );
@@ -1277,17 +1279,72 @@ class Backend
         //                   =  yk * (I(kj) - yj)  ; [ I(kj) -> 1:k=j,
         //                                                      0:k!=j ]
 
-        // dx = (y * dy) - sum(y * dy) * y
-        $dx = $la->multiply($outputs, $la->copy($dOutputs));
-        $shape = $orgShape = $dx->shape();
+        // dx = - y * ( sum(y * dy) - dy)
+        //    = - sum(y * dy) * y + (y * dy)
+        //echo "====================================\n";
+        //echo "outputs: ".$this->matrixOperator->shapeToString($outputs->shape());
+        //echo ": ".$this->matrixOperator->toString($outputs,format:null,indent:true)."\n";
+        //echo "====================================\n";
+        //echo "dOutputs: ".$this->matrixOperator->shapeToString($dOutputs->shape());
+        //echo ": ".$this->matrixOperator->toString($dOutputs,format:null,indent:true)."\n";
+
+        //===== dx = - sum(y * dy) * y + (y * dy) =====
+        // work = y * dy
+        $ydy = $la->multiply($outputs, $la->copy($dOutputs));
+        //echo "====================================\n";
+        //echo "ydy: ".$this->matrixOperator->shapeToString($ydy->shape());
+        //echo ": ".$this->matrixOperator->toString($ydy,format:null,indent:true)."\n";
+        $orgShape = $ydy->shape();
+        $shape = $orgShape;
         $inputDim = array_pop($shape);
         $batches = (int)array_product($shape);
-        $dx = $dx->reshape([$batches,$inputDim]);
+        $ydy = $ydy->reshape([$batches,$inputDim]);
+        //echo "dx_flat: ".$this->matrixOperator->shapeToString($dx->shape())."\n";
+        // sumYdy = sum(y*dy)
+        $sumYdy = $la->reduceSum($ydy, axis:-1);
+        //echo "====================================\n";
+        //echo "sumDx: ".$this->matrixOperator->shapeToString($sumDx->shape());
+        //echo ": ".$this->matrixOperator->toString($sumDx,format:null,indent:true)."\n";
+        // sum(y*dy)*y
+        $sumYdy_mul_y = $la->multiply(
+            $sumYdy,
+            $la->copy($outputs->reshape([$batches,$inputDim])),
+            trans:true
+        );
+        //echo "====================================\n";
+        //echo "sumDx_mul_y: ".$this->matrixOperator->shapeToString($sumDx_mul_y->shape());
+        //echo ": ".$this->matrixOperator->toString($sumDx_mul_y,format:null,indent:true)."\n";
+        // sum(y * dy) * y  - (y * dy)
         $dInputs = $la->axpy(
-            $la->multiply($la->reduceSum($dx, axis:-1),
-                                $la->copy($outputs->reshape([$batches,$inputDim])),$trans=true),$dx,-1.0);
+            $sumYdy_mul_y,
+            $ydy,
+            alpha:-1.0
+        );
+        //echo "====================================\n";
+        //echo "dInputs: ".$this->matrixOperator->shapeToString($dInputs->shape());
+        //echo ": ".$this->matrixOperator->toString($dInputs,format:null,indent:true)."\n";
         //$dInputs = $this->la->scal(1/$dOutputs->shape()[0],$dInputs);
-        return $dInputs->reshape($orgShape);
+        $dInputs = $dInputs->reshape($orgShape);
+
+        // //===== dx = y * (-sum(y * dy) + dy) =====
+        // // work = y * dy
+        // $ydy = $la->multiply($outputs, $la->copy($dOutputs));
+        // // work = sum(y * dy)
+        // $orgShape = $ydy->shape();
+        // $shape = $orgShape;
+        // $inputDim = array_pop($shape);
+        // $batches = (int)array_product($shape);
+        // $ydy = $ydy->reshape([$batches,$inputDim]);
+        // $sumYdy = $la->reduceSum($ydy, axis:-1);
+        // // work =  dy - sum(y * dy)
+        // $dOutputs = $dOutputs->reshape([$batches,$inputDim]);
+        // $sub = $la->add($sumYdy,$la->copy($dOutputs),alpha:-1,trans:true);
+        // $sub = $sub->reshape($orgShape);
+        // // dx = y * (dy - sum(y * dy))
+        // $dInputs = $la->multiply($outputs, $sub);
+        // $dInputs = $dInputs->reshape($orgShape);
+
+        return $dInputs;
     }
 
     /**
