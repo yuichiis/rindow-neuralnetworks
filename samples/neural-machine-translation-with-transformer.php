@@ -164,87 +164,6 @@ class EngFraDataset
     }
 }
 
-class MultiHeadAttention extends AbstractModel
-{
-    protected int $num_heads;
-    protected int $depth;
-    protected int $splited_depth;
-    protected Layer $wq;
-    protected Layer $wk;
-    protected Layer $wv;
-    protected Layer $attention;
-    protected Layer $dense;
-    protected object $gradient;
-
-    public function __construct(
-        object $builder,
-        int $depth,
-        int $num_heads)
-    {
-        parent::__construct($builder);
-        $this->gradient = $builder->gradient();
-        $this->num_heads = $num_heads;
-        $this->depth = $depth;
-        if($depth % $num_heads != 0) {
-            throw new InvalidArgumentException('"depth" must be an integer multiple of "num_heads"');
-        }
-        $this->splited_depth = $depth / $num_heads;
-    
-        $this->wq = $builder->layers->Dense($depth);
-        $this->wk = $builder->layers->Dense($depth);
-        $this->wv = $builder->layers->Dense($depth);
-    
-        $this->attention = $builder->layers->Attention(use_scale:true,do_not_expand_mask:true);
-
-        $this->dense = $builder->layers->Dense($depth);
-    }
-
-    /**
-     * Split the last dimension into (num_heads, depth).
-     * Transpose the result such that the shape is (batch_size, num_heads, seq_len, depth)
-     */
-    protected function split_heads($x)
-    {
-        $g = $this->gradient;
-        if($x->ndim()!=3) {
-            throw new InvalidArgumentException('input array must be 3D NDArray');
-        }
-        $x = $g->reshape($x, [0, -1, $this->num_heads, $this->splited_depth]);
-        return $g->transpose($x, perm:[0, 2, 1, 3]);
-    }
-
-    protected function call(
-        $v,     # (batch_size, seq_len, wordVectSize)
-        $k,     # (batch_size, seq_len, wordVectSize)
-        $q,     # (batch_size, seq_len, wordVectSize)
-        $mask   # (batch_size, 1, 1, seq_len_v)
-        )
-    {
-        $g = $this->gradient;
-
-        $q = $this->wq->forward($q);  # (batch_size, seq_len, depth)
-        $k = $this->wk->forward($k);  # (batch_size, seq_len, depth)
-        $v = $this->wv->forward($v);  # (batch_size, seq_len, depth)
-        $q = $this->split_heads($q);  # (batch_size, num_heads, seq_len_q, splited_depth)
-        $k = $this->split_heads($k);  # (batch_size, num_heads, seq_len_k, splited_depth)
-        $v = $this->split_heads($v);  # (batch_size, num_heads, seq_len_v, splited_depth)
-
-        # scaled_attention.shape == (batch_size, num_heads, seq_len_q, splited_depth)
-        # attention_weights.shape == (batch_size, num_heads, seq_len_q, seq_len_v)
-        [$scaled_attention, $attention_weights] = 
-            $this->attention->forward([$q, $v, $k], returnAttentionScores:true, mask:[null,$mask]);
-    
-        $scaled_attention = $g->transpose($scaled_attention, perm:[0, 2, 1, 3]);  # (batch_size, seq_len_q, num_heads, splited_depth)
-    
-        $concat_attention = $g->reshape($scaled_attention,
-                                      [0, -1, $this->depth]);  # (batch_size, seq_len_q, depth)
-    
-        $output = $this->dense->forward($concat_attention);  # (batch_size, seq_len_q, depth)
-    
-        return [$output, $attention_weights];
-    }
-}
-
 class PositionalEmbedding extends AbstractModel
 {
     protected int $wordVectSize;
@@ -265,7 +184,6 @@ class PositionalEmbedding extends AbstractModel
         $maximumPositionEncoding = $maximumPositionEncoding ?? 256;
         $this->gradient = $builder->gradient();
         $nn = $builder;
-        $K = $this->backend;
         $g = $this->gradient;
 
         $this->embedding = $nn->layers->Embedding(
@@ -379,7 +297,6 @@ class EncoderLayer extends AbstractModel
         float $dropout_rate=0.1)
     {
         parent::__construct($builder);
-        $backend = $this->backend();
         $this->gradient = $builder->gradient();
 
         $this->mha = new MultiHeadAttention($builder,$wordVectSize, $num_heads);
@@ -432,7 +349,6 @@ class Encoder extends AbstractModel
         )
         {
         parent::__construct($builder);
-        $backend = $this->backend();
         $this->gradient = $builder->Gradient();
         $this->embedding = new PositionalEmbedding(
             $builder,
@@ -503,7 +419,6 @@ class DecoderLayer extends AbstractModel
         )
     {
         parent::__construct($builder);
-        $backend = $this->backend();
         $this->gradient = $builder->Gradient();
     
         $this->mha1 = new MultiHeadAttention($builder,$wordVectSize, $num_heads);
@@ -600,7 +515,6 @@ class Decoder extends AbstractModel
         NDArray $padding_mask,
         ) : array
     {
-        $K = $this->backend;
         $this->attentionScores = [];
     
         $x = $this->embedding->forward($inputs);  # (batch_size, target_seq_len, wordVectSize)

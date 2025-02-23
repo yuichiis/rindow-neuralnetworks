@@ -238,9 +238,4 @@ trait GradientUtils
         }
     }
 
-    protected function maskedValue(NDArray $value, NDArray $mask) : MaskedNDArrayInterface
-    {
-        return new MaskedNDArray($value,$mask);
-    }
-
 }

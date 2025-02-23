@@ -10,6 +10,7 @@ use Rindow\NeuralNetworks\Activation\Activation as ActivationInterface;
 use Rindow\NeuralNetworks\Gradient\Core\Variable;
 use Rindow\NeuralNetworks\Layer\Embedding;
 use Rindow\NeuralNetworks\Gradient\MaskedNDArray;
+use Rindow\NeuralNetworks\Gradient\Core\MaskedNDArray as MaskedNDArrayImpl;
 
 /**
  *
@@ -397,6 +398,11 @@ abstract class AbstractLayerBase implements Layer
             $prevMask = $input->mask();
         }
         return $prevMask;
+    }
+
+    protected function maskedValue(NDArray $value, NDArray $mask) : MaskedNDArray
+    {
+        return new MaskedNDArrayImpl($value,$mask);
     }
 
     public function makeSingleMaskedValue(NDArray $input, NDArray $output) : NDArray

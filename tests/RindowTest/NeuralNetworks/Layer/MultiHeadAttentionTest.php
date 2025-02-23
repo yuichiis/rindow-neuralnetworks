@@ -7,6 +7,8 @@ use Rindow\Math\Matrix\MatrixOperator;
 use Rindow\NeuralNetworks\Backend\RindowBlas\Backend;
 use Rindow\NeuralNetworks\Builder\NeuralNetworks;
 use Rindow\NeuralNetworks\Layer\MultiHeadAttention;
+use Rindow\NeuralNetworks\Gradient\MaskedNDArray;
+use Rindow\NeuralNetworks\Gradient\Core\MaskedNDArray as MaskedNDArrayImpl;
 use InvalidArgumentException;
 use WeakMap;
 
@@ -20,6 +22,11 @@ class MultiHeadAttentionTest extends TestCase
     public function newNeuralNetworks($mo)
     {
         return new NeuralNetworks($mo);
+    }
+
+    public function maskedValue(NDArray $value, NDArray $mask) : MaskedNDArray
+    {
+        return new MaskedNDArrayImpl($value,$mask);
     }
 
     public static function providerDefaultInitialize()
@@ -2232,6 +2239,257 @@ class MultiHeadAttentionTest extends TestCase
                [ 0.0000000e+00,  0.0000000e+00,  0.0000000e+00,  0.0000000e+00,  0.0000000e+00],],
             ]),
             //debug:true,
+        ));
+
+    }
+
+    public function testAutoMask()
+    {
+        $num_heads = 8;
+        $key_dim = 4;
+        #$full_query_shape = [2, 6, 16];
+        #$full_value_shape = [2, 7, 16];
+        $full_query_shape = [2, 6, 5];
+        $full_value_shape = [2, 7, 5];
+        #$full_query_shape = [2, 3, 6, 5];
+        #$full_value_shape = [2, 3, 7, 5];
+        $query_mask = [
+            [True,True,True,False,False,False],
+            [True,True,True,True,True,False],
+        ];
+        $value_mask = [
+            [True,True,True,True,False,False,False],
+            [True,True,True,True,True,True,False],
+        ];
+        
+        $tmp = $full_query_shape;
+        $tSeq = array_splice($tmp,1,-1);
+        [$batches,$dim] = $tmp;
+        $tmp = $full_value_shape;
+        $sSeq = array_splice($tmp,1,-1);
+        [$batches,$dim] = $tmp;
+
+        $mo = $this->newMatrixOperator();
+        $nn = $this->newNeuralNetworks($mo);
+        $K = $nn->backend();
+        $g = $nn->gradient();
+        $la = $K->primaryLA();
+        $layer = new MultiHeadAttention(
+            $K,
+            $num_heads, // num_heads
+            $key_dim,   // key_dim
+            kernel_initializer:'ones',
+            bias_initializer:'zeros',
+        );
+
+        $salt_q = $mo->la()->range(array_product($full_query_shape),dtype:NDArray::float32)
+                ->reshape($full_query_shape);
+        $salt_v = $mo->la()->range(array_product($full_value_shape),dtype:NDArray::float32)
+                ->reshape($full_value_shape);
+        //$query = $g->Variable($la->randomNormal($full_query_shape,mean:0,scale:1));
+        //$value = $g->Variable($la->randomNormal($full_value_shape,mean:0,scale:1));
+        //echo "query: ".$mo->toString($dInputs[0],format:'%12.7e',indent:true)."\n";
+        $query = $K->scale(1/array_product($full_query_shape),$K->increment($salt_q,1));
+        $value = $K->scale(1/array_product($full_value_shape),$K->increment($salt_v,1));
+        $query_mask = $K->array($query_mask,dtype:NDArray::bool);
+        $value_mask = $K->array($value_mask,dtype:NDArray::bool);
+        //$key_mask = $K->array($value_mask,dtype:NDArray::bool);
+        $query = $g->Variable($this->maskedValue($query,$query_mask));
+        $value = $g->Variable($this->maskedValue($value,$value_mask));
+        //$key = $g->Variable($this->maskedValue($key,$key_mask));
+        //$query = $g->Variable($K->increment(
+        //        $K->scale(0.5, $K->array($mo->la()->range(array_product($full_query_shape),dtype:NDArray::float32)
+        //        ->reshape($full_query_shape))),
+        //    1,
+        //));
+        //$value = $g->Variable($K->increment(
+        //        $K->scale(0.2, $K->array($mo->la()->range(array_product($full_value_shape),dtype:NDArray::float32)
+        //        ->reshape($full_value_shape))),
+        //    1,
+        //));
+        //echo 'query:'.$mo->toString($query,format:'%12.7f',indent:true)."\n";
+        //echo 'value:'.$mo->toString($value,format:'%12.7f',indent:true)."\n";
+        //echo 'query:'.$mo->shapeToString($query->shape())."\n";
+        //echo 'value:'.$mo->shapeToString($value->shape())."\n";
+        //echo 'query_mask:'.$mo->shapeToString($query_mask->shape())."\n";
+        //echo 'value_mask:'.$mo->shapeToString($value_mask->shape())."\n";
+        $inputs = [
+            $query,
+            $value,
+        ];
+
+        $layer->build($inputs,
+        );
+
+        //
+        // forward
+        //
+        //  batch size 2
+        //echo "query: ".$mo->toString($query,format:'%12.7f',indent:true)."\n";
+        //////////////echo "key: ".$mo->toString($key,indent:true)."\n";
+        //echo "value: ".$mo->toString($value,format:'%12.7f',indent:true)."\n";
+
+        #$query_mask = null;
+        #$value_mask = null;
+        $salt = $g->Variable($salt_q);
+        $copyInputs = [$K->copy($query),$K->copy($value)];
+        [$outputsVariable,$scores,$resultValiable] = $nn->with($tape=$g->GradientTape(),
+            function() use ($g,$layer,$inputs,$salt) {
+                [$outputsVariable,$scores] = $layer->forward(
+                    $inputs,
+                    training:true,
+                    returnAttentionScores:true,
+                );
+                $resultValiable = $g->mul($outputsVariable,$salt);
+                return [$outputsVariable,$scores,$resultValiable];
+            }
+        );
+        $this->assertInstanceof(MaskedNDArray::class,$outputsVariable->value());
+        $this->assertEquals(array_merge([$batches], $tSeq),$outputsVariable->value()->mask()->shape());
+        $outputs = $K->ndarray($outputsVariable);
+        //echo 'query:'.$mo->toString($query,format:'%12.7f',indent:true)."\n";
+        //echo 'value:'.$mo->toString($value,format:'%12.7f',indent:true)."\n";
+        //echo 'outputs:'.$mo->toString($outputs,format:'%12.7f',indent:true)."\n";
+        //echo 'scores:'.$mo->toString($scores,format:'%12.7e',indent:true)."\n";
+        //echo 'kernel:'.$mo->toString($layer->getParams()[0],format:'%14.7f',indent:true)."\n";
+        $this->assertEquals(array_merge([$batches, $num_heads], $tSeq, $sSeq),$scores->shape());
+        $this->assertEquals(array_merge([$batches], $tSeq, [$dim]),$outputs->shape());
+        $this->assertEquals($copyInputs[0]->toArray(),$inputs[0]->toArray());
+        $this->assertEquals($copyInputs[1]->toArray(),$inputs[1]->toArray());
+        //$this->assertTrue($mo->la()->isclose(
+        //    $K->fill([2,8,6,7], 0.14285715),
+        //    $K->ndarray($scores)));
+        //$this->assertTrue($mo->la()->isclose(
+        //    //$K->mul($salt,$K->fill($full_query_shape,512)),
+        //    $K->fill($full_query_shape,512),
+        //    $K->ndarray($outputs)
+        //));
+        
+        //echo "outputs: ".$mo->toString($outputs,format:'%12.7f',indent:true)."\n";
+        $this->assertTrue($mo->la()->isclose(
+            $K->ndarray($outputs),
+            $mo->array([
+               [[ 26.528252,  26.528252,  26.528252,  26.528252,  26.528252],
+                [ 30.400398,  30.400398,  30.400398,  30.400398,  30.400398],
+                [ 33.52552 ,  33.52552 ,  33.52552 ,  33.52552 ,  33.52552 ],
+                [ 41.14286 ,  41.14286 ,  41.14286 ,  41.14286 ,  41.14286 ],
+                [ 41.14286 ,  41.14286 ,  41.14286 ,  41.14286 ,  41.14286 ],
+                [ 41.14286 ,  41.14286 ,  41.14286 ,  41.14286 ,  41.14286 ],],
+              
+               [[142.1361 ,  142.1361 ,  142.1361 ,  142.1361 ,  142.1361  ],
+                [142.67139,  142.67139,  142.67139,  142.67139,  142.67139 ],
+                [143.042  ,  143.042  ,  143.042  ,  143.042  ,  143.042   ],
+                [143.30368,  143.30368,  143.30368,  143.30368,  143.30368 ],
+                [143.49086,  143.49086,  143.49086,  143.49086,  143.49086 ],
+                [132.57143,  132.57143,  132.57143,  132.57143,  132.57143 ],],
+           ])
+        ));
+
+        //echo "scores0: ".$mo->toString($K->slice($scores,[0,0],[2,1]),format:'%12.7e',indent:true)."\n";
+        $this->assertTrue($mo->la()->isclose(
+            $K->ndarray($K->slice($scores,[0,0],[2,1])),
+            $mo->array([
+             [[[1.87497035e-01, 2.24154279e-01, 2.67978311e-01, 3.20370287e-01, 0.00000000e+00, 0.00000000e+00, 0.00000000e+00],
+               [1.06671929e-01, 1.71734333e-01, 2.76480168e-01, 4.45113599e-01, 0.00000000e+00, 0.00000000e+00, 0.00000000e+00],
+               [5.53755946e-02, 1.20054819e-01, 2.60280043e-01, 5.64289570e-01, 0.00000000e+00, 0.00000000e+00, 0.00000000e+00],
+               [1.42857149e-01, 1.42857149e-01, 1.42857149e-01, 1.42857149e-01, 1.42857149e-01, 1.42857149e-01, 1.42857149e-01],
+               [1.42857149e-01, 1.42857149e-01, 1.42857149e-01, 1.42857149e-01, 1.42857149e-01, 1.42857149e-01, 1.42857149e-01],
+               [1.42857149e-01, 1.42857149e-01, 1.42857149e-01, 1.42857149e-01, 1.42857149e-01, 1.42857149e-01, 1.42857149e-01],]],
+             
+             [[[4.66638303e-05, 3.32704338e-04, 2.37212842e-03, 1.69127975e-02, 1.20585077e-01, 8.59750569e-01, 0.00000000e+00],
+               [1.09792027e-05, 1.05415376e-04, 1.01213378e-03, 9.71783325e-03, 9.33045000e-02, 8.95849168e-01, 0.00000000e+00],
+               [2.55331861e-06, 3.30135626e-05, 4.26855200e-04, 5.51907532e-03, 7.13598132e-02, 9.22658682e-01, 0.00000000e+00],
+               [5.88987461e-07, 1.02552840e-05, 1.78562434e-04, 3.10906675e-03, 5.41340895e-02, 9.42567468e-01, 0.00000000e+00],
+               [1.35080356e-07, 3.16729142e-06, 7.42650882e-05, 1.74132455e-03, 4.08296399e-02, 9.57351446e-01, 0.00000000e+00],
+               [3.20762188e-29, 3.20762188e-29, 2.00000003e-01, 2.00000003e-01, 2.00000003e-01, 2.00000003e-01, 2.00000003e-01],]],
+            ])
+        ));
+
+        //echo "scores: ".$mo->toString($K->slice($scores,[-1,-1,-1],[1,1,1]),format:'%12.7e',indent:true)."\n";
+        //echo "scores: ".$mo->shapeToString($K->slice($scores,[-1,-1,-1],[1,1,1])->shape())."\n";
+        $this->assertTrue($mo->la()->isclose(
+            $K->ndarray($K->slice($scores,[0,-1],[2,1])),
+            $mo->array([
+             [[[1.87497035e-01, 2.24154279e-01, 2.67978311e-01, 3.20370287e-01, 0.00000000e+00, 0.00000000e+00, 0.00000000e+00],
+               [1.06671929e-01, 1.71734333e-01, 2.76480168e-01, 4.45113599e-01, 0.00000000e+00, 0.00000000e+00, 0.00000000e+00],
+               [5.53755946e-02, 1.20054819e-01, 2.60280043e-01, 5.64289570e-01, 0.00000000e+00, 0.00000000e+00, 0.00000000e+00],
+               [1.42857149e-01, 1.42857149e-01, 1.42857149e-01, 1.42857149e-01, 1.42857149e-01, 1.42857149e-01, 1.42857149e-01],
+               [1.42857149e-01, 1.42857149e-01, 1.42857149e-01, 1.42857149e-01, 1.42857149e-01, 1.42857149e-01, 1.42857149e-01],
+               [1.42857149e-01, 1.42857149e-01, 1.42857149e-01, 1.42857149e-01, 1.42857149e-01, 1.42857149e-01, 1.42857149e-01],]],
+             
+             [[[4.66638303e-05, 3.32704338e-04, 2.37212842e-03, 1.69127975e-02, 1.20585077e-01, 8.59750569e-01, 0.00000000e+00],
+               [1.09792027e-05, 1.05415376e-04, 1.01213378e-03, 9.71783325e-03, 9.33045000e-02, 8.95849168e-01, 0.00000000e+00],
+               [2.55331861e-06, 3.30135626e-05, 4.26855200e-04, 5.51907532e-03, 7.13598132e-02, 9.22658682e-01, 0.00000000e+00],
+               [5.88987461e-07, 1.02552840e-05, 1.78562434e-04, 3.10906675e-03, 5.41340895e-02, 9.42567468e-01, 0.00000000e+00],
+               [1.35080356e-07, 3.16729142e-06, 7.42650882e-05, 1.74132455e-03, 4.08296399e-02, 9.57351446e-01, 0.00000000e+00],
+               [3.20762188e-29, 3.20762188e-29, 2.00000003e-01, 2.00000003e-01, 2.00000003e-01, 2.00000003e-01, 2.00000003e-01],]],
+            ])
+        ));
+        //
+        // backward
+        //
+        // 
+        $dResultValiable = $K->ones($resultValiable->shape());
+        [$dOutputs,$dSalt] = $resultValiable->creator()->backward([$dResultValiable]);
+        $this->assertEquals($outputsVariable->shape(),$dOutputs->shape());
+        $this->assertEquals($resultValiable->shape(),$dSalt->shape());
+        $this->assertTrue($mo->la()->isclose(
+            $dOutputs,$salt
+        ));
+        $this->assertTrue($mo->la()->isclose(
+            $dSalt,$outputs
+        ));
+
+        $copydOutputs = $K->copy($dOutputs);
+        $dInputs = $outputsVariable->creator()->backward([$dOutputs]);
+        // 2 batch
+        $this->assertCount(2,$dInputs);
+        //echo "dQuery: ".$mo->shapeToString($dInputs[0]->shape())."\n";
+        //echo "dValue: ".$mo->shapeToString($dInputs[1]->shape())."\n";
+        $this->assertEquals($full_query_shape,$dInputs[0]->shape());
+        $this->assertEquals($full_value_shape,$dInputs[1]->shape());
+        $this->assertEquals($copydOutputs->toArray(),$dOutputs->toArray());
+
+        //echo "dQuery: ".$mo->toString($dInputs[0],format:'%12.7e',indent:true)."\n";
+        //echo "dValue: ".$mo->toString($dInputs[1],format:'%12.7e',indent:true)."\n";
+
+        $this->assertTrue($mo->la()->isclose(
+            $K->ndarray($dInputs[0]),
+            $mo->array([
+               [[  99.330315,   99.330315,   99.330315,   99.330315,   99.330315],
+                [ 297.12323 ,  297.12323 ,  297.12323 ,  297.12323 ,  297.12323 ],
+                [ 389.20917 ,  389.20917 ,  389.20917 ,  389.20917 ,  389.20917 ],
+                [2775.5093  , 2775.5093  , 2775.5093  , 2775.5093  , 2775.5093  ],
+                [3591.8362  , 3591.8362  , 3591.8362  , 3591.8362  , 3591.8362  ],
+                [4408.163   , 4408.163   , 4408.163   , 4408.163   , 4408.163   ],],
+              
+               [[ 247.50195,   247.50195,   247.50195,   247.50195,   247.50195 ],
+                [ 195.90976,   195.90976,   195.90976,   195.90976,   195.90976 ],
+                [ 155.72949,   155.72949,   155.72949,   155.72949,   155.72949 ],
+                [ 124.00012,   124.00012,   124.00012,   124.00012,   124.00012 ],
+                [  98.75073,    98.75073,    98.75073,    98.75073,    98.75073 ],
+                [4653.039  ,  4653.039  ,  4653.039  ,  4653.039  ,  4653.039   ],],
+            ])
+        ));
+        $this->assertTrue($mo->la()->isclose(
+            $K->ndarray($dInputs[1]),
+            $mo->array([
+              [[-4.9332588e+03, -4.9332588e+03, -4.9332588e+03, -4.9332588e+03, -4.9332588e+03],
+               [-2.6076963e+03, -2.6076963e+03, -2.6076963e+03, -2.6076963e+03, -2.6076963e+03],
+               [ 1.3684351e+02,  1.3684351e+02,  1.3684351e+02,  1.3684351e+02,  1.3684351e+02],
+               [ 3.9983945e+03,  3.9983945e+03,  3.9983945e+03,  3.9983945e+03,  3.9983945e+03],
+               [ 3.6419038e+03,  3.6419038e+03,  3.6419038e+03,  3.6419038e+03,  3.6419038e+03],
+               [ 5.7752368e+03,  5.7752368e+03,  5.7752368e+03,  5.7752368e+03,  5.7752368e+03],
+               [ 7.9085723e+03,  7.9085723e+03,  7.9085723e+03,  7.9085723e+03,  7.9085723e+03],],
+             
+              [[-2.9573274e+00, -2.9573274e+00, -2.9573274e+00, -2.9573274e+00, -2.9573274e+00],
+               [-1.9088331e+01, -1.9088331e+01, -1.9088331e+01, -1.9088331e+01, -1.9088331e+01],
+               [-1.0892528e+04, -1.0892528e+04, -1.0892528e+04, -1.0892528e+04, -1.0892528e+04],
+               [-5.2124438e+03, -5.2124438e+03, -5.2124438e+03, -5.2124438e+03, -5.2124438e+03],
+               [-1.1397036e+03, -1.1397036e+03, -1.1397036e+03, -1.1397036e+03, -1.1397036e+03],
+               [ 4.5568398e+04,  4.5568398e+04,  4.5568398e+04,  4.5568398e+04,  4.5568398e+04],
+               [ 1.4418279e+04,  1.4418279e+04,  1.4418279e+04,  1.4418279e+04,  1.4418279e+04],],
+            ])
         ));
 
     }
