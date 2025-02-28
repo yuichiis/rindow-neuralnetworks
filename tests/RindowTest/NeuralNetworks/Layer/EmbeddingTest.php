@@ -191,7 +191,9 @@ class EmbeddingTest extends TestCase
                 return $outputsVariable;
             }
         );
-        $outputs = $K->ndarray($outputsVariable);
+        //$outputs = $K->ndarray($outputsVariable);
+        $outputs = $outputsVariable->value();
+        $this->assertInstanceOf(MaskedNDArray::class,$outputs);
         //
         $this->assertEquals([
             [[0,1,2,3,4],
@@ -202,7 +204,6 @@ class EmbeddingTest extends TestCase
              [0,1,2,3,4]],
         ],$outputs->toArray());
 
-        $this->assertInstanceOf(MaskedNDArray::class,$outputs);
         $this->assertEquals($copyInputs->toArray(),$inputs->toArray());
 
         $this->assertEquals([
@@ -254,7 +255,9 @@ class EmbeddingTest extends TestCase
             }
         );
 
-        $outputs = $K->ndarray($outputsVariable);
+        //$outputs = $K->ndarray($outputsVariable);
+        $outputs = $outputsVariable->value();
+        $this->assertInstanceOf(MaskedNDArray::class,$outputs);
         //
         $this->assertEquals([
             [[0,1,2,3,4],
@@ -265,7 +268,6 @@ class EmbeddingTest extends TestCase
              [0,1,2,3,4]],
         ],$outputs->toArray());
 
-        $this->assertInstanceOf(MaskedNDArray::class,$outputs);
 
         $this->assertEquals([
             [false,true,true],
@@ -288,7 +290,9 @@ class EmbeddingTest extends TestCase
             }
         );
 
-        $outputs = $K->ndarray($outputsVariable);
+        //$outputs = $K->ndarray($outputsVariable);
+        $outputs = $outputsVariable->value();
+        $this->assertInstanceOf(MaskedNDArray::class,$outputs);
         //
         $this->assertEquals([
             [[0,1,2,3,4],
@@ -298,8 +302,6 @@ class EmbeddingTest extends TestCase
              [10,11,12,13,14],
              [5,6,7,8,9]],
         ],$outputs->toArray());
-
-        $this->assertInstanceOf(MaskedNDArray::class,$outputs);
 
         $this->assertEquals([
             [false,true,true],

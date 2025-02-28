@@ -39,9 +39,9 @@ abstract class AbstractNormalization extends AbstractLayer
     //protected $xn;
     //protected $std;
     /** @var array<int> $orignalShape1 */
-    protected array $orignalShape1;
+    protected ?array $orignalShape1;
     /** @var array<int> $orignalShape2 */
-    protected array $orignalShape2;
+    protected ?array $orignalShape2;
     protected int $transformShapePhase1Pre=0;
     protected int $transformShapePhase1Post=0;
     protected int $transformShapePhase2Pre=0;
@@ -59,7 +59,7 @@ abstract class AbstractNormalization extends AbstractLayer
     {
         parent::__construct($backend);
         $axis = $axis ?? -1;
-        $epsilon = $epsilon ?? 0.001;
+        $epsilon ??= 1e-3;
         $center = $center ?? true;
         $scale = $scale ?? true;
         $beta_initializer = $beta_initializer ?? 'zeros';
@@ -123,15 +123,22 @@ abstract class AbstractNormalization extends AbstractLayer
         }
 
         //$this->calcAxis = $axis;
-        if($ndim>$axis) {
-            $nnn = array_slice($inputShape,0,$axis);
-            $this->transformShapePhase1Pre = (int)array_product($nnn);
-            $this->transformShapePhase1Post = (int)array_product(array_slice($inputShape,$axis));
-        }
-        if($ndim>1) {
-            $this->transformShapePhase2Pre = (int)(array_product($inputShape)/$featureSize);
-            $this->transformShapePhase2Post = $featureSize;
-        }
+        //echo "ndim={$ndim}\n";
+        //echo "axis={$axis}\n";
+        //echo "inputShape=".$this->shapeToString($inputShape)."\n";
+        //if($ndim>$axis) {
+        //    $nnn = array_slice($inputShape,0,$axis);
+        //    $this->transformShapePhase1Pre = (int)array_product($nnn);
+        //    $this->transformShapePhase1Post = (int)array_product(array_slice($inputShape,$axis));
+        //    echo "Phase1Pre={$this->transformShapePhase1Pre}\n";
+        //    echo "Phase1Post={$this->transformShapePhase1Post}\n";
+        //}
+        //if($ndim>1) {
+        //    $this->transformShapePhase2Pre = (int)(array_product($inputShape)/$featureSize);
+        //    $this->transformShapePhase2Post = $featureSize;
+        //    echo "Phase2Pre={$this->transformShapePhase2Pre}\n";
+        //    echo "Phase2Post={$this->transformShapePhase2Post}\n";
+        //}
         $this->inputShape = $inputShape;
         $this->outputShape = $inputShape;
         $this->syncWeightVariables();
@@ -140,21 +147,75 @@ abstract class AbstractNormalization extends AbstractLayer
     protected function transformShape(NDArray $inputs) : NDArray
     {
         $K = $this->backend;
-        $batches = $inputs->shape()[0];
-        if($this->transformShapePhase1Pre) {
-            $this->orignalShape1 = $inputs->shape();
-            $inputs = $inputs->reshape([
-                $batches*$this->transformShapePhase1Pre,
-                $this->transformShapePhase1Post,
-            ]);
-            $inputs = $K->transpose($inputs);
+        $orignalShape = $inputs->shape();
+
+        $axis = $this->axis;
+        //echo "@axis={$axis}\n";
+        $ndim = $inputs->ndim();
+        if($axis<0) {
+            $axis = $ndim+$axis;
         }
-        if($this->transformShapePhase2Pre) {
+        if($axis<1) {
+            throw new InvalidArgumentException('Axis must be greater than 0');
+        }
+        $full_input_shape = $inputs->shape();
+        //echo "ndim={$ndim}\n";
+        //echo "axis={$axis}\n";
+        //echo "full_input_shape=".$this->shapeToString($full_input_shape)."\n";
+        $transformShapePhase1Pre=0;
+        $transformShapePhase1Post=0;
+        $transformShapePhase2Pre=0;
+        $transformShapePhase2Post=0;
+            
+        if($ndim-1>$axis) {
+            //echo "try ph1\n";
+            $outerShape = $full_input_shape;
+            $innerShape = array_splice($outerShape,$axis+1);
+            //echo "innerShape=".$this->shapeToString($innerShape)."\n";
+            //echo "outerShape=".$this->shapeToString($outerShape)."\n";
+            $transformShapePhase1Pre = (int)array_product($outerShape);
+            $transformShapePhase1Post = (int)array_product($innerShape);
+            //echo "Phase1Pre={$transformShapePhase1Pre}\n";
+            //echo "Phase1Post={$transformShapePhase1Post}\n";
+        }
+        if($ndim>2) {
+            //echo "try ph2\n";
+            $outerShape = $full_input_shape;
+            $innerShape = array_splice($outerShape,$axis,1);
+            //echo "innerShape=".$this->shapeToString($innerShape)."\n";
+            //echo "outerShape=".$this->shapeToString($outerShape)."\n";
+            $transformShapePhase2Pre = (int)array_product($outerShape);
+            $transformShapePhase2Post = (int)array_product($innerShape);
+            //echo "Phase2Pre={$transformShapePhase2Pre}\n";
+            //echo "Phase2Post={$transformShapePhase2Post}\n";
+        }
+
+        $this->orignalShape1 = null;
+        if($transformShapePhase1Pre) {
+            $this->orignalShape1 = $inputs->shape();
+            //echo "transpose:".$this->shapeToString($inputs->shape());
+            $inputs = $inputs->reshape([
+                $transformShapePhase1Pre,
+                $transformShapePhase1Post,
+            ]);
+            //echo "->".$this->shapeToString($inputs->shape());
+            $inputs = $K->transpose($inputs);
+            //echo "->".$this->shapeToString($inputs->shape())."\n";
+            //echo "pre transpose\n";
+        }
+        $this->orignalShape2 = null;
+        if($transformShapePhase2Pre) {
             $this->orignalShape2 = $inputs->shape();
             $inputs = $inputs->reshape([
-                $batches*$this->transformShapePhase2Pre,
-                $this->transformShapePhase2Post,
+                $transformShapePhase2Pre,
+                $transformShapePhase2Post,
             ]);
+            //echo "pre reshape\n";
+        }
+        //echo "transform=".$this->shapeToString($inputs->shape())."\n";
+        if($inputs->ndim()!=2) {
+            throw new InvalidArgumentException("Invalid shape of inputs: ".
+                $this->shapeToString($orignalShape)." given and translated to ".$this->shapeToString($inputs->shape()));
         }
         return $inputs;
     }
@@ -162,13 +223,16 @@ abstract class AbstractNormalization extends AbstractLayer
     protected function untransformShape(NDArray $inputs) : NDArray
     {
         $K = $this->backend;
-        if($this->transformShapePhase2Pre) {
+        if($this->orignalShape2) {
             $inputs = $inputs->reshape($this->orignalShape2);
+            //echo "post reshape\n";
         }
-        if($this->transformShapePhase1Pre) {
+        if($this->orignalShape1) {
             $inputs = $K->transpose($inputs);
             $inputs = $inputs->reshape($this->orignalShape1);
+            //echo "post transpose\n";
         }
+        //echo "untransform=".$this->shapeToString($inputs->shape())."\n";
         return $inputs;
     }
 

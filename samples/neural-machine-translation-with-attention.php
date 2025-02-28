@@ -529,8 +529,8 @@ class CustomAccuracy
 }
 
 
-$numExamples=50000;#20000;#30000
-$numWords=null;#1024;#null;
+$numExamples=20000;#30000#50000;
+$numWords=1024;#null;
 $epochs = 10;
 $batchSize = 64;
 $wordVectSize=256;

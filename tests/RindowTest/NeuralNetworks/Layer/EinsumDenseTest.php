@@ -462,10 +462,10 @@ class EinsumDenseTest extends TestCase
         $this->assertEquals($outputsVariable->shape(),$dOutputs->shape());
         $this->assertEquals($resultValiable->shape(),$dSalt->shape());
         $this->assertTrue($mo->la()->isclose(
-            $dOutputs,$salt
+            $K->ndarray($dOutputs),$K->ndarray($salt)
         ));
         $this->assertTrue($mo->la()->isclose(
-            $dSalt,$outputs
+            $K->ndarray($dSalt),$outputs
         ));
         $copydOutputs = $K->copy($dOutputs);
         [$dInputs] = $outputsVariable->creator()->backward([$dOutputs]);

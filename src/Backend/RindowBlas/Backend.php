@@ -3,6 +3,7 @@ namespace Rindow\NeuralNetworks\Backend\RindowBlas;
 
 use Interop\Polite\Math\Matrix\NDArray;
 use Rindow\NeuralNetworks\Gradient\Variable;
+use Rindow\NeuralNetworks\Gradient\MaskedNDArray;
 use InvalidArgumentException;
 use stdClass;
 
@@ -134,6 +135,9 @@ class Backend
     public function ndarray(NDArray $ndarray) : NDArray
     {
         if($ndarray instanceof Variable) {
+            $ndarray = $ndarray->value();
+        }
+        if($ndarray instanceof MaskedNDArray) {
             $ndarray = $ndarray->value();
         }
         return $ndarray;
@@ -622,6 +626,7 @@ class Backend
         NDArray $a,
         NDArray $mask,
         float $fill=null,
+        int $mode=null,
         int $batchDims=null,
         int $axis=null,
         ) : NDArray
@@ -631,6 +636,7 @@ class Backend
             $mask,
             $a,
             fill:$fill,
+            mode:$mode,
             batchDims:$batchDims,
             axis:$axis,
         );

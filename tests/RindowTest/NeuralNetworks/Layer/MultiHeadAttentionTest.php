@@ -202,6 +202,8 @@ class MultiHeadAttentionTest extends TestCase
                 ->reshape($full_query_shape);
         $salt_v = $mo->la()->range(array_product($full_value_shape),dtype:NDArray::float32)
                 ->reshape($full_value_shape);
+        $salt_q = $K->array($salt_q);
+        $salt_v = $K->array($salt_v);
         //$query = $g->Variable($la->randomNormal($full_query_shape,mean:0,scale:1));
         //$value = $g->Variable($la->randomNormal($full_value_shape,mean:0,scale:1));
         //echo "query: ".$mo->toString($dInputs[0],format:'%12.7e',indent:true)."\n";
@@ -305,10 +307,10 @@ class MultiHeadAttentionTest extends TestCase
         $this->assertEquals($outputsVariable->shape(),$dOutputs->shape());
         $this->assertEquals($resultValiable->shape(),$dSalt->shape());
         $this->assertTrue($mo->la()->isclose(
-            $dOutputs,$salt
+            $K->ndarray($dOutputs),$K->ndarray($salt)
         ));
         $this->assertTrue($mo->la()->isclose(
-            $dSalt,$outputs
+            $K->ndarray($dSalt),$K->ndarray($outputs)
         ));
 
         $copydOutputs = $K->copy($dOutputs);
@@ -398,6 +400,8 @@ class MultiHeadAttentionTest extends TestCase
                 ->reshape($full_query_shape);
         $salt_v = $mo->la()->range(array_product($full_value_shape),dtype:NDArray::float32)
                 ->reshape($full_value_shape);
+        $salt_q = $K->array($salt_q);
+        $salt_v = $K->array($salt_v);
         //$query = $g->Variable($la->randomNormal($full_query_shape,mean:0,scale:1));
         //$value = $g->Variable($la->randomNormal($full_value_shape,mean:0,scale:1));
         //echo "query: ".$mo->toString($dInputs[0],format:'%12.7e',indent:true)."\n";
@@ -503,10 +507,10 @@ class MultiHeadAttentionTest extends TestCase
         $this->assertEquals($outputsVariable->shape(),$dOutputs->shape());
         $this->assertEquals($resultValiable->shape(),$dSalt->shape());
         $this->assertTrue($mo->la()->isclose(
-            $dOutputs,$salt
+            $K->ndarray($dOutputs),$K->ndarray($salt)
         ));
         $this->assertTrue($mo->la()->isclose(
-            $dSalt,$outputs
+            $K->ndarray($dSalt),$K->ndarray($outputs)
         ));
 
         $copydOutputs = $K->copy($dOutputs);
@@ -617,6 +621,8 @@ class MultiHeadAttentionTest extends TestCase
                 ->reshape($full_query_shape);
         $salt_v = $mo->la()->range(array_product($full_value_shape),dtype:NDArray::float32)
                 ->reshape($full_value_shape);
+        $salt_q = $K->array($salt_q);
+        $salt_v = $K->array($salt_v);
         //$query = $g->Variable($la->randomNormal($full_query_shape,mean:0,scale:1));
         //$value = $g->Variable($la->randomNormal($full_value_shape,mean:0,scale:1));
         //echo "query: ".$mo->toString($dInputs[0],format:'%12.7e',indent:true)."\n";
@@ -810,10 +816,10 @@ class MultiHeadAttentionTest extends TestCase
         $this->assertEquals($outputsVariable->shape(),$dOutputs->shape());
         $this->assertEquals($resultValiable->shape(),$dSalt->shape());
         $this->assertTrue($mo->la()->isclose(
-            $dOutputs,$salt
+            $K->ndarray($dOutputs),$K->ndarray($salt)
         ));
         $this->assertTrue($mo->la()->isclose(
-            $dSalt,$outputs
+            $K->ndarray($dSalt),$K->ndarray($outputs)
         ));
 
         $copydOutputs = $K->copy($dOutputs);
@@ -966,6 +972,8 @@ class MultiHeadAttentionTest extends TestCase
                 ->reshape($full_query_shape);
         $salt_v = $mo->la()->range(array_product($full_value_shape),dtype:NDArray::float32)
                 ->reshape($full_value_shape);
+        $salt_q = $K->array($salt_q);
+        $salt_v = $K->array($salt_v);
         //$query = $g->Variable($la->randomNormal($full_query_shape,mean:0,scale:1));
         //$value = $g->Variable($la->randomNormal($full_value_shape,mean:0,scale:1));
         //echo "query: ".$mo->toString($dInputs[0],format:'%12.7e',indent:true)."\n";
@@ -1098,10 +1106,10 @@ class MultiHeadAttentionTest extends TestCase
         $this->assertEquals($outputsVariable->shape(),$dOutputs->shape());
         $this->assertEquals($resultValiable->shape(),$dSalt->shape());
         $this->assertTrue($mo->la()->isclose(
-            $dOutputs,$salt
+            $K->ndarray($dOutputs),$K->ndarray($salt)
         ));
         $this->assertTrue($mo->la()->isclose(
-            $dSalt,$outputs
+            $K->ndarray($dSalt),$K->ndarray($outputs)
         ));
 
         $copydOutputs = $K->copy($dOutputs);
@@ -1199,6 +1207,8 @@ class MultiHeadAttentionTest extends TestCase
                 ->reshape($full_query_shape);
         $salt_v = $mo->la()->range(array_product($full_value_shape),dtype:NDArray::float32)
                 ->reshape($full_value_shape);
+        $salt_q = $K->array($salt_q);
+        $salt_v = $K->array($salt_v);
         //$query = $g->Variable($la->randomNormal($full_query_shape,mean:0,scale:1));
         //$value = $g->Variable($la->randomNormal($full_value_shape,mean:0,scale:1));
         //echo "query: ".$mo->toString($dInputs[0],format:'%12.7e',indent:true)."\n";
@@ -1342,10 +1352,10 @@ class MultiHeadAttentionTest extends TestCase
         $this->assertEquals($outputsVariable->shape(),$dOutputs->shape());
         $this->assertEquals($resultValiable->shape(),$dSalt->shape());
         $this->assertTrue($mo->la()->isclose(
-            $dOutputs,$salt
+            $K->ndarray($dOutputs),$K->ndarray($salt)
         ));
         $this->assertTrue($mo->la()->isclose(
-            $dSalt,$outputs
+            $K->ndarray($dSalt),$K->ndarray($outputs)
         ));
 
         $copydOutputs = $K->copy($dOutputs);
@@ -1444,6 +1454,8 @@ class MultiHeadAttentionTest extends TestCase
                 ->reshape($full_query_shape);
         $salt_v = $mo->la()->range(array_product($full_value_shape),dtype:NDArray::float32)
                 ->reshape($full_value_shape);
+        $salt_q = $K->array($salt_q);
+        $salt_v = $K->array($salt_v);
         //$query = $g->Variable($la->randomNormal($full_query_shape,mean:0,scale:1));
         //$value = $g->Variable($la->randomNormal($full_value_shape,mean:0,scale:1));
         //echo "query: ".$mo->toString($dInputs[0],format:'%12.7e',indent:true)."\n";
@@ -1588,10 +1600,10 @@ class MultiHeadAttentionTest extends TestCase
         $this->assertEquals($outputsVariable->shape(),$dOutputs->shape());
         $this->assertEquals($resultValiable->shape(),$dSalt->shape());
         $this->assertTrue($mo->la()->isclose(
-            $dOutputs,$salt
+            $K->ndarray($dOutputs),$K->ndarray($salt)
         ));
         $this->assertTrue($mo->la()->isclose(
-            $dSalt,$outputs
+            $K->ndarray($dSalt),$K->ndarray($outputs)
         ));
 
         $copydOutputs = $K->copy($dOutputs);
@@ -1690,6 +1702,8 @@ class MultiHeadAttentionTest extends TestCase
                 ->reshape($full_query_shape);
         $salt_v = $mo->la()->range(array_product($full_value_shape),dtype:NDArray::float32)
                 ->reshape($full_value_shape);
+        $salt_q = $K->array($salt_q);
+        $salt_v = $K->array($salt_v);
         //$query = $g->Variable($la->randomNormal($full_query_shape,mean:0,scale:1));
         //$value = $g->Variable($la->randomNormal($full_value_shape,mean:0,scale:1));
         //echo "query: ".$mo->toString($dInputs[0],format:'%12.7e',indent:true)."\n";
@@ -1855,10 +1869,10 @@ class MultiHeadAttentionTest extends TestCase
         $this->assertEquals($outputsVariable->shape(),$dOutputs->shape());
         $this->assertEquals($resultValiable->shape(),$dSalt->shape());
         $this->assertTrue($mo->la()->isclose(
-            $dOutputs,$salt
+            $K->ndarray($dOutputs),$K->ndarray($salt)
         ));
         $this->assertTrue($mo->la()->isclose(
-            $dSalt,$outputs,
+            $K->ndarray($dSalt),$K->ndarray($outputs),
             //debug:true,
         ));
 
@@ -1985,6 +1999,8 @@ class MultiHeadAttentionTest extends TestCase
                 ->reshape($full_query_shape);
         $salt_v = $mo->la()->range(array_product($full_value_shape),dtype:NDArray::float32)
                 ->reshape($full_value_shape);
+        $salt_q = $K->array($salt_q);
+        $salt_v = $K->array($salt_v);
         //$query = $g->Variable($la->randomNormal($full_query_shape,mean:0,scale:1));
         //$value = $g->Variable($la->randomNormal($full_value_shape,mean:0,scale:1));
         //echo "query: ".$mo->toString($dInputs[0],format:'%12.7e',indent:true)."\n";
@@ -2154,10 +2170,10 @@ class MultiHeadAttentionTest extends TestCase
         $this->assertEquals($outputsVariable->shape(),$dOutputs->shape());
         $this->assertEquals($resultValiable->shape(),$dSalt->shape());
         $this->assertTrue($mo->la()->isclose(
-            $dOutputs,$salt
+            $K->ndarray($dOutputs),$K->ndarray($salt)
         ));
         $this->assertTrue($mo->la()->isclose(
-            $dSalt,$outputs,
+            $K->ndarray($dSalt),$K->ndarray($outputs),
             //debug:true,
         ));
 
@@ -2286,6 +2302,8 @@ class MultiHeadAttentionTest extends TestCase
                 ->reshape($full_query_shape);
         $salt_v = $mo->la()->range(array_product($full_value_shape),dtype:NDArray::float32)
                 ->reshape($full_value_shape);
+        $salt_q = $K->array($salt_q);
+        $salt_v = $K->array($salt_v);
         //$query = $g->Variable($la->randomNormal($full_query_shape,mean:0,scale:1));
         //$value = $g->Variable($la->randomNormal($full_value_shape,mean:0,scale:1));
         //echo "query: ".$mo->toString($dInputs[0],format:'%12.7e',indent:true)."\n";
@@ -2434,10 +2452,10 @@ class MultiHeadAttentionTest extends TestCase
         $this->assertEquals($outputsVariable->shape(),$dOutputs->shape());
         $this->assertEquals($resultValiable->shape(),$dSalt->shape());
         $this->assertTrue($mo->la()->isclose(
-            $dOutputs,$salt
+            $K->ndarray($dOutputs),$K->ndarray($salt)
         ));
         $this->assertTrue($mo->la()->isclose(
-            $dSalt,$outputs
+            $K->ndarray($dSalt),$K->ndarray($outputs)
         ));
 
         $copydOutputs = $K->copy($dOutputs);

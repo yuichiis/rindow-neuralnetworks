@@ -50,7 +50,11 @@ abstract class AbstractModel implements Model
     /** @var array<string,bool> $callOptions */
     protected ?array $callOptions;
 
-    public function __construct(Builder $builder, HDAFactory $hdaFactory=null)
+    public function __construct(
+        Builder $builder,
+        HDAFactory $hdaFactory=null,
+        string $name=null,
+    )
     {
         $this->builder = $builder;
         $this->backend = $builder->backend();
@@ -65,6 +69,7 @@ abstract class AbstractModel implements Model
         foreach($refParams as $param) {
             $this->callOptions[$param->name] = true;
         }
+        $this->name = $name;
     }
 
     protected function console(string $message) : void
@@ -624,18 +629,20 @@ abstract class AbstractModel implements Model
         if(isset($this->graph['model'])) {
             return $this->graph['model'];
         }
-        $model = $this;
-        $func = function($x,...$options) use ($model) {
-            return $model->forward($x,...$options);
-        };
-        //$options = ['alternateCreator'=>$this];
-        //[$weights,$grads] = $this->initWeights();
-        //if(count($weights)) {
-        //    $options['weights'] = $weights;
-        //    $options['grads'] = $grads;
-        //}
+        //$model = $this;
+        //$func = function($x,...$options) use ($model) {
+        //    return $model->forward($x,...$options);
+        //};
+        ////$options = ['alternateCreator'=>$this];
+        ////[$weights,$grads] = $this->initWeights();
+        ////if(count($weights)) {
+        ////    $options['weights'] = $weights;
+        ////    $options['grads'] = $grads;
+        ////}
+        //$this->graph['model'] = $this->builder->gradient->Function(
+        //    $func,alternateCreator:$this);
         $this->graph['model'] = $this->builder->gradient->Function(
-            $func,alternateCreator:$this);
+            $this,alternateCreator:$this);
         return $this->graph['model'];
     }
 
@@ -782,10 +789,10 @@ abstract class AbstractModel implements Model
         }
         $inputs = array_map(fn($x)=>$g->Variable($x),$inputs);
         if($this->isAwareOf('training')) {
-            $inputs['training'] = $g->Variable(true);
+            $inputs['training'] = $g->Variable(true,name:'training');
         }
         if($this->isAwareOf('trues')) {
-            $inputs['trues'] = $g->Variable($trues);
+            $inputs['trues'] = $g->Variable($trues,name:'trues');
         }
         $trues = $this->trueValuesFilter($trues);
         $trues = $g->Variable($trues);

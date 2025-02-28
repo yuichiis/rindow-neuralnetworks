@@ -3,6 +3,7 @@ declare(strict_types=1);
 namespace Rindow\NeuralNetworks\Gradient\Core;
 
 use InvalidArgumentException;
+use UnexpectedValueException;
 use LogicException;
 use RuntimeException;
 use Throwable;
@@ -193,6 +194,26 @@ class GraphFunction implements GraphFunctionInterface
         });
         if(!is_array($graphOutputs)) {
             $graphOutputs = [$graphOutputs];
+        }
+        foreach($graphOutputs as $o) {
+            if(!($o instanceof Variable)) {
+                $name = null;
+                if($this->func instanceof Module) {
+                    $name = $this->name();
+                }
+                if($name==null && is_object($this->func)) {
+                    $name = get_class($this->func);
+                }
+                if($name==null && !is_object($this->func)) {
+                    $name = 'function';
+                }
+                if(is_object($o)) {
+                    $type = get_class($o);
+                } else {
+                    $type = gettype($o);
+                }
+                throw new UnexpectedValueException("The call method in the Top of Model must return a Variable type or a list of Variable types.: {$name} Model returned {$type}.");
+            }
         }
 
         $this->endOutputOids = $graphOutputs;

@@ -3,12 +3,14 @@ namespace Rindow\NeuralNetworks\Builder;
 
 use Interop\Polite\Math\Matrix\NDArray;
 use Rindow\NeuralNetworks\Gradient\Variable as VariableIF;
+use Rindow\NeuralNetworks\Gradient\MaskedNDArray;
 use Rindow\NeuralNetworks\Gradient\Module;
 use Rindow\NeuralNetworks\Gradient\ArrayShape;
 use Rindow\NeuralNetworks\Gradient\ArraySpec;
 use Rindow\NeuralNetworks\Gradient\Core\ArraySpec as ArraySpecImpl;
 use Rindow\NeuralNetworks\Gradient\Core\Variable as VariableImpl;
 use Rindow\NeuralNetworks\Gradient\Core\Modules;
+
 use Rindow\NeuralNetworks\Gradient\Core\GradientTape;
 use Rindow\NeuralNetworks\Gradient\Core\GraphFunction;
 use Rindow\NeuralNetworks\Gradient\Core\StopGradient;
@@ -51,12 +53,28 @@ class Gradient
         $this->backend = $backend;
     }
 
+    public function constant(mixed $value, $dtype=null) : NDArray
+    {
+        return $this->backend->array($value, dtype:$dtype);
+    }
+
     public function Variable(mixed $variable, mixed ...$options) : VariableIF
     {
         if(GraphFunction::$mode==GraphFunction::EXECUTING) {
             return $variable;
         }
         return new VariableImpl($this->backend,$variable,...$options);
+    }
+
+    public function ndarray(NDArray $value) : NDArray
+    {
+        if($value instanceof VariableIF) {
+            $value = $value->value();
+        }
+        if($value instanceof MaskedNDArray) {
+            $value = $value->value();
+        }
+        return $value;
     }
 
     /**
@@ -374,5 +392,4 @@ class Gradient
         $func = new Repeat($this->backend,axis:$axis,keepdims:$keepdims);
         return $func($x,$repeats);
     }
-
 }

@@ -134,9 +134,9 @@ abstract class AbstractMultiInputLayer extends AbstractLayerBase
     public function _rawCall(array $inputs,array $options) : array
     {
         $training = $options['training'] ?? null;
-        $outputs = [$this->call($inputs, training:$training)];
+        $outputs = $this->call($inputs, training:$training);
 
-        $values = $this->makeMultiMaskedValues($inputs, $outputs);
+        $values = $this->makeMultiMaskedValues($inputs, [$outputs]);
         return $values;
     }
 

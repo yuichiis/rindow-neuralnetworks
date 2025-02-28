@@ -5,6 +5,7 @@ use Interop\Polite\Math\Matrix\NDArray;
 use Interop\Polite\Math\Matrix\OpenCL;
 use Rindow\Math\Matrix\NDArrayCL;
 use Rindow\NeuralNetworks\Gradient\Variable;
+use Rindow\NeuralNetworks\Gradient\MaskedNDArray;
 use InvalidArgumentException;
 use stdClass;
 
@@ -163,8 +164,12 @@ class Backend
         if($ndarray instanceof Variable) {
             $ndarray = $ndarray->value();
         }
-        if($ndarray instanceof NDArrayCL)
-            return $ndarray->toNDArray();
+        if($ndarray instanceof MaskedNDArray) {
+            $ndarray = $ndarray->value();
+        }
+        if($ndarray instanceof NDArrayCL) {
+            $ndarray = $ndarray->toNDArray();
+        }
         return $ndarray;
     }
 
@@ -450,70 +455,91 @@ class Backend
         return $x;
     }
 
-    public function add(NDArray $x, NDArray $y) : NDArray
+    public function add(NDArray $x, NDArray $y, bool $trans=null) : NDArray
     {
         $la = $this->la;
-        $ndimX = $x->ndim();
-        $ndimY = $y->ndim();
-        if($ndimX == $ndimY) {
-            $x = $la->copy($x,$la->alloc($y->shape(),$x->dtype()));
-            $la->axpy($y,$x);
-            return $x;
-        } elseif($ndimX < $ndimY) {
-            $x = $la->duplicate($x,null,null,$la->alloc($y->shape(),$x->dtype()));
-            $la->axpy($y,$x);
-            return $x;
+        if(!$trans) {
+            $ndimX = $x->ndim();
+            $ndimY = $y->ndim();
+            if($ndimX == $ndimY) {
+                $x = $la->copy($x,$la->alloc($y->shape(),$x->dtype()));
+                $la->axpy($y,$x);
+                return $x;
+            } elseif($ndimX < $ndimY) {
+                $x = $la->duplicate($x,null,null,$la->alloc($y->shape(),$x->dtype()));
+                $la->axpy($y,$x);
+                return $x;
+            } else {
+                $y = $la->duplicate($y,null,null,$la->alloc($x->shape(),$y->dtype()));
+                $la->axpy($x,$y);
+                return $y;
+            }
         } else {
-            $y = $la->duplicate($y,null,null,$la->alloc($x->shape(),$y->dtype()));
-            $la->axpy($x,$y);
-            return $y;
+            $x = $la->copy($x);
+            return $la->add($y, $x, alpha:1, trans:$trans);
         }
     }
 
-    public function sub(NDArray $x, NDArray $y) : NDArray
+    public function sub(NDArray $x, NDArray $y, bool $trans=null) : NDArray
     {
         $la = $this->la;
-        $ndimX = $x->ndim();
-        $ndimY = $y->ndim();
-        if($ndimX == $ndimY) {
-            $x = $la->copy($x,$la->alloc($y->shape(),$x->dtype()));
-            $la->axpy($y,$x,-1.0);
-            return $x;
-        } elseif($ndimX < $ndimY) {
-            $x = $la->duplicate($x,null,null,$la->alloc($y->shape(),$x->dtype()));
-            $la->axpy($y,$x,-1.0);
-            return $x;
+        if(!$trans) {
+            $ndimX = $x->ndim();
+            $ndimY = $y->ndim();
+            if($ndimX == $ndimY) {
+                $x = $la->copy($x,$la->alloc($y->shape(),$x->dtype()));
+                $la->axpy($y,$x,-1.0);
+                return $x;
+            } elseif($ndimX < $ndimY) {
+                $x = $la->duplicate($x,null,null,$la->alloc($y->shape(),$x->dtype()));
+                $la->axpy($y,$x,-1.0);
+                return $x;
+            } else {
+                $y = $la->duplicate($y,null,null,$la->alloc($x->shape(),$y->dtype()));
+                $la->increment($y,0,-1);
+                $la->axpy($x,$y);
+                return $y;
+            }
         } else {
-            $y = $la->duplicate($y,null,null,$la->alloc($x->shape(),$y->dtype()));
-            $la->increment($y,0,-1);
-            $la->axpy($x,$y);
-            return $y;
+            $x = $la->copy($x);
+            return $la->add($y, $x, alpha:-1, trans:$trans);
         }
     }
 
-    public function mul(NDArray $x, NDArray $y) : NDArray
+    public function mul(NDArray $x, NDArray $y, bool $trans=null) : NDArray
     {
         $la = $this->la;
-        if($x->ndim() < $y->ndim()) {
+        if(!$trans) {
+            if($x->ndim() < $y->ndim()) {
+                $y = $la->copy($y);
+                return $la->multiply($x,$y);
+            } else {
+                $x = $la->copy($x);
+                return $la->multiply($y,$x);
+            }
+        } else {
+            $x = $la->copy($x);
+            return $la->multiply($y,$x,trans:$trans);
+        }
+    }
+
+    public function div(NDArray $x, NDArray $y, bool $trans=null) : NDArray
+    {
+        $la = $this->la;
+        if(!$trans) {
             $y = $la->copy($y);
-            return $la->multiply($x,$y);
+            $la->reciprocal($y);
+            if($x->ndim() < $y->ndim()) {
+                return $la->multiply($x,$y);
+            } else {
+                $x = $la->copy($x);
+                return $la->multiply($y,$x);
+            }
         } else {
             $x = $la->copy($x);
-            return $la->multiply($y,$x);
-        }
-    }
-
-    public function div(NDArray $x, NDArray $y) : NDArray
-    {
-        $la = $this->la;
-        $y = $la->copy($y);
-        $la->reciprocal($y);
-        if($x->ndim() < $y->ndim()) {
-            return $la->multiply($x,$y);
-        } else {
-            $x = $la->copy($x);
-            $z = $la->multiply($y,$x);
-            return $z;
+            $y = $la->copy($y);
+            $la->reciprocal($y);
+            return $la->multiply($y,$x,trans:$trans);
         }
     }
 
@@ -521,6 +547,7 @@ class Backend
         NDArray $mask,
         NDArray $a,
         float $fill=null,
+        int $mode=null,         // mode=0:set  mode=1:add
         int $batchDims=null,
         int $axis=null,
         ) : NDArray
@@ -530,6 +557,7 @@ class Backend
             $mask,
             $la->copy($a),
             fill:$fill,
+            mode:$mode,
             batchDims:$batchDims,
             axis:$axis,
         );
@@ -551,10 +579,17 @@ class Backend
         return $x;
     }
 
-    public function update_add(NDArray $x, NDArray $increment,
-        float $alpha=null) : NDArray
+    public function update_add(
+        NDArray $x,
+        NDArray $increment,
+        float $alpha=null,
+        bool $trans=null) : NDArray
     {
-        $this->la->axpy($increment,$x,$alpha);
+        if($trans || ($x->shape()!=$increment->shape())) {
+            $this->la->add($increment,$x,$alpha,$trans);
+        } else {
+            $this->la->axpy($increment,$x,$alpha);
+        }
         return $x;
     }
 
@@ -2492,6 +2527,14 @@ class Backend
             reverse:$reverse,
             outputs:$outputs,
         );
+    }
+
+    public function einsum(
+        string $equation,
+        NDArray ...$arrays,
+    ) : NDArray
+    {
+        return $this->la->einsum($equation, ...$arrays);
     }
 
     public function equalTest(mixed $a, mixed $b) : bool

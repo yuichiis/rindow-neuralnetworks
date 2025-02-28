@@ -360,9 +360,13 @@ abstract class AbstractRNNLayer extends AbstractLayerBase implements RNNLayer
     public function _rawCall(array $inputs,array $options) : array
     {
         $training = $options['training'] ?? false;
-        $results = $this->call($inputs,training:$training);
-        $values = $this->makeMultiMaskedValues($inputs, $results);
-        return $values;
+        $mask = $options['mask'] ?? null;
+        if($mask===null) {
+            $mask = $this->retrieveSingleMask($inputs[0]);
+        }
+        $results = $this->call($inputs,training:$training,mask:$mask);
+        $results[0] = $this->makeSingleMaskedValue($inputs[0], $results[0]);
+        return $results;
     }
 
     public function computeMask(

@@ -51,7 +51,9 @@ class Dropout extends AbstractLayer
     {
         $K = $this->backend;
         $container = $this->container();
-        $dInputs = $K->mul($dOutputs, $container->mask);
+        if(isset($container->mask)) {
+            $dInputs = $K->mul($dOutputs, $container->mask);
+        }
         return $dInputs;
     }
 

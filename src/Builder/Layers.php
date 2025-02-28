@@ -36,6 +36,9 @@ use Rindow\NeuralNetworks\Layer\SimpleRNN;
 use Rindow\NeuralNetworks\Layer\LSTM;
 use Rindow\NeuralNetworks\Layer\GRU;
 use Rindow\NeuralNetworks\Layer\Attention;
+use Rindow\NeuralNetworks\Layer\MultiHeadAttention;
+use Rindow\NeuralNetworks\Layer\InheritMask;
+use Rindow\NeuralNetworks\Layer\Add;
 
 class Layers
 {
@@ -275,5 +278,20 @@ class Layers
     public function Attention(mixed ...$options) : object
     {
         return new Attention($this->backend, ...$options);
+    }
+
+    public function MultiHeadAttention(mixed ...$options) : object
+    {
+        return new MultiHeadAttention($this->backend, ...$options);
+    }
+
+    public function InheritMask(mixed ...$options) : object
+    {
+        return new InheritMask($this->backend, ...$options);
+    }
+    
+    public function Add(mixed ...$options) : object
+    {
+        return new Add($this->backend, ...$options);
     }
 }
