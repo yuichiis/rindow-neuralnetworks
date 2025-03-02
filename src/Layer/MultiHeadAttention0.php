@@ -103,9 +103,6 @@ class MultiHeadAttention extends AbstractAttentionLayer
     protected ?string $biasInitializerName;
     /** @var array<int> $attention_axes */
     protected ?array $attention_axes;
-    protected array $query_input_shape;
-    protected array $key_input_shape;
-    protected array $value_input_shape;
     protected Layer $query_dense;
     protected Layer $key_dense;
     protected Layer $value_dense;
@@ -238,30 +235,27 @@ class MultiHeadAttention extends AbstractAttentionLayer
         $value_rank = count($value_shape);                      // rank = 3+?
         $key_rank = count($key_shape);                          // rank = 3+?
 
+        //echo "==query_dense==\n";
+        [$einsum_equation, $bias_axes, $output_rank] = $this->build_proj_equation(
+            $query_rank-1, bound_dims:1, output_dims:2
+        );
         $common_args = $this->get_common_args();
         //echo "common_args=";
         //var_dump($common_args);
-        //echo "==query_dense==\n";
-        //[$einsum_equation, $bias_axes, $output_rank] = $this->build_proj_equation(
-        //    free_dims:$query_rank-1, bound_dims:1, output_dims:2
-        //);
-        //echo "query_einsum=$einsum_equation\n";
+        //echo "query_einsum=$einsum_equation\n";                 // ab.c,c.de->ab.de    =>  gemm(x,y)
         //echo "output_rank=$output_rank\n";
-        [$batch,$Tq,$dim,$units,$dense_input_shape] = $this->build_input_dense_args(
-            $query_shape,$this->numHeads, $this->keyDim,
+        $this->query_dense = new EinsumDense(
+            $this->backend,
+            $einsum_equation,
+            ...$common_args,
+            output_shape:$this->get_output_shape(  // output_shape: ((Tq), numHeads, keyDim)
+                $output_rank-1,
+                $query_shape,
+                [$this->numHeads, $this->keyDim]
+            ),
+            bias_axes:($this->useBias)?$bias_axes:null,
+            name:'query',
         );
-        //echo "query_shape=".$this->shapeToString($query_shape)."\n";
-        //echo "(B*Tq,Dim),(Dim,Head*KeyDim) -> (B*Tq,Head*KeyDim)\n"; // ab.c,c.de->ab.de =>
-        //echo "B={$batch},Tq=".$this->shapeToString($Tq).",Dim={$dim},Head*KeyDim={$units}\n";//        m.n,n.k,=>m.k
-        //                                          // gemm(batches.Dim,Dim.units) => batches.units
-        $this->query_input_shape = $dense_input_shape;// kernel(Dim.units) , bias(units)
-        $this->query_dense = new Dense(             // Dense(inputs(batches.Dim),units)
-            $this->backend,                         //     units       : (numHeads.keyDim)
-            $units,                                 //     input_shape : ((Tq),Dim)
-            ...$common_args,                        //     output_shape: ((Tq),(numHeads.keyDim))
-            input_shape:$dense_input_shape,         //     kernel_initializer
-            name:'query',                           //     bias_initializer
-        );                                          //     use_bias
         $sampleW = null;
         if($sampleWeights!==null) {
             $sampleW = [];
@@ -270,7 +264,7 @@ class MultiHeadAttention extends AbstractAttentionLayer
                 $sampleW[] = array_shift($sampleWeights);   // query_dense/bias
             }
         }
-        $this->query_dense->build($dense_input_shape,sampleWeights:$sampleW);
+        $this->query_dense->build(array_slice($query_shape,1),sampleWeights:$sampleW);
         //echo "query_dense->inputShape=(".implode(',',$this->query_dense->inputShape()).")\n";
         //echo "query_dense->kernelShape=(".implode(',',$this->query_dense->getParams()[0]->shape()).")\n";
         //echo "query_dense->outputShape=(".implode(',',$this->query_dense->outputShape()).")\n";
@@ -279,27 +273,24 @@ class MultiHeadAttention extends AbstractAttentionLayer
         // output = ((Batch), (Tq), numHeads, keyDim)
 
         //echo "==key_dense==\n";
-        //[$einsum_equation, $bias_axes, $output_rank] = $this->build_proj_equation(
-        //    $key_rank-1, bound_dims:1, output_dims:2
-        //);
-        //echo "key_einsum=$einsum_equation\n";
+        [$einsum_equation, $bias_axes, $output_rank] = $this->build_proj_equation(
+            $key_rank-1, bound_dims:1, output_dims:2
+        );
+        //echo "key_einsum=$einsum_equation\n";                   // ab.c,c.de->ab.de    =>  gemm(x,y)
         //echo "common_args=";
         //var_dump($common_args);
-        [$batch,$Tv,$dim,$units,$dense_input_shape] = $this->build_input_dense_args(
-            $key_shape,$this->numHeads, $this->keyDim,
+        $this->key_dense = new EinsumDense(
+            $this->backend,
+            $einsum_equation,
+            ...$common_args,
+            output_shape:$this->get_output_shape(               // ((Batch), (Tv), numHeads, keyDim)
+                $output_rank-1,
+                $key_shape,
+                [$this->numHeads, $this->keyDim]
+            ),
+            bias_axes:($this->useBias)?$bias_axes:null,
+            name:'key',
         );
-        //echo "key_shape=".$this->shapeToString($key_shape)."\n";
-        //echo "(B*Tv,Dim),(Dim,Head*KeyDim) -> (B*Tv,Head*KeyDim)\n";  // ab.c,c.de->ab.de =>
-        //echo "B={$batch},Tv=".$this->shapeToString($Tv).",Dim={$dim},Head*KeyDim={$units}\n"; //        m.n,n.k,=>m.k
-        //                                          // gemm(batches.Dim,Dim.units) => batches.units
-        $this->key_input_shape = $dense_input_shape;// kernel(Dim.units) , bias(units)
-        $this->key_dense = new Dense(             // Dense(inputs(batches.Dim),units)
-            $this->backend,                         //     units       : (numHeads.keyDim)
-            $units,                                 //     input_shape : ((Tq),Dim)
-            ...$common_args,                        //     output_shape: ((Tq),(numHeads.keyDim))
-            input_shape:$dense_input_shape,         //     kernel_initializer
-            name:'key',                           //     bias_initializer
-        );                                          //     use_bias
         $sampleW = null;
         if($sampleWeights!==null) {
             $sampleW = [];
@@ -308,7 +299,7 @@ class MultiHeadAttention extends AbstractAttentionLayer
                 $sampleW[] = array_shift($sampleWeights);   // key_dense/bias
             }
         }
-        $this->key_dense->build($dense_input_shape,sampleWeights:$sampleW);
+        $this->key_dense->build(array_slice($key_shape,1),sampleWeights:$sampleW);
         //echo "key_dense->inputShape=(".implode(',',$this->key_dense->inputShape()).")\n";
         //echo "key_dense->kernelShape=(".implode(',',$this->key_dense->getParams()[0]->shape()).")\n";
         //echo "key_dense->outputShape=(".implode(',',$this->key_dense->outputShape()).")\n";
@@ -317,28 +308,24 @@ class MultiHeadAttention extends AbstractAttentionLayer
         // output = ((Batch), (Tv), numHeads, keyDim)
 
         //echo "==value_dense==\n";
-        //[$einsum_equation, $bias_axes, $output_rank] = $this->build_proj_equation(
-        //    $value_rank-1, bound_dims:1, output_dims:2
-        //);
-        //echo "value_einsum=$einsum_equation\n";
+        [$einsum_equation, $bias_axes, $output_rank] = $this->build_proj_equation(
+            $value_rank-1, bound_dims:1, output_dims:2
+        );
+        //echo "value_einsum=$einsum_equation\n";                 // ab.c,c.de->ab.de    =>  gemm(x,y)
         //echo "common_args=";
         //var_dump($common_args);
-        [$batch,$Tv,$dim,$units,$dense_input_shape] = $this->build_input_dense_args(
-            $value_shape,$this->numHeads, $this->valueDim,
+        $this->value_dense = new EinsumDense(
+            $this->backend,
+            $einsum_equation,
+            ...$common_args,
+            output_shape:$this->get_output_shape(               // ((Batch), (Tv), numHeads, valueDim)
+                $output_rank-1,
+                $value_shape,
+                [$this->numHeads, $this->valueDim]
+            ),
+            bias_axes:($this->useBias)?$bias_axes:null,
+            name:'value',
         );
-        //echo "value_shape=".$this->shapeToString($value_shape)."\n";
-        //echo "(B*Tv,Dim),(Dim,Head*KeyDim) -> (B*Tv,Head*KeyDim)\n";  // ab.c,c.de->ab.de => ab.de
-        //echo "B={$batch},Tv=".$this->shapeToString($Tv).",Dim={$dim},Head*KeyDim={$units}\n"; //        m.n,n.k,=>m.k
-        //                                          // gemm(batches.Dim,Dim.units) => batches.units
-        $this->value_input_shape = $dense_input_shape;// kernel(Dim.units) , bias(units)
-        $this->value_dense = new Dense(             // Dense(inputs(batches.Dim),units)
-            $this->backend,                         //     units       : (numHeads.keyDim)
-            $units,                                 //     input_shape : ((Tq),Dim)
-            ...$common_args,                        //     output_shape: ((Tq),(numHeads.keyDim))
-            input_shape:$dense_input_shape,         //     kernel_initializer
-            name:'value',                           //     bias_initializer
-        );                                          //     use_bias
-        $output_rank = 1+count($Tv)+1+1;
         $sampleW = null;
         if($sampleWeights!==null) {
             $sampleW = [];
@@ -347,7 +334,7 @@ class MultiHeadAttention extends AbstractAttentionLayer
                 $sampleW[] = array_shift($sampleWeights);   // value_dense/bias
             }
         }
-        $this->value_dense->build($dense_input_shape,sampleWeights:$sampleW);
+        $this->value_dense->build(array_slice($value_shape,1),sampleWeights:$sampleW);
         //echo "value_dense->inputShape=(".implode(',',$this->value_dense->inputShape()).")\n";
         //echo "value_dense->kernelShape=(".implode(',',$this->value_dense->getParams()[0]->shape()).")\n";
         //echo "value_dense->outputShape=(".implode(',',$this->value_dense->outputShape()).")\n";
@@ -376,9 +363,8 @@ class MultiHeadAttention extends AbstractAttentionLayer
         //echo "==output_dense==\n";
         //echo "common_args=";
         //var_dump($common_args);
-        //$output_dense_input_shape = $this->query_dense->outputShape();
-        //array_unshift($output_dense_input_shape,1);
-        $output_dense_input_shape = array_merge([$batch],$Tq,[$this->numHeads, $this->valueDim]);
+        $output_dense_input_shape = $this->query_dense->outputShape();
+        array_unshift($output_dense_input_shape,1);
 
         // input:   ((Batch), (Tq), numHeads, valueDim)
         // kernel:  (numHeads, valueDim, Dim)
@@ -466,7 +452,6 @@ class MultiHeadAttention extends AbstractAttentionLayer
         return [
             'kernel_initializer'=>$this->kernelInitializerName,
             'bias_initializer'=>$this->biasInitializerName,
-            'use_bias'=>$this->useBias,
         ];
     }
 
@@ -508,7 +493,6 @@ class MultiHeadAttention extends AbstractAttentionLayer
         // kernel:  (numHeads, valueDim, Dim)
         // output:  ((Batch), (Tq), Dim)
 
-        unset($common_args['use_bias']);
         //echo "output_einsum=$einsum_equation\n";        //  abcd,cde->abe
         return new EinsumDense(
             $this->backend,
@@ -536,7 +520,7 @@ class MultiHeadAttention extends AbstractAttentionLayer
         """
     */
     private function build_attention(
-        int $rank   // full rank
+        $rank   // full rank
         ) : void
     {
         if($this->attention_axes===null) {
@@ -1260,25 +1244,15 @@ class MultiHeadAttention extends AbstractAttentionLayer
         #   H = `size_per_head`
         # `query` = [B, T, N ,H]
         //echo "query: ".$mo->toString($query,indent:true)."\n";
-        [$full_input_shape,$full_output_shape] = $this->make_forward_dense_shape($query, $this->query_input_shape, $this->numHeads, $this->keyDim);
-        $query = $query->reshape($full_input_shape);
         $query = $this->query_dense->_rawCall([$query],['training'=>$training])[0];
-        $query = $query->reshape($full_output_shape);
-
         //echo "query_: ".$mo->toString($query,format:'%14.7f',indent:true)."\n";
     
         # `key` = [B, S, N, H]
-        [$full_input_shape,$full_output_shape] = $this->make_forward_dense_shape($key, $this->key_input_shape, $this->numHeads, $this->keyDim);
-        $key = $key->reshape($full_input_shape);
         $key = $this->key_dense->_rawCall([$key],['training'=>$training])[0];
-        $key = $key->reshape($full_output_shape);
-
+    
         # `value` = [B, S, N, H]
-        [$full_input_shape,$full_output_shape] = $this->make_forward_dense_shape($value, $this->value_input_shape, $this->numHeads, $this->valueDim);
-        $value = $value->reshape($full_input_shape);
         $value = $this->value_dense->_rawCall([$value],['training'=>$training])[0];
-        $value = $value->reshape($full_output_shape);
-
+    
         //echo "query after dense: ".$mo->toString($query,indent:true)."\n";
         //echo "key: ".$mo->toString($key,indent:true)."\n";
         //echo "value: ".$mo->toString($value,indent:true)."\n";
@@ -1352,20 +1326,9 @@ class MultiHeadAttention extends AbstractAttentionLayer
         //echo "dQuery before dense->df(): ".$mo->toString($dQuery,indent:true)."\n";
         //echo "dValue_: ".$mo->toString($dValue,format:'%13.7e',indent:true)."\n";
 
-        [$full_output_shape,$full_input_shape] = $this->make_backward_dense_shape($dValue, $this->value_input_shape, $this->numHeads, $this->valueDim);
-        $dValue = $dValue->reshape($full_output_shape);
         $dValue = $this->value_dense->_rawDifferentiate([$dValue])[0];
-        $dValue = $dValue->reshape($full_input_shape);
-
-        [$full_output_shape,$full_input_shape] = $this->make_backward_dense_shape($dQuery, $this->query_input_shape, $this->numHeads, $this->keyDim);
-        $dQuery = $dQuery->reshape($full_output_shape);
         $dQuery = $this->query_dense->_rawDifferentiate([$dQuery])[0];
-        $dQuery = $dQuery->reshape($full_input_shape);
-
-        [$full_output_shape,$full_input_shape] = $this->make_backward_dense_shape($dKey, $this->key_input_shape, $this->numHeads, $this->keyDim);
-        $dKey = $dKey->reshape($full_output_shape);
         $dKey   = $this->key_dense->_rawDifferentiate([$dKey])[0];
-        $dKey = $dKey->reshape($full_input_shape);
 
         //echo "============================================\n";
         //echo "dQuery after dense->df(): ".$mo->toString($dQuery,indent:true)."\n";
@@ -1846,57 +1809,6 @@ class MultiHeadAttention extends AbstractAttentionLayer
         //echo "equation:$equation, bias_axes:$bias_axes, output_rank:".(strlen($output_str))."]\n";
         return [$equation, $bias_axes, strlen($output_str)];
     }
-
-    protected function build_input_dense_args(
-        array $inputShape,
-        int $numHeads,
-        int $headDim,
-    ) : array
-    {
-        if($this->attention_axes==null) {
-            $this->attention_axes = range(1, count($inputShape)-2);
-        }
-        $shape = $inputShape;
-        $batch = array_shift($inputShape);
-        $T = array_splice($inputShape,0,count($this->attention_axes));
-        $dim = array_product($inputShape);
-        $units = $numHeads*$headDim;
-        $dense_input_shape = [array_product($T),$dim];
-        return [$batch,$T,$dim,$units,$dense_input_shape];
-    }
-
-    protected function make_forward_dense_shape(
-        NDArray $inputs,
-        array $input_shape,
-        int $numHeads,
-        int $headDims,
-    ) : array
-    {
-        $shape = $inputs->shape();
-        $batch = array_shift($shape);
-        $tdim = array_shift($input_shape);
-        array_unshift($input_shape,$batch*$tdim);
-        $T = array_slice($shape,0,count($this->attention_axes));
-        $full_output_shape = array_merge([$batch],$T,[$numHeads,$headDims]);
-        return [$input_shape,$full_output_shape];
-    }
-
-    protected function make_backward_dense_shape(
-        NDArray $dOutputs,
-        array $input_shape,
-        int $numHeads,
-        int $headDims,
-    ) : array
-    {
-        $shape = $dOutputs->shape();
-        $batch = array_shift($shape);
-        $T = array_slice($shape,0,count($this->attention_axes));
-        $tdim = array_shift($input_shape);
-        $full_output_shape = [$batch*$tdim,$numHeads*$headDims];
-        $full_input_shape = array_merge([$batch],$T,$input_shape);
-        return [$full_output_shape,$full_input_shape];
-    }
-
     
     private function get_output_shape(
         int $output_rank,
