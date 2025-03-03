@@ -921,12 +921,12 @@ function make_labels($la,$label_tensor) {
     return $label_tensor;
 }
 
-$numExamples=128;#20000;#30000
+$numExamples=2000;#20000;#30000
 $numWords=1024;#null;
 $epochs = 1;#10;#20;
 $batchSize = 8;#64;
-$wordVectSize=64;#256;#128  // d_model embedding_dim
-$dff=64;#512;  // units 
+$d_model=128;#256;#64;#128  // d_model embedding_dim
+$dff=512;#64;  // units 
 $num_layers=4;
 $num_heads =8;
 
@@ -967,7 +967,7 @@ echo "num_examples: $numExamples\n";
 echo "num_words: $numWords\n";
 echo "epoch: $epochs\n";
 echo "batchSize: $batchSize\n";
-echo "embedding_dim: $wordVectSize\n";
+echo "embedding_dim: $d_model\n";
 echo "num_heads: $num_heads\n";
 echo "dff: $dff\n";
 echo "Total questions: $corpusSize\n";
@@ -985,7 +985,7 @@ echo "device type: ".$nn->deviceType()."\n";
 $transformer = new Transformer(
     $nn,
     $num_layers,
-    $wordVectSize,      // d_model,
+    $d_model,      // d_model,
     $num_heads,
     $dff,
     $inputVocabSize,    // input_vocab_size,
@@ -999,7 +999,7 @@ $transformer = new Transformer(
 
 $lossfunc = new CustomLossFunction($nn);
 $accuracyFunc = new CustomAccuracy($nn);
-$learning_rate = new CustomSchedule($wordVectSize);
+$learning_rate = new CustomSchedule($d_model);
 $optimizer = $nn->optimizers->Adam(lr:$learning_rate, beta1:0.9, beta2:0.98,
                                      epsilon:1e-9);
 
