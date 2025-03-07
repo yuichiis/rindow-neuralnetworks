@@ -921,10 +921,10 @@ function make_labels($la,$label_tensor) {
     return $label_tensor;
 }
 
-$numExamples=2000;#20000;#30000
+$numExamples=20000;#30000;#2000;
 $numWords=1024;#null;
-$epochs = 1;#10;#20;
-$batchSize = 8;#64;
+$epochs = 10;#20;
+$batchSize = 64;#8;
 $d_model=128;#256;#64;#128  // d_model embedding_dim
 $dff=512;#64;  // units 
 $num_layers=4;
@@ -932,7 +932,7 @@ $num_heads =8;
 
 $mo = new MatrixOperator();
 $nn = new NeuralNetworks($mo);
-$nn->backend()->primaryLA()->setProfiling(true);
+//$nn->backend()->primaryLA()->setProfiling(true);
 $g = $nn->gradient();
 $pltConfig = [];
 $plt = new Plot($pltConfig,$mo);
@@ -1083,4 +1083,4 @@ foreach($choice as $idx)
     echo "Exception!!!\n";
 }
 //$plt->show();
-$nn->backend()->primaryLA()->profilingReport();
+//$nn->backend()->primaryLA()->profilingReport();

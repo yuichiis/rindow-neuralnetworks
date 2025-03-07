@@ -338,7 +338,7 @@ class MultiHeadAttention extends AbstractAttentionLayer
             input_shape:$dense_input_shape,         //     kernel_initializer
             name:'value_dense',                     //     bias_initializer
         );                                          //     use_bias
-        $output_rank = 1+count($Tv)+1+1;
+        $output_rank = 1+count($Tv)+1+1; // (B,(Tv),Head,KeyDim)
         $sampleW = null;
         if($sampleWeights!==null) {
             $sampleW = [];
@@ -495,23 +495,30 @@ class MultiHeadAttention extends AbstractAttentionLayer
         }
         //echo "value_dense output rank=$rank\n";
         //echo "attention_axes=(".implode(',',$this->attention_axes).")\n";
-        [
-            $this->dot_product_equation,
-            $this->backward_dot_product_key_equation,
-            $this->backward_dot_product_query_equation,
-            $this->combine_equation,
-            $this->backward_combine_scores_equation,
-            $this->backward_combine_value_equation,
-            $attn_scores_rank,
-        ] = $this->build_attention_equation($rank, attn_axes:$this->attention_axes);
-        //echo "dot_product_equation: ".$this->dot_product_equation."\n";
-        //echo "attn_scores_rank=$attn_scores_rank\n";
-        //echo "combine_equation: ".$this->combine_equation."\n";
-        $norm_axes = range(
-            $attn_scores_rank-count($this->attention_axes), $attn_scores_rank-1
-        );
+        // [
+        //     $this->dot_product_equation,
+        //     $this->backward_dot_product_key_equation,
+        //     $this->backward_dot_product_query_equation,
+        //     $this->combine_equation,
+        //     $this->backward_combine_scores_equation,
+        //     $this->backward_combine_value_equation,
+        //     $attn_scores_rank,
+        // ] = $this->build_attention_equation($rank, attn_axes:$this->attention_axes);
+        // //echo "dot_product_equation: ".$this->dot_product_equation."\n";
+        // //echo "attn_scores_rank=$attn_scores_rank\n";
+        // //echo "combine_equation: ".$this->combine_equation."\n";
+        // $norm_axes = range(
+        //     $attn_scores_rank-count($this->attention_axes), $attn_scores_rank-1
+        // );
         //$this->softmax = new Activation($this->backend,'softmax',axis:$norm_axes);
         //echo "norm_axes=".implode(',',$norm_axes)."\n";
+
+        $this->dot_product_equation = 'aecd,abcd->acbe';
+        $this->backward_dot_product_key_equation = 'acbe,abcd->aecd';
+        $this->backward_dot_product_query_equation = 'acbe,aecd->abcd';
+        $this->combine_equation = 'acbe,aecd->abcd';
+        $this->backward_combine_scores_equation = 'abcd,aecd->acbe';
+        $this->backward_combine_value_equation = 'abcd,acbe->aecd';
         $this->softmax_layer = new Activation($this->backend,'softmax');
         $this->dropout_layer = new Dropout(
             $this->backend,
@@ -658,6 +665,9 @@ class MultiHeadAttention extends AbstractAttentionLayer
         //    throw new \Exception("Error Processing Request", 1);
         //}
 
+        //
+        // dot_product: (B,Tk,H,Dk),(B,Tq,H,Dk) -> (B,H,Tq,Tk)
+        //
         # Take the dot product between "query" and "key" to get the raw
         # attention scores.
         //echo "dot_product:\n";
@@ -666,7 +676,19 @@ class MultiHeadAttention extends AbstractAttentionLayer
         //echo "  query:  (".implode(',',$query->shape()).")\n";
         //echo "key_: ".$mo->toString($key,format:'%12.7f',indent:true)."\n";
         //echo "query_scaled: ".$mo->toString($query,format:'%12.7f',indent:true)."\n";
-        $attention_scores = $K->einsum($this->dot_product_equation, $key, $scaled_query);
+
+        [$key_input_shape,$query_input_shape,$score_output_shape] = 
+            $this->make_forward_product_shape($key, $scaled_query);
+        
+        $attention_scores = $K->einsum4p1(
+            $this->dot_product_equation,
+            $key->reshape($key_input_shape),
+            $scaled_query->reshape($query_input_shape),
+        );
+        $attention_scores = $attention_scores->reshape($score_output_shape);
+        //));
+        //$attention_scores = $K->mhaProduct($key, $scaled_query);
+
         //echo "  scores: (".implode(',',$attention_scores->shape()).")\n";
         //echo "attention_scores: ".$mo->toString($attention_scores,format:'%12.7f',indent:true)."\n";
         //echo "attention_scores ";
@@ -770,14 +792,26 @@ class MultiHeadAttention extends AbstractAttentionLayer
             $final_attn_scores = $attention_scores;
         }
     
+        //
+        // combine_product: (B,H,Tq,Tk),(B,Tv,H,Dv)->(B,Tq,H,Dv)
+        //
         # `context_layer` = [B, T, N, H]
         //echo "combine_product:\n";
         //echo "  equation:".$this->combine_equation."\n";
         //echo "  scores: (".implode(',',$final_attn_scores->shape()).")\n";
         //echo "  value:  (".implode(',',$value->shape()).")\n";
-        $attention_output = $K->einsum(
-            $this->combine_equation, $final_attn_scores, $value
+
+        [$scores_input_shape,$value_input_shape,$combine_output_shape] = 
+            $this->make_forward_combine_shape($final_attn_scores, $value);
+        $attention_output = $K->einsum4p1(
+            $this->combine_equation,
+            $final_attn_scores->reshape($scores_input_shape),
+            $value->reshape($value_input_shape),
         );
+        $attention_output = $attention_output->reshape($combine_output_shape);
+        //
+        //$attention_output = $K->mhaCombine($final_attn_scores, $value);
+
         //echo "  output: (".implode(',',$attention_output->shape()).")\n";
         //echo "outputs=".$mo->toString($attention_output,format:'%13.8f',indent:true)."\n";
         //echo "t_outputs        ";
@@ -882,9 +916,28 @@ class MultiHeadAttention extends AbstractAttentionLayer
 
 
 
+        //echo "combine_equation:                 ".$this->combine_equation."\n";
+        //echo "backward_combine_value_equation:  ".$this->backward_combine_value_equation."\n";
+        //echo "backward_combine_scores_equation: ".$this->backward_combine_scores_equation."\n";
 
-        $dValue = $K->einsum($this->backward_combine_value_equation, $dAttention_output, $softmaxed_attention_scores);
-        $dSoftmaxedScores = $K->einsum($this->backward_combine_scores_equation, $dAttention_output, $value);
+        [$scores_input_shape,$value_input_shape,$combine_output_shape] = 
+            $this->make_backward_combine_shape($softmaxed_attention_scores, $value);
+
+        $dValue = $K->einsum4p1(
+            $this->backward_combine_value_equation,
+            $dAttention_output->reshape($combine_output_shape),
+            $softmaxed_attention_scores->reshape($scores_input_shape),
+        );
+        $dValue = $dValue->reshape($value->shape());
+        //$dValue = $K->mhaDvCombine($dAttention_output, $softmaxed_attention_scores);
+
+        $dSoftmaxedScores = $K->einsum4p1(
+            $this->backward_combine_scores_equation,
+            $dAttention_output->reshape($combine_output_shape),
+            $value->reshape($value_input_shape),
+        );
+        $dSoftmaxedScores = $dSoftmaxedScores->reshape($softmaxed_attention_scores->shape());
+        //$dSoftmaxedScores = $K->mhaDsCombine($dAttention_output, $value);
 
         //echo "combine_equation: ".$this->combine_equation."\n";
         //echo "d_outputs=(".implode(',',$dAttention_output->shape()).")\n";
@@ -983,11 +1036,29 @@ class MultiHeadAttention extends AbstractAttentionLayer
         //    throw new \Exception("Error Processing Request", 1);
         //}
 
-        //echo "dot_product_equation: ".$this->dot_product_equation."\n";
-        //echo "backward_dot_product_key_equation: ".$this->backward_dot_product_key_equation."\n";
+        //echo "dot_product_equation:                ".$this->dot_product_equation."\n";
+        //echo "backward_dot_product_key_equation:   ".$this->backward_dot_product_key_equation."\n";
         //echo "backward_dot_product_query_equation: ".$this->backward_dot_product_query_equation."\n";
-        $dKey = $K->einsum($this->backward_dot_product_key_equation, $dScores, $scaled_query);
-        $dScaledQuery = $K->einsum($this->backward_dot_product_query_equation, $dScores, $key);
+
+        [$key_input_shape,$query_input_shape,$score_output_shape] = 
+            $this->make_backward_product_shape($key,$scaled_query);
+
+        $dKey = $K->einsum4p1(
+            $this->backward_dot_product_key_equation,
+            $dScores->reshape($score_output_shape),
+            $scaled_query->reshape($query_input_shape),
+        );
+        $dKey = $dKey->reshape($key->shape());
+        //$dKey = $K->mhaDkProduct($dScores, $scaled_query);
+
+        $dScaledQuery = $K->einsum4p1(
+            $this->backward_dot_product_query_equation,
+            $dScores->reshape($score_output_shape),
+            $key->reshape($key_input_shape),
+        );
+        $dScaledQuery = $dScaledQuery->reshape($scaled_query->shape());
+        //$dScaledQuery = $K->mhaDqProduct($dScores, $key);
+
         //echo "equation=".$this->backward_dot_product_query_equation."\n";
         //echo "dScores=(".implode(',',$dScores->shape()).")";
         //echo ": ".$mo->toString($dScores,format:'%13.8e',indent:true)."\n";
@@ -1207,9 +1278,7 @@ class MultiHeadAttention extends AbstractAttentionLayer
         //echo "value: ".$mo->toString($value,indent:true)."\n";
         //echo "attention_mask".$K->localMatrixOperator()->shapeToString($attention_mask->shape()).": ".$K->localMatrixOperator()->toString($attention_mask,indent:true)."\n";
 
-        #   N = `num_attention_heads`
-        #   H = `size_per_head`
-        # `query` = [B, T, N ,H]
+        // query_dense: (B,Tq,Fq),(Fq,H,Dk) -> (B,Tq,H,Dk)
         //echo "query: ".$mo->toString($query,indent:true)."\n";
         //echo "query: ".$mo->shapeToString($query->shape())."\n";
         [$full_input_shape,$full_output_shape,$Fq] = $this->make_forward_dense_shape(
@@ -1221,7 +1290,7 @@ class MultiHeadAttention extends AbstractAttentionLayer
 
         //echo "query_: ".$mo->toString($query,format:'%14.7f',indent:true)."\n";
     
-        # `key` = [B, S, N, H]
+        # key_dense: (B,Tk,Fk),(Fk,H,Dk) -> (B,Tk,H,Dk)
         [$full_input_shape,$full_output_shape,$Fk] = $this->make_forward_dense_shape(
             $key, [$this->numHeads, $this->keyDim],
         );
@@ -1229,7 +1298,7 @@ class MultiHeadAttention extends AbstractAttentionLayer
         $key = $this->key_dense->_rawCall([$key],['training'=>$training])[0];
         $key = $key->reshape($full_output_shape);
 
-        # `value` = [B, S, N, H]
+        # value_dense: (B,Tv,Fv),(Fv,H,Dv) -> (B,Tv,H,Dv)
         [$full_input_shape,$full_output_shape,$Fv] = $this->make_forward_dense_shape(
             $value, [$this->numHeads, $this->valueDim],
         );
@@ -1241,6 +1310,8 @@ class MultiHeadAttention extends AbstractAttentionLayer
         //echo "key: ".$mo->toString($key,indent:true)."\n";
         //echo "value: ".$mo->toString($value,indent:true)."\n";
 
+        // dot_product:     (B,Tk,H,Dk),(B,Tq,H,Dk)->(B,H,Tq,Tk)
+        // combine_product: (B,H,Tq,Tk),(B,Tv,H,Dv)->(B,Tq,H,Dv)
         [$attention_output, $attention_scores, $scaled_query] = $this->compute_attention(
                 $query, $key, $value,
                 $query_mask,
@@ -1453,12 +1524,13 @@ class MultiHeadAttention extends AbstractAttentionLayer
             // [T,S]
             $causal_mask = $this->compute_causal_mask($query, $value);
             if($auto_mask==null && $query_mask==null && $value_mask==null && $key_mask==null) {
-                //echo "causal-mask".$K->localMatrixOperator()->shapeToString($mask->shape()).": ".$K->localMatrixOperator()->toString($mask,indent:true)."\n";
+                //echo "causal-mask".$K->localMatrixOperator()->shapeToString($causal_mask->shape()).": ".$K->localMatrixOperator()->toString($causal_mask,indent:true)."\n";
                 //$auto_mask = ($auto_mask===null) ? $mask : ($auto_mask & $mask);
                 //echo 'causal_mask='.$mo->shapeToString($causal_mask->shape())."\n";
                 // [T,S] -expand-> [1, 1, T, S] -mask-to-> [B, H, T, S]
                 $attention_scores = $K->masking($causal_mask,$attention_scores,fill:-1e9,mode:1,axis:-$causal_mask->ndim());
                 //echo "causal_mask only\n";
+                //echo "attention_scores".$K->localMatrixOperator()->shapeToString($attention_scores->shape()).": ".$K->localMatrixOperator()->toString($attention_scores,format:'%10.5e',indent:true)."\n";
                 return $attention_scores;
             }
             if($auto_mask==null) {
@@ -1485,6 +1557,7 @@ class MultiHeadAttention extends AbstractAttentionLayer
             }
             // [B,T,S] <==masking== [B,T]
             $K->update_masking($auto_mask,$query_mask);
+            //echo "auto_mask".$K->localMatrixOperator()->shapeToString($auto_mask->shape()).": ".$K->localMatrixOperator()->toString($auto_mask,indent:true)."\n";
         }
         if($value_mask) {
             //echo "=== value_mask ===\n";
@@ -1504,6 +1577,7 @@ class MultiHeadAttention extends AbstractAttentionLayer
             }
             // [B,T,S] <==masking== [B,S]
             $K->update_masking($auto_mask,$value_mask,batchDims:1,axis:-$value_mask->ndim()+1);
+            //echo "auto_mask".$K->localMatrixOperator()->shapeToString($auto_mask->shape()).": ".$K->localMatrixOperator()->toString($auto_mask,indent:true)."\n";
         }
         if($key_mask) {
             if($auto_mask==null) {
@@ -1526,7 +1600,10 @@ class MultiHeadAttention extends AbstractAttentionLayer
         }
         if($auto_mask) {
             // [B,H,T,S] <==masking== [B,T,S]
+            //echo "auto_mask".$K->localMatrixOperator()->shapeToString($auto_mask->shape()).": ".$K->localMatrixOperator()->toString($auto_mask,indent:true)."\n";
+            //echo "attention_scores".$K->localMatrixOperator()->shapeToString($attention_scores->shape()).": ".$K->localMatrixOperator()->toString($attention_scores,format:'%10.5e',indent:true)."\n";
             $attention_scores = $K->masking($auto_mask,$attention_scores,fill:-1e9,mode:1,batchDims:1,axis:-$auto_mask->ndim()+1);
+            //echo "attention_scores".$K->localMatrixOperator()->shapeToString($attention_scores->shape()).": ".$K->localMatrixOperator()->toString($attention_scores,format:'%10.5e',indent:true)."\n";
             //echo "auto_mask\n";
         }
         ## attention_mask = [B, T, S]
@@ -1863,6 +1940,10 @@ class MultiHeadAttention extends AbstractAttentionLayer
         array $effectorDims,
     ) : array
     {
+        // input:   ((Batch, (T)), (Feature))
+        // kernel:  ((Feature), （Heads)
+        // output:  ((Batch, (T)), (Heads))
+
         $feature = $inputs->shape();
         $batch = array_shift($feature);
         $T = array_splice($feature,0,count($this->attention_axes));
@@ -1886,7 +1967,110 @@ class MultiHeadAttention extends AbstractAttentionLayer
         return [$full_output_shape,$full_input_shape];
     }
 
+
+    /*
+        key(B.Tv.H.Dk),query(B.Tq.H.Dk)->scores(B.H.Tq.Tv)
+        $this->dot_product_equation = 'a{e}cd,a{b}cd->ac{b}{e}';
+    */
+    protected function make_forward_product_shape(
+        NDArray $key,
+        NDArray $query,
+    ) : array
+    {
+        $key_hd = $key->shape();
+        $batch = array_shift($key_hd);
+        $Tv = array_splice($key_hd,0,count($this->attention_axes));
+        $key_input_shape = array_merge([$batch,array_product($Tv)],$key_hd);
+
+        $query_hd = $query->shape();
+        $batch = array_shift($query_hd);
+        $Tq = array_splice($query_hd,0,count($this->attention_axes));
+        $query_input_shape = array_merge([$batch,array_product($Tq)],$query_hd);
+
+        $score_output_shape = array_merge([$batch,$query_hd[0]],$Tq,$Tv);
+        return [$key_input_shape,$query_input_shape,$score_output_shape];
+    }
+
+    /*
+        key(B.Tv.H.Dk),query(B.Tq.H.Dk)->scores(B.H.Tq.Tv)
+        $this->backward_dot_product_key_equation   = 'ac{b}{e},a{b}cd->a{e}cd';
+        $this->backward_dot_product_query_equation = 'ac{b}{e},a{e}cd->a{b}cd';
+    */
+    protected function make_backward_product_shape(
+        NDArray $key,
+        NDArray $query,
+    ) : array
+    {
+        $key_hd = $key->shape();
+        $batch = array_shift($key_hd);
+        $Tv = array_splice($key_hd,0,count($this->attention_axes));
+        $key_input_shape = array_merge([$batch,array_product($Tv)],$key_hd);
+
+        $query_hd = $query->shape();
+        $batch = array_shift($query_hd);
+        $Tq = array_splice($query_hd,0,count($this->attention_axes));
+        $query_input_shape = array_merge([$batch,array_product($Tq)],$query_hd);
+
+        $score_output_shape = [$batch,$query_hd[0],array_product($Tq),array_product($Tv)];
+        return [$key_input_shape,$query_input_shape,$score_output_shape];
+    }
+
+    /*
+        scores: ((Batch), numHeads, (Tq), (Tv))
+        value:  ((Batch), (Tv), numHeads, valueDim)
+        output: ((Batch), (Tq), numHeads, valueDim)
+        
+        $this->combine_equation = 'ac{b}{e},a{e}cd->a{b}cd';
+    */
+    protected function make_forward_combine_shape(
+        NDArray $scores,
+        NDArray $value,
+    ) : array
+    {
+        $scores_tv = $scores->shape();
+        $batch = array_shift($scores_tv);
+        $scores_nhd = array_shift($scores_tv);
+        $Tq = array_splice($scores_tv,0,count($this->attention_axes));
+        $scores_input_shape = [$batch,$scores_nhd,array_product($Tq),array_product($scores_tv)];
+
+        $value_hd = $value->shape();
+        $batch = array_shift($value_hd);
+        $Tv = array_splice($value_hd,0,count($this->attention_axes));
+        $value_input_shape = array_merge([$batch,array_product($Tv)],$value_hd);
+
+        $combine_output_shape = array_merge([$batch],$Tq,$value_hd);
+        return [$scores_input_shape,$value_input_shape,$combine_output_shape];
+    }
+
     
+    /*
+        doutput: ((Batch), (Tq), numHeads, valueDim)
+        dscores: ((Batch), numHeads, (Tq), (Tv))
+        dvalue:  ((Batch), (Tv), numHeads, valueDim)
+        
+        $this->backward_combine_scores_equation = 'a{b}cd,a{e}cd->ac{b}{e}';
+        $this->backward_combine_value_equation  = 'a{b}cd,ac{b}{e}->a{e}cd';
+    */
+    protected function make_backward_combine_shape(
+        NDArray $scores,
+        NDArray $value,
+    ) : array
+    {
+        $scores_tv = $scores->shape();
+        $batch = array_shift($scores_tv);
+        $scores_nhd = array_shift($scores_tv);
+        $Tq = array_splice($scores_tv,0,count($this->attention_axes));
+        $scores_input_shape = [$batch,$scores_nhd,array_product($Tq),array_product($scores_tv)];
+
+        $value_hd = $value->shape();
+        $batch = array_shift($value_hd);
+        $Tv = array_splice($value_hd,0,count($this->attention_axes));
+        $value_input_shape = array_merge([$batch,array_product($Tv)],$value_hd);
+
+        $combine_output_shape = array_merge([$batch,array_product($Tq)],$value_hd);
+        return [$scores_input_shape,$value_input_shape,$combine_output_shape];
+    }
+
     private function get_output_shape(
         int $output_rank,
         array $input_shape,

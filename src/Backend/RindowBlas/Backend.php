@@ -2572,6 +2572,15 @@ class Backend
         return $this->la->einsum($equation, ...$arrays);
     }
 
+    public function einsum4p1(
+        string $equation,
+        NDArray $a,
+        NDArray $b,
+    ) : NDArray
+    {
+        return $this->la->einsum4p1($equation, $a, $b);
+    }
+
     public function equalTest(mixed $a, mixed $b) : bool
     {
         $mo = $this->matrixOperator;
