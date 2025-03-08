@@ -122,7 +122,7 @@ abstract class AbstractLayer extends AbstractLayerBase implements SequentialLaye
         if(isset($this->dBias)) {
             $this->dBias = clone $this->dBias;
         }
-        $this->allocateWeights(count($this->weights));
+        $this->allocateWeights(array_map(fn($weight)=>$weight->name(),$this->weights));
         if($this->assignedWeights) {
             $this->syncWeightVariables();
         }

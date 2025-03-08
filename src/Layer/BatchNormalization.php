@@ -52,7 +52,7 @@ class BatchNormalization extends AbstractNormalization
         $this->movingMeanInitializer  = $K->getInitializer($moving_mean_initializer);
         $this->movingVarianceInitializer = $K->getInitializer($moving_variance_initializer);
         $this->initName($name,'batchnormalization');
-        $this->allocateWeights(2,$nonTrainables=2);
+        $this->allocateWeights(['beta','gamma'],$nonTrainables=2);
         $this->callOptions['training'] = true;
     }
 
@@ -211,7 +211,7 @@ class BatchNormalization extends AbstractNormalization
             $this->dBeta = clone $this->dBeta;
         }
 
-        $this->allocateWeights(2,$nonTrainables=2);
+        $this->allocateWeights(array_map(fn($weight)=>$weight->name(),$this->weights),nonTrainables:2);
         if($this->assignedWeights) {
             $this->syncWeightVariables();
         }

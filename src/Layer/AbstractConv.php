@@ -99,7 +99,7 @@ abstract class AbstractConv extends AbstractImage
         $this->kernelInitializerName = $kernel_initializer;
         $this->biasInitializerName = $bias_initializer;
         $this->useBias = $use_bias;
-        $this->allocateWeights($this->useBias?2:1);
+        $this->allocateWeights($this->useBias?['kernel','bias']:['kernel']);
         $this->setActivation($activation);
     }
 

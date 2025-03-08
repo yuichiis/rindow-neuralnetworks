@@ -96,7 +96,7 @@ class Variable implements VariableInterface
     public function value() : mixed
     {
         if($this->undetermined) {
-            throw new LogicException("Undetermined variable");
+            throw new LogicException("Undetermined variable:".$this->name??'');
         }
         return $this->value;
     }

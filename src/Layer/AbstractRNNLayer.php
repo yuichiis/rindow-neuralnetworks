@@ -385,7 +385,7 @@ abstract class AbstractRNNLayer extends AbstractLayerBase implements RNNLayer
         if(isset($this->cell)) {
             $this->cell = clone $this->cell;
         }
-        $this->allocateWeights(count($this->weights));
+        $this->allocateWeights(array_map(fn($weight)=>$weight->name(),$this->weights));
         if($this->assignedWeights) {
             $this->syncWeightVariables();
         }

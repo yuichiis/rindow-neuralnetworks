@@ -45,12 +45,12 @@ class Attention extends AbstractAttentionLayer
         $this->inputShape = $input_shapes;
         $this->useScale = $use_scale;
         $this->doNotExpandMask = $do_not_expand_mask;
+        $this->initName($name,'attention');
         if($this->useScale) {
             $this->scale = $K->array(1.0);
             $this->dScale = $K->array(0.0);
-            $this->allocateWeights(1);
+            $this->allocateWeights(['scale']);
         }
-        $this->initName($name,'attention');
     }
 
     public function build(mixed $variables=null, array $sampleWeights=null) : void
@@ -101,6 +101,13 @@ class Attention extends AbstractAttentionLayer
             return [$this->dScale];
         } else {
             return [];
+        }
+    }
+
+    public function reverseSyncWeightVariables() : void
+    {
+        if($this->useScale) {
+            $this->scale = $this->weights[0]->value();
         }
     }
 

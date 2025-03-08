@@ -39,6 +39,7 @@ use Rindow\NeuralNetworks\Layer\Attention;
 use Rindow\NeuralNetworks\Layer\MultiHeadAttention;
 use Rindow\NeuralNetworks\Layer\InheritMask;
 use Rindow\NeuralNetworks\Layer\Add;
+use Rindow\NeuralNetworks\Layer\Debug;
 
 class Layers
 {
@@ -47,6 +48,11 @@ class Layers
     public function __construct(object $backend)
     {
         $this->backend = $backend;
+    }
+
+    public function Debug(mixed ...$options) : object
+    {
+        return new Debug($this->backend,...$options);
     }
 
     public function Activation(

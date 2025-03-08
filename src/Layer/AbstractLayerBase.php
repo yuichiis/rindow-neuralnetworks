@@ -230,6 +230,9 @@ abstract class AbstractLayerBase implements Layer
 
     public function reverseSyncWeightVariables() : void
     {
+        if(count($this->weights)!=0) {
+            throw new LogicException("reverseSyncWeightVariables is not impremented in ".get_class($this));
+        }
     }
 
     public function getConfig() : array
@@ -308,16 +311,27 @@ abstract class AbstractLayerBase implements Layer
         }
     }
 
-    protected function allocateWeights(int $num,int $nonTrainables=null) : void
+    protected function allocateWeights(array $names, int $nonTrainables=null) : void
     {
         $variables = [];
-        for($i=0;$i<$num;$i++) {
-            $variables[] = new Variable($this->backend, null, undetermined: true);
+        foreach($names as $name) {
+            $fullname = $name.'@'.$this->name();
+            $variables[] = new Variable(
+                $this->backend,
+                null,
+                name:$fullname,
+                undetermined: true,
+            );
         }
         if($nonTrainables) {
             for($i=0;$i<$nonTrainables;$i++) {
                 $variables[] = new Variable(
-                    $this->backend,null, undetermined: true, trainable: false);
+                    $this->backend,
+                    null,
+                    name:('nonTrainable'.$i.'@'.$this->name()),
+                    undetermined: true,
+                    trainable: false,
+                );
             }
         }
         $this->weights = $variables;
@@ -337,7 +351,6 @@ abstract class AbstractLayerBase implements Layer
         foreach(array_map(null,$this->weights,$params) as [$variable,$param]) {
             if($param!==null) {
                 $variable->assign($param, reference: true);
-                $variable->setName('weights:'.$this->basename($this));
             }
         }
         $this->assignedWeights = true;

@@ -18,14 +18,19 @@ class Modules implements Module, ArrayAccess, Countable, IteratorAggregate
     /**
      * @var array<Module> $modules
      */
+    protected ?string $name;
     protected array $modules = [];
     protected bool $shapeInspection=true;
 
     /**
      * @param array<Module> $modules
      */
-    public function __construct(array $modules=null)
+    public function __construct(
+        array $modules=null,
+        string $name=null,
+    )
     {
+        $this->name = $name;
         if($modules) {
             foreach($modules as $m) {
                 if(!($m instanceof Module)) {
@@ -34,6 +39,10 @@ class Modules implements Module, ArrayAccess, Countable, IteratorAggregate
             }
             $this->modules = $modules;
         }
+    }
+    public function name() : ?string
+    {
+        return $this->name;
     }
 
     public function add(Module $module) : void
@@ -67,12 +76,29 @@ class Modules implements Module, ArrayAccess, Countable, IteratorAggregate
 
     public function variables() : array
     {
-        return [];
+        $variables = [];
+        foreach ($this->submodules() as $module) {
+            $variables = array_merge($variables,$module->variables());
+        }
+        return $variables;
+    }
+
+    public function parameterVariables() : array
+    {
+        $variables = [];
+        foreach ($this->submodules() as $module) {
+            $variables = array_merge($variables,$module->parameterVariables());
+        }
+        return $variables;
     }
 
     public function trainableVariables() : array
     {
-        return [];
+        $variables = [];
+        foreach ($this->submodules() as $module) {
+            $variables = array_merge($variables,$module->trainableVariables());
+        }
+        return $variables;
     }
 
     public function offsetExists( $offset ) : bool

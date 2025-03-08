@@ -36,12 +36,9 @@ class Dense extends AbstractLayer
     )
     {
         // defaults
-        $input_shape = $input_shape ?? null;
-        $activation = $activation ?? null;
         $use_bias = $use_bias ?? true;
         $kernel_initializer = $kernel_initializer ?? 'glorot_uniform';
         $bias_initializer = $bias_initializer ?? 'zeros';
-        $name = $name ?? null;
         //'kernel_regularizer'=>null, 'bias_regularizer'=>null,
         //'activity_regularizer'=null,
         //'kernel_constraint'=null, 'bias_constraint'=null,
@@ -56,7 +53,7 @@ class Dense extends AbstractLayer
         $this->biasInitializerName = $this->toStringName($bias_initializer);
         $this->useBias = $use_bias;
         $this->initName($name,'dense');
-        $this->allocateWeights($this->useBias?2:1);
+        $this->allocateWeights($this->useBias?['kernel','bias']:['kernel']);
         $this->setActivation($activation);
     }
 

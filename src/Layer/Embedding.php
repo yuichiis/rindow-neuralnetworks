@@ -48,7 +48,7 @@ class Embedding extends AbstractLayer
         $this->embeddingsInitializerName = $this->toStringName($embeddings_initializer);
         $this->maskZero = $mask_zero;
         $this->initName($name,'embedding');
-        $this->allocateWeights(1);
+        $this->allocateWeights(['kernel']);
     }
 
     public function build(mixed $variable=null, array $sampleWeights=null) : void

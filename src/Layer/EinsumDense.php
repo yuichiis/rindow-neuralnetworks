@@ -188,7 +188,7 @@ class EinsumDense extends AbstractLayer
         //$this->lora_rank = $lora_rank;
         //$this->lora_enabled = false;
         $this->initName($name,'einsumdense');
-        $this->allocateWeights($this->useBias?2:1);
+        $this->allocateWeights($this->useBias?['kernel','bias']:['kernel']);
         $this->setActivation($activation);
     }
 
@@ -304,6 +304,16 @@ class EinsumDense extends AbstractLayer
             return [$this->dKernel,$this->dBias];
         } else {
             return [$this->dKernel];
+        }
+    }
+
+    public function reverseSyncWeightVariables() : void
+    {
+        if($this->useBias) {
+            $this->kernel = $this->weights[0]->value();
+            $this->bias = $this->weights[1]->value();
+        } else {
+            $this->kernel = $this->weights[0]->value();
         }
     }
 

@@ -698,7 +698,6 @@ abstract class AbstractModel implements Model
                 $variables[] = $var;
             }
         }
-
         return $variables;
     }
 
@@ -723,7 +722,8 @@ abstract class AbstractModel implements Model
 
     public function trainableVariables() : array
     {
-        return array_filter($this->variables(),fn($v)=>$v->isTrainable());
+        $variables = $this->variables();
+        return array_filter($variables,fn($v)=>$v->isTrainable());
     }
 
     public function reverseSyncWeightVariables() : void
@@ -977,8 +977,9 @@ abstract class AbstractModel implements Model
         foreach($this->variables() as $idx => $weights) {
             $param = $weights->value();
             $param=$K->ndarray($param);
-            if($portable)
+            if($portable) {
                 $param = $this->converPortableSaveMode($param);
+            }
             $modelWeights['weights'][$idx] = $mo->serializeArray($param);
         }
         $optimizerWeights = $this->optimizer()->getWeights();
@@ -986,8 +987,9 @@ abstract class AbstractModel implements Model
         $modelWeights['optimizer'] = $modelWeights['optimizer'] ?? [];
         foreach ($optimizerWeights as $idx => $weights) {
             $weights=$K->ndarray($weights);
-            if($portable)
+            if($portable) {
                 $weights = $this->converPortableSaveMode($weights);
+            }
             $modelWeights['optimizer'][$idx] = $mo->serializeArray($weights);
         }
     }

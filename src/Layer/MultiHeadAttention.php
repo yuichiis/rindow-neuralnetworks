@@ -115,7 +115,7 @@ class MultiHeadAttention extends AbstractAttentionLayer
     protected string $combine_equation;
     protected string $backward_combine_scores_equation;
     protected string $backward_combine_value_equation;
-    protected Layer $softmax_layer;
+    //protected Layer $softmax_layer;
     protected Layer $dropout_layer;
     /** @var array<int> $partial_output_shape */
     protected ?array $partial_output_shape;
@@ -187,7 +187,6 @@ class MultiHeadAttention extends AbstractAttentionLayer
         $this->biasInitializerName = $this->toStringName($bias_initializer);
         $this->attention_axes = $attention_axes;
         $this->initName($name,'multiheadattention');
-        $this->allocateWeights($this->useBias?2:1);
     }
     
     /*
@@ -260,7 +259,7 @@ class MultiHeadAttention extends AbstractAttentionLayer
             $units,                                 //     input_shape : ((Tq),Dim)
             ...$common_args,                        //     output_shape: ((Tq),(numHeads.keyDim))
             input_shape:$dense_input_shape,         //     kernel_initializer
-            name:'query_dense',                     //     bias_initializer
+            name:"query.{$this->name}",             //     bias_initializer
         );                                          //     use_bias
         $sampleW = null;
         if($sampleWeights!==null) {
@@ -298,7 +297,7 @@ class MultiHeadAttention extends AbstractAttentionLayer
             $units,                                 //     input_shape : ((Tq),Dim)
             ...$common_args,                        //     output_shape: ((Tq),(numHeads.keyDim))
             input_shape:$dense_input_shape,         //     kernel_initializer
-            name:'key_dense',                       //     bias_initializer
+            name:"key.{$this->name}",               //     bias_initializer
         );                                          //     use_bias
         $sampleW = null;
         if($sampleWeights!==null) {
@@ -336,7 +335,7 @@ class MultiHeadAttention extends AbstractAttentionLayer
             $units,                                 //     input_shape : ((Tq),Dim)
             ...$common_args,                        //     output_shape: ((Tq),(numHeads.keyDim))
             input_shape:$dense_input_shape,         //     kernel_initializer
-            name:'value_dense',                     //     bias_initializer
+            name:"value.{$this->name}",             //     bias_initializer
         );                                          //     use_bias
         $output_rank = 1+count($Tv)+1+1; // (B,(Tv),Head,KeyDim)
         $sampleW = null;
@@ -392,7 +391,7 @@ class MultiHeadAttention extends AbstractAttentionLayer
             $units,
             ...$common_args,
             input_shape:$dense_input_shape, 
-            name:'attention_output',
+            name:"output.{$this->name}",
         );
 
         //echo "output_dense_input_shape0=(".implode(',',$output_dense_input_shape).")\n";
@@ -423,6 +422,16 @@ class MultiHeadAttention extends AbstractAttentionLayer
         //$this->syncWeightVariables();
     }
 
+    public function weights() : array
+    {
+        return array_merge(
+            $this->query_dense->weights(),
+            $this->key_dense->weights(),
+            $this->value_dense->weights(),
+            $this->output_dense->weights(),
+        );
+    }
+
     public function getParams() : array
     {
         return array_merge(
@@ -441,6 +450,14 @@ class MultiHeadAttention extends AbstractAttentionLayer
             $this->value_dense->getGrads(),
             $this->output_dense->getGrads(),
         );
+    }
+
+    public function reverseSyncWeightVariables() : void
+    {
+        $this->query_dense->reverseSyncWeightVariables();
+        $this->key_dense->reverseSyncWeightVariables();
+        $this->value_dense->reverseSyncWeightVariables();
+        $this->output_dense->reverseSyncWeightVariables();
     }
 
     public function getConfig() : array
@@ -519,7 +536,7 @@ class MultiHeadAttention extends AbstractAttentionLayer
         $this->combine_equation = 'acbe,aecd->abcd';
         $this->backward_combine_scores_equation = 'abcd,aecd->acbe';
         $this->backward_combine_value_equation = 'abcd,acbe->aecd';
-        $this->softmax_layer = new Activation($this->backend,'softmax');
+        //$this->softmax_layer = new Activation($this->backend,'softmax');
         $this->dropout_layer = new Dropout(
             $this->backend,
             rate:$this->dropout
@@ -988,6 +1005,10 @@ class MultiHeadAttention extends AbstractAttentionLayer
         //)){
         //    throw new \Exception("Error Processing Request", 1);
         //}
+
+        if($this->dropout!=0) {
+            $dSoftmaxedScores = $this->dropout_layer->_rawDifferentiate([$dSoftmaxedScores])[0];
+        }
 
 
         $original_shape  = $softmaxed_attention_scores->shape();
