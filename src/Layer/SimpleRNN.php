@@ -56,6 +56,7 @@ class SimpleRNN extends AbstractRNNLayer
         $this->setUnits($units);
         $this->inputShape = $input_shape;
         $this->useBias = $use_bias;
+        $this->initName($name,'simplernn');
         $this->allocateWeights(
             $this->useBias?
             ['kernel','recurrentKernel','bias']:
@@ -73,7 +74,6 @@ class SimpleRNN extends AbstractRNNLayer
             goBackwards:$go_backwards,
             stateful:$stateful,
         );
-        $this->initName($name,'simplernn');
         $this->setCell(new SimpleRNNCell(
             $this->backend,
             $this->units,

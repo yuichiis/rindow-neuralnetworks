@@ -233,7 +233,7 @@ class LayerNormalizationTest extends TestCase
         );
         $grads = $tape->gradient($outputsVariable,$inputs);
         
-        [$beta,$gamma] = $layer->getParams();
+        [$beta,$gamma] = $layer->trainableVariables();
         $this->assertEquals([2],$beta->shape());
         $this->assertEquals([2],$gamma->shape());
         [$dbeta,$dgamma] = $layer->getGrads();
@@ -287,7 +287,8 @@ class LayerNormalizationTest extends TestCase
         //echo "dout=".$mo->toString($dout,indent:true)."\n";
         [$dx] = $outputsVariable->creator()->backward([$dout]);
         // 4 batch x 2x2 image x 3 input x
-        //echo $mo->toString($dx,indent:true)."\n";
+        //echo $mo->toString($dx,format:'%13.8f',indent:true)."\n";
+        //echo $mo->la()->sum($K->ndarray($dx))."\n";
         $this->assertEquals([4,3,2],$dx->shape());
         $this->assertTrue($mo->la()->isclose(
             $mo->la()->array([
@@ -309,6 +310,21 @@ class LayerNormalizationTest extends TestCase
             //atol:1e-7,
             //debug:true,
         ));
+
+        $this->assertTrue($mo->la()->isclose(
+            $mo->la()->array([
+                -143.71284,  155.6889
+            ]),
+            $K->ndarray($dgamma),
+        ));
+
+        $this->assertTrue($mo->la()->isclose(
+            $mo->la()->array([
+                144.0, 156.0,
+            ]),
+            $K->ndarray($dbeta),
+        ));
+
     }
 
 }

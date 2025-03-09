@@ -1549,7 +1549,7 @@ class MultiHeadAttention extends AbstractAttentionLayer
                 //$auto_mask = ($auto_mask===null) ? $mask : ($auto_mask & $mask);
                 //echo 'causal_mask='.$mo->shapeToString($causal_mask->shape())."\n";
                 // [T,S] -expand-> [1, 1, T, S] -mask-to-> [B, H, T, S]
-                $attention_scores = $K->masking($causal_mask,$attention_scores,fill:-1e9,mode:1,axis:-$causal_mask->ndim());
+                $attention_scores = $K->masking($causal_mask,$attention_scores,fill:-1e9,mode:1,axis:-$causal_mask->ndim());//mode=add
                 //echo "causal_mask only\n";
                 //echo "attention_scores".$K->localMatrixOperator()->shapeToString($attention_scores->shape()).": ".$K->localMatrixOperator()->toString($attention_scores,format:'%10.5e',indent:true)."\n";
                 return $attention_scores;

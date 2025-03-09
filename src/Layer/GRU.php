@@ -60,6 +60,7 @@ class GRU extends AbstractRNNLayer
         $this->setUnits($units);
         $this->inputShape = $input_shape;
         $this->useBias = $use_bias;
+        $this->initName($name,'gru');
         $this->allocateWeights(
             $this->useBias?
             ['kernel','recurrentKernel','bias']:
@@ -77,7 +78,6 @@ class GRU extends AbstractRNNLayer
             stateful:$stateful,
         );
         $this->resetAfter = $reset_after;
-        $this->initName($name,'gru');
         $this->setCell(new GRUCell(
             $this->backend,
             $this->units,

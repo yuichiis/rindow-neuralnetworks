@@ -178,6 +178,7 @@ class PositionalEmbedding extends AbstractModel
         int $d_model,
         int $maximumPositionEncoding=null,
         int $inputLength=null,
+        string|callable $kernel_initializer=null,
         string $name=null,
         )
     {
@@ -193,6 +194,7 @@ class PositionalEmbedding extends AbstractModel
             $d_model,       // outputDim
             mask_zero:true,
             input_length:$inputLength,
+            embeddings_initializer:$kernel_initializer,
             name:"embedding.{$name}",
         );
         $this->inheritMask = $nn->layers->InheritMask(name:"mask.{$name}");
@@ -295,12 +297,22 @@ abstract class AbstractBaseAttention extends AbstractModel
     public function __construct(
         object $nn,
         string $name=null,
+        string|callable $kernel_initializer=null,
+        string|object $bias_initializer=null,
         ...$args
         )
     {
         parent::__construct($nn,name:$name);
-        $this->mha = $nn->layers->MultiHeadAttention(...$args,name:"mha.{$name}");
-        $this->layernorm = $nn->layers->LayerNormalization(name:"layernorm.{$name}");
+        $this->mha = $nn->layers->MultiHeadAttention(...$args,
+            kernel_initializer:$kernel_initializer,
+            bias_initializer:$bias_initializer,
+            name:"mha.{$name}",
+        );
+        $this->layernorm = $nn->layers->LayerNormalization(
+            gamma_initializer:$kernel_initializer,
+            beta_initializer:$bias_initializer,
+            name:"layernorm.{$name}"
+        );
         $this->add = $nn->layers->Add(name:"add.{$name}");
     }
 }
@@ -378,17 +390,34 @@ class FeedForward extends AbstractModel
         object $nn,
         int $d_model,
         int $dff,
-        float $dropout_rate=0.1,
+        //float $dropout_rate=0.1,
+        string|callable $kernel_initializer=null,
+        string|object $bias_initializer=null,
         string $name=null,
     ) {
         parent::__construct($nn,name:$name);
         $this->seq = $nn->models->Sequential([
-            $nn->layers->Dense($dff, activation:'relu',name:"ff1.{$name}"),
-            $nn->layers->Dense($d_model,name:"ff2.{$name}"),
-            $nn->layers->Dropout($dropout_rate,name:"dropout.{$name}"),
+            $nn->layers->Dense($dff,
+                activation:'relu',
+                name:"ff1.{$name}",
+                kernel_initializer:$kernel_initializer,
+                bias_initializer:$bias_initializer,
+            ),
+            $nn->layers->Dense($d_model,
+                name:"ff2.{$name}",
+                kernel_initializer:$kernel_initializer,
+                bias_initializer:$bias_initializer,
+            ),
+            //$nn->layers->Dropout($dropout_rate,
+            //    name:"dropout.{$name}",
+            //),
         ]);
         $this->add = $nn->layers->Add(name:"add.{$name}");
-        $this->layer_norm = $nn->layers->LayerNormalization(name:"layernorm.{$name}");
+        $this->layer_norm = $nn->layers->LayerNormalization(
+            name:"layernorm.{$name}",
+            gamma_initializer:$kernel_initializer,
+            beta_initializer:$bias_initializer,
+        );
     }
 
     protected function call(NDArray $x, Variable|bool $training=null)
@@ -410,18 +439,26 @@ class EncoderLayer extends AbstractModel
         int $d_model,
         int $num_heads,
         int $dff,
-        float $dropout_rate=0.1,
+        //float $dropout_rate=0.1,
         string $name=null,
+        string|callable $kernel_initializer=null,
+        string|object $bias_initializer=null,
     ) {
         parent::__construct($nn,name:$name);
         $this->self_attention = new GlobalSelfAttention(
             $nn,
             num_heads:$num_heads,
             key_dim:$d_model,
-            dropout:$dropout_rate,
+            //dropout:$dropout_rate,
             name:"globalattn.{$name}",
-        );
-        $this->ffn = new FeedForward($nn, $d_model, $dff, name:"ffn.{$name}");
+            kernel_initializer:$kernel_initializer,
+            bias_initializer:$bias_initializer,
+    );
+        $this->ffn = new FeedForward($nn, $d_model, $dff, 
+            name:"ffn.{$name}",
+            kernel_initializer:$kernel_initializer,
+            bias_initializer:$bias_initializer,
+    );
     }
 
     protected function call(NDArray $x, Variable|bool $training=null)
@@ -438,7 +475,7 @@ class Encoder extends AbstractModel
     protected int $num_layers;
     protected Model $pos_embedding;
     protected Module $enc_layers;
-    protected Layer $dropout;
+    //protected Layer $dropout;
 
     public function __construct(
         object $nn,
@@ -447,8 +484,10 @@ class Encoder extends AbstractModel
         int $num_heads,
         int $dff,
         int $vocab_size,
-        float $dropout_rate=0.1,
+        //float $dropout_rate=0.1,
         string $name=null,
+        string|callable $kernel_initializer=null,
+        string|object $bias_initializer=null,
     ) {
         parent::__construct($nn,name:$name);
         $this->d_model = $d_model;
@@ -459,6 +498,7 @@ class Encoder extends AbstractModel
             vocab_size:$vocab_size,
             d_model:$d_model,
             name:"posemb.{$name}",
+            kernel_initializer:$kernel_initializer,
         );
     
         $this->enc_layers = $nn->gradient->modules();
@@ -468,11 +508,13 @@ class Encoder extends AbstractModel
                 d_model:$d_model,
                 num_heads:$num_heads,
                 dff:$dff,
-                dropout_rate:$dropout_rate,
+                //dropout_rate:$dropout_rate,
                 name:"enc_layer$i.{$name}",
+                kernel_initializer:$kernel_initializer,
+                bias_initializer:$bias_initializer,
             ));
         }
-        $this->dropout = $nn->layers->Dropout($dropout_rate,name:"dropout.{$name}");
+        //$this->dropout = $nn->layers->Dropout($dropout_rate,name:"dropout.{$name}");
     }
 
     protected function call(NDArray $x, Variable|bool $training=null)
@@ -482,7 +524,7 @@ class Encoder extends AbstractModel
         # `x` is token-IDs shape: (batch, seq_len)
         $x = $this->pos_embedding->forward($x);  # Shape `(batch_size, seq_len, d_model)`.
         # Add dropout.
-        $x = $this->dropout->forward($x, training:$training);
+        //$x = $this->dropout->forward($x, training:$training);
 
         foreach($this->enc_layers as $enc_layer) {
             $x = $enc_layer->forward($x, training:$training);
@@ -505,24 +547,30 @@ class DecoderLayer extends AbstractModel
         int $d_model,
         int $num_heads,
         int $dff,
-        float $dropout_rate=0.1,
+        //float $dropout_rate=0.1,
         string $name=null,
+        string|callable $kernel_initializer=null,
+        string|object $bias_initializer=null,
     ) {
         parent::__construct($nn,name:$name);
         $this->causal_self_attention = new CausalSelfAttention(
             $nn,
             num_heads:$num_heads,
             key_dim:$d_model,
-            dropout:$dropout_rate,
+            //dropout:$dropout_rate,
             name:"causalatten.{$name}",
+            kernel_initializer:$kernel_initializer,
+            bias_initializer:$bias_initializer,
         );
     
         $this->cross_attention = new CrossAttention(
             $nn,
             num_heads:$num_heads,
             key_dim:$d_model,
-            dropout:$dropout_rate,
+            //dropout:$dropout_rate,
             name:"crossAttn.{$name}",
+            kernel_initializer:$kernel_initializer,
+            bias_initializer:$bias_initializer,
         );
     
         $this->ffn = new FeedForward(
@@ -530,6 +578,8 @@ class DecoderLayer extends AbstractModel
             $d_model,
             $dff,
             name:"ffn.{$name}",
+            kernel_initializer:$kernel_initializer,
+            bias_initializer:$bias_initializer,
         );
     
     }
@@ -552,7 +602,7 @@ class Decoder extends AbstractModel
     protected int $d_model;
     protected int $num_layers;
     protected Model $pos_embedding;
-    protected Layer $dropout;
+    //protected Layer $dropout;
     protected Module $dec_layers;
     public ?NDArray $last_attn_scores=null;
 
@@ -563,8 +613,10 @@ class Decoder extends AbstractModel
         int $num_heads,
         int $dff,
         int $vocab_size,
-        float $dropout_rate=0.1,
+        //float $dropout_rate=0.1,
         string $name=null,
+        string|callable $kernel_initializer=null,
+        string|object $bias_initializer=null,
     ) {
         parent::__construct($nn,name:$name);
         $this->d_model = $d_model;
@@ -575,8 +627,9 @@ class Decoder extends AbstractModel
             vocab_size:$vocab_size,
             d_model:$d_model,
             name:"posemb.{$name}",
+            kernel_initializer:$kernel_initializer,
         );
-        $this->dropout = $nn->layers->Dropout($dropout_rate,name:"dropout.{$name}");
+        //$this->dropout = $nn->layers->Dropout($dropout_rate,name:"dropout.{$name}");
         $this->dec_layers = $nn->gradient->modules();
         for($i=0;$i<$num_layers;$i++) {
             $this->dec_layers->add(new DecoderLayer(
@@ -584,8 +637,10 @@ class Decoder extends AbstractModel
                 d_model:$d_model,
                 num_heads:$num_heads,
                 dff:$dff,
-                dropout_rate:$dropout_rate,
+                //dropout_rate:$dropout_rate,
                 name:"dec_layer$i.{$name}",
+                kernel_initializer:$kernel_initializer,
+                bias_initializer:$bias_initializer,
             ));
         }
 
@@ -600,7 +655,7 @@ class Decoder extends AbstractModel
         # `x` is token-IDs shape (batch, target_seq_len)
         $x = $this->pos_embedding->forward($x);  # (batch_size, target_seq_len, d_model)
 
-        $x = $this->dropout->forward($x, $training);
+        //$x = $this->dropout->forward($x, $training);
 
         foreach($this->dec_layers as $dec_layer) {
             $x = $dec_layer->forward($x, $context, training:$training);
@@ -629,8 +684,10 @@ class Transformer extends AbstractModel
         int $dff,
         int $input_vocab_size,
         int $target_vocab_size,
-        float $dropout_rate=0.1,
+        //float $dropout_rate=0.1,
         string $name=null,
+        string|callable $kernel_initializer=null,
+        string|object $bias_initializer=null,
     )
     {
         $name ??= 'transformer';
@@ -642,8 +699,10 @@ class Transformer extends AbstractModel
             num_heads:$num_heads,
             dff:$dff,
             vocab_size:$input_vocab_size,
-            dropout_rate:$dropout_rate,
+            //dropout_rate:$dropout_rate,
             name:"encoder.{$name}",
+            kernel_initializer:$kernel_initializer,
+            bias_initializer:$bias_initializer,
         );
 
         $this->decoder = new Decoder(
@@ -653,15 +712,23 @@ class Transformer extends AbstractModel
             num_heads:$num_heads,
             dff:$dff,
             vocab_size:$target_vocab_size,
-            dropout_rate:$dropout_rate,
+            //dropout_rate:$dropout_rate,
             name:"decoder.{$name}",
+            kernel_initializer:$kernel_initializer,
+            bias_initializer:$bias_initializer,
         );
 
-        $this->final_layer = $nn->layers->Dense($target_vocab_size,name:"final_layer.{$name}");
+        $this->final_layer = $nn->layers->Dense($target_vocab_size,
+            name:"final_layer.{$name}",
+            kernel_initializer:$kernel_initializer,
+            bias_initializer:$bias_initializer,
+        );
 
     }
 
-    protected function call(NDArray $context, NDArray $x, Variable|bool $training=null) : NDArray
+    protected function call(
+        NDArray $context, NDArray $x, Variable|bool $training=null
+    ) : NDArray
     {
         //$mo = $this->backend()->localMatrixOperator();
         //$K = $this->backend();
@@ -722,8 +789,8 @@ class Translator
 
     public function predict(NDArray $sentence) : array
     {
-        echo "(".implode(',',$sentence->shape()).")\n";
-        echo $this->inpLang->sequencesToTexts([$sentence])[0]."\n";
+        //echo "(".implode(',',$sentence->shape()).")\n";
+        //echo $this->inpLang->sequencesToTexts([$sentence])[0]."\n";
         $g = $this->builder->gradient();
         $K = $this->builder->backend();
         $sentence = $K->array($sentence);
@@ -749,13 +816,13 @@ class Translator
         $output_array = $K->zeros([$this->max_out_length,1],dtype:NDArray::int32);
         $K->copy($start,$output_array[R(0,1)]);
         $output = $output_array[R(0,1)]->reshape([1,1]);
-        echo $this->targLang->sequencesToTexts($K->ndarray($output))[0]."\n";
+        //echo $this->targLang->sequencesToTexts($K->ndarray($output))[0]."\n";
     
         $this->transformer->setShapeInspection(false);
         for($i=0;$i<$this->max_out_length-1;$i++) {
             $output = $g->Variable($output_array[R(0,$i+1)]->reshape([1,$i+1]));
             $predictions = $this->transformer->forward($encoder_input, $output, training:false);
-            echo "B(".implode(',',$predictions->shape()).")\n";
+            //echo "B(".implode(',',$predictions->shape()).")\n";
 
             # Select the last token from the `seq_len` dimension.
             #$predictions = predictions[:, -1:, :]  # Shape `(batch_size, 1, vocab_size)`.
@@ -956,17 +1023,66 @@ $numExamples=20000;#30000;#128;
 $numWords=1024;#null;
 $epochs = 10;#20;
 $batchSize = 64;#8;
-$d_model=128;#256;#64;#128  // d_model embedding_dim
-$dff=512;#64;  // units 
-$num_layers=4;
-$num_heads =8;
+$d_model=4;#128;#64;#128;#256;#512  // d_model embedding_dim
+$dff=4;#512;#64;  // units 
+$num_layers=1;#4;#6;
+$num_heads =2;#8;
+$dropout_rate = 0.1;#0.1
 
 $mo = new MatrixOperator();
 $nn = new NeuralNetworks($mo);
+$K = $nn->backend();
 //$nn->backend()->primaryLA()->setProfiling(true);
 $g = $nn->gradient();
 $pltConfig = [];
 $plt = new Plot($pltConfig,$mo);
+
+
+$vocab_size = 5;
+$d_model = 4;
+$context_len = 3;
+$input_vocab_size = $vocab_size;
+$target_vocab_size = $vocab_size;
+$shape = [1,$context_len];
+$v_shape = [1,$context_len, $d_model];
+//$inp = $K->ones($shape, dtype:NDArray::int32);
+//$targ = $K->ones($shape, dtype:NDArray::int32);
+$inp = $mo->la()->range(start:1,limit:1+array_product($shape),dtype:NDArray::int32)->reshape($shape);
+$targ = $mo->la()->range(start:1,limit:1+array_product($shape),dtype:NDArray::int32)->reshape($shape);
+$inp_seq = $g->Variable($inp);  # (batch_size, context_len, d_model)
+$targ_seq = $g->Variable($targ);  # (batch_size, context_len, d_model)
+$inp_vec = $mo->la()->range(start:1,limit:1+array_product($v_shape),dtype:NDArray::float32)->reshape($v_shape);
+
+//$posEmb = new PositionalEmbedding($nn,$vocab_size,$d_model,embeddings_initializer:'ones');
+//$x = $posEmb($seq);
+//echo $mo->toString($x,format:'%13.7f',indent:true)."\n";
+
+$transformer = new Transformer(
+    $nn,
+    num_layers:$num_layers,
+    d_model:$d_model,
+    num_heads:$num_heads,
+    dff:$dff,
+    input_vocab_size:$input_vocab_size,
+    target_vocab_size:$target_vocab_size,
+    #dropout_rate:$dropout_rate,
+    kernel_initializer:'ones',
+    bias_initializer:'zeros',
+);
+$predict = $nn->with($tape=$g->GradientTape(),
+    function() use ($transformer,$g,$inp_seq,$targ_seq) {
+        return $transformer($inp_seq, $targ_seq, training:true);
+    }
+); 
+echo $mo->toString($predict,format:'%13.7e',indent:true)."\n";
+$params = $transformer->trainableVariables();
+$grads = $tape->gradient($predict, $params);
+echo count($grads)."\n";
+foreach(array_map(null,$params,$grads) as $i=>[$param,$grad]) {
+    echo $i.":".substr($param->name(),0,16).":";
+    echo $mo->toString($grad,format:'%13.7e',indent:true)."\n";
+}
+exit();
 
 $dataset = new EngFraDataset($mo);
 
@@ -1022,12 +1138,12 @@ $transformer = new Transformer(
     dff:$dff,
     input_vocab_size:$inputVocabSize,    // input_vocab_size,
     target_vocab_size:$targetVocabSize,   // target_vocab_size,
+    dropout_rate:$dropout_rate,
     name:'transformer',
     // $inputLength,       // inputLength,
     // $outputLength,      // targetLength,
     // int $max_pe_input=null,
     // int $max_pe_target=null,
-    // float $dropout_rate=0.1,
 );
 
 $lossfunc = new CustomLossFunction($nn,$targLang);
@@ -1113,8 +1229,10 @@ foreach($choice as $idx)
     //echo "label:", $targLang->sequencesToTexts([$labelTensorTrain[$idx]])[0]."\n";
     $la = $mo->la();
     $question = $la->expandDims($inputTensor[$idx], axis:0);
-    $answer = $la->expandDims($targetTensor[$idx], axis:0);
+    $answer = $la->expandDims($targetTensor[$idx][[0,$outputLength-4]], axis:0);
+    $transformer->setShapeInspection(false);
     $predict = $transformer->predict([$question,$answer]);
+    $transformer->setShapeInspection(true);
     $predict = $mo->la()->reduceArgMax($predict,axis:-1);
     echo "fullPredict:".$targLang->sequencesToTexts([$predict[0]])[0]."\n";
     echo "\n"; 

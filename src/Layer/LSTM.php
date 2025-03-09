@@ -57,6 +57,7 @@ class LSTM extends AbstractRNNLayer
         $this->setUnits($units);
         $this->inputShape = $input_shape;
         $this->useBias = $use_bias;
+        $this->initName($name,'lstm');
         $this->allocateWeights(
             $this->useBias?
             ['kernel','recurrentKernel','bias']:
@@ -73,7 +74,6 @@ class LSTM extends AbstractRNNLayer
             goBackwards:$go_backwards,
             stateful:$stateful,
         );
-        $this->initName($name,'lstm');
         $this->setCell(new LSTMCell(
             $this->backend,
             $this->units,
