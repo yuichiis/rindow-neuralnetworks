@@ -2564,6 +2564,16 @@ class Backend
         );
     }
 
+    public function range(
+        int|float $limit,
+        int|float $start=null,
+        int|float $delta=null,
+        int $dtype=null
+        ) : NDArray
+    {
+        return $this->la->range(limit:$limit,start:$start,delta:$delta,dtype:$dtype);
+    }
+
     public function einsum(
         string $equation,
         NDArray ...$arrays,

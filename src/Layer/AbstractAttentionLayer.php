@@ -154,7 +154,6 @@ abstract class AbstractAttentionLayer extends AbstractLayerBase
      */
     public function _rawCall(array $inputs,array $options) : array
     {
-        $training = $options['training'] ?? null;
         $queryMask = $options['queryMask'] ?? null;
         $valueMask = $options['valueMask'] ?? null;
         $keyMask   = $options['keyMask'] ?? null;
@@ -167,11 +166,12 @@ abstract class AbstractAttentionLayer extends AbstractLayerBase
         } else {
             $mask = $this->retrieveMultiMasks($inputs);
         }
-        $returnAttentionScores = $options['returnAttentionScores'] ?? null;
+        unset($options['queryMask']);
+        unset($options['valueMask']);
+        unset($options['keyMask']);
         $outputs = $this->call(
             $inputs,
-            training:$training,
-            returnAttentionScores:$returnAttentionScores,
+            ...$options,
             mask:$mask,
         );
         if(!is_array($outputs)) {
