@@ -211,7 +211,10 @@ class BatchNormalization extends AbstractNormalization
             $this->dBeta = clone $this->dBeta;
         }
 
-        $this->allocateWeights(array_map(fn($weight)=>$weight->name(),$this->weights),nonTrainables:2);
+        $this->allocateWeights(
+            array_map(fn($weight)=>$weight->name(),$this->trainableVariables()),
+            nonTrainables:2
+        );
         if($this->assignedWeights) {
             $this->syncWeightVariables();
         }
