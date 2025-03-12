@@ -984,7 +984,7 @@ $dropout_rate = 0.1;#0.1
 $mo = new MatrixOperator();
 $nn = new NeuralNetworks($mo);
 $K = $nn->backend();
-//$nn->backend()->primaryLA()->setProfiling(true);
+#$nn->backend()->primaryLA()->setProfiling(true);
 $g = $nn->gradient();
 $pltConfig = [];
 $plt = new Plot($pltConfig,$mo);
@@ -1084,7 +1084,7 @@ if(file_exists($modelFilePath)) {
         $labelTensorTrain,
         batch_size:$batchSize,
         epochs:$epochs,
-        validation_data:[[$inputTensorVal,$targetTensorVal],$labelTensorVal],
+        #validation_data:[[$inputTensorVal,$targetTensorVal],$labelTensorVal],
         #callbacks:[checkpoint],
     );
     echo "trainableVariables=".count($transformer->trainableVariables())."\n";
@@ -1136,4 +1136,4 @@ foreach($choice as $idx)
     echo "Exception!!!\n";
 }
 $plt->show();
-//$nn->backend()->primaryLA()->profilingReport();
+#$nn->backend()->primaryLA()->profilingReport();
