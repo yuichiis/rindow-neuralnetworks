@@ -38,7 +38,11 @@ class Activation extends AbstractLayer
         ];
     }
 
-    protected function call(NDArray $inputs, bool $training=null, ...$kargs) : NDArray
+    protected function call(
+        NDArray $inputs,
+        bool $training=null,
+        mixed ...$kargs
+    ) : NDArray
     {
         $outputs = $inputs;
         if($this->activation) {

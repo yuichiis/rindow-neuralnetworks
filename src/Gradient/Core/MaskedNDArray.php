@@ -10,10 +10,17 @@ use Rindow\Math\Matrix\Drivers\Service;
 
 class MaskedNDArray implements MaskedNDArrayInterface
 {
+    protected NDArray $value;
+    protected NDArray $mask;
+
     public function __construct(
-        protected readonly NDArray $value,
-        protected readonly NDArray $mask,
-    ) {}
+        NDArray $value,
+        NDArray $mask
+    )
+    {
+        $this->value = $value;
+        $this->mask = $mask;
+    }
 
     public function value() : NDArray
     {

@@ -67,6 +67,9 @@ class Cifar10
         fwrite(STDERR,$message);
     }
 
+    /**
+     * @return array{Traversable<array{NDArray,NDArray}>,Traversable<array{NDArray,NDArray}>}
+     */
     public function loadData(string $filePath=null) : array
     {
         $mo = $this->matrixOperator;
@@ -96,7 +99,7 @@ class Cifar10
     }
 
     /**
-     * @return array<string,NDArray>
+     * @return array{Traversable<array{NDArray,NDArray}>,Traversable<array{NDArray,NDArray}>}
      */
     protected function loadPickles() : array
     {
@@ -108,6 +111,10 @@ class Cifar10
         return [$train,$test];
     }
 
+    /**
+     * @param array<string> $filenames
+     * @return Traversable<array{NDArray,NDArray}>
+     */
     protected function createIterator($filenames) : iterable
     {
         $iter = new class (
@@ -115,9 +122,17 @@ class Cifar10
             ) implements IteratorAggregate
         {
             protected object $matrixOperator;
+            /** @var array<string> $filenames */
             protected array $filenames;
             protected string $datasetDir;
-            public function __construct(object $mo, array $filenames, string $datasetDir)
+            /**
+             * @param array<string> $filenames
+             */
+            public function __construct(
+                object $mo,
+                array $filenames,
+                string $datasetDir
+                )
             {
                 $this->matrixOperator = $mo;
                 $this->filenames = $filenames;

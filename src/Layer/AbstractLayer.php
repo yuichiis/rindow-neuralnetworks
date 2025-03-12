@@ -102,6 +102,10 @@ abstract class AbstractLayer extends AbstractLayerBase implements SequentialLaye
         return $previousMask;
     }
 
+    /**
+     * @param array<NDArray> $dOutputs
+     * @return array<NDArray>
+     */
     public function _rawDifferentiate(array $dOutputs) : array
     {
         $results = $this->differentiate($dOutputs[0]);

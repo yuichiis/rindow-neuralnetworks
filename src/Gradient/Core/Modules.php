@@ -8,6 +8,8 @@ use ArrayAccess;
 use Countable;
 use IteratorAggregate;
 use Rindow\NeuralNetworks\Gradient\Module;
+use Rindow\NeuralNetworks\Gradient\Variable;
+use Rindow\NeuralNetworks\Model\Model;
 
 /**
  * @implements ArrayAccess<int,Module>
@@ -19,6 +21,7 @@ class Modules implements Module, ArrayAccess, Countable, IteratorAggregate
      * @var array<Module> $modules
      */
     protected ?string $name;
+    /** @var array<Module> $modules */
     protected array $modules = [];
     protected bool $shapeInspection=true;
 
@@ -83,11 +86,16 @@ class Modules implements Module, ArrayAccess, Countable, IteratorAggregate
         return $variables;
     }
 
+    /**
+     * @return array<Variable>
+     */
     public function parameterVariables() : array
     {
         $variables = [];
         foreach ($this->submodules() as $module) {
-            $variables = array_merge($variables,$module->parameterVariables());
+            if($module instanceof Model) {
+                $variables = array_merge($variables,$module->parameterVariables());
+            }
         }
         return $variables;
     }

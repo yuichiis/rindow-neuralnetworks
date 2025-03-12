@@ -88,7 +88,7 @@ class Add extends AbstractMultiInputLayer
             throw new InvalidArgumentException('num of masks must be 2 items: 1 mask gives.');
         }
         if(count($previousMask)!=2) {
-            throw new InvalidArgumentException('num of masks must be 2 items: '.count($inputShapes).' mask gives.');
+            throw new InvalidArgumentException('num of masks must be 2 items: '.count($previousMask).' mask gives.');
         }
         [$maskX,$maskY] = $previousMask;
         if($maskX===null) {

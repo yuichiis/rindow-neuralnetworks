@@ -53,7 +53,7 @@ class Gradient
         $this->backend = $backend;
     }
 
-    public function constant(mixed $value, $dtype=null) : NDArray
+    public function constant(mixed $value, int $dtype=null) : NDArray
     {
         return $this->backend->array($value, dtype:$dtype);
     }

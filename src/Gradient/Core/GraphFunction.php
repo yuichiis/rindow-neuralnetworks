@@ -15,6 +15,8 @@ use Rindow\NeuralNetworks\Gradient\Scalar as ScalarInterface;
 use Rindow\NeuralNetworks\Gradient\ArrayShape as ArrayShapeInterface;
 use Rindow\NeuralNetworks\Gradient\GraphFunction as GraphFunctionInterface;
 use Rindow\NeuralNetworks\Gradient\Variable as VariableInterface;
+use Rindow\NeuralNetworks\Gradient\Module;
+
 
 class GraphFunction implements GraphFunctionInterface
 {
@@ -199,7 +201,7 @@ class GraphFunction implements GraphFunctionInterface
             if(!($o instanceof Variable)) {
                 $name = null;
                 if($this->func instanceof Module) {
-                    $name = $this->name();
+                    $name = $this->func->name();
                 }
                 if($name==null && is_object($this->func)) {
                     $name = get_class($this->func);

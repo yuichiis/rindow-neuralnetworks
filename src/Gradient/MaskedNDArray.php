@@ -10,6 +10,9 @@ interface MaskedNDArray extends NDArray
     public function value() : NDArray;
     public function mask() : NDArray;
     public function count() : int;
+    /**
+     * @return Traversable<NDArray>
+     */
     public function getIterator() :  Traversable;
     public function service() : Service;
 }

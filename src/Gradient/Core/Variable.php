@@ -18,7 +18,7 @@ class Variable implements VariableInterface
     protected object $backend;
     protected bool $trainable;
     protected bool $undetermined;
-    protected ?string $name;
+    protected ?string $name=null;
     protected mixed $value;
     protected ?object $creator=null;
     protected int $generation=0;

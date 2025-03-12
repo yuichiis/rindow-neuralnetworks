@@ -20,7 +20,12 @@ abstract class AbstractActivation implements Activation
     //    $this->states = $states;
     //}
 
-    public function forward(object $states, NDArray $inputs, bool $training=null, ...$kargs) : NDArray
+    public function forward(
+        object $states,
+        NDArray $inputs,
+        bool $training=null, 
+        mixed ...$kargs,
+    ) : NDArray
     {
         //if($this->states===null) {
         //    $this->states = new \stdClass();

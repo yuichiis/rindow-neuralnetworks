@@ -11,8 +11,6 @@ class Attention extends AbstractAttentionLayer
     protected bool $doNotExpandMask;
     protected NDArray $scale;
     protected NDArray $dScale;
-    /** @var array<int> $scoresShape */
-    protected $scoresShape;
     /** @var array<bool> $unbackpropagatables */
     protected ?array $unbackpropagatables = null;
 
@@ -221,7 +219,7 @@ class Attention extends AbstractAttentionLayer
 
     /**
      * @param array<NDArray> $inputs
-     * @param array{NDArray,NDArray} $mask
+     * @param array<NDArray|null> $mask
      * @return NDArray|array<NDArray>
      */
     protected function call(

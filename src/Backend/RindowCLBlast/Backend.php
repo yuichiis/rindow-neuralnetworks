@@ -241,9 +241,7 @@ class Backend
             $nodeNum = [array_shift($tmpShape)];
             $nodeNum[] = array_product($tmpShape);
         }
-        if($nodeNum===null) {
-            [$fanIn,$fanOut]=[1,1];
-        } elseif(count($nodeNum)==1) {
+        if(count($nodeNum)==1) {
             [$fanIn,$fanOut]=[$nodeNum[0],$nodeNum[0]];
         } else {
             [$fanIn,$fanOut]=$nodeNum;
@@ -2400,6 +2398,7 @@ class Backend
         //    }
         //}
         $outputs_t = null;
+        $next_states_t = null;
         foreach($tm as $t){
             $calcState = new stdClass();
             $calcStates[$t] = $calcState;
@@ -2412,6 +2411,7 @@ class Backend
             if($mask) {
                 $mask_t = $this->rnnGetTimestepMask($mask, $t);
                 $not_mask_t = $this->not($mask_t);
+                $tmp_next_states_t = [];
                 foreach (array_map(null,$next_states_t,$prev_states_t) as [$next_st_t,$prev_st_t]) {
                     //$next_st_t = $this->mul($next_st_t,$mask_t,trans:true);
                     //$next_st_t = $this->add($next_st_t,$this->mul($prev_st_t,$not_mask_t,trans:true));

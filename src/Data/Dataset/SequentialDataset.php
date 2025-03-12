@@ -16,7 +16,7 @@ use function Rindow\Math\Matrix\R;
 class SequentialDataset implements IteratorAggregate,Dataset
 {
     protected object $mo;
-    /** @var iterable<NDArray> $iterable */
+    /** @var iterable<NDArray|array{NDArray,NDArray}> $iterable */
     protected iterable $iterable;
     protected ?NDArray $tests;
     protected int $batchSize;
@@ -29,7 +29,9 @@ class SequentialDataset implements IteratorAggregate,Dataset
     protected bool $multiInputs=false;
 
     /**
+     * @param iterable<NDArray|array{NDArray,NDArray}> $iterable
      * @param DatasetFilter<NDArray> $filter
+     * @param DatasetFilter<NDArray> $inputs_filter
      */
     public function __construct(
         object $mo,
@@ -42,7 +44,6 @@ class SequentialDataset implements IteratorAggregate,Dataset
     )
     {
         // defaults
-        $tests = $tests ?? null;
         $batch_size = $batch_size ?? 32;
         $shuffle = $shuffle ?? true;
         $filter = $filter ?? null;

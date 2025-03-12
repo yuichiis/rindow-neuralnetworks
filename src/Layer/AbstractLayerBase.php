@@ -311,6 +311,9 @@ abstract class AbstractLayerBase implements Layer
         }
     }
 
+    /**
+     * @param array<string> $names
+     */
     protected function allocateWeights(array $names, int $nonTrainables=null) : void
     {
         $variables = [];
@@ -393,8 +396,8 @@ abstract class AbstractLayerBase implements Layer
 
     /**
      * @param array<NDArray>|NDArray $inputs
-     * @param array<NDArray>|NDArray $previousMask
-     * @return array<NDArray>|NDArray
+     * @param array<NDArray|null>|NDArray $previousMask
+     * @return array<NDArray>|NDArray|null
      */
     public function computeMask(
         array|NDArray $inputs,
@@ -433,6 +436,7 @@ abstract class AbstractLayerBase implements Layer
 
     /**
      * @param array<NDArray> $inputs
+     * @return array<NDArray|null>
      */
     public function retrieveMultiMasks(array $inputs) : array
     {
@@ -447,6 +451,11 @@ abstract class AbstractLayerBase implements Layer
         return $prevMasks;
     }
 
+    /**
+     * @param array<NDArray> $inputs
+     * @param array<NDarray> $outputs
+     * @return array<NDArray>
+     */
     public function makeMultiMaskedValues(array $inputs, array $outputs) : array
     {
         $prevMasks = array_map(

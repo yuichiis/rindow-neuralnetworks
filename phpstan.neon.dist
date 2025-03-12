@@ -25,6 +25,26 @@ parameters:
 			message: "#^Call to an undefined method .*Rindow\\\\NeuralNetworks\\\\Layer\\\\Layer::forward\\(\\)#"
 		-
 			message: "#^Call to an undefined method .*Rindow\\\\NeuralNetworks\\\\Layer\\\\Layer::inputDtype\\(\\)#"
+		-
+			message: "#^Call to an undefined method Rindow\\\\NeuralNetworks\\\\Layer\\\\Layer::_rawCall\\(\\)#"
+			count: 5
+			path: src/Layer/MultiHeadAttention.php
+		-
+			message: "#^Call to an undefined method Rindow\\\\NeuralNetworks\\\\Layer\\\\Layer::_rawDifferentiate\\(\\)#"
+			count: 5
+			path: src/Layer/MultiHeadAttention.php
+		-
+			message: "#^Call to an undefined method Rindow\\\\NeuralNetworks\\\\Layer\\\\AbstractAttentionLayer::forward\\(\\)#"
+			count: 1
+			path: src/Layer/AbstractAttentionLayer.php
+		-
+			message: "#^Expression on left side of \\?\\? is not nullable#"
+			count: 1
+			path: src/Gradient/Core/Variable.php
+		-
+			message: "#^Call to an undefined method Interop\\\\Polite\\\\Math\\\\Matrix\\\\NDArray::#"
+			count: 3
+			path: src/Gradient/Core/MaskedNDArray.php
 
 
 #		-

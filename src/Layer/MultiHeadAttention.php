@@ -26,8 +26,11 @@ class MultiHeadAttention extends AbstractAttentionLayer
     protected ?string $biasInitializerName;
     /** @var array<int> $attention_axes */
     protected ?array $attention_axes;
+    /** @var array<int> $query_feature_shape */
     protected array $query_feature_shape;
+    /** @var array<int> $key_feature_shape */
     protected array $key_feature_shape;
+    /** @var array<int> $value_feature_shape */
     protected array $value_feature_shape;
     protected Layer $query_dense;
     protected Layer $key_dense;
@@ -39,15 +42,11 @@ class MultiHeadAttention extends AbstractAttentionLayer
     protected string $backward_combine_scores_equation = 'abcd,aecd->acbe';
     protected string $backward_combine_value_equation = 'abcd,acbe->aecd';
     protected ?Layer $dropout_layer=null;
-    /** @var array<int> $partial_output_shape */
-    protected ?array $partial_output_shape;
     protected Layer $output_dense;
     protected bool $useScale;
     protected bool $doNotExpandMask;
     protected NDArray $scale;
     protected NDArray $dScale;
-    /** @var array<int> $scoresShape */
-    protected $scoresShape;
     /** @var array<bool> $unbackpropagatables */
     protected ?array $unbackpropagatables = null;
 
@@ -60,8 +59,7 @@ class MultiHeadAttention extends AbstractAttentionLayer
 
     /**
      * @param array<array<int>> $input_shapes
-     * @param array<array<int>> $output_shape
-     * @param array<int> $attention_axes
+     * @param int|array<int> $attention_axes
      */
     public function __construct(
         object $backend,
@@ -71,7 +69,6 @@ class MultiHeadAttention extends AbstractAttentionLayer
         float $dropout=null,
         bool $use_bias=null,
         array $input_shapes=null,
-        array $output_shape=null,
         int|array $attention_axes=null,
         string|object $kernel_initializer=null,
         string|object $bias_initializer=null,
@@ -94,7 +91,6 @@ class MultiHeadAttention extends AbstractAttentionLayer
         $this->dropout = $dropout;
         $this->useBias = $use_bias;
         $this->inputShape = $input_shapes;
-        $this->partial_output_shape = $output_shape;  // without batch and sequence
         if($attention_axes!==null) {
             if(is_int($attention_axes)) {
                 $attention_axes = [$attention_axes];
@@ -167,10 +163,12 @@ class MultiHeadAttention extends AbstractAttentionLayer
         $this->query_dense = new Dense(             // Dense(inputs(batches.Feature),units)
             $this->backend,                         //     units       : (numHeads.keyDim)
             $units,                                 //     input_shape : ((Tq),Feature)
-            ...$common_args,                        //     output_shape: ((Tq),(numHeads.keyDim))
-            input_shape:$dense_input_shape,         //     kernel_initializer
-            name:"query.{$this->name}",             //     bias_initializer
-        );                                          //     use_bias
+            input_shape:$dense_input_shape,         //     output_shape: ((Tq),(numHeads.keyDim))
+            name:"query.{$this->name}",             //     use_bias
+            kernel_initializer:$this->kernelInitializerName,
+            bias_initializer:$this->biasInitializerName,
+            use_bias:$this->useBias,
+        );
         $sampleW = null;
         if($sampleWeights!==null) {
             $sampleW = [];
@@ -193,10 +191,12 @@ class MultiHeadAttention extends AbstractAttentionLayer
         $this->key_dense = new Dense(               // Dense(inputs(batches.Feature),units)
             $this->backend,                         //     units       : (numHeads.keyDim)
             $units,                                 //     input_shape : ((Tq),Feature)
-            ...$common_args,                        //     output_shape: ((Tq),(numHeads.keyDim))
-            input_shape:$dense_input_shape,         //     kernel_initializer
-            name:"key.{$this->name}",               //     bias_initializer
-        );                                          //     use_bias
+            input_shape:$dense_input_shape,         //     output_shape: ((Tq),(numHeads.keyDim))
+            name:"key.{$this->name}",               //     use_bias
+            kernel_initializer:$this->kernelInitializerName,
+            bias_initializer:$this->biasInitializerName,
+            use_bias:$this->useBias,
+        );
         $sampleW = null;
         if($sampleWeights!==null) {
             $sampleW = [];
@@ -219,10 +219,12 @@ class MultiHeadAttention extends AbstractAttentionLayer
         $this->value_dense = new Dense(             // Dense(inputs(batches.Feature),units)
             $this->backend,                         //     units       : (numHeads.keyDim)
             $units,                                 //     input_shape : ((Tq),Feature)
-            ...$common_args,                        //     output_shape: ((Tq),(numHeads.keyDim))
-            input_shape:$dense_input_shape,         //     kernel_initializer
-            name:"value.{$this->name}",             //     bias_initializer
-        );                                          //     use_bias
+            input_shape:$dense_input_shape,         //     output_shape: ((Tq),(numHeads.keyDim))
+            name:"value.{$this->name}",             //     use_bias
+            kernel_initializer:$this->kernelInitializerName,
+            bias_initializer:$this->biasInitializerName,
+            use_bias:$this->useBias,
+        );                                          
         $output_rank = 1+count($Tv)+1+1; // (B,(Tv),Head,KeyDim)
         $sampleW = null;
         if($sampleWeights!==null) {
@@ -288,9 +290,11 @@ class MultiHeadAttention extends AbstractAttentionLayer
         $this->output_dense = new Dense(
             $this->backend,
             $units,
-            ...$common_args,
-            input_shape:$dense_input_shape, 
-            name:"output.{$this->name}",
+            input_shape: $dense_input_shape, 
+            name: "output.{$this->name}",
+            kernel_initializer:$this->kernelInitializerName,
+            bias_initializer:$this->biasInitializerName,
+            use_bias:$this->useBias,
         );
         $sampleW = null;
         if($sampleWeights!==null) {
@@ -361,14 +365,16 @@ class MultiHeadAttention extends AbstractAttentionLayer
                 'value_dim'=>$this->valueDim,
                 'dropout'=>$this->dropout,
                 'use_bias'=>$this->useBias,
-                'output_shape'=>$this->outputShape,
-                'attention_axes'=>$this->attentionAxes,
+                'attention_axes'=>$this->attention_axes,
                 'kernel_initializer' => $this->kernelInitializerName,
                 'bias_initializer' => $this->biasInitializerName,
             ],
         ];
     }
 
+    /**
+     * @return array{NDArray,NDArray,NDArray}
+     */
     private function compute_attention(
         NDArray $query,
         NDArray $key,
@@ -476,15 +482,18 @@ class MultiHeadAttention extends AbstractAttentionLayer
         return [$attention_output, $attention_scores, $scaled_query];
     }
 
+    /**
+     * @return array{NDArray,NDArray,NDArray}
+     */
     private function compute_differntiate_attention(
-        $dAttention_output,
-        $scaled_query,
-        $key,
-        $value,
-        $attention_output,
-        $softmaxed_attention_scores,
-        $attention_mask,
-        $training,
+        NDArray $dAttention_output,
+        NDArray $scaled_query,
+        NDArray $key,
+        NDArray $value,
+        NDArray $attention_output,
+        NDArray $softmaxed_attention_scores,
+        NDArray $attention_mask=null,
+        ?bool $training,
     ) : array
     {
         $K = $this->backend;
@@ -662,6 +671,11 @@ class MultiHeadAttention extends AbstractAttentionLayer
         }
     }
     
+    /**
+     * @param array<NDArray> $inputs
+     * @param array<NDArray|null> $mask
+     * @return array<Variable>|Variable
+     */
     protected function call( 
         array $inputs,
         bool $training=null,
@@ -759,6 +773,9 @@ class MultiHeadAttention extends AbstractAttentionLayer
         return $attention_output;
     }
     
+    /**
+     * @return array<NDArray>
+     */
     protected function differentiate(NDArray $dOutputs) : array
     {
         $K = $this->backend;
@@ -850,7 +867,7 @@ class MultiHeadAttention extends AbstractAttentionLayer
         //$q_seq_length = $query->shape()[1];
         //$v_seq_length = ($value===null) ? $q_seq_length : $value->shape()[1];
         $q_seq_shape = array_slice($query->shape(),1,$n_attn_axes);
-        $v_seq_shape = ($value===null) ? $q_seq_shape : array_slice($value->shape(),1,$n_attn_axes);
+        $v_seq_shape = array_slice($value->shape(),1,$n_attn_axes);
         $batches = $query->shape()[0];
         $shape = array_merge([$batches],$q_seq_shape,$v_seq_shape);
         $attention_mask = $K->ones($shape,dtype:NDArray::bool);
@@ -882,17 +899,15 @@ class MultiHeadAttention extends AbstractAttentionLayer
             // causal mask:  ((Tq), (Tv))
             //
             $causal_mask = $this->compute_causal_mask($query, $value);
-            if($auto_mask==null && $query_mask==null && $value_mask==null && $key_mask==null) {
+            if($query_mask==null && $value_mask==null && $key_mask==null) {
                 // When causal mask is used alone, apply mask directly to save memory.
                 // ((Tq), (Tv)) -> (1, 1, (Tq), (Tv)) -mask-to-> (B, H, (Tq), (Tv))
                 $attention_scores = $K->masking($causal_mask,$attention_scores,fill:-1e9,mode:1,axis:-$causal_mask->ndim());//mode=add
                 return $attention_scores;
             }
             // If the causal mask does not exist alone, it is merged with other masks.
-            if($auto_mask==null) {
                 // (B, (Tq), (Tv))
-                $auto_mask = $this->alloc_attention_mask($query,$value);
-            }
+            $auto_mask = $this->alloc_attention_mask($query,$value);
             // (B, (Tq), (Tv)) <==masking== ((Tq), (Tv))
             $K->update_masking($auto_mask,$causal_mask,axis:-$causal_mask->ndim());
         }
@@ -978,6 +993,11 @@ class MultiHeadAttention extends AbstractAttentionLayer
         return $causal_mask;
     }
     
+    /**
+     * @param array<int> $inputShape
+     * @param array<int> $effectorDims
+     * @return array{int,array<int>,array<int>,int,array<int>}
+     */
     private function build_dense_args(
         array $inputShape,
         array $effectorDims,
@@ -1002,6 +1022,10 @@ class MultiHeadAttention extends AbstractAttentionLayer
         return [$batch,$T,$feature,$units,$dense_input_shape];
     }
 
+    /**
+     * @param array<int> $effectorDims
+     * @return array{array<int>,array<int>,array<int>}
+     */
     private function make_forward_dense_shape(
         NDArray $inputs,
         array $effectorDims,
@@ -1019,6 +1043,10 @@ class MultiHeadAttention extends AbstractAttentionLayer
         return [$dense_input_shape,$full_output_shape,$feature];
     }
 
+    /**
+     * @param array<int> $feature
+     * @return array{array<int>,array<int>}
+     */
     private function make_backward_dense_shape(
         NDArray $dOutputs,
         array $feature,
@@ -1035,10 +1063,12 @@ class MultiHeadAttention extends AbstractAttentionLayer
     }
 
 
-    /*
-        key(B.Tv.H.Dk),query(B.Tq.H.Dk)->scores(B.H.Tq.Tv)
-        $this->dot_product_equation = 'a{e}cd,a{b}cd->ac{b}{e}';
-    */
+    /**
+     *  key(B.Tv.H.Dk),query(B.Tq.H.Dk)->scores(B.H.Tq.Tv)
+     *  $this->dot_product_equation = 'a{e}cd,a{b}cd->ac{b}{e}';
+     * 
+     *  @return array{array<int>,array<int>,array<int>}
+     */
     private function make_forward_product_shape(
         NDArray $key,
         NDArray $query,
@@ -1058,11 +1088,13 @@ class MultiHeadAttention extends AbstractAttentionLayer
         return [$key_input_shape,$query_input_shape,$score_output_shape];
     }
 
-    /*
-        key(B.Tv.H.Dk),query(B.Tq.H.Dk)->scores(B.H.Tq.Tv)
-        $this->backward_dot_product_key_equation   = 'ac{b}{e},a{b}cd->a{e}cd';
-        $this->backward_dot_product_query_equation = 'ac{b}{e},a{e}cd->a{b}cd';
-    */
+    /**
+     *  key(B.Tv.H.Dk),query(B.Tq.H.Dk)->scores(B.H.Tq.Tv)
+     *  $this->backward_dot_product_key_equation   = 'ac{b}{e},a{b}cd->a{e}cd';
+     *  $this->backward_dot_product_query_equation = 'ac{b}{e},a{e}cd->a{b}cd';
+     * 
+     *  @return array{array<int>,array<int>,array<int>}
+     */
     private function make_backward_product_shape(
         NDArray $key,
         NDArray $query,
@@ -1082,13 +1114,15 @@ class MultiHeadAttention extends AbstractAttentionLayer
         return [$key_input_shape,$query_input_shape,$score_output_shape];
     }
 
-    /*
-        scores: ((Batch), numHeads, (Tq), (Tv))
-        value:  ((Batch), (Tv), numHeads, valueDim)
-        output: ((Batch), (Tq), numHeads, valueDim)
-        
-        $this->combine_equation = 'ac{b}{e},a{e}cd->a{b}cd';
-    */
+    /**
+     *  scores: ((Batch), numHeads, (Tq), (Tv))
+     *  value:  ((Batch), (Tv), numHeads, valueDim)
+     *  output: ((Batch), (Tq), numHeads, valueDim)
+     *  
+     *  $this->combine_equation = 'ac{b}{e},a{e}cd->a{b}cd';
+     * 
+     *  @return array{array<int>,array<int>,array<int>}
+     */
     private function make_forward_combine_shape(
         NDArray $scores,
         NDArray $value,
@@ -1109,15 +1143,16 @@ class MultiHeadAttention extends AbstractAttentionLayer
         return [$scores_input_shape,$value_input_shape,$combine_output_shape];
     }
 
-    
-    /*
-        doutput: ((Batch), (Tq), numHeads, valueDim)
-        dscores: ((Batch), numHeads, (Tq), (Tv))
-        dvalue:  ((Batch), (Tv), numHeads, valueDim)
-        
-        $this->backward_combine_scores_equation = 'a{b}cd,a{e}cd->ac{b}{e}';
-        $this->backward_combine_value_equation  = 'a{b}cd,ac{b}{e}->a{e}cd';
-    */
+    /**
+     *   doutput: ((Batch), (Tq), numHeads, valueDim)
+     *   dscores: ((Batch), numHeads, (Tq), (Tv))
+     *   dvalue:  ((Batch), (Tv), numHeads, valueDim)
+     *   
+     *   $this->backward_combine_scores_equation = 'a{b}cd,a{e}cd->ac{b}{e}';
+     *   $this->backward_combine_value_equation  = 'a{b}cd,ac{b}{e}->a{e}cd';
+     * 
+     *  @return array{array<int>,array<int>,array<int>}
+     */
     private function make_backward_combine_shape(
         NDArray $scores,
         NDArray $value,

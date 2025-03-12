@@ -103,7 +103,12 @@ class SimpleRNNCell extends AbstractRNNCell
         ];
     }
 
-    protected function call(NDArray $inputs, array $states, bool $training=null, object $calcState=null) : array
+    protected function call(
+        NDArray $inputs,
+        array $states,
+        bool $training=null,
+        object $calcState=null
+        ) : array
     {
         $K = $this->backend;
         $prev_h = $states[0];

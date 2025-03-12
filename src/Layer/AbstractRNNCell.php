@@ -12,15 +12,23 @@ abstract class AbstractRNNCell extends AbstractLayerBase implements RNNCell
 {
     /**
      * @param array<NDArray> $states
-     * @return array{NDArray,array<NDArray>}
+     * @return array{NDArray}|array{NDArray,array<NDArray>}
      */
-    abstract protected function call(NDArray $inputs, array $states, bool $training=null, object $calcState=null) : array;
+    abstract protected function call(
+        NDArray $inputs,
+        array $states,
+        bool $training=null,
+        object $calcState=null
+    ) : array;
 
     /**
      * @param array<NDArray> $dStates
      * @return array{NDArray,array<NDArray>}
      */
-    abstract protected function differentiate(array $dStates, object $calcState) : array;
+    abstract protected function differentiate(
+        array $dStates,
+        object $calcState
+    ) : array;
 
     protected bool $useBias;
     protected ?NDArray $kernel=null;

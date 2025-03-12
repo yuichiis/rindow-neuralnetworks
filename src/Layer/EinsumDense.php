@@ -22,12 +22,18 @@ class EinsumDense extends AbstractLayer
     protected NDArray $dBias;
 
     protected string $equation;
+    /** @var array<int> $partial_output_shape */
     protected array $partial_output_shape;
+    /** @var array<int> $full_output_shape */
     protected array $full_output_shape;
     protected ?string $bias_axes;
     protected string $dInputsBackwardEquation;
     protected string $dKernelBackwardEquation;
-    
+
+    /**
+     * @param int|array<int> $output_shape
+     * @param array<int>|null $input_shape
+     */
     public function __construct(
         object $backend,
         string $equation,
@@ -158,7 +164,10 @@ class EinsumDense extends AbstractLayer
         }
         return $this->kernel;
     }
-    
+
+    /**
+     * @return array<int>
+     */
     public function compute_output_shape() : array
     {
         return $this->full_output_shape;
@@ -203,6 +212,9 @@ class EinsumDense extends AbstractLayer
         return $dInputs;
     }
     
+    /**
+     * @return array<string,mixed>
+     */
     public function get_config() : array
     {
         $config = [
@@ -210,8 +222,8 @@ class EinsumDense extends AbstractLayer
             "equation"=>$this->equation,
             "activation"=>$this->activationName,
             "bias_axes"=>$this->bias_axes,
-            "kernel_initializer"=>$this->kernel_initializer_name,
-            "bias_initializer"=>$this->bias_initializer_name,
+            "kernel_initializer"=>$this->kernelInitializerName,
+            "bias_initializer"=>$this->biasInitializerName,
         ];
         return $config;
     }
@@ -226,6 +238,10 @@ class EinsumDense extends AbstractLayer
      *     $backward_dinput_equation,
      *     $backward_dkernel_equation
      * ]
+     * 
+     *  @param array<int> $input_shape
+     *  @param array<int> $output_shape
+     *  @return array{array<int>,array<int>,array<int>,string,string}
      */
     private function analyze_einsum_string(
         string $equation,
@@ -313,6 +329,12 @@ class EinsumDense extends AbstractLayer
 
     /**
      *  Analyze an pre-split einsum string to find the weight shape.
+     * 
+     *  @param array{string,string,string,string} $split_string
+     *  @param array<string>|null $bias_axes
+     *  @param array<int>|null $input_shape 
+     *  @param array<int> $output_shape
+     *  @return array{array<int>,array<int>,array<int>}
      */
     private function analyze_split_string(
         array $split_string,

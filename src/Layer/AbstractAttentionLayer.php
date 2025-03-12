@@ -19,6 +19,14 @@ abstract class AbstractAttentionLayer extends AbstractLayerBase
     use GenericUtils;
     use GradientUtils;
 
+    /** @var array<int>|null $scoresShape */
+    protected ?array $scoresShape=null;
+
+    /**
+     * @param array<NDArray> $inputs
+     * @param array<NDArray|null> $mask
+     * @return array<Variable>|Variable
+     */
     abstract protected function call(
         array $inputs,
         bool $training=null,
@@ -169,10 +177,10 @@ abstract class AbstractAttentionLayer extends AbstractLayerBase
         unset($options['queryMask']);
         unset($options['valueMask']);
         unset($options['keyMask']);
+        $options['mask'] = $mask;
         $outputs = $this->call(
             $inputs,
             ...$options,
-            mask:$mask,
         );
         if(!is_array($outputs)) {
             $outputs = [$outputs];

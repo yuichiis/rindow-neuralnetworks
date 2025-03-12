@@ -42,6 +42,9 @@ class Data
         return new NDArrayDataset($this->matrixOperator, $inputs, ...$options);
     }
 
+    /**
+     * @param iterable<NDArray|array{NDArray,NDArray}> $inputs
+     */
     public function SequentialDataset(iterable $inputs, mixed ...$options) : object
     {
         return new SequentialDataset($this->matrixOperator, $inputs, ...$options);
@@ -57,6 +60,9 @@ class Data
         return new ImageFilter($this->matrixOperator, ...$options);
     }
 
+    /**
+     * @param Dataset<NDArray>|NDArray $dataset
+     */
     public function ImageDataGenerator(Dataset|NDArray $dataset, mixed ...$options) : object
     {
         $data_format = $options['data_format'] ?? null;
