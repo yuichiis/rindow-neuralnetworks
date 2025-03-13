@@ -13,6 +13,7 @@ class Attention extends AbstractAttentionLayer
     protected NDArray $dScale;
     /** @var array<bool> $unbackpropagatables */
     protected ?array $unbackpropagatables = null;
+    protected float $mask_exp = -1e9;
 
     //protected $returnAttentionScores;
 
@@ -48,6 +49,9 @@ class Attention extends AbstractAttentionLayer
             $this->scale = $K->array(1.0);
             $this->dScale = $K->array(0.0);
             $this->allocateWeights(['scale']);
+        }
+        if($backend->deviceType()=='PHP') {
+            $this->mask_exp = -1e99;
         }
     }
 
@@ -262,6 +266,7 @@ class Attention extends AbstractAttentionLayer
             $valueMask = $mask[1] ?? null;
         }
         if($valueMask) {
+            $mask_exp = $this->mask_exp;
             //if($valueMask->dtype()==NDArray::bool || $K->isInt($valueMask)) {
             //    $valueMask = $K->cast($valueMask,$scores->dtype());
             //}
@@ -271,11 +276,11 @@ class Attention extends AbstractAttentionLayer
                 }
                 // scores = [batch_size, Tq, Tv]
                 // valueMask = [batch_size, Tv]
-                $K->update_masking($scores,$valueMask,fill:-1e9,batchDims:-2,axis:-1);
+                $K->update_masking($scores,$valueMask,fill:$mask_exp,batchDims:-2,axis:-1);
             } else { // No Broadcasting 
                 // scores += (-1e9*valueMask)
                 $valueMask = $this->expandMask($valueMask,$scores);
-                $K->update_masking($scores,$valueMask,fill:-1e9);
+                $K->update_masking($scores,$valueMask,fill:$mask_exp);
             }
         }
         // weights = softmax(scores)
