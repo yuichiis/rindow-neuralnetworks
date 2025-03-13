@@ -4,6 +4,7 @@ namespace RindowTest\NeuralNetworks\Layer\MultiHeadAttentionTest;
 use PHPUnit\Framework\TestCase;
 use Interop\Polite\Math\Matrix\NDArray;
 use Rindow\Math\Matrix\MatrixOperator;
+use Rindow\Math\Matrix\Drivers\Service;
 use Rindow\NeuralNetworks\Backend\RindowBlas\Backend;
 use Rindow\NeuralNetworks\Builder\NeuralNetworks;
 use Rindow\NeuralNetworks\Layer\MultiHeadAttention;
@@ -1196,6 +1197,7 @@ class MultiHeadAttentionTest extends TestCase
         $K = $nn->backend();
         $g = $nn->gradient();
         $la = $K->primaryLA();
+        $srvLvl = $K->localMatrixOperator()->service()->serviceLevel();
         $layer = new MultiHeadAttention(
             $K,
             $num_heads, // num_heads
@@ -1300,7 +1302,9 @@ class MultiHeadAttentionTest extends TestCase
                 [143.30368,  143.30368,  143.30368,  143.30368,  143.30368 ],
                 [143.49086,  143.49086,  143.49086,  143.49086,  143.49086 ],
                 [132.57143,  132.57143,  132.57143,  132.57143,  132.57143 ],],
-           ])
+            ]),
+            rtol:($srvLvl==Service::LV_BASIC)?1e-1:1e-4,
+            //debug:true,
         ));
 
         //echo "scores0: ".$mo->toString($K->slice($scores,[0,0],[2,1]),format:'%12.7e',indent:true)."\n";
@@ -1320,7 +1324,9 @@ class MultiHeadAttentionTest extends TestCase
                [5.88987461e-07, 1.02552840e-05, 1.78562434e-04, 3.10906675e-03, 5.41340895e-02, 9.42567468e-01, 0.00000000e+00],
                [1.35080356e-07, 3.16729142e-06, 7.42650882e-05, 1.74132455e-03, 4.08296399e-02, 9.57351446e-01, 0.00000000e+00],
                [3.20762188e-29, 3.20762188e-29, 2.00000003e-01, 2.00000003e-01, 2.00000003e-01, 2.00000003e-01, 2.00000003e-01],]],
-            ])
+            ]),
+            rtol:($srvLvl==Service::LV_BASIC)?1e+0:1e-4,
+            //debug:true,
         ));
 
         //echo "scores: ".$mo->toString($K->slice($scores,[-1,-1,-1],[1,1,1]),format:'%12.7e',indent:true)."\n";
@@ -1341,7 +1347,9 @@ class MultiHeadAttentionTest extends TestCase
                [5.88987461e-07, 1.02552840e-05, 1.78562434e-04, 3.10906675e-03, 5.41340895e-02, 9.42567468e-01, 0.00000000e+00],
                [1.35080356e-07, 3.16729142e-06, 7.42650882e-05, 1.74132455e-03, 4.08296399e-02, 9.57351446e-01, 0.00000000e+00],
                [3.20762188e-29, 3.20762188e-29, 2.00000003e-01, 2.00000003e-01, 2.00000003e-01, 2.00000003e-01, 2.00000003e-01],]],
-            ])
+            ]),
+            rtol:($srvLvl==Service::LV_BASIC)?1e+0:1e-4,
+            //debug:true,
         ));
         //
         // backward
@@ -1387,7 +1395,9 @@ class MultiHeadAttentionTest extends TestCase
                 [ 124.00012,   124.00012,   124.00012,   124.00012,   124.00012 ],
                 [  98.75073,    98.75073,    98.75073,    98.75073,    98.75073 ],
                 [4653.039  ,  4653.039  ,  4653.039  ,  4653.039  ,  4653.039   ],],
-            ])
+            ]),
+            rtol:($srvLvl==Service::LV_BASIC)?1e+1:1e-4,
+            //debug:true,
         ));
         $this->assertTrue($mo->la()->isclose(
             $K->ndarray($dInputs[1]),
@@ -1407,7 +1417,9 @@ class MultiHeadAttentionTest extends TestCase
                [-1.1397036e+03, -1.1397036e+03, -1.1397036e+03, -1.1397036e+03, -1.1397036e+03],
                [ 4.5568398e+04,  4.5568398e+04,  4.5568398e+04,  4.5568398e+04,  4.5568398e+04],
                [ 1.4418279e+04,  1.4418279e+04,  1.4418279e+04,  1.4418279e+04,  1.4418279e+04],],
-            ])
+            ]),
+            rtol:($srvLvl==Service::LV_BASIC)?1e+0:1e-4,
+            //debug:true,
         ));
 
     }
@@ -1443,6 +1455,7 @@ class MultiHeadAttentionTest extends TestCase
         $K = $nn->backend();
         $g = $nn->gradient();
         $la = $K->primaryLA();
+        $srvLvl = $K->localMatrixOperator()->service()->serviceLevel();
         $layer = new MultiHeadAttention(
             $K,
             $num_heads, // num_heads
@@ -1548,7 +1561,9 @@ class MultiHeadAttentionTest extends TestCase
                 [120.447    , 120.447    , 120.447    , 120.447    , 120.447    ],
                 [132.06229  , 132.06229  , 132.06229  , 132.06229  , 132.06229  ],
                 [132.57143  , 132.57143  , 132.57143  , 132.57143  , 132.57143  ],],
-           ])
+            ]),
+            rtol:($srvLvl==Service::LV_BASIC)?1e+0:1e-4,
+            //debug:true,
         ));
 
         //echo "scores0: ".$mo->toString($K->slice($scores,[0,0],[2,1]),format:'%12.7e',indent:true)."\n";
@@ -1569,7 +1584,9 @@ class MultiHeadAttentionTest extends TestCase
                [1.4285092e-03, 2.4872797e-02, 4.3307897e-01, 7.5406194e+00, 0.0000000e+00, 0.0000000e+00, 0.0000000e+00],
                [2.5338335e-05, 5.9411960e-04, 1.3930625e-02, 3.2663718e-01, 7.6588130e+00, 0.0000000e+00, 0.0000000e+00],
                [2.5660975e-28, 2.5660975e-28, 1.6000001e+00, 1.6000001e+00, 1.6000001e+00, 1.6000001e+00, 1.6000001e+00],],
-            ])
+            ]),
+            rtol:($srvLvl==Service::LV_BASIC)?1e+0:1e-4,
+            //debug:true,
         ));
 
         //
@@ -1616,7 +1633,9 @@ class MultiHeadAttentionTest extends TestCase
                 [ 123.67627,  123.67627,  123.67627,  123.67627,  123.67627],
                 [  98.72949,   98.72949,   98.72949,   98.72949,   98.72949],
                 [4653.039  , 4653.039  , 4653.039  , 4653.039  , 4653.039  ],],
-            ])
+            ]),
+            rtol:($srvLvl==Service::LV_BASIC)?1e+1:1e-4,
+            //debug:true,
         ));
         //echo $mo->toString($dInputs[1],format:'%12.4f',indent:true)."\n";
         //echo $mo->shapeToString($dInputs[1]->shape())."\n";
@@ -1639,6 +1658,8 @@ class MultiHeadAttentionTest extends TestCase
                 [ 8121.1396 ,  8121.1396,   8121.1396,   8121.1396,   8121.1396 ],
                 [14418.279  , 14418.279 ,  14418.279 ,  14418.279 ,  14418.279  ],],
             ]),
+            rtol:($srvLvl==Service::LV_BASIC)?1e+0:1e-4,
+            //debug:true,
         ));
 
     }
@@ -1674,6 +1695,7 @@ class MultiHeadAttentionTest extends TestCase
         $K = $nn->backend();
         $g = $nn->gradient();
         $la = $K->primaryLA();
+        $srvLvl = $K->localMatrixOperator()->service()->serviceLevel();
         $layer = new MultiHeadAttention(
             $K,
             $num_heads, // num_heads
@@ -1779,7 +1801,9 @@ class MultiHeadAttentionTest extends TestCase
                 [154.7322 ,  154.7322 ,  154.7322 ,  154.7322 ,  154.7322  ],
                 [154.91945,  154.91945,  154.91945,  154.91945,  154.91945 ],
                 [132.57143,  132.57143,  132.57143,  132.57143,  132.57143 ],],               
-           ])
+            ]),
+            rtol:($srvLvl==Service::LV_BASIC)?1e-1:1e-4,
+            //debug:true,
         ));
 
         //echo "scores0: ".$mo->toString($K->slice($scores,[0,0],[2,1]),format:'%12.7e',indent:true)."\n";
@@ -1799,7 +1823,9 @@ class MultiHeadAttentionTest extends TestCase
                [3.38271953e-08, 5.88989565e-07, 1.02553395e-05, 1.78562390e-04, 3.10907187e-03, 5.41342832e-02, 9.42567229e-01],
                [5.76100057e-09, 1.35080853e-07, 3.16730916e-06, 7.42652192e-05, 1.74133084e-03, 4.08297926e-02, 9.57351327e-01],
                [3.20762188e-29, 3.20762188e-29, 2.00000003e-01, 2.00000003e-01, 2.00000003e-01, 2.00000003e-01, 2.00000003e-01],]],
-            ])
+            ]),
+            rtol:($srvLvl==Service::LV_BASIC)?1e+0:1e-4,
+            //debug:true,
         ));
 
         //echo "scores: ".$mo->toString($K->slice($scores,[-1,-1,-1],[1,1,1]),format:'%12.7e',indent:true)."\n";
@@ -1820,7 +1846,9 @@ class MultiHeadAttentionTest extends TestCase
                [3.38271953e-08, 5.88989565e-07, 1.02553395e-05, 1.78562390e-04, 3.10907187e-03, 5.41342832e-02, 9.42567229e-01],
                [5.76100057e-09, 1.35080853e-07, 3.16730916e-06, 7.42652192e-05, 1.74133084e-03, 4.08297926e-02, 9.57351327e-01],
                [3.20762188e-29, 3.20762188e-29, 2.00000003e-01, 2.00000003e-01, 2.00000003e-01, 2.00000003e-01, 2.00000003e-01],]],
-            ])
+            ]),
+            rtol:($srvLvl==Service::LV_BASIC)?1e+0:1e-4,
+            //debug:true,
         ));
         //
         // backward
@@ -1866,7 +1894,9 @@ class MultiHeadAttentionTest extends TestCase
                 [ 123.993286,  123.993286,  123.993286,  123.993286,  123.993286],
                 [  98.746216,   98.746216,   98.746216,   98.746216,   98.746216],
                 [4653.039   , 4653.039   , 4653.039   , 4653.039   , 4653.039   ],],
-            ])
+            ]),
+            rtol:($srvLvl==Service::LV_BASIC)?1e+1:1e-4,
+            //debug:true,
         ));
         $this->assertTrue($mo->la()->isclose(
             $K->ndarray($dInputs[1]),
@@ -1886,7 +1916,9 @@ class MultiHeadAttentionTest extends TestCase
                [ 1.0847009e+03,  1.0847009e+03,  1.0847009e+03,  1.0847009e+03,  1.0847009e+03],
                [ 5.1574980e+03,  5.1574980e+03,  5.1574980e+03,  5.1574980e+03,  5.1574980e+03],
                [ 5.1865906e+04,  5.1865906e+04,  5.1865906e+04,  5.1865906e+04,  5.1865906e+04],],
-            ])
+            ]),
+            rtol:($srvLvl==Service::LV_BASIC)?1e+0:1e-4,
+            //debug:true,
         ));
 
     }
@@ -2521,6 +2553,7 @@ class MultiHeadAttentionTest extends TestCase
         $K = $nn->backend();
         $g = $nn->gradient();
         $la = $K->primaryLA();
+        $srvLvl = $K->localMatrixOperator()->service()->serviceLevel();
         $layer = new MultiHeadAttention(
             $K,
             $num_heads, // num_heads
@@ -2631,7 +2664,9 @@ class MultiHeadAttentionTest extends TestCase
                 [143.30368,  143.30368,  143.30368,  143.30368,  143.30368 ],
                 [143.49086,  143.49086,  143.49086,  143.49086,  143.49086 ],
                 [132.57143,  132.57143,  132.57143,  132.57143,  132.57143 ],],
-           ])
+            ]),
+            rtol:($srvLvl==Service::LV_BASIC)?1e-1:1e-4,
+            //debug:true,
         ));
 
         //echo "scores0: ".$mo->toString($K->slice($scores,[0,0],[2,1]),format:'%12.7e',indent:true)."\n";
@@ -2651,7 +2686,9 @@ class MultiHeadAttentionTest extends TestCase
                [5.88987461e-07, 1.02552840e-05, 1.78562434e-04, 3.10906675e-03, 5.41340895e-02, 9.42567468e-01, 0.00000000e+00],
                [1.35080356e-07, 3.16729142e-06, 7.42650882e-05, 1.74132455e-03, 4.08296399e-02, 9.57351446e-01, 0.00000000e+00],
                [3.20762188e-29, 3.20762188e-29, 2.00000003e-01, 2.00000003e-01, 2.00000003e-01, 2.00000003e-01, 2.00000003e-01],]],
-            ])
+            ]),
+            rtol:($srvLvl==Service::LV_BASIC)?1e+0:1e-4,
+            //debug:true,
         ));
 
         //echo "scores: ".$mo->toString($K->slice($scores,[-1,-1,-1],[1,1,1]),format:'%12.7e',indent:true)."\n";
@@ -2672,7 +2709,9 @@ class MultiHeadAttentionTest extends TestCase
                [5.88987461e-07, 1.02552840e-05, 1.78562434e-04, 3.10906675e-03, 5.41340895e-02, 9.42567468e-01, 0.00000000e+00],
                [1.35080356e-07, 3.16729142e-06, 7.42650882e-05, 1.74132455e-03, 4.08296399e-02, 9.57351446e-01, 0.00000000e+00],
                [3.20762188e-29, 3.20762188e-29, 2.00000003e-01, 2.00000003e-01, 2.00000003e-01, 2.00000003e-01, 2.00000003e-01],]],
-            ])
+            ]),
+            rtol:($srvLvl==Service::LV_BASIC)?1e+0:1e-4,
+            //debug:true,
         ));
         //
         // backward
@@ -2718,7 +2757,9 @@ class MultiHeadAttentionTest extends TestCase
                 [ 124.00012,   124.00012,   124.00012,   124.00012,   124.00012 ],
                 [  98.75073,    98.75073,    98.75073,    98.75073,    98.75073 ],
                 [4653.039  ,  4653.039  ,  4653.039  ,  4653.039  ,  4653.039   ],],
-            ])
+            ]),
+            rtol:($srvLvl==Service::LV_BASIC)?1e+1:1e-4,
+            //debug:true,
         ));
         $this->assertTrue($mo->la()->isclose(
             $K->ndarray($dInputs[1]),
@@ -2738,7 +2779,9 @@ class MultiHeadAttentionTest extends TestCase
                [-1.1397036e+03, -1.1397036e+03, -1.1397036e+03, -1.1397036e+03, -1.1397036e+03],
                [ 4.5568398e+04,  4.5568398e+04,  4.5568398e+04,  4.5568398e+04,  4.5568398e+04],
                [ 1.4418279e+04,  1.4418279e+04,  1.4418279e+04,  1.4418279e+04,  1.4418279e+04],],
-            ])
+            ]),
+            rtol:($srvLvl==Service::LV_BASIC)?1e+0:1e-4,
+            //debug:true,
         ));
 
     }

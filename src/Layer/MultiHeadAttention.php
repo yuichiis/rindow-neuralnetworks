@@ -49,13 +49,7 @@ class MultiHeadAttention extends AbstractAttentionLayer
     protected NDArray $dScale;
     /** @var array<bool> $unbackpropagatables */
     protected ?array $unbackpropagatables = null;
-
-    //protected $returnAttentionScores;
-
-    //protected $query;
-    //protected $value;
-    //protected $key;
-    //protected $attentionWeight;
+    protected float $mask_exp = -1e9;
 
     /**
      * @param array<array<int>> $input_shapes
@@ -101,6 +95,9 @@ class MultiHeadAttention extends AbstractAttentionLayer
         $this->kernelInitializerName = $this->toStringName($kernel_initializer);
         $this->biasInitializerName = $this->toStringName($bias_initializer);
         $this->attention_axes = $attention_axes;
+        if($backend->deviceType()=='PHP') {
+            $this->mask_exp = -1e99;
+        }
         $this->initName($name,'multiheadattention');
     }
     
@@ -449,6 +446,7 @@ class MultiHeadAttention extends AbstractAttentionLayer
         $shape = array_merge($shape,[(int)array_product($value_seq_shape)]);
         $attention_scores = $K->softmax($attention_scores->reshape($shape));
         $attention_scores = $attention_scores->reshape($original_shape);
+        //echo $K->localMatrixOperator()->toString($attention_scores,format:'%13.8e',indent:true)."\n";
 
 
         //
@@ -886,6 +884,7 @@ class MultiHeadAttention extends AbstractAttentionLayer
     ) : ?NDArray
     {
         $K = $this->backend;
+        $m_inf = $this->mask_exp;
 
         if($value_mask && $key_mask) {
             if(spl_object_id($value_mask)==spl_object_id($key_mask)) {
@@ -902,7 +901,7 @@ class MultiHeadAttention extends AbstractAttentionLayer
             if($query_mask==null && $value_mask==null && $key_mask==null) {
                 // When causal mask is used alone, apply mask directly to save memory.
                 // ((Tq), (Tv)) -> (1, 1, (Tq), (Tv)) -mask-to-> (B, H, (Tq), (Tv))
-                $attention_scores = $K->masking($causal_mask,$attention_scores,fill:-1e9,mode:1,axis:-$causal_mask->ndim());//mode=add
+                $attention_scores = $K->masking($causal_mask,$attention_scores,fill:$m_inf,mode:1,axis:-$causal_mask->ndim());//mode=add
                 return $attention_scores;
             }
             // If the causal mask does not exist alone, it is merged with other masks.
@@ -912,10 +911,13 @@ class MultiHeadAttention extends AbstractAttentionLayer
             $K->update_masking($auto_mask,$causal_mask,axis:-$causal_mask->ndim());
         }
         if($query_mask) {
+            //echo $K->localMatrixOperator()->toString($query_mask,format:'%13.8e',indent:true)."\n";
             if($auto_mask==null && $value_mask==null && $key_mask==null) {
                 // When query mask is used alone, apply mask directly to save memory.
                 // (B, (Tq)) -> (B, 1, (Tq), 1) -mask-to-> (B, H, (Tq), (Tv))
-                $attention_scores = $K->masking($query_mask,$attention_scores,fill:-1e9,mode:1,batchDims:1,axis:2);
+                //echo $K->localMatrixOperator()->toString($attention_scores,format:'%13.8e',indent:true)."\n";
+                $attention_scores = $K->masking($query_mask,$attention_scores,fill:$m_inf,mode:1,batchDims:1,axis:2);
+                //echo $K->localMatrixOperator()->toString($attention_scores,format:'%13.8e',indent:true)."\n";
                 return $attention_scores;
             }
             // If the query mask does not exist alone, it is merged with other masks.
@@ -930,7 +932,7 @@ class MultiHeadAttention extends AbstractAttentionLayer
             if($auto_mask==null && $key_mask==null) {
                 // When value mask is used alone, apply mask directly to save memory.
                 // (B, (Tv)) -> (B, 1, 1, (Tv)) -mask-to-> (B, H, (Tq), (Tv))
-                $attention_scores = $K->masking($value_mask,$attention_scores,fill:-1e9,mode:1,batchDims:1,axis:-$value_mask->ndim()+1);
+                $attention_scores = $K->masking($value_mask,$attention_scores,fill:$m_inf,mode:1,batchDims:1,axis:-$value_mask->ndim()+1);
                 return $attention_scores;
             }
             // If the value mask does not exist alone, it is merged with other masks.
@@ -945,7 +947,7 @@ class MultiHeadAttention extends AbstractAttentionLayer
             if($auto_mask==null) {
                 // When key mask is used alone, apply mask directly to save memory.
                 // (B, (Tv)) -> (B, 1, 1, (Tv)) -mask-to-> (B, H, (Tq), (Tv))
-                $attention_scores = $K->masking($key_mask,$attention_scores,fill:-1e9,mode:1,batchDims:1,axis:-$key_mask->ndim()+1);
+                $attention_scores = $K->masking($key_mask,$attention_scores,fill:$m_inf,mode:1,batchDims:1,axis:-$key_mask->ndim()+1);
                 return $attention_scores;
             }
             // If the key mask does not exist alone, it is merged with other masks.
@@ -960,7 +962,7 @@ class MultiHeadAttention extends AbstractAttentionLayer
         // If it has any mask, it will be applied to the scores.
         if($auto_mask) {
             // (B,H,(Tq),(Tv)) <==masking== (B,(Tq),(Tv))
-            $attention_scores = $K->masking($auto_mask,$attention_scores,fill:-1e9,mode:1,batchDims:1,axis:-$auto_mask->ndim()+1);
+            $attention_scores = $K->masking($auto_mask,$attention_scores,fill:$m_inf,mode:1,batchDims:1,axis:-$auto_mask->ndim()+1);
         }
         return $attention_scores;
     }
