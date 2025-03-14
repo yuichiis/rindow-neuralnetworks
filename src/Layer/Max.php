@@ -17,9 +17,9 @@ class Max extends AbstractLayer
      */
     public function __construct(
         object $backend,
-        int $axis=null,
-        array $input_shape=null,
-        string $name=null,
+        ?int $axis=null,
+        ?array $input_shape=null,
+        ?string $name=null,
     )
     {
         $axis = $axis ?? -1;
@@ -32,7 +32,7 @@ class Max extends AbstractLayer
         $this->initName($name,'max');
     }
 
-    public function build(mixed $variable=null, array $sampleWeights=null) : void
+    public function build(mixed $variable=null, ?array $sampleWeights=null) : void
     {
         $K = $this->backend;
 
@@ -79,7 +79,7 @@ class Max extends AbstractLayer
         ];
     }
 
-    protected function call(NDArray $inputs, bool $training=null) : NDArray
+    protected function call(NDArray $inputs, ?bool $training=null) : NDArray
     {
         $K = $this->backend;
         $container = $this->container();

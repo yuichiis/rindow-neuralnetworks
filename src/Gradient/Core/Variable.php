@@ -28,12 +28,12 @@ class Variable implements VariableInterface
     public function __construct(
         object $backend,
         mixed $value,
-        string $name=null,
-        bool $reference=null,
-        bool $trainable=null,
-        bool $undetermined=null,
-        bool $unbackpropagatable=null,
-        NDArray $mask=null,
+        ?string $name=null,
+        ?bool $reference=null,
+        ?bool $trainable=null,
+        ?bool $undetermined=null,
+        ?bool $unbackpropagatable=null,
+        ?NDArray $mask=null,
     )
     {
         $this->backend = $backend;
@@ -47,7 +47,7 @@ class Variable implements VariableInterface
     }
 
     public function assign(
-        mixed $value, bool $reference=null, NDArray $mask=null) : void
+        mixed $value, ?bool $reference=null, ?NDArray $mask=null) : void
     {
         $K = $this->backend;
         $reference = $reference ?? false;

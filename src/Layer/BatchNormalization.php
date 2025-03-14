@@ -18,16 +18,16 @@ class BatchNormalization extends AbstractNormalization
 
     public function __construct(
         object $backend,
-        int $axis=null,
-        float $momentum=null,
-        float $epsilon=null,
-        bool $center=null,
-        bool $scale=null,
-        string|callable $beta_initializer=null,
-        string|callable $gamma_initializer=null,
-        string|callable $moving_mean_initializer=null,
-        string|callable $moving_variance_initializer=null,
-        string $name=null,
+        ?int $axis=null,
+        ?float $momentum=null,
+        ?float $epsilon=null,
+        ?bool $center=null,
+        ?bool $scale=null,
+        string|callable|null $beta_initializer=null,
+        string|callable|null $gamma_initializer=null,
+        string|callable|null $moving_mean_initializer=null,
+        string|callable|null $moving_variance_initializer=null,
+        ?string $name=null,
     )
     {
         parent::__construct(
@@ -100,7 +100,7 @@ class BatchNormalization extends AbstractNormalization
         return [$this->dBeta,$this->dGamma];
     }
 
-    protected function call(NDArray $inputs, bool $training=null) : NDArray
+    protected function call(NDArray $inputs, ?bool $training=null) : NDArray
     {
         $K = $this->backend;
         if($training===null) {

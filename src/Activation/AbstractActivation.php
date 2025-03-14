@@ -5,7 +5,7 @@ use Interop\Polite\Math\Matrix\NDArray;
 
 abstract class AbstractActivation implements Activation
 {
-    abstract protected function call(NDArray $inputs, bool $training=null) : NDArray;
+    abstract protected function call(NDArray $inputs, ?bool $training=null) : NDArray;
     abstract protected function differentiate(NDArray $dOutputs) : NDArray;
 
     protected ?object $states=null;
@@ -23,7 +23,7 @@ abstract class AbstractActivation implements Activation
     public function forward(
         object $states,
         NDArray $inputs,
-        bool $training=null, 
+        ?bool $training=null, 
         mixed ...$kargs,
     ) : NDArray
     {

@@ -14,8 +14,8 @@ class InheritMask extends AbstractMultiInputLayer
      */
     public function __construct(
         object $backend,
-        array $input_shapes=null,
-        string $name=null,
+        ?array $input_shapes=null,
+        ?string $name=null,
     )
     {
         parent::__construct($backend);
@@ -23,7 +23,7 @@ class InheritMask extends AbstractMultiInputLayer
         $this->initName($name,'inheritmask');
     }
 
-    public function build(mixed $variables=null, array $sampleWeights=null) : void
+    public function build(mixed $variables=null, ?array $sampleWeights=null) : void
     {
         $K = $this->backend;
         if(!is_array($variables) && $variables!==null) {
@@ -52,7 +52,7 @@ class InheritMask extends AbstractMultiInputLayer
         ];
     }
 
-    protected function call(array $inputs, bool $training=null) : NDArray
+    protected function call(array $inputs, ?bool $training=null) : NDArray
     {
         $K = $this->backend;
         $container = $this->container();

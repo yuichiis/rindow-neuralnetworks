@@ -19,18 +19,18 @@ class LSTM extends AbstractRNNLayer
     public function __construct(
         object $backend,
         int $units,
-        array $input_shape=null,
-        string|object $activation=null,
-        string|object $recurrent_activation=null,
-        bool $use_bias=null,
-        string|callable $kernel_initializer=null,
-        string|callable $recurrent_initializer=null,
-        string|callable $bias_initializer=null,
-        bool $return_sequences=null,
-        bool $return_state=null,
-        bool $go_backwards=null,
-        bool $stateful=null,
-        string $name=null,
+        ?array $input_shape=null,
+        string|object|null $activation=null,
+        string|object|null $recurrent_activation=null,
+        ?bool $use_bias=null,
+        string|callable|null $kernel_initializer=null,
+        string|callable|null $recurrent_initializer=null,
+        string|callable|null $bias_initializer=null,
+        ?bool $return_sequences=null,
+        ?bool $return_state=null,
+        ?bool $go_backwards=null,
+        ?bool $stateful=null,
+        ?string $name=null,
         )
     {
         // defaults
@@ -86,7 +86,7 @@ class LSTM extends AbstractRNNLayer
         ));
     }
 
-    public function build(mixed $variables=null, array $sampleWeights=null) : void
+    public function build(mixed $variables=null, ?array $sampleWeights=null) : void
     {
        $K = $this->backend;
         if(is_object($variables)) {

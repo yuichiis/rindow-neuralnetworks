@@ -48,7 +48,7 @@ class GraphFunction implements GraphFunctionInterface
     protected array $constants = [];
     protected ?object $alternateCreator;
 
-    public function __construct(object $backend, callable $func, object $alternateCreator=null)
+    public function __construct(object $backend, callable $func, ?object $alternateCreator=null)
     {
         $this->backend = $backend;
         $this->func = $func;
@@ -257,7 +257,7 @@ class GraphFunction implements GraphFunctionInterface
      * @return array<NDArray>
      */
     public function backward(
-        array $dOutputs, ArrayAccess $grads=null, array $oidsToCollect=null) : array
+        array $dOutputs, ?ArrayAccess $grads=null, ?array $oidsToCollect=null) : array
     {
         if(!$this->built) {
             throw new RuntimeException('Not yet built');

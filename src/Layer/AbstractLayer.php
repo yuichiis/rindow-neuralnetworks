@@ -15,14 +15,14 @@ use Rindow\NeuralNetworks\Gradient\MaskedNDArray;
 abstract class AbstractLayer extends AbstractLayerBase implements SequentialLayer
 {
     use GradientUtils;
-    abstract protected function call(NDArray $inputs, bool $training=null) : NDArray;
+    abstract protected function call(NDArray $inputs, ?bool $training=null) : NDArray;
     abstract protected function differentiate(NDArray $dOutputs) : NDArray;
 
     /**
     *  @param  array<NDArray> $dOutputs
     *  @return array<NDArray>
     */
-    final public function backward(array $dOutputs, ArrayAccess $grads=null, array $oidsToCollect=null) : array
+    final public function backward(array $dOutputs, ?ArrayAccess $grads=null, ?array $oidsToCollect=null) : array
     {
         if(count($dOutputs)!=1) {
             throw new InvalidArgumentException('dOutputs must be list containing one NDArray');
@@ -45,7 +45,7 @@ abstract class AbstractLayer extends AbstractLayerBase implements SequentialLaye
         return $this->forward(...$args);
     }
     
-    public function forward(NDArray $inputs, Variable|bool $training=null) : Variable
+    public function forward(NDArray $inputs, Variable|bool|null $training=null) : Variable
     {
         [$inputs,$rawInputs]     = $this->packAndUnpackVariable($this->backend,$inputs);
         //[$training,$rawTraining] = $this->packAndUnpackVariable($this->backend,$training);

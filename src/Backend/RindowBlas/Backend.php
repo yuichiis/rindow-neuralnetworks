@@ -94,7 +94,7 @@ class Backend
         return $mo->dtypeToString($dtype);
     }
 
-    public function toString(NDArray $array,string $format=null, bool $indent=null) : string
+    public function toString(NDArray $array,?string $format=null, ?bool $indent=null) : string
     {
         $mo = $this->matrixOperator;
         return $mo->toString($array,$format,$indent);
@@ -113,7 +113,7 @@ class Backend
     /**
      * @param array<int> $shape
      */
-    public function alloc(array $shape, int $dtype=null) : NDArray
+    public function alloc(array $shape, ?int $dtype=null) : NDArray
     {
         return $this->la->alloc($shape,$dtype);
     }
@@ -123,7 +123,7 @@ class Backend
         return $this->la->alloc($x->shape(),$x->dtype());
     }
 
-    public function array(mixed $value, int $dtype=null) : NDArray
+    public function array(mixed $value, ?int $dtype=null) : NDArray
     {
         if($value instanceof NDArray) {
             return $value;
@@ -146,7 +146,7 @@ class Backend
     /**
      * @param array<int> $shape
      */
-    public function fill(array $shape, mixed $value, int $dtype=null) : NDArray
+    public function fill(array $shape, mixed $value, ?int $dtype=null) : NDArray
     {
         return $this->matrixOperator->full(
             $shape,$value,$dtype);
@@ -335,7 +335,7 @@ class Backend
     /**
      * @param array<int> $shape
      */
-    public function zeros(array $shape, int $dtype=null) : NDArray
+    public function zeros(array $shape, ?int $dtype=null) : NDArray
     {
         $x = $this->la->alloc($shape,$dtype);
         $this->la->zeros($x);
@@ -345,7 +345,7 @@ class Backend
     /**
      * @param array<int> $shape
      */
-    public function ones(array $shape, int $dtype=null) : NDArray
+    public function ones(array $shape, ?int $dtype=null) : NDArray
     {
         $x = $this->la->alloc($shape,$dtype);
         $this->la->fill(1.0,$x);
@@ -373,7 +373,7 @@ class Backend
         return $x;
     }
 
-    public function copy(NDArray $from,NDArray $to=null) : NDArray
+    public function copy(NDArray $from,?NDArray $to=null) : NDArray
     {
         return $this->la->copy($from, $to);
     }
@@ -386,7 +386,7 @@ class Backend
     /**
      * @param array<int> $perm
      */
-    public function transpose(NDArray $x,NDArray|array $perm=null) : NDArray
+    public function transpose(NDArray $x,NDArray|array|null $perm=null) : NDArray
     {
         return $this->la->transpose($x,perm:$perm);
     }
@@ -464,7 +464,7 @@ class Backend
         }
     }
 */
-    public function add(NDArray $x, NDArray $y, bool $trans=null) : NDArray
+    public function add(NDArray $x, NDArray $y, ?bool $trans=null) : NDArray
     {
         $la = $this->la;
         if(!$trans) {
@@ -489,7 +489,7 @@ class Backend
         }
     }
 
-    public function sub(NDArray $x, NDArray $y, bool $trans=null) : NDArray
+    public function sub(NDArray $x, NDArray $y, ?bool $trans=null) : NDArray
     {
         $la = $this->la;
         if(!$trans) {
@@ -515,7 +515,7 @@ class Backend
         }
     }
 
-    public function mul(NDArray $x, NDArray $y, bool $trans=null) : NDArray
+    public function mul(NDArray $x, NDArray $y, ?bool $trans=null) : NDArray
     {
         $la = $this->la;
         if(!$trans) {
@@ -532,7 +532,7 @@ class Backend
         }
     }
 
-    public function div(NDArray $x, NDArray $y, bool $trans=null) : NDArray
+    public function div(NDArray $x, NDArray $y, ?bool $trans=null) : NDArray
     {
         $la = $this->la;
         if(!$trans) {
@@ -555,10 +555,10 @@ class Backend
     public function masking(
         NDArray $mask,
         NDArray $a,
-        float $fill=null,
-        int $mode=null,
-        int $batchDims=null,
-        int $axis=null,
+        ?float $fill=null,
+        ?int $mode=null,
+        ?int $batchDims=null,
+        ?int $axis=null,
         ) : NDArray
     {
         $la = $this->la;
@@ -574,8 +574,8 @@ class Backend
 
     public function reciprocal(
         NDArray $x,
-        float $beta=null,
-        float $alpha=null) : NDArray
+        ?float $beta=null,
+        ?float $alpha=null) : NDArray
     {
         $la = $this->la;
         $x = $la->copy($x);
@@ -591,8 +591,8 @@ class Backend
     public function update_add(
         NDArray $x,
         NDArray $increment,
-        float $alpha=null,
-        bool $trans=null) : NDArray
+        ?float $alpha=null,
+        ?bool $trans=null) : NDArray
     {
         if($trans || ($x->shape()!=$increment->shape())) {
             $this->la->add($increment,$x,$alpha,$trans);
@@ -603,7 +603,7 @@ class Backend
     }
 
     public function update_sub(NDArray $x, NDArray $decrement,
-        float $alpha=null) : NDArray
+        ?float $alpha=null) : NDArray
     {
         if($alpha===null) {
             $alpha = 1.0;
@@ -615,7 +615,7 @@ class Backend
     public function update_mul(
         NDArray $x,
         NDArray $magnifications,
-        bool $trans=null) : NDArray
+        ?bool $trans=null) : NDArray
     {
         return $this->la->multiply($magnifications,$x,$trans);
     }
@@ -623,10 +623,10 @@ class Backend
     public function update_masking(
         NDArray $a,
         NDArray $mask,
-        float $fill=null,
-        int $mode=null,
-        int $batchDims=null,
-        int $axis=null,
+        ?float $fill=null,
+        ?int $mode=null,
+        ?int $batchDims=null,
+        ?int $axis=null,
         ) : NDArray
     {
         $la = $this->la;
@@ -654,7 +654,7 @@ class Backend
     /**
     *    Y := a*X + b
     */
-    public function increment(NDArray $x, float $b, float $a=null) : NDArray
+    public function increment(NDArray $x, float $b, ?float $a=null) : NDArray
     {
         $x = $this->la->copy($x);
         return $this->la->increment($x, $b, $a);
@@ -663,12 +663,12 @@ class Backend
     /**
     *    X := a*X + b
     */
-    public function update_increment(NDArray $x, float $b, float $a=null) : NDArray
+    public function update_increment(NDArray $x, float $b, ?float $a=null) : NDArray
     {
         return $this->la->increment($x, $b, $a);
     }
 
-    public function pow(NDArray $x, float|NDArray $y, bool $trans=null) : NDArray
+    public function pow(NDArray $x, float|NDArray $y, ?bool $trans=null) : NDArray
     {
         $x = $this->la->copy($x);
         return $this->la->pow($x,$y,$trans);
@@ -686,7 +686,7 @@ class Backend
         return $this->la->sqrt($x);
     }
 
-    public function rsqrt(NDArray $x,float $beta=null, float $alpha=null) : NDArray
+    public function rsqrt(NDArray $x,?float $beta=null, ?float $alpha=null) : NDArray
     {
         $x = $this->la->copy($x);
         return $this->la->rsqrt($x,$beta,$alpha);
@@ -802,9 +802,9 @@ class Backend
 
     public function sum(
         NDArray $x,
-        int $axis=null,
-        bool $keepdims=null,
-        NDArray $output=null
+        ?int $axis=null,
+        ?bool $keepdims=null,
+        ?NDArray $output=null
         ) : int|float|NDArray
     {
         if($axis===null) {
@@ -816,9 +816,9 @@ class Backend
 
     public function mean(
         NDArray $x,
-        int $axis=null,
-        bool $keepdims=null,
-        NDArray $output=null
+        ?int $axis=null,
+        ?bool $keepdims=null,
+        ?NDArray $output=null
         ) : int|float|NDArray
     {
         if($axis===null) {
@@ -830,7 +830,7 @@ class Backend
 
     public function std(
         NDArray $x,
-        int $axis=null
+        ?int $axis=null
         ) : int|float|NDArray
     {
         $la = $this->la;
@@ -851,9 +851,9 @@ class Backend
 
     public function max(
         NDArray $x,
-        int $axis=null,
-        bool $keepdims=null,
-        NDArray $output=null
+        ?int $axis=null,
+        ?bool $keepdims=null,
+        ?NDArray $output=null
         ) : int|float|NDArray
     {
         if($axis===null) {
@@ -865,8 +865,8 @@ class Backend
 
     public function min(
         NDArray $x,
-        int $axis=null,
-        bool $keepdims=null
+        ?int $axis=null,
+        ?bool $keepdims=null
         ) : int|float|NDArray
     {
         $mo = $this->matrixOperator;
@@ -885,9 +885,9 @@ class Backend
 
     public function argMax(
         NDArray $x,
-        int $axis=null,
-        bool $keepdims=null,
-        int $dtype=null) : float|object
+        ?int $axis=null,
+        ?bool $keepdims=null,
+        ?int $dtype=null) : float|object
     {
         if($axis===null) {
             return $this->la->imax($x);
@@ -896,7 +896,7 @@ class Backend
         }
     }
 
-    public function argMin(NDArray $x,int $axis=null) : int|NDArray
+    public function argMin(NDArray $x,?int $axis=null) : int|NDArray
     {
         $mo = $this->matrixOperator;
         return $mo->argMin($x,axis:$axis);
@@ -916,7 +916,7 @@ class Backend
         return $this->randomUniformVariables($shape,0.0,1.0);
     }
 
-    public function randomSequence(int $base, int $size=null, int $seed=null) : NDArray
+    public function randomSequence(int $base, ?int $size=null, ?int $seed=null) : NDArray
     {
         $mo = $this->matrixOperator;
         return $this->la->randomSequence($base, $size, $seed);
@@ -930,11 +930,11 @@ class Backend
     public function gemm(
         NDArray $a,
         NDArray $b,
-        float $alpha=null,
-        float $beta=null,
-        NDArray $c=null,
-        bool $transA=null,
-        bool $transB=null
+        ?float $alpha=null,
+        ?float $beta=null,
+        ?NDArray $c=null,
+        ?bool $transA=null,
+        ?bool $transB=null
         ) : NDArray
     {
         return $this->la->gemm($a, $b,$alpha,$beta,$c,$transA,$transB);
@@ -943,9 +943,9 @@ class Backend
     public function batch_gemm(
         NDArray $a,
         NDArray $b,
-        float $alpha=null,
-        float $beta=null,
-        NDArray $c=null
+        ?float $alpha=null,
+        ?float $beta=null,
+        ?NDArray $c=null
         ) : NDArray
     {
         $batchSize = $a->shape()[0];
@@ -961,11 +961,11 @@ class Backend
     public function matmul(
         NDArray $a,
         NDArray $b,
-        bool $transA=null,
-        bool $transB=null,
-        NDArray $c=null,
-        float $alpha=null,
-        float $beta=null
+        ?bool $transA=null,
+        ?bool $transB=null,
+        ?NDArray $c=null,
+        ?float $alpha=null,
+        ?float $beta=null
         ) : NDArray
     {
         return $this->la->matmul($a,$b,$transA,$transB,$c,$alpha,$beta);
@@ -976,7 +976,7 @@ class Backend
         return $this->la->expandDims($x,axis:$axis);
     }
 
-    public function squeeze(NDArray $x, int $axis=null) : NDArray
+    public function squeeze(NDArray $x, ?int $axis=null) : NDArray
     {
         return $this->la->squeeze($x,axis:$axis);
     }
@@ -984,7 +984,7 @@ class Backend
     public function gather(
         NDArray $source,
         NDArray $indices,
-        int $axis=null
+        ?int $axis=null
         ) : NDArray
     {
         return $this->la->gather($source,$indices,axis:$axis);
@@ -994,8 +994,8 @@ class Backend
         NDArray $indices,
         NDArray $values,
         int $numClass,
-        int $axis=null,
-        NDArray $target=null
+        ?int $axis=null,
+        ?NDArray $target=null
         ) : NDArray
     {
         return $this->la->scatter($indices,$values,$numClass,axis:$axis,output:$target);
@@ -1005,7 +1005,7 @@ class Backend
         NDArray $target,
         NDArray $indices,
         NDArray $values,
-        int $axis=null
+        ?int $axis=null
         ) : NDArray
     {
         return $this->la->scatterAdd($indices,$values,$target,axis:$axis);
@@ -1014,11 +1014,11 @@ class Backend
     public function gatherb(
         NDArray $params,
         NDarray $indices,
-        int $axis=null,
-        int $batchDims=null,
-        int $detailDepth=null,
-        int $indexDepth=null,
-        NDArray $outputs=null,
+        ?int $axis=null,
+        ?int $batchDims=null,
+        ?int $detailDepth=null,
+        ?int $indexDepth=null,
+        ?NDArray $outputs=null,
         ) : NDArray
     {
         return $this->la->gatherb(
@@ -1039,11 +1039,11 @@ class Backend
         NDarray $indices,
         NDArray $updates,
         array $shape,
-        int $axis=null,
-        int $batchDims=null,
-        int $detailDepth=null,
-        int $indexDepth=null,
-        NDArray $outputs=null,
+        ?int $axis=null,
+        ?int $batchDims=null,
+        ?int $detailDepth=null,
+        ?int $indexDepth=null,
+        ?NDArray $outputs=null,
         ) : NDArray
     {
         return $this->la->scatterb(
@@ -1065,11 +1065,11 @@ class Backend
         NDarray $indices,
         NDArray $updates,
         array $shape,
-        int $axis=null,
-        int $batchDims=null,
-        int $detailDepth=null,
-        int $indexDepth=null,
-        NDArray $outputs=null,
+        ?int $axis=null,
+        ?int $batchDims=null,
+        ?int $detailDepth=null,
+        ?int $indexDepth=null,
+        ?NDArray $outputs=null,
         ) : NDArray
     {
         return $this->la->scatterbAdd(
@@ -1091,7 +1091,7 @@ class Backend
     public function slice(
         NDArray $input,
         array $begin, array $size,
-        NDArray $output=null
+        ?NDArray $output=null
         ) : NDArray
     {
         return $this->la->slice(
@@ -1122,7 +1122,7 @@ class Backend
      */
     public function stack(
         array $inputs,
-        int $axis=null
+        ?int $axis=null
         ) : NDArray
     {
         return $this->la->stack(
@@ -1136,7 +1136,7 @@ class Backend
      */
     public function concat(
         array $inputs,
-        int $axis=null
+        ?int $axis=null
         ) : NDArray 
     {
         return $this->la->concat(
@@ -1152,7 +1152,7 @@ class Backend
     public function split(
         NDArray $value,
         array $sizeSplits,
-        int $axis=null
+        ?int $axis=null
         ) : array
     {
         return $this->la->split(
@@ -1165,8 +1165,8 @@ class Backend
     public function repeat(
         NDArray $inputs,
         int $repeats,
-        int $axis=null,
-        bool $keepdims=null,
+        ?int $axis=null,
+        ?bool $keepdims=null,
         ) : NDArray
     {
         return $this->la->repeat(
@@ -1188,7 +1188,7 @@ class Backend
     /**
      * @param array<int> $shape
      */
-    public function randomUniformVariables(array $shape, int|float $low, int|float $high, int $dtype=null, int $seed=null, NDArray $x=null) : NDArray
+    public function randomUniformVariables(array $shape, int|float $low, int|float $high, ?int $dtype=null, ?int $seed=null, ?NDArray $x=null) : NDArray
     {
         return $this->la->randomUniform($shape,$low,$high,$dtype,$seed,$x);
     }
@@ -1196,7 +1196,7 @@ class Backend
     /**
      * @param array<int> $shape
      */
-    public function randomNormalVariables(array $shape, float $mean, float $scale, int $dtype=null, int $seed=null, NDArray $x=null) : NDArray
+    public function randomNormalVariables(array $shape, float $mean, float $scale, ?int $dtype=null, ?int $seed=null, ?NDArray $x=null) : NDArray
     {
         return $this->la->randomNormal($shape,$mean,$scale,$dtype,$seed,$x);
     }
@@ -1359,11 +1359,11 @@ class Backend
         object $status,
         NDArray $inputs,
         NDArray $kernel,
-        NDArray $bias=null,
-        array $strides=null,
-        string $padding=null,
-        string $data_format=null,
-        array $dilation_rate=null
+        ?NDArray $bias=null,
+        ?array $strides=null,
+        ?string $padding=null,
+        ?string $data_format=null,
+        ?array $dilation_rate=null
         ) : NDArray
     {
         $rank = 1;
@@ -1384,7 +1384,7 @@ class Backend
         object $status,
         NDArray $dOutputs,
         NDArray $dKernel,
-        NDArray $dBias=null
+        ?NDArray $dBias=null
         ): NDArray
     {
         $rank = 1;
@@ -1406,11 +1406,11 @@ class Backend
         object $status,
         NDArray $inputs,
         array $poolSize,
-        array $strides=null,
-        string $padding=null,
-        string $data_format=null,
-        array $dilation_rate=null,
-        string $pool_mode=null
+        ?array $strides=null,
+        ?string $padding=null,
+        ?string $data_format=null,
+        ?array $dilation_rate=null,
+        ?string $pool_mode=null
         ) : NDArray
     {
         $rank = 1;
@@ -1448,11 +1448,11 @@ class Backend
         object $status,
         NDArray $inputs,
         NDArray $kernel,
-        NDArray $bias=null,
-        array $strides=null,
-        string $padding=null,
-        string $data_format=null,
-        array $dilation_rate=null
+        ?NDArray $bias=null,
+        ?array $strides=null,
+        ?string $padding=null,
+        ?string $data_format=null,
+        ?array $dilation_rate=null
         ) : NDArray
     {
         $rank = 2;
@@ -1473,7 +1473,7 @@ class Backend
         object $status,
         NDArray $dOutputs,
         NDArray $dKernel,
-        NDArray $dBias=null
+        ?NDArray $dBias=null
         ): NDArray
     {
         $rank = 2;
@@ -1495,11 +1495,11 @@ class Backend
         object $status,
         NDArray $inputs,
         array $poolSize,
-        array $strides=null,
-        string $padding=null,
-        string $data_format=null,
-        array $dilation_rate=null,
-        string $pool_mode=null
+        ?array $strides=null,
+        ?string $padding=null,
+        ?string $data_format=null,
+        ?array $dilation_rate=null,
+        ?string $pool_mode=null
         ) : NDArray
     {
         $rank = 2;
@@ -1537,11 +1537,11 @@ class Backend
         object $status,
         NDArray $inputs,
         NDArray $kernel,
-        NDArray $bias=null,
-        array $strides=null,
-        string $padding=null,
-        string $data_format=null,
-        array $dilation_rate=null
+        ?NDArray $bias=null,
+        ?array $strides=null,
+        ?string $padding=null,
+        ?string $data_format=null,
+        ?array $dilation_rate=null
         ) : NDArray
     {
         $rank = 3;
@@ -1562,7 +1562,7 @@ class Backend
         object $status,
         NDArray $dOutputs,
         NDArray $dKernel,
-        NDArray $dBias=null
+        ?NDArray $dBias=null
         ): NDArray
     {
         $rank = 3;
@@ -1584,11 +1584,11 @@ class Backend
         object $status,
         NDArray $inputs,
         array $poolSize,
-        array $strides=null,
-        string $padding=null,
-        string $data_format=null,
-        array $dilation_rate=null,
-        string $pool_mode=null
+        ?array $strides=null,
+        ?string $padding=null,
+        ?string $data_format=null,
+        ?array $dilation_rate=null,
+        ?string $pool_mode=null
         ) : NDArray
     {
         $rank = 3;
@@ -1627,11 +1627,11 @@ class Backend
         object $status,
         NDArray $inputs,
         NDArray $kernel,
-        NDArray $bias=null,
-        array $strides=null,
-        string $padding=null,
-        string $data_format=null,
-        array $dilation_rate=null
+        ?NDArray $bias=null,
+        ?array $strides=null,
+        ?string $padding=null,
+        ?string $data_format=null,
+        ?array $dilation_rate=null
         ) : NDArray
     {
         if($inputs->ndim()!=$rank+2) {
@@ -1713,7 +1713,7 @@ class Backend
         object $status,
         NDArray $dOutputs,
         NDArray $dKernel,
-        NDArray $dBias=null
+        ?NDArray $dBias=null
         ): NDArray
     {
         if($dOutputs->ndim()!=$rank+2) {
@@ -1764,11 +1764,11 @@ class Backend
         object $status,
         NDArray $inputs,
         array $poolSize,
-        array $strides=null,
-        string $padding=null,
-        string $data_format=null,
-        array $dilation_rate=null,
-        string $pool_mode=null
+        ?array $strides=null,
+        ?string $padding=null,
+        ?string $data_format=null,
+        ?array $dilation_rate=null,
+        ?string $pool_mode=null
         ) : NDArray
     {
         if($inputs->ndim()!=$rank+2) {
@@ -1940,9 +1940,9 @@ class Backend
         array $inputShape,
         array $filterSize,
         array $strides,
-        string $padding=null,
-        string $data_format=null,
-        array $dilation_rate=null
+        ?string $padding=null,
+        ?string $data_format=null,
+        ?array $dilation_rate=null
         ) : array
     {
         if($padding=='same') {
@@ -1977,7 +1977,7 @@ class Backend
     // MSE
     public function meanSquaredError(
         NDArray $trues, NDArray $predicts,
-        string $reduction=null,
+        ?string $reduction=null,
         ) : NDArray
     {
         $la = $this->la;
@@ -2001,7 +2001,7 @@ class Backend
 
     public function dMeanSquaredError(
         NDArray $dLoss, NDArray $trues, NDArray $predicts,
-        string $reduction=null,
+        ?string $reduction=null,
         ) : NDarray
     {
         $la = $this->la;
@@ -2023,8 +2023,8 @@ class Backend
 
     public function sparseCategoricalCrossEntropy(
         NDArray $trues, NDArray $predicts,
-        bool $fromLogits=null,
-        string $reduction=null,
+        ?bool $fromLogits=null,
+        ?string $reduction=null,
         ) : NDArray
     {
         $la = $this->la;
@@ -2089,8 +2089,8 @@ class Backend
 
     public function dSparseCategoricalCrossEntropy(
         NDArray $dLoss, NDArray $trues, NDArray $predicts,
-        bool $fromLogits=null,
-        string $reduction=null,
+        ?bool $fromLogits=null,
+        ?string $reduction=null,
         ) : NDArray
     {
         $la = $this->la;
@@ -2179,8 +2179,8 @@ class Backend
 
     public function categoricalCrossEntropy(
         NDArray $trues, NDArray $predicts,
-        bool $fromLogits=null,
-        string $reduction=null,
+        ?bool $fromLogits=null,
+        ?string $reduction=null,
         ) : NDArray
     {
         $la = $this->la;
@@ -2214,8 +2214,8 @@ class Backend
 
     public function dCategoricalCrossEntropy(
         NDArray $dLoss, NDArray $trues, NDArray $predicts,
-        bool $fromLogits=null,
-        string $reduction=null,
+        ?bool $fromLogits=null,
+        ?string $reduction=null,
         ) : NDArray
     {
         $la = $this->la;
@@ -2268,8 +2268,8 @@ class Backend
 
     public function binaryCrossEntropy(
         NDArray $trues, NDArray $predicts,
-        bool $fromLogits=null,
-        string $reduction=null,
+        ?bool $fromLogits=null,
+        ?string $reduction=null,
         ) : NDArray
     {
         if($predicts->ndim()!=2){
@@ -2310,8 +2310,8 @@ class Backend
 
     public function dBinaryCrossEntropy(
         NDArray $dLoss, NDArray $trues, NDArray $predicts,
-        bool $fromLogits=null,
-        string $reduction=null,
+        ?bool $fromLogits=null,
+        ?string $reduction=null,
         ) : NDArray
     {
         $la = $this->la;
@@ -2413,10 +2413,10 @@ class Backend
         callable $stepFunction,
         NDArray $inputs,
         array $initialStates,
-        bool $training=null,
-        NDArray $outputs=null,
-        bool $goBackwards=null,
-        NDArray $mask=null,
+        ?bool $training=null,
+        ?NDArray $outputs=null,
+        ?bool $goBackwards=null,
+        ?NDArray $mask=null,
     ) : array
     {
         $inputLength = $inputs->shape()[1];
@@ -2486,8 +2486,8 @@ class Backend
         array $dStates,
         array $calcStates,
         NDArray $dInputs,
-        bool $goBackwards=null,
-        NDArray $mask=null,
+        ?bool $goBackwards=null,
+        ?NDArray $mask=null,
     ) : array
     {
         $ndim = $dOutputs->ndim();
@@ -2549,10 +2549,10 @@ class Backend
 
     public function cumsum(
         NDArray $inputs,
-        int $axis=null,
-        bool $exclusive=null,
-        bool $reverse=null,
-        NDArray $outputs=null,
+        ?int $axis=null,
+        ?bool $exclusive=null,
+        ?bool $reverse=null,
+        ?NDArray $outputs=null,
     ) : NDArray
     {
         return $this->la->cumsum(
@@ -2566,9 +2566,9 @@ class Backend
 
     public function range(
         int|float $limit,
-        int|float $start=null,
-        int|float $delta=null,
-        int $dtype=null
+        int|float|null $start=null,
+        int|float|null $delta=null,
+        ?int $dtype=null
         ) : NDArray
     {
         return $this->la->range(limit:$limit,start:$start,delta:$delta,dtype:$dtype);

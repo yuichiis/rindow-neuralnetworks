@@ -6,7 +6,7 @@ use InvalidArgumentException;
 
 class Softmax extends AbstractActivation
 {
-    protected function call(NDArray $inputs, bool $training=null, NDArray $mask=null) : NDArray
+    protected function call(NDArray $inputs, ?bool $training=null, ?NDArray $mask=null) : NDArray
     {
         $K = $this->backend;
         if($mask===null) {

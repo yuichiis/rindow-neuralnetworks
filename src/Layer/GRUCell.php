@@ -30,14 +30,14 @@ class GRUCell extends AbstractRNNCell
     public function __construct(
         object $backend,
         int $units,
-        array $input_shape=null,
-        string|object $activation=null,
-        string|object $recurrent_activation=null,
-        bool $use_bias=null,
-        string|callable $kernel_initializer=null,
-        string|callable $recurrent_initializer=null,
-        string|callable $bias_initializer=null,
-        bool $reset_after=null,
+        ?array $input_shape=null,
+        string|object|null $activation=null,
+        string|object|null $recurrent_activation=null,
+        ?bool $use_bias=null,
+        string|callable|null $kernel_initializer=null,
+        string|callable|null $recurrent_initializer=null,
+        string|callable|null $bias_initializer=null,
+        ?bool $reset_after=null,
     )
     {
         // defaults 
@@ -68,7 +68,7 @@ class GRUCell extends AbstractRNNCell
         $this->resetAfter = $reset_after;
     }
 
-    public function build(mixed $inputShape=null, array $sampleWeights=null) : void
+    public function build(mixed $inputShape=null, ?array $sampleWeights=null) : void
     {
         $K = $this->backend;
         $kernelInitializer = $this->kernelInitializer;
@@ -162,8 +162,8 @@ class GRUCell extends AbstractRNNCell
     protected function call(
         NDArray $inputs,
         array $states,
-        bool $training=null,
-        object $calcState=null
+        ?bool $training=null,
+        ?object $calcState=null
         ) : array
     {
         $K = $this->backend;

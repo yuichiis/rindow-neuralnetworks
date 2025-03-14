@@ -15,8 +15,8 @@ class Activation extends AbstractLayer
     public function __construct(
         object $backend,
         string|object $activation,
-        array $input_shape=null,
-        string $name=null,
+        ?array $input_shape=null,
+        ?string $name=null,
     )
     {
         // defaults
@@ -40,7 +40,7 @@ class Activation extends AbstractLayer
 
     protected function call(
         NDArray $inputs,
-        bool $training=null,
+        ?bool $training=null,
         mixed ...$kargs
     ) : NDArray
     {

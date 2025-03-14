@@ -18,11 +18,11 @@ class Debug extends AbstractLayer
      */
     public function __construct(
         object $backend,
-        array $input_shape=null,
-        bool $enable=null,
-        callable $forward_hook=null,
-        callable $backward_hook=null,
-        string $name=null,
+        ?array $input_shape=null,
+        ?bool $enable=null,
+        ?callable $forward_hook=null,
+        ?callable $backward_hook=null,
+        ?string $name=null,
     )
     {
         $enable ??= false;
@@ -35,7 +35,7 @@ class Debug extends AbstractLayer
         $this->initName($name,'debug');
     }
 
-    public function build(mixed $variable=null, array $sampleWeights=null) : void
+    public function build(mixed $variable=null, ?array $sampleWeights=null) : void
     {
         $K = $this->backend;
 
@@ -62,7 +62,7 @@ class Debug extends AbstractLayer
         ];
     }
 
-    protected function call(NDArray $inputs, bool $training=null) : NDArray
+    protected function call(NDArray $inputs, ?bool $training=null) : NDArray
     {
         $K = $this->backend;
         if($this->enable && $this->forwardHook) {

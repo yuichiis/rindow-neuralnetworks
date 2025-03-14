@@ -67,8 +67,8 @@ $inputsFilter = new class ($mo) implements DatasetFilter
     }
     public function translate(
         iterable $img,
-        iterable $label=null,
-        array $options=null) : array
+        ?iterable $label=null,
+        ?array $options=null) : array
     {
         $la = $this->mo->la();
         $dataSize = $img->shape()[0];

@@ -83,7 +83,7 @@ trait GraphUtils
      */
     public function backwardPipeline(
         object $backend,
-        array $pipeline, ArrayAccess $grads=null, array $oidsToCollect=null) : void
+        array $pipeline, ?ArrayAccess $grads=null, ?array $oidsToCollect=null) : void
     {
         $K = $backend;
         foreach($pipeline as $func) {

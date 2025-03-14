@@ -27,10 +27,10 @@ interface Model extends Module
      * @param array<int|string,string|Metric> $metrics
      */
     public function compile(
-        string|object $optimizer=null,
-        string|object $loss=null,
-        array $metrics=null,
-        int $numInputs=null,
+        string|object|null $optimizer=null,
+        string|object|null $loss=null,
+        ?array $metrics=null,
+        ?int $numInputs=null,
     ) : void;
 
     /**
@@ -40,14 +40,14 @@ interface Model extends Module
      */
     public function fit(
         mixed $inputs,
-        NDArray $tests=null,
-        int $batch_size=null,
-        int $epochs=null,
-        int $verbose=null,
-        array|Dataset $validation_data=null,
-        array $callbacks=null,
-        bool $shuffle=null,
-        object $filter=null,
+        ?NDArray $tests=null,
+        ?int $batch_size=null,
+        ?int $epochs=null,
+        ?int $verbose=null,
+        array|Dataset|null $validation_data=null,
+        ?array $callbacks=null,
+        ?bool $shuffle=null,
+        ?object $filter=null,
     ) : array;
 
     /**
@@ -56,10 +56,10 @@ interface Model extends Module
      */
     public function evaluate(
         mixed $inputs,
-        NDArray $trues=null, 
-        int $batch_size=null,
-        int $verbose=null,
-        array|Broadcaster $callbacks=null,
+        ?NDArray $trues=null, 
+        ?int $batch_size=null,
+        ?int $verbose=null,
+        array|Broadcaster|null $callbacks=null,
     ) : array;
 
     /**
@@ -68,7 +68,7 @@ interface Model extends Module
      */
     public function predict(
         mixed $inputs, 
-        array|Broadcaster $callbacks=null,
+        array|Broadcaster|null $callbacks=null,
         mixed ...$options
     ) : NDArray;
 
@@ -80,7 +80,7 @@ interface Model extends Module
     /**
      * @param array<mixed,mixed> $modelWeights
      */
-    public function saveWeights(iterable &$modelWeights,bool $portable=null) : void;
+    public function saveWeights(iterable &$modelWeights,?bool $portable=null) : void;
 
     /**
      * @param array<mixed,mixed> $modelWeights

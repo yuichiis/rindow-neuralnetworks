@@ -29,8 +29,8 @@ class Modules implements Module, ArrayAccess, Countable, IteratorAggregate
      * @param array<Module> $modules
      */
     public function __construct(
-        array $modules=null,
-        string $name=null,
+        ?array $modules=null,
+        ?string $name=null,
     )
     {
         $this->name = $name;

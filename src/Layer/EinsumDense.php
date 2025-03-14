@@ -38,12 +38,12 @@ class EinsumDense extends AbstractLayer
         object $backend,
         string $equation,
         int|array $output_shape,
-        array $input_shape=null,
-        string|object $activation=null,
-        string $bias_axes=null,
-        string|object $kernel_initializer=null,
-        string|object $bias_initializer=null,
-        string $name=null,
+        ?array $input_shape=null,
+        string|object|null $activation=null,
+        ?string $bias_axes=null,
+        string|object|null $kernel_initializer=null,
+        string|object|null $bias_initializer=null,
+        ?string $name=null,
     )
     {
         $kernel_initializer ??= 'glorot_uniform';
@@ -73,7 +73,7 @@ class EinsumDense extends AbstractLayer
         return $this->equation;
     }
     
-    public function build(mixed $variable=null, array $sampleWeights=null) : void
+    public function build(mixed $variable=null, ?array $sampleWeights=null) : void
     {
         $K = $this->backend;
         $kernelInitializer = $this->kernelInitializer;
@@ -173,7 +173,7 @@ class EinsumDense extends AbstractLayer
         return $this->full_output_shape;
     }
     
-    protected function call(NDArray $inputs, bool $training=null) : NDArray
+    protected function call(NDArray $inputs, ?bool $training=null) : NDArray
     {
         $K = $this->backend;
         $container = $this->container();
@@ -341,7 +341,7 @@ class EinsumDense extends AbstractLayer
         ?array $bias_axes,
         ?array $input_shape,
         array $output_shape,
-        bool $left_elided=null
+        ?bool $left_elided=null
     ) : array
     {
         //echo "einsum analyze_split_string input_shape arg=(".implode(',',$input_shape).")\n";

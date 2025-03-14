@@ -16,8 +16,8 @@ class ArraySpec implements ArraySpecInterface
      */
     public function __construct(
         ArrayShapeInterface|array $shape,
-        int $dtype=null,
-        string $name=null,
+        ?int $dtype=null,
+        ?string $name=null,
     ) {
         if(is_array($shape)) {
             $shape = new ArrayShape($shape);

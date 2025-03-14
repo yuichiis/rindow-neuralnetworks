@@ -27,12 +27,12 @@ class Dense extends AbstractLayer
     public function __construct(
         object $backend,
         int $units,
-        array $input_shape=null,
-        string|object $activation=null,
-        bool $use_bias=null,
-        string|callable $kernel_initializer=null,
-        string|callable $bias_initializer=null,
-        string $name=null,
+        ?array $input_shape=null,
+        string|object|null $activation=null,
+        ?bool $use_bias=null,
+        string|callable|null $kernel_initializer=null,
+        string|callable|null $bias_initializer=null,
+        ?string $name=null,
     )
     {
         // defaults
@@ -57,7 +57,7 @@ class Dense extends AbstractLayer
         $this->setActivation($activation);
     }
 
-    public function build(mixed $variable=null, array $sampleWeights=null) : void
+    public function build(mixed $variable=null, ?array $sampleWeights=null) : void
     {
         $K = $this->backend;
         $kernelInitializer = $this->kernelInitializer;
@@ -135,7 +135,7 @@ class Dense extends AbstractLayer
         ];
     }
 
-    protected function call(NDArray $inputs, bool $training=null) : NDArray
+    protected function call(NDArray $inputs, ?bool $training=null) : NDArray
     {
         $K = $this->backend;
         $container = $this->container();

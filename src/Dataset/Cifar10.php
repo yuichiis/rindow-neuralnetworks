@@ -70,7 +70,7 @@ class Cifar10
     /**
      * @return array{Traversable<array{NDArray,NDArray}>,Traversable<array{NDArray,NDArray}>}
      */
-    public function loadData(string $filePath=null) : array
+    public function loadData(?string $filePath=null) : array
     {
         $mo = $this->matrixOperator;
         if($filePath===null) {
@@ -85,7 +85,7 @@ class Cifar10
         return $dataset;
     }
 
-    public function cleanPickle(string $filePath=null) : void
+    public function cleanPickle(?string $filePath=null) : void
     {
         if($filePath===null) {
             $filePath = $this->saveFile;

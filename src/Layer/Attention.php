@@ -27,10 +27,10 @@ class Attention extends AbstractAttentionLayer
      */
     public function __construct(
         object $backend,
-        array $input_shapes=null,
-        bool $use_scale=null,
-        bool $do_not_expand_mask=null,
-        string $name=null,
+        ?array $input_shapes=null,
+        ?bool $use_scale=null,
+        ?bool $do_not_expand_mask=null,
+        ?string $name=null,
     )
     {
         // defaults
@@ -55,7 +55,7 @@ class Attention extends AbstractAttentionLayer
         }
     }
 
-    public function build(mixed $variables=null, array $sampleWeights=null) : void
+    public function build(mixed $variables=null, ?array $sampleWeights=null) : void
     {
         $K = $this->backend;
         $inputShapes = $this->normalizeInputShapes($variables);
@@ -129,15 +129,12 @@ class Attention extends AbstractAttentionLayer
      */
     public function forward(
         array $inputs, 
-        Variable|bool $training=null, 
-        Variable|bool $returnAttentionScores=null,
-        array $mask=null,
+        Variable|bool|null $training=null, 
+        Variable|bool|null $returnAttentionScores=null,
+        ?array $mask=null,
         )
     {
         //$outputs = null;
-        if(!is_array($inputs)) {
-            throw new InvalidArgumentException('inputs must be list of Variable');
-        }
         [$inputs,$rawInputs]     = $this->packAndUnpackVariables($this->backend,$inputs);
         $options = [];
         [$training,$rawTraining] = $this->packAndUnpackVariable($this->backend,$training,unbackpropagatable:true);
@@ -228,9 +225,9 @@ class Attention extends AbstractAttentionLayer
      */
     protected function call(
         array $inputs,
-        bool $training=null,
-        bool $returnAttentionScores=null,
-        array $mask=null,
+        ?bool $training=null,
+        ?bool $returnAttentionScores=null,
+        ?array $mask=null,
         ) : NDArray|array
     {
         $K = $this->backend;

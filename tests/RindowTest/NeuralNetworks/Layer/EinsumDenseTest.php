@@ -3,6 +3,7 @@ namespace RindowTest\NeuralNetworks\Layer\EinsumDenseTest;
 
 use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Interop\Polite\Math\Matrix\NDArray;
 use Rindow\Math\Matrix\MatrixOperator;
 use Rindow\NeuralNetworks\Builder\NeuralNetworks;
@@ -267,9 +268,7 @@ class EinsumDenseTest extends TestCase
         ];
     }
 
-    /**
-    * @dataProvider providerDefaultInitialize
-    */
+    #[DataProvider('providerDefaultInitialize')]
     public function testDefaultInitialize($params)
     {
         extract($params);
@@ -317,9 +316,7 @@ class EinsumDenseTest extends TestCase
         //$layer->unlink();
     }
 
-    /**
-    * @dataProvider providerDefaultInitialize
-    */
+    #[DataProvider('providerDefaultInitialize')]
     public function testSetInputShape($params)
     {
         extract($params);

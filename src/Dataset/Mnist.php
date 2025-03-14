@@ -64,7 +64,7 @@ class Mnist
     /**
      * @return array{array{NDArray,NDArray},array{NDArray,NDArray}}
      */
-    public function loadData(string $filePath=null) : array
+    public function loadData(?string $filePath=null) : array
     {
         $mo = $this->matrixOperator;
         if($filePath===null) {
@@ -80,7 +80,7 @@ class Mnist
                 [$dataset['test_images'],  $dataset['test_labels']]];
     }
 
-    public function cleanPickle(string $filePath=null) : void
+    public function cleanPickle(?string $filePath=null) : void
     {
         if($filePath===null) {
             $filePath = $this->saveFile;

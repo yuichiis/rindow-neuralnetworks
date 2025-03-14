@@ -2,6 +2,7 @@
 namespace RindowTest\NeuralNetworks\Layer\MultiHeadAttentionTest;
 
 use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Interop\Polite\Math\Matrix\NDArray;
 use Rindow\Math\Matrix\MatrixOperator;
 use Rindow\Math\Matrix\Drivers\Service;
@@ -68,9 +69,7 @@ class MultiHeadAttentionTest extends TestCase
         ];
     }
 
-    /**
-    * @dataProvider providerDefaultInitialize
-    */
+    #[DataProvider('providerDefaultInitialize')]
     public function testDefaultInitialize($params)
     {
         extract($params);
@@ -110,9 +109,7 @@ class MultiHeadAttentionTest extends TestCase
         $this->assertEquals($expected_output_shape,$layer->outputShape());
     }
 
-    /**
-    * @dataProvider providerDefaultInitialize
-    */
+    #[DataProvider('providerDefaultInitialize')]
     public function testSetInputShape($params)
     {
         extract($params);

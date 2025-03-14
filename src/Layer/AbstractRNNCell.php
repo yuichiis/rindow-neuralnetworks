@@ -12,13 +12,13 @@ abstract class AbstractRNNCell extends AbstractLayerBase implements RNNCell
 {
     /**
      * @param array<NDArray> $states
-     * @return array{NDArray}|array{NDArray,array<NDArray>}
+     * @return array<NDArray>
      */
     abstract protected function call(
         NDArray $inputs,
         array $states,
-        bool $training=null,
-        object $calcState=null
+        ?bool $training=null,
+        ?object $calcState=null
     ) : array;
 
     /**
@@ -102,8 +102,8 @@ abstract class AbstractRNNCell extends AbstractLayerBase implements RNNCell
     final public function forward(
         NDArray $inputs,
         array $states,
-        bool $training=null,
-        object $calcState=null,
+        ?bool $training=null,
+        ?object $calcState=null,
         ) : array
     {
         $this->assertInputShape($inputs,'forward');

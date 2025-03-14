@@ -52,10 +52,10 @@ abstract class AbstractRNNLayer extends AbstractLayerBase implements RNNLayer
     }
 
     protected function setFlags(
-        bool $returnSequences=null,
-        bool $returnState=null,
-        bool $goBackwards=null,
-        bool $stateful=null,
+        ?bool $returnSequences=null,
+        ?bool $returnState=null,
+        ?bool $goBackwards=null,
+        ?bool $stateful=null,
         ) : void
     {
         $this->returnSequences = $returnSequences;
@@ -77,7 +77,7 @@ abstract class AbstractRNNLayer extends AbstractLayerBase implements RNNLayer
     /**
      * @param array<NDArray> $states
      */
-    protected function assertStatesShape(array $states=null,string $direction) : void
+    protected function assertStatesShape(?array $states,string $direction) : void
     {
         if(!$this->shapeInspection)
             return;
@@ -138,8 +138,8 @@ abstract class AbstractRNNLayer extends AbstractLayerBase implements RNNLayer
      */
     final public function backward(
         array $dOutputs,
-        ArrayAccess $grads=null,
-        array $oidsToCollect=null
+        ?ArrayAccess $grads=null,
+        ?array $oidsToCollect=null
         ) : array
     {
         if(!$this->shapeInspection) {
@@ -175,8 +175,8 @@ abstract class AbstractRNNLayer extends AbstractLayerBase implements RNNLayer
      */
     protected function call(
         array $inputs,
-        bool $training=null,
-        NDArray $mask=null,
+        ?bool $training=null,
+        ?NDArray $mask=null,
         ) : array
     {
         $K = $this->backend;
@@ -273,7 +273,7 @@ abstract class AbstractRNNLayer extends AbstractLayerBase implements RNNLayer
     }
 
     /**
-     * @return NDArray|array<Variable>
+     * @return NDArray|array{Variable,array<Variable>}
      */
     public function __invoke(mixed ...$args) : NDArray|array
     {
@@ -284,14 +284,14 @@ abstract class AbstractRNNLayer extends AbstractLayerBase implements RNNLayer
      * param Variable  $inputs
      * param bool      $training
      * param array<Variable> $initialStates
-     * return NDArray|array<Variable> outputs
+     * return Variable|array<Variable> outputs
      */
     final public function forward(
         object $inputs,
-        Variable|bool $training=null,
-        array $initialStates=null,
-        NDArray $mask=null,
-        ) : NDArray|array
+        Variable|bool|null $training=null,
+        ?array $initialStates=null,
+        ?NDArray $mask=null,
+        ) : Variable|array
     {
         $inputs = [$inputs];
         if($initialStates!==null) {

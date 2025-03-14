@@ -52,8 +52,8 @@ abstract class AbstractModel implements Model
 
     public function __construct(
         Builder $builder,
-        HDAFactory $hdaFactory=null,
-        string $name=null,
+        ?HDAFactory $hdaFactory=null,
+        ?string $name=null,
     )
     {
         $this->builder = $builder;
@@ -224,10 +224,10 @@ abstract class AbstractModel implements Model
     }
 
     public function compile(
-        string|object $optimizer=null,
-        string|object $loss=null,
-        array $metrics=null,
-        int $numInputs=null,
+        string|object|null $optimizer=null,
+        string|object|null $loss=null,
+        ?array $metrics=null,
+        ?int $numInputs=null,
     ) : void
     {
         $optimizer = $optimizer ?? 'SGD';
@@ -248,14 +248,14 @@ abstract class AbstractModel implements Model
 
     public function fit(
         mixed $inputs,
-        NDArray $tests=null,
-        int $batch_size=null,
-        int $epochs=null,
-        int $verbose=null,
-        array|Dataset $validation_data=null,
-        array $callbacks=null,
-        bool $shuffle=null,
-        object $filter=null,
+        ?NDArray $tests=null,
+        ?int $batch_size=null,
+        ?int $epochs=null,
+        ?int $verbose=null,
+        array|Dataset|null $validation_data=null,
+        ?array $callbacks=null,
+        ?bool $shuffle=null,
+        ?object $filter=null,
     ) : array
     {
         if($this->optimizer==null || $this->lossFunction==null) {
@@ -494,10 +494,10 @@ abstract class AbstractModel implements Model
 
     public function evaluate(
         mixed $inputs,
-        NDArray $trues=null,
-        int $batch_size=null,
-        int $verbose=null,
-        array|object $callbacks=null,
+        ?NDArray $trues=null,
+        ?int $batch_size=null,
+        ?int $verbose=null,
+        array|object|null $callbacks=null,
     ) : array
     {
         // defaults
@@ -571,7 +571,7 @@ abstract class AbstractModel implements Model
 
     public function predict(
         mixed $inputs,
-        array|Broadcaster $callbacks=null,
+        array|Broadcaster|null $callbacks=null,
         mixed ...$options
     ) : NDArray
     {
@@ -768,7 +768,7 @@ abstract class AbstractModel implements Model
      * @return array<NDArray>
      */
     public function backward(
-        array $dOutputs, ArrayAccess $grads=null, array $oidsToCollect=null) : array
+        array $dOutputs, ?ArrayAccess $grads=null, ?array $oidsToCollect=null) : array
     {
         return $this->graph['model']->backward($dOutputs, $grads, $oidsToCollect);
     }
@@ -969,7 +969,7 @@ abstract class AbstractModel implements Model
         $this->display('Total params: '.$totalParams."\n");
     }
 
-    public function saveWeights(iterable &$modelWeights,bool $portable=null) : void
+    public function saveWeights(iterable &$modelWeights,?bool $portable=null) : void
     {
         $K = $this->backend;
         $mo = $K->localMatrixOperator();
@@ -1032,7 +1032,7 @@ abstract class AbstractModel implements Model
         return $ndarray;
     }
 
-    public function saveWeightsToFile(string|object $filepath,bool $portable=null) : void
+    public function saveWeightsToFile(string|object $filepath,?bool $portable=null) : void
     {
         $f = $this->hdaFactory->open($filepath);
         $f['modelWeights'] = [];

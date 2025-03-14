@@ -26,10 +26,10 @@ class Embedding extends AbstractLayer
         object $backend,
         int $inputDim,
         int $outputDim,
-        int $input_length=null,
-        string|callable $embeddings_initializer=null,
-        bool $mask_zero=null,
-        string $name=null,
+        ?int $input_length=null,
+        string|callable|null $embeddings_initializer=null,
+        ?bool $mask_zero=null,
+        ?string $name=null,
     )
     {
         // defaults
@@ -51,7 +51,7 @@ class Embedding extends AbstractLayer
         $this->allocateWeights(['kernel']);
     }
 
-    public function build(mixed $variable=null, array $sampleWeights=null) : void
+    public function build(mixed $variable=null, ?array $sampleWeights=null) : void
     {
         $K = $this->backend;
         $embeddingsInitializer = $this->embeddingsInitializer;
@@ -104,7 +104,7 @@ class Embedding extends AbstractLayer
     }
 
 
-    protected function call(NDArray $inputs, bool $training=null) : NDArray
+    protected function call(NDArray $inputs, ?bool $training=null) : NDArray
     {
         // inputs:  [batch,len]
         // kernel:  [inputDim,outputDim] (numClass=inputDim)
@@ -225,7 +225,7 @@ class Embedding extends AbstractLayer
         return $mask;
     }
 
-    //protected function call(NDArray $inputs, bool $training=null) : NDArray
+    //protected function call(NDArray $inputs, ?bool $training=null) : NDArray
     //{
     //    $K = $this->backend;
     //    $container = $this->container();

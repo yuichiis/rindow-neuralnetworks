@@ -29,9 +29,9 @@ abstract class AbstractAttentionLayer extends AbstractLayerBase
      */
     abstract protected function call(
         array $inputs,
-        bool $training=null,
-        bool $returnAttentionScores=null,
-        array $mask=null,
+        ?bool $training=null,
+        ?bool $returnAttentionScores=null,
+        ?array $mask=null,
     ) : NDArray|array;
 
     /**
@@ -116,8 +116,8 @@ abstract class AbstractAttentionLayer extends AbstractLayerBase
      */
     public function backward(
         array $dOutputs,
-        ArrayAccess $grads=null,
-        array $oidsToCollect=null
+        ?ArrayAccess $grads=null,
+        ?array $oidsToCollect=null
         ) : array
     {
         if(count($dOutputs)!=1&&count($dOutputs)!=2) {

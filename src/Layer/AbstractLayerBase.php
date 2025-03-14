@@ -79,7 +79,7 @@ abstract class AbstractLayerBase implements Layer
         }
     }
 
-    public function build(mixed $variable=null, array $sampleWeights=null) : void
+    public function build(mixed $variable=null, ?array $sampleWeights=null) : void
     {
         $inputShape = $this->normalizeInputShape($variable);
         if($inputShape!==null)
@@ -91,7 +91,7 @@ abstract class AbstractLayerBase implements Layer
      * @param array<int>|Variable $variable
      * @return array<int>
      */
-    protected function normalizeInputShape(array|Variable $variable=null) : array
+    protected function normalizeInputShape(array|Variable|null $variable=null) : array
     {
         $inputShape = null;
         if($variable===null) {
@@ -155,7 +155,7 @@ abstract class AbstractLayerBase implements Layer
      * @param array<Variable> $variables
      * @return array<array<int>>
      */
-    protected function normalizeInputShapes(array $variables=null) : array
+    protected function normalizeInputShapes(?array $variables=null) : array
     {
         if($variables===null) {
             $inputShapes = $this->inputShape;
@@ -314,7 +314,7 @@ abstract class AbstractLayerBase implements Layer
     /**
      * @param array<string> $names
      */
-    protected function allocateWeights(array $names, int $nonTrainables=null) : void
+    protected function allocateWeights(array $names, ?int $nonTrainables=null) : void
     {
         $variables = [];
         foreach($names as $name) {

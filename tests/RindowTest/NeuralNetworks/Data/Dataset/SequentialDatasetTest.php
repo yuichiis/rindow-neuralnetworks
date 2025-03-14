@@ -62,8 +62,8 @@ class SequentialDatasetTest extends TestCase
             }
             public function translate(
                 iterable $inputs,
-                iterable $tests=null,
-                array $options=null) : array
+                ?iterable $tests=null,
+                ?array $options=null) : array
             {
                 $la = $this->mo->la();
                 $this->alpha += 1;
@@ -152,8 +152,8 @@ class SequentialDatasetTest extends TestCase
             }
             public function translate(
                 iterable $inputs,
-                iterable $tests=null,
-                array $options=null) : array
+                ?iterable $tests=null,
+                ?array $options=null) : array
             {
                 $la = $this->mo->la();
                 $this->alpha += 1;

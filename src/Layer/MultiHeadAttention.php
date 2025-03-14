@@ -57,16 +57,16 @@ class MultiHeadAttention extends AbstractAttentionLayer
      */
     public function __construct(
         object $backend,
-        int $num_heads,
-        int $key_dim,
-        int $value_dim=null,
-        float $dropout=null,
-        bool $use_bias=null,
-        array $input_shapes=null,
-        int|array $attention_axes=null,
-        string|object $kernel_initializer=null,
-        string|object $bias_initializer=null,
-        string $name=null,
+        ?int $num_heads,
+        ?int $key_dim,
+        ?int $value_dim=null,
+        ?float $dropout=null,
+        ?bool $use_bias=null,
+        ?array $input_shapes=null,
+        int|array|null $attention_axes=null,
+        string|object|null $kernel_initializer=null,
+        string|object|null $bias_initializer=null,
+        ?string $name=null,
     )
     {
         $value_dim ??= $key_dim;
@@ -106,7 +106,7 @@ class MultiHeadAttention extends AbstractAttentionLayer
      * value_shape: Shape of the value tensor.
      * key: Optional shape of the key tensor.
      */
-    public function build(mixed $variables=null, array $sampleWeights=null) : void
+    public function build(mixed $variables=null, ?array $sampleWeights=null) : void
     {
         $K = $this->backend;
         $inputShapes = $this->normalizeInputShapes($variables);
@@ -376,12 +376,12 @@ class MultiHeadAttention extends AbstractAttentionLayer
         NDArray $query,
         NDArray $key,
         NDArray $value,
-        NDArray $query_mask=null,
-        NDArray $value_mask=null,
-        NDArray $key_mask=null,
-        NDArray $attention_mask=null,
-        bool $useCausalMask=null,
-        bool $training=null
+        ?NDArray $query_mask=null,
+        ?NDArray $value_mask=null,
+        ?NDArray $key_mask=null,
+        ?NDArray $attention_mask=null,
+        ?bool $useCausalMask=null,
+        ?bool $training=null
     ) : array
     {
         $K = $this->backend;
@@ -490,7 +490,7 @@ class MultiHeadAttention extends AbstractAttentionLayer
         NDArray $value,
         NDArray $attention_output,
         NDArray $softmaxed_attention_scores,
-        NDArray $attention_mask=null,
+        ?NDArray $attention_mask,
         ?bool $training,
     ) : array
     {
@@ -595,16 +595,13 @@ class MultiHeadAttention extends AbstractAttentionLayer
      */
     public function forward(
         array $inputs, 
-        Variable|bool $training=null, 
-        Variable|bool $returnAttentionScores=null,
-        array $mask=null,
-        NDArray $attention_mask=null,
-        Variable|bool $useCausalMask=null,
+        Variable|bool|null $training=null, 
+        Variable|bool|null $returnAttentionScores=null,
+        ?array $mask=null,
+        ?NDArray $attention_mask=null,
+        Variable|bool|null $useCausalMask=null,
     )
     {
-        if(!is_array($inputs)) {
-            throw new InvalidArgumentException('inputs must be list of Variable');
-        }
         [$inputs,$rawInputs]     = $this->packAndUnpackVariables($this->backend,$inputs);
         $options = [];
         [$training,$rawTraining] = $this->packAndUnpackVariable($this->backend,$training,unbackpropagatable:true);
@@ -672,15 +669,15 @@ class MultiHeadAttention extends AbstractAttentionLayer
     /**
      * @param array<NDArray> $inputs
      * @param array<NDArray|null> $mask
-     * @return array<Variable>|Variable
+     * @return array<NDArray>|NDArray
      */
     protected function call( 
         array $inputs,
-        bool $training=null,
-        bool $returnAttentionScores=null,
-        array $mask=null,
-        NDArray $attention_mask=null,
-        bool $useCausalMask=null,
+        ?bool $training=null,
+        ?bool $returnAttentionScores=null,
+        ?array $mask=null,
+        ?NDArray $attention_mask=null,
+        ?bool $useCausalMask=null,
     ) : NDArray|array
     {
         $K = $this->backend;
@@ -752,6 +749,7 @@ class MultiHeadAttention extends AbstractAttentionLayer
         );
         $attention_output = $attention_output->reshape($full_input_shape);
         $attention_output = $this->output_dense->_rawCall([$attention_output],['training'=>$training])[0];
+        /** @var NDArray $attention_output */
         $attention_output = $attention_output->reshape($full_output_shape);
 
 
@@ -876,11 +874,11 @@ class MultiHeadAttention extends AbstractAttentionLayer
         NDArray $attention_scores,
         NDArray $query,
         NDArray $value,
-        NDArray $query_mask=null,
-        NDArray $value_mask=null,
-        NDArray $key_mask=null,
-        NDArray $attention_mask=null,
-        bool $useCausalMask=null,
+        ?NDArray $query_mask=null,
+        ?NDArray $value_mask=null,
+        ?NDArray $key_mask=null,
+        ?NDArray $attention_mask=null,
+        ?bool $useCausalMask=null,
     ) : ?NDArray
     {
         $K = $this->backend;
@@ -978,7 +976,7 @@ class MultiHeadAttention extends AbstractAttentionLayer
      */
     private function compute_causal_mask(
         NDArray $query,
-        NDArray $value=null
+        ?NDArray $value=null
     ) : NDArray
     {
         $K = $this->backend;

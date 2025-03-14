@@ -22,7 +22,7 @@ class Sequential extends AbstractModel
     /**
      * @param array<Layer> $layers
      */
-    public function __construct(Builder $builder, HDAFactory $hdaFactory=null, array $layers=null)
+    public function __construct(Builder $builder, ?HDAFactory $hdaFactory=null, ?array $layers=null)
     {
         parent::__construct($builder,$hdaFactory);
         if($layers!==null) {
@@ -91,7 +91,7 @@ class Sequential extends AbstractModel
     /**
      *  CAUTION: The "call" method is untyped!!
      */
-    protected function call($x, Variable|bool $training=null, ...$args)
+    protected function call($x, Variable|bool|null $training=null, ...$args)
     {
         $trainingOpt = ['training'=> $training];
         //$trues = array_shift($args);
@@ -172,7 +172,7 @@ class Sequential extends AbstractModel
         return $configJson;
     }
 
-    public function save(string $filepath,bool $portable=null) : void
+    public function save(string $filepath,?bool $portable=null) : void
     {
         $f = $this->hdaFactory->open($filepath);
         $f['modelConfig'] = $this->toJson();

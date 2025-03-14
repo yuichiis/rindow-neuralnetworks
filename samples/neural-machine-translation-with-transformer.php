@@ -125,7 +125,7 @@ class EngFraDataset
     }
 
     public function loadData(
-        string $path=null, int $numExamples=null, int $numWords=null)
+        ?string $path=null, ?int $numExamples=null, ?int $numWords=null)
     {
         if($path==null) {
             $path = $this->download($this->downloadFile);
@@ -176,9 +176,9 @@ class PositionalEmbedding extends AbstractModel
         object $builder,
         int $vocab_size,
         int $d_model,
-        int $maximumPositionEncoding=null,
-        int $inputLength=null,
-        string $name=null,
+        ?int $maximumPositionEncoding=null,
+        ?int $inputLength=null,
+        ?string $name=null,
         )
     {
         parent::__construct($builder,name:$name);
@@ -236,32 +236,6 @@ class PositionalEmbedding extends AbstractModel
         return $K->pow($x,$y);
     }
 
-    //protected function range(float $start, float $limit, float $delta=null, $dtype=null) : NDArray
-    //{
-    //    $K = $this->backend;
-    //    if($delta===null) {
-    //        if($start<$limit) {
-    //            $delta = 1.0;
-    //        } else {
-    //            $delta = -1.0;
-    //        }
-    //    }
-    //    if(($start==$limit)||($start<$limit && $delta<=0)||($start>$limit && $delta>=0)) {
-    //        throw new InvalidArgumentException(
-    //            "range has invalid args: start=$start,limit=$limit,delta=$delta");
-    //    }
-    //    if($dtype===null) {
-    //        $dtype = NDArray::float32;
-    //    }
-    //    $count = (int)ceil(($limit-$start)/$delta);
-    //    $y = $K->alloc([$count],$dtype);
-    //    $d = $K->fill([1],$delta,$dtype);
-    //    for($i=0; $i<$count; $i++) {
-    //        $K->update($y[R($i,$i+1)],$K->scale($i,$d));
-    //    }
-    //    return $y;
-    //}
-
     public function call(NDArray $inputs)
     {
         $g = $this->gradient;
@@ -294,7 +268,7 @@ abstract class AbstractBaseAttention extends AbstractModel
     
     public function __construct(
         object $nn,
-        string $name=null,
+        ?string $name=null,
         ...$args
         )
     {
@@ -313,7 +287,7 @@ class CrossAttention extends AbstractBaseAttention
 {
     public ?NDArray $last_attn_scores=null;
 
-    protected function call(NDArray $x, NDArray $context, Variable|bool $training=null)
+    protected function call(NDArray $x, NDArray $context, Variable|bool|null $training=null)
     {
         [$attn_output, $attn_scores] = $this->mha->forward(
             [
@@ -336,7 +310,7 @@ class CrossAttention extends AbstractBaseAttention
 
 class GlobalSelfAttention extends AbstractBaseAttention
 {
-    protected function call(NDArray $x, Variable|bool $training=null)
+    protected function call(NDArray $x, Variable|bool|null $training=null)
     {
         $attn_output = $this->mha->forward(
             [
@@ -354,7 +328,7 @@ class GlobalSelfAttention extends AbstractBaseAttention
 
 class CausalSelfAttention  extends AbstractBaseAttention
 {
-    protected function call(NDArray $x, Variable|bool $training=null)
+    protected function call(NDArray $x, Variable|bool|null $training=null)
     {
         $attn_output = $this->mha->forward(
             [
@@ -383,7 +357,7 @@ class FeedForward extends AbstractModel
         int $d_model,
         int $dff,
         float $dropout_rate=0.1,
-        string $name=null,
+        ?string $name=null,
     ) {
         parent::__construct($nn,name:$name);
         $this->seq = $nn->models->Sequential([
@@ -404,7 +378,7 @@ class FeedForward extends AbstractModel
         );
     }
 
-    protected function call(NDArray $x, Variable|bool $training=null)
+    protected function call(NDArray $x, Variable|bool|null $training=null)
     {
         $x = $this->add->forward([$x, $this->seq->forward($x,training:$training)]);
         $x = $this->layer_norm->forward($x);
@@ -424,7 +398,7 @@ class EncoderLayer extends AbstractModel
         int $num_heads,
         int $dff,
         float $dropout_rate=0.1,
-        string $name=null,
+        ?string $name=null,
     ) {
         parent::__construct($nn,name:$name);
         $this->self_attention = new GlobalSelfAttention(
@@ -439,7 +413,7 @@ class EncoderLayer extends AbstractModel
     );
     }
 
-    protected function call(NDArray $x, Variable|bool $training=null)
+    protected function call(NDArray $x, Variable|bool|null $training=null)
     {
         $x = $this->self_attention->forward($x,training:$training);
         $x = $this->ffn->forward($x,training:$training);
@@ -463,7 +437,7 @@ class Encoder extends AbstractModel
         int $dff,
         int $vocab_size,
         float $dropout_rate=0.1,
-        string $name=null,
+        ?string $name=null,
     ) {
         parent::__construct($nn,name:$name);
         $this->d_model = $d_model;
@@ -490,7 +464,7 @@ class Encoder extends AbstractModel
         $this->dropout = $nn->layers->Dropout($dropout_rate,name:"dropout.{$name}");
     }
 
-    protected function call(NDArray $x, Variable|bool $training=null)
+    protected function call(NDArray $x, Variable|bool|null $training=null)
     {
         //$mo = $this->backend()->localMatrixOperator();
         //$K = $this->backend();
@@ -521,7 +495,7 @@ class DecoderLayer extends AbstractModel
         int $num_heads,
         int $dff,
         float $dropout_rate=0.1,
-        string $name=null,
+        ?string $name=null,
     ) {
         parent::__construct($nn,name:$name);
         $this->causal_self_attention = new CausalSelfAttention(
@@ -549,7 +523,7 @@ class DecoderLayer extends AbstractModel
     
     }
 
-    protected function call(NDArray $x, NDArray $context, Variable|bool $training=null)
+    protected function call(NDArray $x, NDArray $context, Variable|bool|null $training=null)
     {
         $x = $this->causal_self_attention->forward($x, training:$training);
         $x = $this->cross_attention->forward($x, $context, training:$training);
@@ -579,7 +553,7 @@ class Decoder extends AbstractModel
         int $dff,
         int $vocab_size,
         float $dropout_rate=0.1,
-        string $name=null,
+        ?string $name=null,
     ) {
         parent::__construct($nn,name:$name);
         $this->d_model = $d_model;
@@ -607,7 +581,7 @@ class Decoder extends AbstractModel
         $this->last_attn_scores = null;
     }
 
-    protected function call(NDArray $x, NDArray $context, Variable|bool $training=null)
+    protected function call(NDArray $x, NDArray $context, Variable|bool|null $training=null)
     {
         //$mo = $this->backend()->localMatrixOperator();
         //$K = $this->backend();
@@ -645,7 +619,7 @@ class Transformer extends AbstractModel
         int $input_vocab_size,
         int $target_vocab_size,
         float $dropout_rate=0.1,
-        string $name=null,
+        ?string $name=null,
     )
     {
         $name ??= 'transformer';
@@ -679,7 +653,7 @@ class Transformer extends AbstractModel
     }
 
     protected function call(
-        NDArray $context, NDArray $x, Variable|bool $training=null
+        NDArray $context, NDArray $x, Variable|bool|null $training=null
     ) : NDArray
     {
         //$mo = $this->backend()->localMatrixOperator();
@@ -723,11 +697,11 @@ class Translator
     public function __construct(
         object $nn,
         Model $transformer,
-        int $max_out_length=null,
-        int $start_voc_id=null,
-        int $end_voc_id=null,
-        object $inpLang=null,
-        object $targLang=null,
+        ?int $max_out_length=null,
+        ?int $start_voc_id=null,
+        ?int $end_voc_id=null,
+        ?object $inpLang=null,
+        ?object $targLang=null,
     )
     {
         $this->builder = $nn;

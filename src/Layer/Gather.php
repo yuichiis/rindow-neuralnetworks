@@ -23,12 +23,12 @@ class Gather extends AbstractMultiInputLayer
      */
     public function __construct(
         object $backend,
-        int $axis=null,
-        int $batchDims=null,
-        int $detailDepth=null,
-        int $indexDepth=null,
-        array $input_shapes=null,
-        string $name=null,
+        ?int $axis=null,
+        ?int $batchDims=null,
+        ?int $detailDepth=null,
+        ?int $indexDepth=null,
+        ?array $input_shapes=null,
+        ?string $name=null,
     )
     {
         // defaults
@@ -44,7 +44,7 @@ class Gather extends AbstractMultiInputLayer
         $this->initName($name,'gather');
     }
 
-    public function build(mixed $variables=null, array $sampleWeights=null) : void
+    public function build(mixed $variables=null, ?array $sampleWeights=null) : void
     {
         $K = $this->backend;
 
@@ -201,7 +201,7 @@ class Gather extends AbstractMultiInputLayer
         ];
     }
 
-    protected function call(array $inputs, bool $training=null) : NDArray
+    protected function call(array $inputs, ?bool $training=null) : NDArray
     {
         $K = $this->backend;
         $container = $this->container();

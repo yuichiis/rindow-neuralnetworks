@@ -36,11 +36,11 @@ class SequentialDataset implements IteratorAggregate,Dataset
     public function __construct(
         object $mo,
         iterable $iterable,
-        int $batch_size=null,
-        int $total_size=null,
-        bool $shuffle=null,
-        DatasetFilter $filter=null,
-        DatasetFilter $inputs_filter=null,
+        ?int $batch_size=null,
+        ?int $total_size=null,
+        ?bool $shuffle=null,
+        ?DatasetFilter $filter=null,
+        ?DatasetFilter $inputs_filter=null,
     )
     {
         // defaults

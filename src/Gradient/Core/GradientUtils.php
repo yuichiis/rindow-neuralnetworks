@@ -26,7 +26,7 @@ trait GradientUtils
      * @return array<VariableInterface>
      */
     protected function postGradientProcess(
-        object $backend, array $inputsVariables, array $outputs, array $unbackpropagatables=null) : array
+        object $backend, array $inputsVariables, array $outputs, ?array $unbackpropagatables=null) : array
     {
         $outputsVariables = [];
         foreach ($outputs as $key => $v) {
@@ -83,7 +83,7 @@ trait GradientUtils
      */
     protected function postGradientProcessOnSession(
         object $backend, object $session, array $inputsVariables,
-        array $outputs, array $unbackpropagatables=null) : array
+        array $outputs, ?array $unbackpropagatables=null) : array
     {
         $outputsVariables = [];
         foreach ($outputs as $key => $v) {
@@ -117,7 +117,7 @@ trait GradientUtils
      * @param array<object> $oidsToCollect
      */
     protected function collectGradients(
-        object $backend, array $mapping, ArrayAccess $grads=null, array $oidsToCollect=null) : void
+        object $backend, array $mapping, ?ArrayAccess $grads=null, ?array $oidsToCollect=null) : void
     {
         if($oidsToCollect===null) {
             return;
@@ -168,7 +168,7 @@ trait GradientUtils
      * @return array{null|VariableInterface,mixed}
      */
     public function packAndUnpackVariable(
-        object $backend, mixed $value, bool $unbackpropagatable=null) : array
+        object $backend, mixed $value, ?bool $unbackpropagatable=null) : array
     {
         if($value===null) {
             return [null,null];
@@ -187,7 +187,7 @@ trait GradientUtils
      * @return array{array<null|VariableInterface>,array<mixed>}
      */
     public function packAndUnpackVariables(
-        object $backend, array $values, bool $unbackpropagatable=null) : array
+        object $backend, array $values, ?bool $unbackpropagatable=null) : array
     {
         $variables = [];
         $rawValues = [];

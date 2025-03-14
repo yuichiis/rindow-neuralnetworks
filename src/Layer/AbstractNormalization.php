@@ -9,7 +9,7 @@ abstract class AbstractNormalization extends AbstractLayer
 {
     use GenericUtils;
 
-    abstract protected function call(NDArray $inputs, bool $training=null) : NDArray;
+    abstract protected function call(NDArray $inputs, ?bool $training=null) : NDArray;
 
     abstract protected function differentiate(NDArray $dOutputs) : NDArray;
 
@@ -49,12 +49,12 @@ abstract class AbstractNormalization extends AbstractLayer
 
     public function __construct(
         object $backend,
-        int $axis=null,
-        float $epsilon=null,
-        bool $center=null,
-        bool $scale=null,
-        string|callable $beta_initializer=null,
-        string|callable $gamma_initializer=null,
+        ?int $axis=null,
+        ?float $epsilon=null,
+        ?bool $center=null,
+        ?bool $scale=null,
+        string|callable|null $beta_initializer=null,
+        string|callable|null $gamma_initializer=null,
         )
     {
         parent::__construct($backend);
@@ -76,7 +76,7 @@ abstract class AbstractNormalization extends AbstractLayer
         $this->gammaInitializer = $K->getInitializer($gamma_initializer);
     }
 
-    public function build(mixed $variable=null, array $sampleWeights=null) : void
+    public function build(mixed $variable=null, ?array $sampleWeights=null) : void
     {
         $K = $this->backend;
         $betaInitializer = $this->betaInitializer;

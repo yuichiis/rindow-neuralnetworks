@@ -16,13 +16,13 @@ interface RNNCell extends Layer
     public function forward(
         NDArray $inputs,
         array $states,
-        bool $training=null,
-        object $calcState=null
+        ?bool $training=null,
+        ?object $calcState=null
     ) : array;
 
     /**
      * @param array<NDArray> $dStates
-     * @return array<NDArray>
+     * @return array{NDArray,array<NDArray>}
      */
     public function backward(
         array $dStates,
