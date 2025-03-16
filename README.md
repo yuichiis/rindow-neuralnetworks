@@ -43,7 +43,7 @@ Linked library
 Required environment
 --------------------
 
-- PHP 8.1, 8.2, 8.3
+- PHP 8.1, 8.2, 8.3, 8.4
 - For PHP 7.x, 8.0 environments, use Release 1.x.
 
 Install
@@ -103,6 +103,7 @@ $ php basic-image-clasification.php
 ```
 
 *Please specify an appropriate viewer for RINDOW_MATH_PLOT_VIEWER.
+(ex. viewnior)
 
 If done correctly, a graph of the learning process will be displayed.
 

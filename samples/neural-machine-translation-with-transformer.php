@@ -125,7 +125,7 @@ class EngFraDataset
     }
 
     public function loadData(
-        string $path=null, int $numExamples=null, int $numWords=null)
+        ?string $path=null, ?int $numExamples=null, ?int $numWords=null)
     {
         if($path==null) {
             $path = $this->download($this->downloadFile);
@@ -164,114 +164,41 @@ class EngFraDataset
     }
 }
 
-class MultiHeadAttention extends AbstractModel
-{
-    protected int $num_heads;
-    protected int $depth;
-    protected int $splited_depth;
-    protected Layer $wq;
-    protected Layer $wk;
-    protected Layer $wv;
-    protected Layer $attention;
-    protected Layer $dense;
-    protected object $gradient;
-
-    public function __construct(
-        object $builder,
-        int $depth,
-        int $num_heads)
-    {
-        parent::__construct($builder);
-        $this->gradient = $builder->gradient();
-        $this->num_heads = $num_heads;
-        $this->depth = $depth;
-        if($depth % $num_heads != 0) {
-            throw new InvalidArgumentException('"depth" must be an integer multiple of "num_heads"');
-        }
-        $this->splited_depth = $depth / $num_heads;
-    
-        $this->wq = $builder->layers->Dense($depth);
-        $this->wk = $builder->layers->Dense($depth);
-        $this->wv = $builder->layers->Dense($depth);
-    
-        $this->attention = $builder->layers->Attention(use_scale:true,do_not_expand_mask:true);
-
-        $this->dense = $builder->layers->Dense($depth);
-    }
-
-    /**
-     * Split the last dimension into (num_heads, depth).
-     * Transpose the result such that the shape is (batch_size, num_heads, seq_len, depth)
-     */
-    protected function split_heads($x)
-    {
-        $g = $this->gradient;
-        if($x->ndim()!=3) {
-            throw new InvalidArgumentException('input array must be 3D NDArray');
-        }
-        $x = $g->reshape($x, [0, -1, $this->num_heads, $this->splited_depth]);
-        return $g->transpose($x, perm:[0, 2, 1, 3]);
-    }
-
-    protected function call(
-        $v,     # (batch_size, seq_len, wordVectSize)
-        $k,     # (batch_size, seq_len, wordVectSize)
-        $q,     # (batch_size, seq_len, wordVectSize)
-        $mask   # (batch_size, 1, 1, seq_len_v)
-        )
-    {
-        $g = $this->gradient;
-
-        $q = $this->wq->forward($q);  # (batch_size, seq_len, depth)
-        $k = $this->wk->forward($k);  # (batch_size, seq_len, depth)
-        $v = $this->wv->forward($v);  # (batch_size, seq_len, depth)
-        $q = $this->split_heads($q);  # (batch_size, num_heads, seq_len_q, splited_depth)
-        $k = $this->split_heads($k);  # (batch_size, num_heads, seq_len_k, splited_depth)
-        $v = $this->split_heads($v);  # (batch_size, num_heads, seq_len_v, splited_depth)
-
-        # scaled_attention.shape == (batch_size, num_heads, seq_len_q, splited_depth)
-        # attention_weights.shape == (batch_size, num_heads, seq_len_q, seq_len_v)
-        [$scaled_attention, $attention_weights] = 
-            $this->attention->forward([$q, $v, $k], returnAttentionScores:true, mask:[null,$mask]);
-    
-        $scaled_attention = $g->transpose($scaled_attention, perm:[0, 2, 1, 3]);  # (batch_size, seq_len_q, num_heads, splited_depth)
-    
-        $concat_attention = $g->reshape($scaled_attention,
-                                      [0, -1, $this->depth]);  # (batch_size, seq_len_q, depth)
-    
-        $output = $this->dense->forward($concat_attention);  # (batch_size, seq_len_q, depth)
-    
-        return [$output, $attention_weights];
-    }
-}
-
 class PositionalEmbedding extends AbstractModel
 {
-    protected int $wordVectSize;
+    protected int $d_model;
     protected object $gradient;
     protected Layer $embedding;
+    protected Layer $inheritMask;
     protected Variable $posEncoding;
 
     public function __construct(
         object $builder,
         int $vocab_size,
-        int $wordVectSize,
-        int $maximumPositionEncoding=null,
-        int $inputLength=null,
+        int $d_model,
+        ?int $maximumPositionEncoding=null,
+        ?int $inputLength=null,
+        ?string $name=null,
         )
     {
-        parent::__construct($builder);
-        $this->wordVectSize = $wordVectSize;
-        $maximumPositionEncoding = $maximumPositionEncoding ?? 256;
+        parent::__construct($builder,name:$name);
+        $this->d_model = $d_model;
+        $maximumPositionEncoding ??= 256;
         $this->gradient = $builder->gradient();
         $nn = $builder;
-        $K = $this->backend;
         $g = $this->gradient;
 
         $this->embedding = $nn->layers->Embedding(
-            $vocab_size, $wordVectSize, input_length:$inputLength);
+            $vocab_size,    // inputDim
+            $d_model,       // outputDim
+            mask_zero:true,
+            input_length:$inputLength,
+            name:"embedding.{$name}",
+        );
+        $this->inheritMask = $nn->layers->InheritMask(name:"mask.{$name}");
+
         $this->posEncoding = $g->Variable(
-            $this->positionalEncoding($maximumPositionEncoding, $depth=$wordVectSize),
+            $this->positionalEncoding(maxLength:$maximumPositionEncoding, depth:$d_model),
             trainable:false,
             unbackpropagatable:true,
             name:'posEncoding',
@@ -287,8 +214,8 @@ class PositionalEmbedding extends AbstractModel
         $depth = $depth/2;
 
         $positions = $K->repeat(                                # (maxLength, depth/2)
-            $this->range(0,$maxLength),$depth,axis:1);
-        $depths = $K->scale(1/$depth,$this->range(0,$depth));   # (depth/2)
+            $K->range($maxLength),$depth,axis:1);
+        $depths = $K->scale(1/$depth,$K->range($depth));        # (depth/2)
         $angleRates = $K->reciprocal($this->pow(10000,$depths));# (depth/2)
         $angleRads = $K->mul($positions,$angleRates);           # (maxLength, depth/2)
       
@@ -303,624 +230,574 @@ class PositionalEmbedding extends AbstractModel
     {
         $K = $this->backend;
         if(is_numeric($x)) {
-            $x = $K->fill($y->shape(),$x,$y->dtype());
+            $x = $K->fill($y->shape(),$x,dtype:$y->dtype());
         }
         //return $K->exp($K->mul($y,$K->log($x)));
         return $K->pow($x,$y);
-    }
-
-    protected function range(float $start, float $limit, float $delta=null, $dtype=null) : NDArray
-    {
-        $K = $this->backend;
-        if($delta===null) {
-            if($start<$limit) {
-                $delta = 1.0;
-            } else {
-                $delta = -1.0;
-            }
-        }
-        if(($start==$limit)||($start<$limit && $delta<=0)||($start>$limit && $delta>=0)) {
-            throw new InvalidArgumentException(
-                "range has invalid args: start=$start,limit=$limit,delta=$delta");
-        }
-        if($dtype===null) {
-            $dtype = NDArray::float32;
-        }
-        $count = (int)ceil(($limit-$start)/$delta);
-        $y = $K->alloc([$count],$dtype);
-        $d = $K->fill([1],$delta,$dtype);
-        for($i=0; $i<$count; $i++) {
-            $K->update($y[R($i,$i+1)],$K->scale($i,$d));
-        }
-        return $y;
     }
 
     public function call(NDArray $inputs)
     {
         $g = $this->gradient;
         // Embedding
-        $x = $this->embedding->forward($inputs);
+        $input_vect = $this->embedding->forward($inputs);
 
         // positional Encoding
         $inputShape = $g->shape($inputs);
         $length = $g->get($inputShape,1);
-        $x = $g->scale(sqrt($this->wordVectSize), $x);
+        $x = $g->scale(sqrt($this->d_model), $input_vect);
         $pos_encoding = $g->get($this->posEncoding,0,$length);
         $x = $g->add($x, $pos_encoding); // broadcast add
+        $x = $this->inheritMask->forward([$x,$input_vect]);
+        return $x;
+    }
 
+    public function computeMask(...$args)
+    {
+        return $this->embedding->computeMask(...$args);
+    }
+
+}
+
+
+abstract class AbstractBaseAttention extends AbstractModel
+{
+    protected Layer $mha;
+    protected Layer $layernorm;
+    protected Layer $add;
+    
+    public function __construct(
+        object $nn,
+        ?string $name=null,
+        ...$args
+        )
+    {
+        parent::__construct($nn,name:$name);
+        $this->mha = $nn->layers->MultiHeadAttention(...$args,
+            name:"mha.{$name}",
+        );
+        $this->layernorm = $nn->layers->LayerNormalization(
+            name:"layernorm.{$name}"
+        );
+        $this->add = $nn->layers->Add(name:"add.{$name}");
+    }
+}
+
+class CrossAttention extends AbstractBaseAttention
+{
+    public ?NDArray $last_attn_scores=null;
+
+    protected function call(NDArray $x, NDArray $context, Variable|bool|null $training=null)
+    {
+        [$attn_output, $attn_scores] = $this->mha->forward(
+            [
+                $x, // query
+                $context, // value
+                $context, // key
+            ],
+            training:$training,
+            returnAttentionScores:True
+        );
+    
+        # Cache the attention scores for plotting later.
+        $this->last_attn_scores = $this->builder->gradient()->ndarray($attn_scores);
+    
+        $x = $this->add->forward([$x, $attn_output]);
+        $x = $this->layernorm->forward($x);
         return $x;
     }
 }
 
-
-function point_wise_feed_forward_network(object $builder, int $depth, int $dff) : object
+class GlobalSelfAttention extends AbstractBaseAttention
 {
-    return $builder->models->Sequential([
-        $builder->layers->Dense($dff, activation:'relu'),   # (batch_size, seq_len, dff)
-        $builder->layers->Dense($depth),                    # (batch_size, seq_len, depth)
-    ]);
+    protected function call(NDArray $x, Variable|bool|null $training=null)
+    {
+        $attn_output = $this->mha->forward(
+            [
+                $x,  // query=
+                $x,  // value=
+                $x   // key=
+            ],
+            training:$training,
+        );
+        $x = $this->add->forward([$x, $attn_output]);
+        $x = $this->layernorm->forward($x);
+        return $x;
+    }
+}
+
+class CausalSelfAttention  extends AbstractBaseAttention
+{
+    protected function call(NDArray $x, Variable|bool|null $training=null)
+    {
+        $attn_output = $this->mha->forward(
+            [
+                $x, // query
+                $x, // value
+                $x, // key                
+            ],
+            training:$training,
+            useCausalMask:True,
+        );
+        $x = $this->add->forward([$x, $attn_output]);
+        //echo 'layernorm IN=('.implode(',',$x->shape()).")\n";
+        $x = $this->layernorm->forward($x);
+        return $x;
+    }
+}
+
+class FeedForward extends AbstractModel
+{
+    protected Model $seq;
+    protected Layer $add;
+    protected Layer $layer_norm;
+
+    public function __construct(
+        object $nn,
+        int $d_model,
+        int $dff,
+        float $dropout_rate=0.1,
+        ?string $name=null,
+    ) {
+        parent::__construct($nn,name:$name);
+        $this->seq = $nn->models->Sequential([
+            $nn->layers->Dense($dff,
+                activation:'relu',
+                name:"ff1.{$name}",
+            ),
+            $nn->layers->Dense($d_model,
+                name:"ff2.{$name}",
+            ),
+            $nn->layers->Dropout($dropout_rate,
+                name:"dropout.{$name}",
+            ),
+        ]);
+        $this->add = $nn->layers->Add(name:"add.{$name}");
+        $this->layer_norm = $nn->layers->LayerNormalization(
+            name:"layernorm.{$name}",
+        );
+    }
+
+    protected function call(NDArray $x, Variable|bool|null $training=null)
+    {
+        $x = $this->add->forward([$x, $this->seq->forward($x,training:$training)]);
+        $x = $this->layer_norm->forward($x);
+        return $x;
+    }
+
 }
 
 class EncoderLayer extends AbstractModel
 {
-    protected object $gradient;
-    protected Model $mha;
-    protected Layer $dropout1;
-    protected Layer $layernorm1;
+    protected Model $self_attention;
     protected Model $ffn;
-    protected Layer $dropout2;
-    protected Layer $layernorm2;
 
     public function __construct(
-        object $builder,
-        int $wordVectSize=null, 
-        int $num_heads=null, 
-        int $dff=null, 
-        float $dropout_rate=0.1)
-    {
-        parent::__construct($builder);
-        $backend = $this->backend();
-        $this->gradient = $builder->gradient();
-
-        $this->mha = new MultiHeadAttention($builder,$wordVectSize, $num_heads);
-        $this->dropout1 = $builder->layers->Dropout($dropout_rate);
-        $this->layernorm1 = $builder->layers->LayerNormalization(epsilon:1e-6);
-
-        $this->ffn = point_wise_feed_forward_network($builder,$wordVectSize, $dff);
-        $this->dropout2 = $builder->layers->Dropout($dropout_rate);
-        $this->layernorm2 = $builder->layers->LayerNormalization(epsilon:1e-6);
+        object $nn,
+        int $d_model,
+        int $num_heads,
+        int $dff,
+        float $dropout_rate=0.1,
+        ?string $name=null,
+    ) {
+        parent::__construct($nn,name:$name);
+        $this->self_attention = new GlobalSelfAttention(
+            $nn,
+            num_heads:$num_heads,
+            key_dim:$d_model,
+            dropout:$dropout_rate,
+            name:"globalattn.{$name}",
+    );
+        $this->ffn = new FeedForward($nn, $d_model, $dff, 
+            name:"ffn.{$name}",
+    );
     }
 
-    protected function call(
-        NDArray $x,                 # (batch_size, input_seq_len, d_model)
-        Variable|bool $training,    # bool
-        NDArray $mask)              # (batch_size, input_seq_len)
+    protected function call(NDArray $x, Variable|bool|null $training=null)
     {
-        $g = $this->gradient;
-
-        [$attn_output, $dummy] = $this->mha->forward($x, $x, $x, $mask);  # (batch_size, input_seq_len, d_model)
-        $attn_output = $this->dropout1->forward($attn_output, $training);
-        $out1 = $this->layernorm1->forward($g->add($x, $attn_output), $training);  # (batch_size, input_seq_len, d_model)
-    
-        $ffn_output = $this->ffn->forward($out1);  # (batch_size, input_seq_len, d_model)
-        $ffn_output = $this->dropout2->forward($ffn_output, $training);
-        $out2 = $this->layernorm2->forward($g->add($out1, $ffn_output), $training);  # (batch_size, input_seq_len, d_model)
-        return $out2;
+        $x = $this->self_attention->forward($x,training:$training);
+        $x = $this->ffn->forward($x,training:$training);
+        return $x;
     }
 }
 
 class Encoder extends AbstractModel
 {
-    protected object $gradient;
-    protected Variable $posEncoding;
-    protected Model $embedding;
+    protected int $d_model;
+    protected int $num_layers;
+    protected Model $pos_embedding;
     protected Module $enc_layers;
     protected Layer $dropout;
-    protected object $mo;
 
     public function __construct(
-        object $builder,
-        int $numLayers,
-        int $wordVectSize,
+        object $nn,
+        int $num_layers,
+        int $d_model,
         int $num_heads,
         int $dff,
-        int $vocabSize,
-        int $maximumPositionEncoding=null,
-        int $inputLength=null,
-        float $dropout_rate=null,
-        object $mo=null,
-        )
-        {
-        parent::__construct($builder);
-        $backend = $this->backend();
-        $this->gradient = $builder->Gradient();
-        $this->embedding = new PositionalEmbedding(
-            $builder,
-            $vocabSize,$wordVectSize,
-            maximumPositionEncoding:$maximumPositionEncoding,
-            inputLength:$inputLength
+        int $vocab_size,
+        float $dropout_rate=0.1,
+        ?string $name=null,
+    ) {
+        parent::__construct($nn,name:$name);
+        $this->d_model = $d_model;
+        $this->num_layers = $num_layers;
+    
+        $this->pos_embedding = new PositionalEmbedding(
+            $nn,
+            vocab_size:$vocab_size,
+            d_model:$d_model,
+            name:"posemb.{$name}",
         );
-        $this->enc_layers = $builder->gradient->Modules();
-        for($i=0;$i<$numLayers;$i++) {
-            $this->enc_layers->add(
-                new EncoderLayer(
-                    $builder,
-                    wordVectSize:$wordVectSize,
-                    num_heads:$num_heads,
-                    dff:$dff,
-                    dropout_rate:$dropout_rate,
-                )
-            );
+    
+        $this->enc_layers = $nn->gradient->modules();
+        for($i=0;$i<$num_layers;$i++) {
+            $this->enc_layers->add(new EncoderLayer(
+                $nn,
+                d_model:$d_model,
+                num_heads:$num_heads,
+                dff:$dff,
+                dropout_rate:$dropout_rate,
+                name:"enc_layer$i.{$name}",
+            ));
         }
-        $this->dropout = $builder->layers->Dropout($dropout_rate);
+        $this->dropout = $nn->layers->Dropout($dropout_rate,name:"dropout.{$name}");
     }
 
-    protected function call(
-        NDArray $inputs,
-        Variable|bool $training,
-        NDArray $mask=null
-        ) : NDArray
+    protected function call(NDArray $x, Variable|bool|null $training=null)
     {
-        $g = $this->gradient;
-
-        $inputShape = $g->shape($inputs);
-        $length = $g->get($inputShape,1);
-
-        // positional Encoding
-        $x = $this->embedding->forward($inputs);
-
+        //$mo = $this->backend()->localMatrixOperator();
+        //$K = $this->backend();
+        # `x` is token-IDs shape: (batch, seq_len)
+        $x = $this->pos_embedding->forward($x);  # Shape `(batch_size, seq_len, d_model)`.
         # Add dropout.
-        $x = $this->dropout->forward($x,$training);
+        $x = $this->dropout->forward($x, training:$training);
 
-        // seq layers
-        foreach($this->enc_layers as $enc) {
-            $x = $enc->forward($x,$training, $mask);
+        foreach($this->enc_layers as $enc_layer) {
+            $x = $enc_layer->forward($x, training:$training);
         }
+        //echo $mo->toString($K->ndarray($x->value()->mask()),indent:true)."\n";
 
-        return $x;  # Shape `(batch_size, seq_len, wordVectSize)`.
+        return $x;  # Shape `(batch_size, seq_len, d_model)`.
     }
 }
 
 class DecoderLayer extends AbstractModel
 {
-    protected object $gradient;
-    protected Model $mha1;
-    protected Layer $dropout1;
-    protected Layer $layernorm1;
-    protected Model $mha2;
-    protected Layer $dropout2;
-    protected Layer $layernorm2;
+    protected Model $causal_self_attention;
+    protected Model $cross_attention;
     protected Model $ffn;
-    protected Layer $dropout3;
-    protected Layer $layernorm3;
+    public ?NDArray $last_attn_scores=null;
 
     public function __construct(
-        object $builder,
-        int $wordVectSize=null,
-        int $num_heads=null,
-        int $dff=null,
-        float $dropout_rate=0.1
-        )
-    {
-        parent::__construct($builder);
-        $backend = $this->backend();
-        $this->gradient = $builder->Gradient();
+        object $nn,
+        int $d_model,
+        int $num_heads,
+        int $dff,
+        float $dropout_rate=0.1,
+        ?string $name=null,
+    ) {
+        parent::__construct($nn,name:$name);
+        $this->causal_self_attention = new CausalSelfAttention(
+            $nn,
+            num_heads:$num_heads,
+            key_dim:$d_model,
+            dropout:$dropout_rate,
+            name:"causalatten.{$name}",
+        );
     
-        $this->mha1 = new MultiHeadAttention($builder,$wordVectSize, $num_heads);
-        $this->dropout1 = $builder->layers->Dropout($dropout_rate);
-        $this->layernorm1 = $builder->layers->LayerNormalization(epsilon:1e-6);
-
-        $this->mha2 = new MultiHeadAttention($builder,$wordVectSize, $num_heads);
-        $this->dropout2 = $builder->layers->Dropout($dropout_rate);
-        $this->layernorm2 = $builder->layers->LayerNormalization(epsilon:1e-6);
-
-        $this->ffn = point_wise_feed_forward_network($builder,$wordVectSize, $dff);
-        $this->dropout3 = $builder->layers->Dropout($dropout_rate);
-        $this->layernorm3 = $builder->layers->LayerNormalization(epsilon:1e-6);
+        $this->cross_attention = new CrossAttention(
+            $nn,
+            num_heads:$num_heads,
+            key_dim:$d_model,
+            dropout:$dropout_rate,
+            name:"crossAttn.{$name}",
+        );
+    
+        $this->ffn = new FeedForward(
+            $nn,
+            $d_model,
+            $dff,
+            name:"ffn.{$name}",
+        );
+    
     }
-    
-    protected function call(
-        NDArray $x,                 # (batch_size, target_seq_len, wordVectSize)
-        NDArray $enc_output,        # (batch_size, target_seq_len, wordVectSize)
-        Variable|bool $training,
-        NDArray $look_ahead_mask,   # (batch_size, target_seq_len)
-        NDArray $padding_mask,      # (batch_size, target_seq_len)
-        )
-    {
-        $g = $this->gradient;
 
-        [$attn1, $attn_weights_block1] = $this->mha1->forward($x, $x, $x, $look_ahead_mask);  # (batch_size, target_seq_len, wordVectSize)
-        $attn1 = $this->dropout1->forward($attn1, training:$training);
-        $out1 = $this->layernorm1->forward($g->add($attn1, $x),training:$training);
+    protected function call(NDArray $x, NDArray $context, Variable|bool|null $training=null)
+    {
+        $x = $this->causal_self_attention->forward($x, training:$training);
+        $x = $this->cross_attention->forward($x, $context, training:$training);
     
-        [$attn2, $attn_weights_block2] = $this->mha2->forward(
-            $enc_output, $enc_output, $out1, $padding_mask);  # (batch_size, target_seq_len, wordVectSize)
-        $attn2 = $this->dropout2->forward($attn2, training:$training);
-        $out2 = $this->layernorm2->forward($g->add($attn2, $out1),training:$training);  # (batch_size, target_seq_len, wordVectSize)
+        # Cache the last attention scores for plotting later
+        $this->last_attn_scores = $this->cross_attention->last_attn_scores;
     
-        $ffn_output = $this->ffn->forward($out2);  # (batch_size, target_seq_len, wordVectSize)
-        $ffn_output = $this->dropout3->forward($ffn_output, training:$training);
-        $out3 = $this->layernorm3->forward($g->add($ffn_output, $out2),training:$training);  # (batch_size, target_seq_len, wordVectSize)
-    
-        return [$out3, $attn_weights_block1, $attn_weights_block2];
+        $x = $this->ffn->forward($x, training:$training);  # Shape `(batch_size, seq_len, d_model)`.
+        return $x;
     }
 }
 
 class Decoder extends AbstractModel
 {
-    protected int $wordVectSize;
-    protected Model $embedding;
+    protected int $d_model;
+    protected int $num_layers;
+    protected Model $pos_embedding;
     protected Layer $dropout;
     protected Module $dec_layers;
-    protected array $attentionScores;
+    public ?NDArray $last_attn_scores=null;
 
     public function __construct(
-        object $builder,
-        int $numLayers,
-        int $wordVectSize,
+        object $nn,
+        int $num_layers,
+        int $d_model,
         int $num_heads,
         int $dff,
-        int $target_vocab_size,
-        int $maximumPositionEncoding=null,
-        int $targetLength=null,
+        int $vocab_size,
         float $dropout_rate=0.1,
-        )
-    {
-        parent::__construct($builder);
-        $this->wordVectSize = $wordVectSize;
-        $nn = $builder;
-        $g = $nn->gradient();
-        
-        $this->embedding = new PositionalEmbedding(
-            $builder,
-            $target_vocab_size,$wordVectSize,
-            maximumPositionEncoding:$maximumPositionEncoding,
-            inputLength:$targetLength
+        ?string $name=null,
+    ) {
+        parent::__construct($nn,name:$name);
+        $this->d_model = $d_model;
+        $this->num_layers = $num_layers;
+    
+        $this->pos_embedding = new PositionalEmbedding(
+            $nn,
+            vocab_size:$vocab_size,
+            d_model:$d_model,
+            name:"posemb.{$name}",
         );
-        $this->dec_layers = $g->Modules();
-        for($i=0;$i<$numLayers;$i++) {
-            $this->dec_layers->add(
-                new DecoderLayer(
-                    $builder,
-                    wordVectSize:$wordVectSize,
-                    num_heads:$num_heads,
-                    dff:$dff,
-                    dropout_rate:$dropout_rate,
-                )
-            );
-        }
-        $this->dropout = $builder->layers->Dropout($dropout_rate);
-    }
-
-    protected function call(
-        NDArray $inputs,
-        NDArray $enc_output,
-        Variable|bool $training,
-        NDArray $look_ahead_mask,
-        NDArray $padding_mask,
-        ) : array
-    {
-        $K = $this->backend;
-        $this->attentionScores = [];
-    
-        $x = $this->embedding->forward($inputs);  # (batch_size, target_seq_len, wordVectSize)
-    
-        $x = $this->dropout->forward($x, training:$training);
-    
-        // seq layers
-        foreach($this->dec_layers as $i => $dec) {
-            [$x, $block1, $block2] = $dec->forward(
-                $x, $enc_output, $training,
-                $look_ahead_mask, $padding_mask);
-            $this->attentionScores['decoder_layer'.($i+1).'_block1'] = $block1;
-            $this->attentionScores['decoder_layer'.($i+1).'_block2'] = $block2;
+        $this->dropout = $nn->layers->Dropout($dropout_rate,name:"dropout.{$name}");
+        $this->dec_layers = $nn->gradient->modules();
+        for($i=0;$i<$num_layers;$i++) {
+            $this->dec_layers->add(new DecoderLayer(
+                $nn,
+                d_model:$d_model,
+                num_heads:$num_heads,
+                dff:$dff,
+                dropout_rate:$dropout_rate,
+                name:"dec_layer$i.{$name}",
+            ));
         }
 
-        # x:  (batch_size, target_seq_len, d_model)
-        return [$x];
+        $this->last_attn_scores = null;
     }
 
-    public function getAttentionScores()
+    protected function call(NDArray $x, NDArray $context, Variable|bool|null $training=null)
     {
-        return $this->attentionScores;
+        //$mo = $this->backend()->localMatrixOperator();
+        //$K = $this->backend();
+        //echo $mo->toString($K->ndarray($context->value()->mask()),indent:true)."\n";
+        # `x` is token-IDs shape (batch, target_seq_len)
+        $x = $this->pos_embedding->forward($x);  # (batch_size, target_seq_len, d_model)
+
+        $x = $this->dropout->forward($x, $training);
+
+        foreach($this->dec_layers as $dec_layer) {
+            $x = $dec_layer->forward($x, $context, training:$training);
+        }
+        //echo $mo->toString($K->ndarray($x->value()->mask()),indent:true)."\n";
+
+        $this->last_attn_scores = $dec_layer->last_attn_scores;
+
+        # The shape of x is (batch_size, target_seq_len, d_model).
+        return $x;
     }
 }
 
+
 class Transformer extends AbstractModel
 {
-    protected object $gradient;
     protected Model $encoder;
-    protected Model $decoder;
+    public Model $decoder;
     protected Layer $final_layer;
 
     public function __construct(
-        object $builder,
+        object $nn,
         int $num_layers,
         int $d_model,
         int $num_heads,
         int $dff,
         int $input_vocab_size,
         int $target_vocab_size,
-        int $inputLength,
-        int $targetLength,
-        int $max_pe_input=null,
-        int $max_pe_target=null,
         float $dropout_rate=0.1,
-        )
+        ?string $name=null,
+    )
     {
-        parent::__construct($builder);
-        $this->gradient = $builder->gradient();
+        $name ??= 'transformer';
+        parent::__construct($nn,name:$name);
         $this->encoder = new Encoder(
-            $builder,
-            $num_layers, $d_model, $num_heads, $dff,
-            $input_vocab_size,
-            $max_pe_input, $inputLength,
-            $dropout_rate);
+            $nn,
+            num_layers:$num_layers,
+            d_model:$d_model,
+            num_heads:$num_heads,
+            dff:$dff,
+            vocab_size:$input_vocab_size,
+            dropout_rate:$dropout_rate,
+            name:"encoder.{$name}",
+        );
 
         $this->decoder = new Decoder(
-            $builder,
-            $num_layers, $d_model, $num_heads, $dff,
-            $target_vocab_size, $max_pe_target, $targetLength, $dropout_rate);
+            $nn,
+            num_layers:$num_layers,
+            d_model:$d_model,
+            num_heads:$num_heads,
+            dff:$dff,
+            vocab_size:$target_vocab_size,
+            dropout_rate:$dropout_rate,
+            name:"decoder.{$name}",
+        );
 
-        $this->final_layer = $builder->layers->Dense($target_vocab_size);
+        $this->final_layer = $nn->layers->Dense($target_vocab_size,
+            name:"final_layer.{$name}",
+        );
+
     }
 
-    //protected function create_padding_mask(Variable $seq) : Variable
-    //{
-    //    $seq = $g->notEqual($seq, $g->zerosLike($seq)); # dtype is int32. 1:pass 0:masking
-    //
-    //    # add extra dimensions to add the padding
-    //    # to the attention logits.
-    //    return $g->reshape($seq,[0, 1, 1, -1]); # (batch_size, 1, 1, seq_len)
-    //}
-
-    protected function create_padding_mask(Variable $seq) : Variable
+    protected function call(
+        NDArray $context, NDArray $x, Variable|bool|null $training=null
+    ) : NDArray
     {
-        $g = $this->gradient;
-        $mask = $g->greater($g->cast($seq,NDArray::float32),0.5); // 1:pass 0:masking
-
-        // (batch_size,   num_heads,   seq_len_q,   seq_len_v)
-        // (batch_size, (broardcast), (broardcast), seq_len_v)
-        $mask = $g->reshape($mask, [0, 1, 1,-1]);   # (batch_size, 1, 1, seq_len)
-        return $mask;
-    }
-
-    protected function create_look_ahead_mask($size) : NDArray
-    {
-        $g = $this->gradient;
-        $mask = $g->bandpart( $g->ones([$size, $size]), -1, 0); // 1:pass 0:masking
-        //$mask = $g->increment($mask, b:1, a:-1);    // mask = not mask
-        # Lower triangular part is one.
-        return $mask;  # (seq_len, seq_len)
-    }
-
-    protected function create_masks(Variable $inp, Variable $tar) : array
-    {
-        $g = $this->gradient;
-        # Encoder padding mask
-        $enc_padding_mask = $this->create_padding_mask($inp);   // 1:pass 0:masking
-    
-        # Used in the 2nd attention block in the decoder.
-        # This padding mask is used to mask the encoder outputs.
-        $dec_padding_mask = $this->create_padding_mask($inp);   // 1:pass 0:masking
-    
-        # Used in the 1st attention block in the decoder.
-        # It is used to pad and mask future tokens in the input received by
-        # the decoder.
-        $length = $g->get($g->shape($tar),1);
-        $batchSize = $g->get($g->shape($tar),0);
-
-        $look_ahead_mask = $this->create_look_ahead_mask($length); // 1:pass 0:masking
-        $look_ahead_mask = $g->reshape($look_ahead_mask,[1,1,$length,$length]);
-        $look_ahead_mask = $g->repeat($look_ahead_mask,$batchSize,axis:0,keepdims:true);
-
-        $dec_target_padding_mask = $this->create_padding_mask($tar);
-        $dec_target_padding_mask = $g->repeat($dec_target_padding_mask,$length,axis:2,keepdims:true);
-
-        $look_ahead_mask = $g->mul($dec_target_padding_mask, $look_ahead_mask); // padding and ahead
-    
-        return [
-            $g->stopGradient($enc_padding_mask),
-            $g->stopGradient($look_ahead_mask),
-            $g->stopGradient($dec_padding_mask),
-        ];
-    }
-
-    protected function call($inp, $tar, $training=null, $trues=null)
-    {
-        $K = $this->backend;
-        # Keras models prefer if you pass all your inputs in the first argument
-        //[$inp, $tar] = $inputs;
-        [$enc_padding_mask, $look_ahead_mask, $dec_padding_mask] = $this->create_masks($inp, $tar);
-
-        $enc_output = $this->encoder->forward($inp, $training, $enc_padding_mask);  # (batch_size, inp_seq_len, d_model)
-
-        # dec_output.shape == (batch_size, tar_seq_len, d_model)
-        [$dec_output] = $this->decoder->forward(
-            $tar, $enc_output, $training, $look_ahead_mask, $dec_padding_mask);
-
-        $final_output = $this->final_layer->forward($dec_output);  # (batch_size, tar_seq_len, target_vocab_size)
-
-        return [$final_output];
-    }
-
-    public function getAttentionScores()
-    {
-        return $this->decoder->getAttentionScores();
+        //$mo = $this->backend()->localMatrixOperator();
+        //$K = $this->backend();
+        # To use a Keras model with `.fit` you must pass all your inputs in the
+        # first argument.
+        # [$context, $x]  = $inputs;
+        
+        $context = $this->encoder->forward($context,training:$training);  # (batch_size, context_len, d_model)
+        
+        $x = $this->decoder->forward($x, $context,training:$training);  # (batch_size, target_len, d_model)
+        
+        # Final linear layer output.
+        $logits = $this->final_layer->forward($x);  # (batch_size, target_len, target_vocab_size)
+        //echo $mo->toString($K->ndarray($logits->value()->mask()),indent:true)."\n";
+        
+        #try:
+        #    # Drop the keras mask, so it doesn't scale the losses/metrics.
+        #    # b/250038731
+        #    del logits._keras_mask
+        #except AttributeError:
+        #    pass
+        
+        # Return the final output and the attention weights.
+        return $logits;
     }
 }
 
-class CustomSchedule implements LearningRateSchedule
-{
-    protected float $d_model;
-    protected float $warmup_steps;
-
-    public function __construct(int $d_model, int $warmup_steps=4000)
-    {
-        $this->d_model = (float)$d_model;
-        $this->warmup_steps = (float)$warmup_steps;
-    }
-
-    public function __invoke(mixed $step) : float
-    {
-        $arg1 = 1 / sqrt($step);
-        $arg2 = $step * ($this->warmup_steps ** -1.5);
-        $lr = 1 / sqrt($this->d_model) * min($arg1, $arg2);
-        return $lr;
-    }
-}
-
-class CustomLossFunction
-{
-    protected $loss_object;
-    protected $gradient;
-
-    public function __construct($nn)
-    {
-        $this->gradient = $nn->gradient();
-        $this->loss_object = $nn->losses->SparseCategoricalCrossentropy(
-            from_logits:true, reduction:'none');
-    }
-
-    public function __invoke(NDArray $label, NDArray $pred) : NDArray
-    {
-        $g = $this->gradient;
-        $mask = $g->greater($g->cast($label,dtype:NDArray::float32),0.0);
-        $loss = $this->loss_object->forward($label, $pred);
-        $loss = $g->mul($loss,$mask);
-        return $g->div($g->reduceSum($loss),$g->reduceSum($mask));
-    }
-}
-
-class CustomAccuracy
-{
-    protected $backend;
-    protected $nn;
-    protected $gradient;
-
-    public function __construct($nn)
-    {
-        $this->backend = $nn->backend();
-        $this->nn = $nn;
-        $this->gradient = $nn->gradient();
-    }
-
-    public function __invoke($label, $pred)
-    {
-        $K = $this->backend;
-        $pred = $K->argMax($pred, axis:2);
-        $label = $K->cast($label,dtype:$pred->dtype());
-        $match = $K->equal($label, $pred);
-        $mask = $K->notEqual($label, $K->zerosLike($label));
-        $match = $K->cast($match,dtype:NDArray::float32);
-        $mask = $K->cast($mask,dtype:NDArray::float32);
-        $match = $K->mul($match,$mask);
-        $sumMatch = $K->sum($match);
-        if(is_numeric($sumMatch)) {
-            $accuracy = $sumMatch/$K->sum($mask);
-        } else {
-            $accuracy = $K->add($sumMatch,$K->sum($mask));
-            $accuracy = $K->scalar($accuracy);
-        }
-        return $accuracy;
-    }
-}
 
 class Translator
 {
-    protected $backend;
-    protected $builder;
-    protected $transformer;
-    protected $max_out_length;
-    protected $start_voc_id;
-    protected $end_voc_id;
+    protected object $builder;
+    protected Model $transformer;
+    protected int $max_out_length;
+    protected int $start_voc_id;
+    protected int $end_voc_id;
+    protected object $inpLang;
+    protected object $targLang;
+
 
     public function __construct(
-        object $backend,
-        object $builder,
-        object $transformer,
-        int $max_out_length=null,
-        int $start_voc_id=null,
-        int $end_voc_id=null,
+        object $nn,
+        Model $transformer,
+        ?int $max_out_length=null,
+        ?int $start_voc_id=null,
+        ?int $end_voc_id=null,
+        ?object $inpLang=null,
+        ?object $targLang=null,
     )
     {
-        $this->backend = $backend;
-        $this->builder = $builder;
+        $this->builder = $nn;
         $this->transformer = $transformer;
         $this->max_out_length = $max_out_length;
         $this->start_voc_id = $start_voc_id;
         $this->end_voc_id = $end_voc_id;
+        $this->inpLang = $inpLang;
+        $this->targLang = $targLang;
     }
 
-    public function shiftLeftSentence(
-        NDArray $sentence
-        ) : NDArray
+    public function predict(NDArray $sentence) : array
     {
-        $K = $this->backend;
-        $shape = $sentence->shape();
-        $batchs = $shape[0];
-        $zeroPad = $K->zeros([$batchs,1],$sentence->dtype());
-        $seq = $K->slice($sentence,[0,1],[-1,-1]);
-        $result = $K->concat([$seq,$zeroPad],$axis=1);
-        return $result;
-    }
-
-    protected function trueValuesFilter(NDArray $trues) : NDArray
-    {
-        return $this->shiftLeftSentence($trues);
-    }
-
-    public function predict($encoder_input, ...$options) : array
-    {
-        $K = $this->backend;
+        //echo "(".implode(',',$sentence->shape()).")\n";
+        //echo $this->inpLang->sequencesToTexts([$sentence])[0]."\n";
         $g = $this->builder->gradient();
-        if($encoder_input->ndim()!=1) {
-            throw new InvalidArgumentException('inputs shape must be 1D.');
-        }
-        if(!$K->isInt($encoder_input)) {
-            throw new InvalidArgumentException('inputs must be integer sequence.');
-        }
+        $K = $this->builder->backend();
+        $sentence = $K->array($sentence);
 
-        $encoder_input = $K->array($encoder_input);
-        $encoder_input = $g->Variable($K->expandDims($encoder_input,axis:0));
+        # The input sentence is Portuguese, hence adding the `[START]` and `[END]` tokens.
+        #if len(sentence.shape) == 0:
+        #  sentence = sentence[tf.newaxis]
+        #
+        #sentence = self.tokenizers.pt.tokenize(sentence).to_tensor()
 
-        $start = $K->array([$this->start_voc_id],dtype:NDArray::int32);
-        $output_array = $K->zeros([1,$this->max_out_length],dtype:NDArray::int32);
-        $K->copy($start,$output_array->reshape([$this->max_out_length])[R(0,1)]);
+        $encoder_input = $K->expandDims($sentence, axis:0);
+
+        # As the output language is English, initialize the output with the
+        # English `[START]` token.
+        #start_end = self.tokenizers.en.tokenize([''])[0]
+        #start = start_end[0][tf.newaxis]
+        #end = start_end[1][tf.newaxis]
+        $start = $K->array([[$this->start_voc_id]],dtype:NDArray::int32);
+        $end   = $K->array([[$this->end_voc_id]],dtype:NDArray::int32);
+
+        # `tf.TensorArray` is required here (instead of a Python list), so that the
+        # dynamic-loop can be traced by `tf.function`.
+        $output_array = $K->zeros([$this->max_out_length+2,1],dtype:NDArray::int32);
+        $K->copy($start,$output_array[R(0,1)]);
+        $output = $output_array[R(0,1)]->reshape([1,1]);
+        //echo $this->targLang->sequencesToTexts($K->ndarray($output))[0]."\n";
+
         $this->transformer->setShapeInspection(false);
-
         for($i=0;$i<$this->max_out_length;$i++) {
-            $predictions = $this->transformer->forward($encoder_input, $g->Variable($output_array), training:false);
+            $output = $g->Variable($output_array[R(0,$i+1)]->reshape([1,$i+1]));
+            $predictions = $this->transformer->forward($encoder_input, $output, training:false);
+            //echo "B(".implode(',',$predictions->shape()).")\n";
+
             # Select the last token from the `seq_len` dimension.
-            //$predictions = $predictions[:, -1:, :];  # Shape `(batch_size, 1, vocab_size)`.
-            $predictions = $K->squeeze($predictions[0],axis:0); // 
-            $predictions = $K->slice($predictions,[$i, 0],[1,-1]);
-            $predicted_id = $K->argMax($predictions, axis:-1, dtype:NDArray::int32);
+            #$predictions = predictions[:, -1:, :]  # Shape `(batch_size, 1, vocab_size)`.
+            #$predictions = $K->slice($predictions,[0, -1],[count($predictions), 1]);
+
+            //$output = $K->argmax($predictions, axis:-1);
+            //echo "O1(".implode(',',$output->shape()).")\n";
+            //echo $this->targLang->sequencesToTexts($K->ndarray($output))[0]."\n";
+
+            $predictions = $K->squeeze($predictions,axis:0);
+            //echo "A1(".implode(',',$predictions->shape()).")\n";
+            $predictions = $predictions[R($i,$i+1)];
+            //echo "A2(".implode(',',$predictions->shape()).")\n";
+            $predicted_id = $K->argmax($predictions, axis:-1);
+            //echo "A3(".implode(',',$predicted_id->shape()).")\n";
 
             # Concatenate the `predicted_id` to the output which is given to the
             # decoder as its input.
-            $output = $output_array->reshape([$this->max_out_length]);
-            if($i+1<$this->max_out_length) {
-                $K->copy($predicted_id,$output[R($i+1,$i+2)]);
-            }
-            if($predicted_id[0] == $this->end_voc_id) {
+            $K->copy($predicted_id[0]->reshape([1,1]),$output_array[R($i+1,$i+2)]);
+
+            if($predicted_id->toArray()[0] == $end->toArray()[0][0]) {
                 break;
             }
         }
-        $this->transformer->setShapeInspection(true);
+        $output_len = $i+2;
+        $output = $output_array[R(0,$output_len)];
+        
         # The output shape is `(1, tokens)`.
         #text = tokenizers.en.detokenize(output)[0]  # Shape: `()`.
-    
+
         #tokens = tokenizers.en.lookup(output)[0]
-    
+
         # `tf.function` prevents us from using the attention_weights that were
         # calculated on the last iteration of the loop.
         # So, recalculate them outside the loop.
-        $this->transformer->forward($encoder_input, $g->Variable($output_array), training:false);
-        $attention_weights = $this->transformer->getAttentionScores();
+        $this->transformer->forward(
+            $encoder_input,
+            $output[R(0,$output_len)]->reshape([1,$output_len]),
+            training:False
+        );
+        $this->transformer->setShapeInspection(true);
+        $attention_weights = $this->transformer->decoder->last_attn_scores;
 
+        $output = $output->reshape([1,$output_len]);
         #return text, tokens, attention_weights
+        $output = $K->ndarray($output);
+        $attention_weights = $K->ndarray($attention_weights);
         return [$output,$attention_weights];
+
     }
 
     public function plotAttention(
@@ -949,6 +826,107 @@ class Translator
     }
 }
 
+
+class CustomSchedule implements LearningRateSchedule
+{
+    protected float $d_model;
+    protected float $warmup_steps;
+
+    public function __construct(int $d_model, int $warmup_steps=4000)
+    {
+        $this->d_model = (float)$d_model;
+        $this->warmup_steps = (float)$warmup_steps;
+    }
+
+    public function __invoke(mixed $step) : float
+    {
+        $arg1 = 1 / sqrt($step);
+        $arg2 = $step * ($this->warmup_steps ** -1.5);
+        $lr = 1 / sqrt($this->d_model) * min($arg1, $arg2);
+        return $lr;
+    }
+}
+
+class CustomLossFunction
+{
+    protected object $nn;
+    protected $loss_object;
+    protected $gradient;
+    protected $targLang;
+    protected $debug_f;
+    protected $debug_b;
+
+
+    public function __construct($nn,$targLang)
+    {
+        $this->nn = $nn;
+        $this->targLang = $targLang;
+        $this->gradient = $nn->gradient();
+        $this->loss_object = $nn->losses->SparseCategoricalCrossentropy(
+            from_logits:true, reduction:'none'
+        );
+    }
+
+    public function __invoke(NDArray $label, NDArray $pred) : NDArray
+    {
+        $g = $this->gradient;
+        $loss = $this->loss_object->forward($label, $pred);
+        //$mo = $this->nn->backend()->localMatrixOperator();
+        //$K = $this->nn->backend();
+        //echo $mo->shapeToString($label->shape())."\n";
+        //echo $mo->shapeToString($pred->shape())."\n";
+        //echo $mo->shapeToString($K->argMax($pred,axis:-1)->shape())."\n";
+        //echo "P:".$this->targLang->sequencesToTexts([$K->ndarray($K->argMax($pred,axis:-1))[0]])[0]."\n";
+        //echo "T:".$this->targLang->sequencesToTexts([$K->ndarray($label)[0]])[0]."\n";
+        $mask = $g->greater($g->cast($label,dtype:NDArray::float32),0.0);
+        //echo $mo->toString($K->ndarray($mask),indent:true)."\n";
+        //echo $mo->shapeToString($loss->shape())."\n";
+        //echo $mo->shapeToString($mask->shape())."\n";
+        $loss = $g->mul($loss,$mask);
+        $loss = $g->div($g->reduceSum($loss),$g->reduceSum($mask));
+        //echo "loss=".$loss->toArray()."\n";
+        return $loss;
+    }
+}
+
+class CustomAccuracy
+{
+    protected $backend;
+    protected $nn;
+    protected $gradient;
+
+    public function __construct($nn)
+    {
+        $this->backend = $nn->backend();
+        $this->nn = $nn;
+    }
+
+    public function __invoke($label, $pred)
+    {
+        $mo = $this->nn->backend()->localMatrixOperator();
+        $K = $this->backend;
+        $pred = $K->argMax($pred, axis:-1);  // convert to token id from predicts
+
+        $match = $K->equal($label, $pred);   // compare to trues (int32 == int32) 
+        $mask = $K->cast($label,dtype:NDArray::bool); // make mask
+        $match = $K->cast($match,dtype:NDArray::float32);
+        $match = $K->masking($mask,$match); // masking matching results
+
+        //echo "match=".$mo->shapeToString($match->shape())."\n";
+        //echo "mask=".$mo->shapeToString($mask->shape())."\n";
+        //echo "match=".$mo->toString($match,indent:true)."\n";
+        //echo "mask=".$mo->toString($mask,indent:true)."\n";
+        $sumMatch = $K->scalar($K->sum($match));
+        $n = $K->scalar($K->sum($mask));
+        if($n==0) {
+            $accuracy = 0;
+        } else {
+            $accuracy = $sumMatch/$n;
+        }
+        return $accuracy;
+    }
+}
+
 function make_labels($la,$label_tensor) {
     [$lebel_len,$lebel_words] = $label_tensor->shape();
     //$label_tensor  = $label_tensor,[:,1:$lebel_words];
@@ -967,17 +945,21 @@ function make_labels($la,$label_tensor) {
     return $label_tensor;
 }
 
-$numExamples=20000;#30000
+$numExamples=20000;#30000;#128;
 $numWords=1024;#null;
 $epochs = 10;#20;
-$batchSize = 64;
-$wordVectSize=256;#128  // d_model embedding_dim
-$dff=512;  // units 
-$num_layers=4;
+$batchSize = 64;#8;
+$d_model=128;#64;#128;#256;#512  // d_model embedding_dim
+$dff=512;#64;  // units 
+$num_layers=4;#6;
 $num_heads =8;
+$dropout_rate = 0.1;#0.1
 
 $mo = new MatrixOperator();
 $nn = new NeuralNetworks($mo);
+$K = $nn->backend();
+#$nn->backend()->primaryLA()->setProfiling(true);
+$g = $nn->gradient();
 $pltConfig = [];
 $plt = new Plot($pltConfig,$mo);
 
@@ -1011,7 +993,7 @@ echo "num_examples: $numExamples\n";
 echo "num_words: $numWords\n";
 echo "epoch: $epochs\n";
 echo "batchSize: $batchSize\n";
-echo "embedding_dim: $wordVectSize\n";
+echo "embedding_dim: $d_model\n";
 echo "num_heads: $num_heads\n";
 echo "dff: $dff\n";
 echo "Total questions: $corpusSize\n";
@@ -1026,24 +1008,26 @@ $dataset = $nn->data->NDArrayDataset(
 );
 
 echo "device type: ".$nn->deviceType()."\n";
+
 $transformer = new Transformer(
-    $nn,
-    $num_layers,
-    $wordVectSize,      // d_model,
-    $num_heads,
-    $dff,
-    $inputVocabSize,    // input_vocab_size,
-    $targetVocabSize,   // target_vocab_size,
-    $inputLength,       // inputLength,
-    $outputLength,      // targetLength,
+    nn:$nn,
+    num_layers:$num_layers,
+    d_model:$d_model,      // d_model,
+    num_heads:$num_heads,
+    dff:$dff,
+    input_vocab_size:$inputVocabSize,    // input_vocab_size,
+    target_vocab_size:$targetVocabSize,   // target_vocab_size,
+    dropout_rate:$dropout_rate,
+    name:'transformer',
+    // $inputLength,       // inputLength,
+    // $outputLength,      // targetLength,
     // int $max_pe_input=null,
     // int $max_pe_target=null,
-    // float $dropout_rate=0.1,
 );
 
-$lossfunc = new CustomLossFunction($nn);
+$lossfunc = new CustomLossFunction($nn,$targLang);
 $accuracyFunc = new CustomAccuracy($nn);
-$learning_rate = new CustomSchedule($wordVectSize);
+$learning_rate = new CustomSchedule($d_model);
 $optimizer = $nn->optimizers->Adam(lr:$learning_rate, beta1:0.9, beta2:0.98,
                                      epsilon:1e-9);
 
@@ -1054,7 +1038,11 @@ $transformer->compile(
     metrics:['loss'=>'loss','accuracy'=>$accuracyFunc],
 );
 
-$transformer->build([1,$inputLength], [1,$outputLength], trues:[1,$outputLength]); // just for summary
+$transformer->build(
+    $g->ArraySpec([1,$inputLength],dtype:NDArray::int32),
+    $g->ArraySpec([1,$outputLength],dtype:NDArray::int32),
+    //trues:$g->ArraySpec([1,$outputLength],dtype:NDArray::int32)
+); // just for summary
 $transformer->summary();
 
 $modelFilePath = __DIR__."/neural-machine-translation-with-transformer.model";
@@ -1064,14 +1052,19 @@ if(file_exists($modelFilePath)) {
     $transformer->loadWeightsFromFile($modelFilePath);
 } else {
     echo "Train model...\n";
+    $start_time = time();
     $history = $transformer->fit(
         [$inputTensorTrain,$targetTensorTrain],
         $labelTensorTrain,
         batch_size:$batchSize,
         epochs:$epochs,
-        //validation_data:[[$inputTensorVal,$targetTensorVal],$labelTensorVal],
+        #validation_data:[[$inputTensorVal,$targetTensorVal],$labelTensorVal],
         #callbacks:[checkpoint],
     );
+    echo "trainableVariables=".count($transformer->trainableVariables())."\n";
+    echo "Variables=".count($transformer->variables())."\n";
+    $trainint_time = time() - $start_time;
+    echo "Total training time: ".gmdate('H:i:s', $trainint_time)."\n";
     $transformer->saveWeightsToFile($modelFilePath);
 
     $plt->figure();
@@ -1084,12 +1077,13 @@ if(file_exists($modelFilePath)) {
 }
 
 $translator = new Translator(
-    $nn->backend(),
     $nn,
     $transformer,
     max_out_length:$outputLength,
     start_voc_id:$targLang->wordToIndex('<start>'),
     end_voc_id:$targLang->wordToIndex('<end>'),
+    inpLang:$inpLang,
+    targLang:$targLang,
 );
 
 //$choice = $mo->random()->choice($corpusSize,10,false);
@@ -1100,19 +1094,14 @@ foreach($choice as $idx)
     $question = $inputTensor[$idx];
     [$predict,$attentionPlot] = $translator->predict($question);
     $answer = $targetTensor[$idx];
-    //$predictLabel = $mo->la()->reduceArgMax($mo->la()->squeeze($transformer->predict(inputs:[
-    //    $mo->la()->expandDims($question,axis:0),$mo->la()->expandDims($answer,axis:0)])),axis:0);
         
     $sentence = $inpLang->sequencesToTexts([$question])[0];
-    $predictedSentence = $targLang->sequencesToTexts([$predict])[0];
+    $predictedSentence = $targLang->sequencesToTexts($predict)[0];
     $targetSentence = $targLang->sequencesToTexts([$answer])[0];
-    //$predictLabelSentence = $targLang->sequencesToTexts([$predictLabel])[0];
     echo "Input:   $sentence\n";
     echo "Predict: $predictedSentence\n";
     echo "Target:  $targetSentence\n";
-    //echo "Label:  $predictLabelSentence\n";
-    //echo "label:", $targLang->sequencesToTexts([$labelTensorTrain[$idx]])[0]."\n";
-    echo "\n";    
+    echo "\n";
 }
 } catch(\Exception $e) {
     echo get_class($e).": ".$e->getMessage()."\n";
@@ -1120,4 +1109,5 @@ foreach($choice as $idx)
     echo $e->getTraceAsString()."\n";
     echo "Exception!!!\n";
 }
-//$plt->show();
+$plt->show();
+#$nn->backend()->primaryLA()->profilingReport();
