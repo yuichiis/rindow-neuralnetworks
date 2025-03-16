@@ -27,26 +27,46 @@ jobs:
             phpunit: '11.5'
   
     steps:
+      - name: Setup PHP ${{ matrix.php }}
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          # PHP Extras
+          coverage: none
+          tools: composer, phpunit:${{ matrix.phpunit }}, phpstan
+          # ini-values: "memory_limit=512M"
+          extensions: pdo_sqlite gd # ${{ matrix.ffi }}
+
       - name: Checkout codes
         uses: "actions/checkout@v4"
 
+      #- name: Composer
+      #  uses: php-actions/composer@v6
+      #  with:
+      #    php_version: ${{ matrix.php }}
+
       - name: Composer
-        uses: php-actions/composer@v6
-        with:
-          php_version: ${{ matrix.php }}
+        run: composer update
+
+      #- name: PHP Static Analysys
+      #  uses: php-actions/phpstan@v3
+      #  with:
+      #    php_version: ${{ matrix.php }}
+      #    path: src/
 
       - name: PHP Static Analysys
-        uses: php-actions/phpstan@v3
-        with:
-          php_version: ${{ matrix.php }}
-          path: src/
+        run: phpstan
+
+      #- name: PHPUnit Tests
+      #  uses: php-actions/phpunit@v3
+      #  with:
+      #    configuration: tests/phpunit.xml
+      #    version: ${{ matrix.phpunit }}
+      #    php_version: ${{ matrix.php }}
+      #    php_extensions: pdo_sqlite gd
+      #  env:
+      #    PLOT_RENDERER_SKIP: true
 
       - name: PHPUnit Tests
-        uses: php-actions/phpunit@v3
-        with:
-          configuration: tests/phpunit.xml
-          version: ${{ matrix.phpunit }}
-          php_version: ${{ matrix.php }}
-          php_extensions: pdo_sqlite gd
-        env:
-          PLOT_RENDERER_SKIP: true
+        run: PLOT_RENDERER_SKIP=true; export PLOT_RENDERER_SKIP; phpunit -c tests
+
