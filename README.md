@@ -103,6 +103,7 @@ $ php basic-image-clasification.php
 ```
 
 *Please specify an appropriate viewer for RINDOW_MATH_PLOT_VIEWER.
+(ex. viewnior)
 
 If done correctly, a graph of the learning process will be displayed.
 
