@@ -12,10 +12,13 @@ class Split extends AbstractFunction
 {
     protected int $numOfInputs = 1;
 
-    /** @var arary<int> $sizeSplits */
+    /** @var array<int> $sizeSplits */
     protected array $sizeSplits;
     protected ?int $axis;
 
+    /**
+     * @param array<int> $sizeSplits
+     */
     public function __construct(
         object $backend,
         array $sizeSplits,
