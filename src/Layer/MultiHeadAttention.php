@@ -99,6 +99,7 @@ class MultiHeadAttention extends AbstractAttentionLayer
             $this->mask_exp = -1e99;
         }
         $this->initName($name,'multiheadattention');
+        $this->postConstruct();
     }
     
     /**
@@ -108,6 +109,9 @@ class MultiHeadAttention extends AbstractAttentionLayer
      */
     public function build(mixed $variables=null, ?array $sampleWeights=null) : void
     {
+        if($this->checkAlreadyBuilt()) {
+            return;
+        }
         $K = $this->backend;
         $inputShapes = $this->normalizeInputShapes($variables);
         if(count($inputShapes)!=2&&count($inputShapes)!=3) {
@@ -160,21 +164,21 @@ class MultiHeadAttention extends AbstractAttentionLayer
         $this->query_dense = new Dense(             // Dense(inputs(batches.Feature),units)
             $this->backend,                         //     units       : (numHeads.keyDim)
             $units,                                 //     input_shape : ((Tq),Feature)
-            input_shape:$dense_input_shape,         //     output_shape: ((Tq),(numHeads.keyDim))
+            input_shape:($sampleWeights===null)?$dense_input_shape:null,
+                                                    //     output_shape: ((Tq),(numHeads.keyDim))
             name:"query.{$this->name}",             //     use_bias
             kernel_initializer:$this->kernelInitializerName,
             bias_initializer:$this->biasInitializerName,
             use_bias:$this->useBias,
         );
-        $sampleW = null;
         if($sampleWeights!==null) {
             $sampleW = [];
             $sampleW[] = array_shift($sampleWeights);       // query_dense/kernel
             if($this->useBias) {
                 $sampleW[] = array_shift($sampleWeights);   // query_dense/bias
             }
+            $this->query_dense->build($dense_input_shape,sampleWeights:$sampleW);
         }
-        $this->query_dense->build($dense_input_shape,sampleWeights:$sampleW);
 
         //
         // key dense
@@ -188,21 +192,21 @@ class MultiHeadAttention extends AbstractAttentionLayer
         $this->key_dense = new Dense(               // Dense(inputs(batches.Feature),units)
             $this->backend,                         //     units       : (numHeads.keyDim)
             $units,                                 //     input_shape : ((Tq),Feature)
-            input_shape:$dense_input_shape,         //     output_shape: ((Tq),(numHeads.keyDim))
+            input_shape:($sampleWeights===null)?$dense_input_shape:null,
+                                                    //     output_shape: ((Tq),(numHeads.keyDim))
             name:"key.{$this->name}",               //     use_bias
             kernel_initializer:$this->kernelInitializerName,
             bias_initializer:$this->biasInitializerName,
             use_bias:$this->useBias,
         );
-        $sampleW = null;
         if($sampleWeights!==null) {
             $sampleW = [];
             $sampleW[] = array_shift($sampleWeights);       // key_dense/kernel
             if($this->useBias) {
                 $sampleW[] = array_shift($sampleWeights);   // key_dense/bias
             }
+            $this->key_dense->build($dense_input_shape,sampleWeights:$sampleW);
         }
-        $this->key_dense->build($dense_input_shape,sampleWeights:$sampleW);
 
         //
         // value dense
@@ -216,22 +220,22 @@ class MultiHeadAttention extends AbstractAttentionLayer
         $this->value_dense = new Dense(             // Dense(inputs(batches.Feature),units)
             $this->backend,                         //     units       : (numHeads.keyDim)
             $units,                                 //     input_shape : ((Tq),Feature)
-            input_shape:$dense_input_shape,         //     output_shape: ((Tq),(numHeads.keyDim))
+            input_shape:($sampleWeights===null)?$dense_input_shape:null,
+                                                    //     output_shape: ((Tq),(numHeads.keyDim))
             name:"value.{$this->name}",             //     use_bias
             kernel_initializer:$this->kernelInitializerName,
             bias_initializer:$this->biasInitializerName,
             use_bias:$this->useBias,
         );                                          
         $output_rank = 1+count($Tv)+1+1; // (B,(Tv),Head,KeyDim)
-        $sampleW = null;
         if($sampleWeights!==null) {
             $sampleW = [];
             $sampleW[] = array_shift($sampleWeights);       // value_dense/kernel
             if($this->useBias) {
                 $sampleW[] = array_shift($sampleWeights);   // value_dense/bias
             }
+            $this->value_dense->build($dense_input_shape,sampleWeights:$sampleW);
         }
-        $this->value_dense->build($dense_input_shape,sampleWeights:$sampleW);
 
         // 
         // scale query
@@ -287,21 +291,20 @@ class MultiHeadAttention extends AbstractAttentionLayer
         $this->output_dense = new Dense(
             $this->backend,
             $units,
-            input_shape: $dense_input_shape, 
+            input_shape: ($sampleWeights===null)?$dense_input_shape:null, 
             name: "output.{$this->name}",
             kernel_initializer:$this->kernelInitializerName,
             bias_initializer:$this->biasInitializerName,
             use_bias:$this->useBias,
         );
-        $sampleW = null;
         if($sampleWeights!==null) {
             $sampleW = [];
             $sampleW[] = array_shift($sampleWeights);       // output_dense/kernel
             if($this->useBias) {
                 $sampleW[] = array_shift($sampleWeights);   // output_dense/bias
             }
+            $this->output_dense->build($dense_input_shape,sampleWeights:$sampleW);
         }
-        $this->output_dense->build($dense_input_shape,sampleWeights:$sampleW);
 
         //
         // output shape

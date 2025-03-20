@@ -29,7 +29,7 @@ class ExpandDimsTest extends TestCase
         $layer = new ExpandDims(
             $K,
             $axis=1,
-            input_shape:[4,4,3]
+            //input_shape:[4,4,3]
             );
 
         $inputs = $g->Variable($K->zeros([1,4,4,3]));
@@ -52,7 +52,7 @@ class ExpandDimsTest extends TestCase
         $layer = new ExpandDims(
             $K,
             $axis=3,
-            input_shape:[4,4,3]
+            //input_shape:[4,4,3]
             );
 
         $inputs = $g->Variable($K->zeros([1,4,4,3]));
@@ -75,7 +75,7 @@ class ExpandDimsTest extends TestCase
         $layer = new ExpandDims(
             $K,
             $axis=-1,
-            input_shape:[4,4,3]
+            //input_shape:[4,4,3]
             );
 
         $inputs = $g->Variable($K->zeros([1,4,4,3]));
@@ -98,7 +98,7 @@ class ExpandDimsTest extends TestCase
         $layer = new ExpandDims(
             $K,
             $axis=-2,
-            input_shape:[4,4,3]
+            //input_shape:[4,4,3]
             );
 
         $inputs = $g->Variable($K->zeros([1,4,4,3]));
@@ -121,7 +121,7 @@ class ExpandDimsTest extends TestCase
         $layer = new ExpandDims(
             $K,
             $axis=4,
-            input_shape:[4,4,3]
+            //input_shape:[4,4,3]
             );
         $inputs = $g->Variable($K->zeros([1,4,4,3]));
         $this->expectException(InvalidArgumentException::class);
@@ -138,7 +138,7 @@ class ExpandDimsTest extends TestCase
         $layer = new ExpandDims(
             $K,
             $axis=-5,
-            input_shape:[4,4,3]
+            //input_shape:[4,4,3]
             );
         $inputs = $g->Variable($K->zeros([1,4,4,3]));
         $this->expectException(InvalidArgumentException::class);
@@ -155,9 +155,10 @@ class ExpandDimsTest extends TestCase
         $layer = new ExpandDims(
             $K,
             $axis=0,
-            );
-        $inputs = $g->Variable($K->zeros([1,4,4,3]));
-        $layer->build($inputs);
+            input_shape:[4,4,3]
+        );
+        //$inputs = $g->Variable($K->zeros([1,4,4,3]));
+        //$layer->build($inputs);
 
         $this->assertEquals([1,4,4,3],$layer->outputShape());
     }
@@ -175,8 +176,8 @@ class ExpandDimsTest extends TestCase
             );
         $inputs = $g->Variable($K->zeros([1,4,4,5]));
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Input shape is inconsistent: defined as (4,4,3) but (4,4,5) given in ExpandDims');
-        $layer->build($inputs);
+        $this->expectExceptionMessage('unmatch input shape: (4,4,5), must be (4,4,3) in expanddims');
+        $layer->forward($inputs);
     }
 
     public function testNormalForwardAndBackward()
@@ -190,7 +191,8 @@ class ExpandDimsTest extends TestCase
         $layer = new ExpandDims(
             $K,
             $axis=0,
-            input_shape:[4,4,3]);
+            //input_shape:[4,4,3]
+        );
 
 
         //$layer->build($g->Variable($inputs));

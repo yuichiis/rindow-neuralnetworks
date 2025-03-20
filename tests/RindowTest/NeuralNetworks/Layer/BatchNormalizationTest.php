@@ -38,17 +38,10 @@ class BatchNormalizationTest extends TestCase
         ]);
 
         $inputs = $g->Variable($x);
+        //$gamma = $K->array([1.0, 1.0, 1.0]);
+        //$beta = $K->array([0.0, 0.0, 0.0]);
+        //$layer->build($inputs, sampleWeights:[$gamma,$beta]);
         $layer->build($inputs);
-        [$beta,$gamma] = $layer->getParams();
-        $this->assertEquals([3],$beta->shape());
-        $this->assertEquals([3],$gamma->shape());
-        [$dbeta,$dgamma] = $layer->getGrads();
-        $this->assertEquals([3],$dbeta->shape());
-        $this->assertEquals([3],$dgamma->shape());
-
-        $gamma = $K->array([1.0, 1.0, 1.0]);
-        $beta = $K->array([0.0, 0.0, 0.0]);
-        $layer->build($inputs, sampleWeights:[$gamma,$beta]);
 
         $outputsVariable = $nn->with($tape=$g->GradientTape(),
             function() use ($layer,$x) {
@@ -57,6 +50,14 @@ class BatchNormalizationTest extends TestCase
             }
         );
         $out = $K->ndarray($outputsVariable);
+
+        [$beta,$gamma] = $layer->getParams();
+        $this->assertEquals([3],$beta->shape());
+        $this->assertEquals([3],$gamma->shape());
+        [$dbeta,$dgamma] = $layer->getGrads();
+        $this->assertEquals([3],$dbeta->shape());
+        $this->assertEquals([3],$dgamma->shape());
+
         // 3 output x 4 batch
         $this->assertEquals([4,3],$out->shape());
         $this->assertTrue($mo->la()->isclose($mo->la()->array(
@@ -120,13 +121,7 @@ class BatchNormalizationTest extends TestCase
         ]);
 
         $inputs = $g->Variable($x);
-        $layer->build($inputs);
-        [$beta,$gamma] = $layer->getParams();
-        $this->assertEquals([3],$beta->shape());
-        $this->assertEquals([3],$gamma->shape());
-        [$dbeta,$dgamma] = $layer->getGrads();
-        $this->assertEquals([3],$dbeta->shape());
-        $this->assertEquals([3],$dgamma->shape());
+        //$layer->build($inputs);
 
         $outputsVariable = $nn->with($tape=$g->GradientTape(),
             function() use ($layer,$x) {
@@ -137,6 +132,13 @@ class BatchNormalizationTest extends TestCase
         $out = $K->ndarray($outputsVariable);
         // 4 batch x 2x2 image x 3 channels
         $this->assertEquals([4,2,2,3],$out->shape());
+
+        [$beta,$gamma] = $layer->getParams();
+        $this->assertEquals([3],$beta->shape());
+        $this->assertEquals([3],$gamma->shape());
+        [$dbeta,$dgamma] = $layer->getGrads();
+        $this->assertEquals([3],$dbeta->shape());
+        $this->assertEquals([3],$dgamma->shape());
         // 2 output x 4 batch
         $dout = $K->array([
             [[[1.0,2.0,3.0],[0.5,1.5,2.5]],[[1.5,2.5,3.5],[1.0,2.0,3.0]]],

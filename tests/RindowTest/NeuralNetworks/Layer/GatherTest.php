@@ -29,7 +29,7 @@ class GatherTest extends TestCase
         $g = $nn->gradient();
         $layer = new Gather(
             $K,
-            input_shapes:[[3],[]]
+            //input_shapes:[[3],[]]
             );
 
         $inputs = [$g->Variable($K->zeros([1,3])),$g->Variable($K->zeros([1]))];
@@ -75,7 +75,7 @@ class GatherTest extends TestCase
         $layer = new Gather(
             $K,
             batchDims:2,
-            input_shapes:[[3,2],[2]]
+            //input_shapes:[[3,2],[2]]
             );
 
         $inputs = [$g->Variable($K->zeros([1,3,2])),$g->Variable($K->zeros([1,2]))];
@@ -92,10 +92,11 @@ class GatherTest extends TestCase
         $g = $nn->gradient();
         $layer = new Gather(
             $K,
-            );
+            input_shapes:[[3],[]]
+        );
 
-        $inputs = [$g->Variable($K->zeros([1,3])),$g->Variable($K->zeros([1]))];
-        $layer->build($inputs);
+        //$inputs = [$g->Variable($K->zeros([1,3])),$g->Variable($K->zeros([1]))];
+        //$layer->build($inputs);
 
         $this->assertEquals([],$layer->outputShape());
     }
@@ -113,8 +114,8 @@ class GatherTest extends TestCase
 
         $inputs = [$g->Variable($K->zeros([1,3,2])),$g->Variable($K->zeros([1,4]))];
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Input shape is inconsistent: defined as ((3,2),(2)) but ((3,2),(4)) given in Gather');
-        $layer->build($inputs);
+        $this->expectExceptionMessage('unmatch shape of input 1: [4], must be [2] in gather');
+        $layer->forward($inputs);
     }
 
     public function test1DNormalForwardAndBackward()
@@ -127,7 +128,8 @@ class GatherTest extends TestCase
 
         $layer = new Gather(
             $K,
-            input_shapes:[[3],[]]);
+            //input_shapes:[[3],[]]
+        );
 
         //$layer->build($g->Variable($inputs));
 
@@ -209,7 +211,8 @@ class GatherTest extends TestCase
             $K,
             detailDepth:2,
             indexDepth:0,
-            input_shapes:[[3,2],[2]]);
+            //input_shapes:[[3,2],[2]]
+        );
     
         //$layer->build();
     
@@ -283,7 +286,8 @@ class GatherTest extends TestCase
         $layer = new Gather(
             $K,
             batchDims:-1,
-            input_shapes:[[3,2],[3]]);
+            //input_shapes:[[3,2],[3]]
+        );
     
         //$layer->build();
     

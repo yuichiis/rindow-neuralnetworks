@@ -29,7 +29,7 @@ class AttentionTest extends TestCase
         $nn = $this->newNeuralNetworks($mo);
         $K = $nn->backend();
         $g = $nn->gradient();
-        $layer = new Attention($K, input_shapes:[[3,2],[4,2]]);
+        $layer = new Attention($K);
         $inputs = [
             $g->Variable($K->zeros([1,3,2])),
             $g->Variable($K->zeros([1,4,2])),
@@ -57,7 +57,7 @@ class AttentionTest extends TestCase
             $g->Variable($K->zeros([1,4,2])),
         ];
 
-        $shapes = $layer->build($inputs);
+        //$shapes = $layer->build($inputs);
         $params = $layer->getParams();
         $this->assertCount(0,$params);
 
@@ -74,12 +74,12 @@ class AttentionTest extends TestCase
         $K = $nn->backend();
         $g = $nn->gradient();
         $layer = new Attention($K, input_shapes:[[3,2],[4,2]]);
-        $inputs = [
-            $g->Variable($K->zeros([1,3,2])),
-            $g->Variable($K->zeros([1,4,2])),
-        ];
+        //$inputs = [
+        //    $g->Variable($K->zeros([1,3,2])),
+        //    $g->Variable($K->zeros([1,4,2])),
+        //];
         // [batch,3,2],[batch,4,2]
-        $layer->build($inputs);
+        //$layer->build($inputs);
         // [batch,3,4]
         $this->assertEquals([3,2],$layer->outputShape());
     }
@@ -97,8 +97,8 @@ class AttentionTest extends TestCase
         ];
     
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Input shape is inconsistent: defined as ((3,2),(4,2)) but ((5,2),(4,2)) given in Attention');
-        $layer->build($inputs);
+        $this->expectExceptionMessage('Unmatch query shape  [b,3,2] NDArray. [1,5,2] given in attention');
+        $layer->forward($inputs);
     }
 
     public function testNormalForwardAndBackward()
@@ -113,7 +113,7 @@ class AttentionTest extends TestCase
             $g->Variable($K->zeros([2,4,3])),
         ];
 
-        $layer->build($inputs);
+        //$layer->build($inputs);
 
         //
         // forward
@@ -202,7 +202,7 @@ class AttentionTest extends TestCase
             $g->Variable($K->zeros([2,5,4])),
         ];
 
-        $layer->build($inputs);
+        //$layer->build($inputs);
 
         //
         // forward
@@ -307,7 +307,7 @@ class AttentionTest extends TestCase
             $g->Variable($K->zeros([2,5,4])),
         ];
 
-        $layer->build($inputs);
+        //$layer->build($inputs);
 
         //
         // forward
@@ -416,7 +416,7 @@ class AttentionTest extends TestCase
             $g->Variable($K->zeros([2,5,4])),
         ];
 
-        $layer->build($inputs);
+        //$layer->build($inputs);
 
         //
         // forward
@@ -524,7 +524,7 @@ class AttentionTest extends TestCase
             $g->Variable($query),
             $g->Variable($value),
         ];
-        $layer->build($inputs);
+        //$layer->build($inputs);
 
         //
         // forward
@@ -582,7 +582,7 @@ class AttentionTest extends TestCase
             $g->Variable($K->zeros([2,4,3])),
         ];
 
-        $layer->build($inputs);
+        //$layer->build($inputs);
 
         $query = $K->array([
             [[1,0,0],[0,1,0]],
@@ -680,7 +680,7 @@ class AttentionTest extends TestCase
             $g->Variable($K->zeros([2,2,3])),
             $g->Variable($K->zeros([2,4,3])),
         ];
-        $layer->build($inputs);
+        //$layer->build($inputs);
 
         //
         // forward
@@ -767,7 +767,7 @@ class AttentionTest extends TestCase
             $g->Variable($K->zeros([2,4,2,2,3])),
             $g->Variable($K->zeros([2,4,2,4,3])),
         ];
-        $layer->build($inputs);
+        //$layer->build($inputs);
 
         //
         // forward

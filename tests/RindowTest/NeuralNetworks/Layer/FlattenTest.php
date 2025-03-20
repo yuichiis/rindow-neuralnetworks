@@ -27,7 +27,9 @@ class FlattenTest extends TestCase
         $K = $nn->backend();
         $g = $nn->gradient();
         $layer = new Flatten(
-            $K,input_shape:[4,4,3]);
+            $K,
+            //input_shape:[4,4,3]
+        );
         $inputs = $g->Variable($K->zeros([1,4,4,3]));
         $layer->build($inputs);
         $params = $layer->getParams();
@@ -48,10 +50,11 @@ class FlattenTest extends TestCase
 
         $layer = new Flatten(
             $K,
-            );
+            input_shape:[4,4,3]
+        );
         
-        $inputs = $g->Variable($K->zeros([1,4,4,3]));
-        $layer->build($inputs);
+        //$inputs = $g->Variable($K->zeros([1,4,4,3]));
+        //$layer->build($inputs);
 
         $this->assertEquals([48],$layer->outputShape());
     }
@@ -68,8 +71,8 @@ class FlattenTest extends TestCase
             );
         $inputs = $g->Variable($K->zeros([1,4,4,5]));
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Input shape is inconsistent: defined as (4,4,3) but (4,4,5) given in Flatten');
-        $layer->build($inputs);
+        $this->expectExceptionMessage('unmatch input shape: (4,4,5), must be (4,4,3) in flatten');
+        $layer->forward($inputs);
     }
 
     public function testNormalForwardAndBackward()
@@ -82,7 +85,8 @@ class FlattenTest extends TestCase
 
         $layer = new Flatten(
             $K,
-            input_shape:[4,4,3]);
+            //input_shape:[4,4,3],
+        );
 
         //$layer->build($g->Variable($inputs));
 

@@ -54,6 +54,7 @@ class BatchNormalization extends AbstractNormalization
         $this->initName($name,'batchnormalization');
         $this->allocateWeights(['beta','gamma'],$nonTrainables=2);
         $this->callOptions['training'] = true;
+        $this->postConstruct();
     }
 
     protected function buildNoTrainingMode(array $kernelShape) : void

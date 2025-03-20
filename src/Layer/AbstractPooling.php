@@ -58,10 +58,14 @@ abstract class AbstractPooling extends AbstractImage
         $this->data_format = $data_format;
         $this->dilation_rate = $dilation_rate;
         $this->inputShape = $input_shape;
+        $this->postConstruct();
     }
 
     public function build(mixed $variable=null, ?array $sampleWeights=null) : void
     {
+        if($this->checkAlreadyBuilt()) {
+            return;
+        }
         $K = $this->backend;
 
         $inputShape = $this->normalizeInputShape($variable);

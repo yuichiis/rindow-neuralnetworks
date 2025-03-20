@@ -28,7 +28,7 @@ class GlobalAveragePooling1DTest extends TestCase
         $g = $nn->gradient();
         $layer = new GlobalAveragePooling1D(
             $K,
-            input_shape:[4,3]
+            //input_shape:[4,3]
             );
 
         $inputs = $g->Variable($K->zeros([1,4,3]));
@@ -50,10 +50,11 @@ class GlobalAveragePooling1DTest extends TestCase
         $g = $nn->gradient();
         $layer = new GlobalAveragePooling1D(
             $K,
-            );
+            input_shape:[4,3]
+        );
 
-        $inputs = $g->Variable($K->zeros([1,4,3]));
-        $layer->build($inputs);
+        //$inputs = $g->Variable($K->zeros([1,4,3]));
+        //$layer->build($inputs);
 
         $this->assertEquals([3],$layer->outputShape());
     }
@@ -71,8 +72,8 @@ class GlobalAveragePooling1DTest extends TestCase
 
         $inputs = $g->Variable($K->zeros([1,4,5]));
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Input shape is inconsistent: defined as (4,3) but (4,5) given in GlobalAveragePooling1D');
-        $layer->build($inputs);
+        $this->expectExceptionMessage('unmatch input shape: (4,5), must be (4,3) in globalaveragepooling1d');
+        $layer->forward($inputs);
     }
 
     public function testNormalForwardAndBackward()
@@ -85,7 +86,8 @@ class GlobalAveragePooling1DTest extends TestCase
 
         $layer = new GlobalAveragePooling1D(
             $K,
-            input_shape:[2,3]);
+            //input_shape:[2,3]
+        );
 
         //$layer->build();
 

@@ -16,3 +16,4 @@ if(!file_exists(RINDOWTEST_TEMP_DIR)) {
 #if(!class_exists('PHPUnit\Framework\TestCase')) {
 #    include __DIR__.'/travis/patch55.php';
 #}
+Rindow\NeuralNetworks\Layer\AbstractLayerBase::$throwDuplicateBuild = true;

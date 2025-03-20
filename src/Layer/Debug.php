@@ -33,10 +33,14 @@ class Debug extends AbstractLayer
         $this->forwardHook = $forward_hook;
         $this->backwardHook = $backward_hook;
         $this->initName($name,'debug');
+        $this->postConstruct();
     }
 
     public function build(mixed $variable=null, ?array $sampleWeights=null) : void
     {
+        if($this->checkAlreadyBuilt()) {
+            return;
+        }
         $K = $this->backend;
 
         $inputShape = $this->normalizeInputShape($variable);

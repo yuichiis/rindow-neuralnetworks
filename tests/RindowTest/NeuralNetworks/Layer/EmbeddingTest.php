@@ -32,7 +32,6 @@ class EmbeddingTest extends TestCase
             $K,
             $inputDim=4,
             $outputDim=5,
-            input_length:3
             );
 
         $inputs = $g->Variable($K->zeros([1,3]));
@@ -59,9 +58,10 @@ class EmbeddingTest extends TestCase
             $K,
             $inputDim=4,
             $outputDim=5,
-            );
-        $inputs = $g->Variable($K->zeros([1,3]));
-        $layer->build($inputs);
+            input_length:3
+        );
+        //$inputs = $g->Variable($K->zeros([1,3]));
+        //$layer->build($inputs);
 
         //$this->assertEquals([3],$layer->inputShape());
         $this->assertEquals([3,5],$layer->outputShape());
@@ -82,8 +82,8 @@ class EmbeddingTest extends TestCase
         $inputs = $g->Variable($K->zeros([1,4]));
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Input shape is inconsistent: defined as (3) but (4) given in Embedding');
-        $layer->build($inputs);
+        $this->expectExceptionMessage('unmatch input shape: (4), must be (3) in embedding');
+        $layer->forward($inputs);
     }
 
     public function testNormalForwardAndBackward()
@@ -97,7 +97,8 @@ class EmbeddingTest extends TestCase
             $K,
             $inputDim=4,
             $outputDim=5,
-            input_length:3);
+            //input_length:3
+        );
         //  2 batch
         $inputs = $K->array([
             [0,1,2],
@@ -166,7 +167,7 @@ class EmbeddingTest extends TestCase
             $K,
             $inputDim=4,
             $outputDim=5,
-            input_length:3,
+            //input_length:3,
             mask_zero:true,
         );
         //  2 batch
@@ -223,7 +224,7 @@ class EmbeddingTest extends TestCase
             $K,
             $inputDim=4,
             $outputDim=5,
-            input_length:3,
+            //input_length:3,
             mask_zero:true,
         );
         //  2 batch

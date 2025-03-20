@@ -53,10 +53,14 @@ class Attention extends AbstractAttentionLayer
         if($backend->deviceType()=='PHP') {
             $this->mask_exp = -1e99;
         }
+        $this->postConstruct();
     }
 
     public function build(mixed $variables=null, ?array $sampleWeights=null) : void
     {
+        if($this->checkAlreadyBuilt()) {
+            return;
+        }
         $K = $this->backend;
         $inputShapes = $this->normalizeInputShapes($variables);
         if(count($inputShapes)!=2&&count($inputShapes)!=3) {

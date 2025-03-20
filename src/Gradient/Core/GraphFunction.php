@@ -243,7 +243,6 @@ class GraphFunction implements GraphFunctionInterface
         $this->constants = $constants; // NDArray
         $this->pipeline = $pipeline; // Func
         $this->backprop = $backprop; // Func
-        $this->built = true;
         $outputs = $this->repackVariables($this->backend,$graphOutputs);
         foreach($pipeline as $func) {
             foreach($func->inputs() as $o) {
@@ -256,6 +255,7 @@ class GraphFunction implements GraphFunctionInterface
         }
         $this->setCreatorToVariables($sessionFunc,$outputs);
         $sessionFunc->_setOutputsVariables($this->referenceVariables($outputs));
+        $this->built = true;
         if(count($outputs)==1) {
             return $outputs[0];
         }

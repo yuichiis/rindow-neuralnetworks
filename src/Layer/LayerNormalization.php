@@ -33,6 +33,7 @@ class LayerNormalization extends AbstractNormalization
 
         $this->initName($name,'layernormalization');
         $this->allocateWeights(['beta','gamma']);
+        $this->postConstruct();
     }
 
     protected function buildNoTrainingMode(array $kernelShape) : void

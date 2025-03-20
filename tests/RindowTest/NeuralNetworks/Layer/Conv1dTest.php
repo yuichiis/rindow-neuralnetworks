@@ -31,7 +31,7 @@ class Conv1DTest extends TestCase
             $K,
             $filters=5,
             $kernel_size=3,
-            input_shape:[4,1]
+            //input_shape:[4,1]
             );
 
         $inputs = $g->Variable($K->zeros([1,4,1]));
@@ -63,9 +63,10 @@ class Conv1DTest extends TestCase
             $K,
             $filters=5,
             $kernel_size=3,
-            );
-        $inputs = $g->Variable($K->zeros([1,4,1]));
-        $layer->build($inputs);
+            input_shape:[4,1]
+        );
+        //$inputs = $g->Variable($K->zeros([1,4,1]));
+        //$layer->build($inputs);
         $params = $layer->getParams();
         $this->assertCount(2,$params);
         $this->assertEquals([3,1,5],$params[0]->shape());
@@ -86,8 +87,8 @@ class Conv1DTest extends TestCase
         $inputs = $g->Variable($K->zeros([1,4,2]));
     
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Input shape is inconsistent: defined as (4,1) but (4,2) given in Conv1D');
-        $layer->build($inputs);
+        $this->expectExceptionMessage('unmatch input shape: (4,2), must be (4,1) in conv1d');
+        $layer->forward($inputs);
     }
 
     public function testNormalForwardAndBackward()
@@ -101,7 +102,8 @@ class Conv1DTest extends TestCase
             $K,
             $filters=2,
             $kernel_size=2,
-            input_shape:[3,1]);
+            //input_shape:[3,1]
+        );
 
         //  batch size 2
         $inputs = $K->array([
@@ -122,14 +124,7 @@ class Conv1DTest extends TestCase
         $layer->build(null,
              sampleWeights:[$kernel,$bias]
         );*/
-        $layer->build($g->Variable($inputs));
-        [$kernel,$bias]=$layer->getParams();
-        $this->assertEquals(
-            [2,1,2],
-            $kernel->shape());
-        $this->assertEquals(
-            [2],
-            $bias->shape());
+        //$layer->build($g->Variable($inputs));
 
         //
         // forward
@@ -149,6 +144,14 @@ class Conv1DTest extends TestCase
         $this->assertEquals(
             [2,2,2],$outputs->shape());
         $this->assertEquals($copyInputs->toArray(),$inputs->toArray());
+        //
+        [$kernel,$bias]=$layer->getParams();
+        $this->assertEquals(
+            [2,1,2],
+            $kernel->shape());
+        $this->assertEquals(
+            [2],
+            $bias->shape());
 
         //
         // backward

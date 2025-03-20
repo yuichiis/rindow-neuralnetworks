@@ -30,11 +30,34 @@ class RepeatVectorTest extends TestCase
         $layer = new RepeatVector(
             $K,
             $repeats=2,
-            input_shape:[3]
+            //input_shape:[3]
             );
 
         $inputs = $g->Variable($K->zeros([1,3]));
         $layer->build($inputs);
+        $params = $layer->getParams();
+        $this->assertCount(0,$params);
+
+        $grads = $layer->getGrads();
+        $this->assertCount(0,$grads);
+
+        $this->assertEquals([2,3],$layer->outputShape());
+    }
+
+    public function testSetInputShape()
+    {
+        $mo = $this->newMatrixOperator();
+        $nn = $this->newNeuralNetworks($mo);
+        $K = $nn->backend();
+        $g = $nn->gradient();
+        $layer = new RepeatVector(
+            $K,
+            $repeats=2,
+            input_shape:[3]
+            );
+
+        //$inputs = $g->Variable($K->zeros([1,3]));
+        //$layer->build($inputs);
         $params = $layer->getParams();
         $this->assertCount(0,$params);
 
@@ -58,8 +81,8 @@ class RepeatVectorTest extends TestCase
 
         $inputs = $g->Variable($K->zeros([1,5]));
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Input shape is inconsistent: defined as (3) but (5) given in RepeatVector');
-        $layer->build($inputs);
+        $this->expectExceptionMessage('unmatch input shape: (5), must be (3) in repeatvector');
+        $layer->forward($inputs);
     }
 
     public function testInvalidInputShape()
@@ -71,7 +94,7 @@ class RepeatVectorTest extends TestCase
         $layer = new RepeatVector(
             $K,
             $repeats=2,
-            input_shape:[3,2]
+            //input_shape:[3,2]
             );
 
         $inputs = $g->Variable($K->zeros([1,3,2]));
@@ -91,7 +114,8 @@ class RepeatVectorTest extends TestCase
         $layer = new RepeatVector(
             $K,
             $repeats=2,
-            input_shape:[3]);
+            //input_shape:[3]
+        );
 
         //$layer->build();
 

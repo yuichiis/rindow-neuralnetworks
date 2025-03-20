@@ -42,10 +42,14 @@ class Gather extends AbstractMultiInputLayer
         $this->indexDepth = $indexDepth;
         $this->inputShape = $input_shapes;
         $this->initName($name,'gather');
+        $this->postConstruct();
     }
 
     public function build(mixed $variables=null, ?array $sampleWeights=null) : void
     {
+        if($this->checkAlreadyBuilt()) {
+            return;
+        }
         $K = $this->backend;
 
         $inputShapes = $this->normalizeInputShapes($variables);

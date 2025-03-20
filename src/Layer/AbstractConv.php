@@ -101,10 +101,14 @@ abstract class AbstractConv extends AbstractImage
         $this->useBias = $use_bias;
         $this->allocateWeights($this->useBias?['kernel','bias']:['kernel']);
         $this->setActivation($activation);
+        $this->postConstruct();
     }
 
     public function build(mixed $variable=null, ?array $sampleWeights=null) : void
     {
+        if($this->checkAlreadyBuilt()) {
+            return;
+        }
         $K = $this->backend;
         $kernelInitializer = $this->kernelInitializer;
         $biasInitializer = $this->biasInitializer;

@@ -51,10 +51,10 @@ class SimpleRNNTest extends TestCase
         $layer = new SimpleRNN(
             $K,
             $units=4,
-            input_shape:[5,3],
+            //input_shape:[5,3],
             );
 
-        $inputs = [$g->Variable($K->zeros([1,5,3]))];
+        $inputs = $g->Variable($K->zeros([1,5,3]));
         $layer->build($inputs);
         $params = $layer->getParams();
         $this->assertCount(3,$params);
@@ -84,9 +84,10 @@ class SimpleRNNTest extends TestCase
         $layer = new SimpleRNN(
             $K,
             $units=4,
+            input_shape:[5,3],
             );
-        $inputs = [$g->Variable($K->zeros([1,5,3]))];
-        $layer->build($inputs);
+        //$inputs = [$g->Variable($K->zeros([1,5,3]))];
+        //$layer->build($inputs);
 
         //$this->assertEquals([3],$layer->inputShape());
         $this->assertEquals([4],$layer->outputShape());
@@ -104,10 +105,10 @@ class SimpleRNNTest extends TestCase
             input_shape:[5,3],
             );
 
-        $inputs = [$g->Variable($K->zeros([1,5,4]))];
+        $inputs = $g->Variable($K->zeros([1,5,4]));
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Input shape is inconsistent: defined as (5,3) but (5,4) given in SimpleRNN');
-        $layer->build($inputs);
+        $this->expectExceptionMessage('unmatch input shape: (5,4), must be (5,3) in simplernn');
+        $layer->forward($inputs);
     }
 
     public function testSetInputShapeForSequential()
@@ -136,11 +137,11 @@ class SimpleRNNTest extends TestCase
         $layer = new SimpleRNN(
             $K,
             $units=4,
-            input_shape:[5,3],
+            //input_shape:[5,3],
             return_sequences:true,
             return_state:true,
             );
-        $inputs = [$g->Variable($K->zeros([1,5,3]))];
+        $inputs = $g->Variable($K->zeros([1,5,3]));
         $layer->build($inputs);
 
         //$this->assertEquals([3],$layer->inputShape());
@@ -158,7 +159,7 @@ class SimpleRNNTest extends TestCase
         $layer = new SimpleRNN(
             $K,
             $units=4,
-            input_shape:[5,3],
+            //input_shape:[5,3],
             );
 
         //$layer->build();
@@ -229,7 +230,7 @@ class SimpleRNNTest extends TestCase
         $layer = new SimpleRNN(
             $K,
             $units=4,
-            input_shape:[5,3],
+            //input_shape:[5,3],
             return_sequences:true,
             return_state:true,
             );
@@ -308,7 +309,7 @@ class SimpleRNNTest extends TestCase
         $layer = new SimpleRNN(
             $K,
             $units=4,
-            input_shape:[5,3],
+            //input_shape:[5,3],
             return_sequences:true,
             return_state:true,
             );
@@ -387,7 +388,7 @@ class SimpleRNNTest extends TestCase
         $layer = new SimpleRNN(
             $K,
             $units=4,
-            input_shape:[3,5],
+            //input_shape:[3,5],
             return_sequences:true,
             return_state:true,
             activation:'linear',
@@ -402,7 +403,7 @@ class SimpleRNNTest extends TestCase
         $recurrent = $K->ones([4,4]);
         $bias = $K->ones([4]);
         $layer->build(
-            array_merge([$g->Variable($inputs)],array_map(fn($x)=>$g->Variable($x),$initialStates)),
+            $g->Variable($inputs),
             sampleWeights:[$kernel,$recurrent,$bias]
         );
 
@@ -480,7 +481,7 @@ class SimpleRNNTest extends TestCase
         $layer = new SimpleRNN(
             $K,
             $units=3,
-            input_shape:[4,10],
+            //input_shape:[4,10],
             return_sequences:true,
             #return_state:true,
             #activation:'linear',
@@ -514,7 +515,7 @@ class SimpleRNNTest extends TestCase
         $layer = new SimpleRNN(
             $K,
             $units=3,
-            input_shape:[4,10],
+            //input_shape:[4,10],
             return_sequences:true,
             go_backwards:true,
             #return_state:true,
@@ -538,7 +539,41 @@ class SimpleRNNTest extends TestCase
             $this->verifyGradient($mo,$nn,$K,$g,$layer,$x));
     }
 
-    public function testClone()
+    public function testCloneNormal()
+    {
+        $mo = $this->newMatrixOperator();
+        $nn = $this->newNeuralNetworks($mo);
+        $K = $nn->backend();
+        $g = $nn->gradient();
+        $origLayer = new SimpleRNN(
+            $K,
+            $units=4,
+            //input_shape:[5,3],
+            );
+
+        $inputs = $g->Variable($K->zeros([1,5,3]));
+        $inputs2 = $g->Variable($K->zeros([1,5,3]));
+        $origLayer->forward($inputs);
+        $layer = clone $origLayer;
+        //$layer->build($inputs2);
+
+        $origParams = $origLayer->getParams();
+        $params = $layer->getParams();
+        $this->assertCount(3,$params);
+        foreach (array_map(null,$origParams,$params) as $data) {
+            [$orig,$dest] = $data;
+            $this->assertNotEquals(spl_object_id($orig),spl_object_id($dest));
+        }
+        $origParams = $origLayer->getGrads();
+        $params = $layer->getGrads();
+        $this->assertCount(3,$params);
+        foreach (array_map(null,$origParams,$params) as $data) {
+            [$orig,$dest] = $data;
+            $this->assertNotEquals(spl_object_id($orig),spl_object_id($dest));
+        }
+    }
+
+    public function testCloneWithInputShape()
     {
         $mo = $this->newMatrixOperator();
         $nn = $this->newNeuralNetworks($mo);
@@ -548,13 +583,13 @@ class SimpleRNNTest extends TestCase
             $K,
             $units=4,
             input_shape:[5,3],
-            );
+        );
 
-        $inputs = $g->Variable($K->zeros([1,5,3]));
-        $inputs2 = $g->Variable($K->zeros([1,5,3]));
-        $origLayer->build($inputs);
+        //$inputs = $g->Variable($K->zeros([1,5,3]));
+        //$inputs2 = $g->Variable($K->zeros([1,5,3]));
+        //$origLayer->forward($inputs);
         $layer = clone $origLayer;
-        $layer->build($inputs2);
+        //$layer->build($inputs2);
 
         $origParams = $origLayer->getParams();
         $params = $layer->getParams();
@@ -589,7 +624,7 @@ class SimpleRNNTest extends TestCase
         $layer = new SimpleRNN(
             $K,
             $units=4,
-            input_shape:[5,3],
+            //input_shape:[5,3],
             return_sequences:true,
             return_state:true,
             );

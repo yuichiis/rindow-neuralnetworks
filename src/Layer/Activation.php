@@ -28,6 +28,7 @@ class Activation extends AbstractLayer
         $this->inputShape = $input_shape;
         $this->initName($name,'activation');
         $this->setActivation($activation);
+        $this->postConstruct();
     }
 
     public function getConfig() : array

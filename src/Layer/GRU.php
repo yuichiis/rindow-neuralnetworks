@@ -89,15 +89,19 @@ class GRU extends AbstractRNNLayer
             bias_initializer:$this->biasInitializerName,
             reset_after:$this->resetAfter,
         ));
+        $this->postConstruct();
     }
 
-    public function build(mixed $variables=null, ?array $sampleWeights=null) : void
+    public function build(mixed $variable=null, ?array $sampleWeights=null) : void
     {
-        $K = $this->backend;
-        if(is_object($variables)) {
-            $variables = [$variables];
+        if($this->checkAlreadyBuilt()) {
+            return;
         }
-        $inputShape = $this->normalizeInputShape(($variables===null)?null:$variables[0]);
+        $K = $this->backend;
+        //if(is_object($variables)) {
+        //    $variables = [$variables];
+        //}
+        $inputShape = $this->normalizeInputShape(($variable===null)?null:$variable);
         //if(count($inputShape)!=1) {
         //    throw new InvalidArgumentException(
         ///        'Unsuppored input shape: ['.implode(',',$inputShape).']');

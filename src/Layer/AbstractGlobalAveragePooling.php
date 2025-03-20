@@ -32,10 +32,14 @@ class AbstractGlobalAveragePooling extends AbstractImage
         $this->data_format = $data_format;
         $this->inputShape = $input_shape;
         $this->initName($name,$this->defaultLayerName);
+        $this->postConstruct();
     }
 
     public function build(mixed $variable=null, ?array $sampleWeights=null) : void
     {
+        if($this->checkAlreadyBuilt()) {
+            return;
+        }
         $K = $this->backend;
 
         $inputShape = $this->normalizeInputShape($variable);

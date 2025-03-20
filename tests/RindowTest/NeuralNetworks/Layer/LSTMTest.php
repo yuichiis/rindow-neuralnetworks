@@ -55,10 +55,10 @@ class LSTMTest extends TestCase
         $layer = new LSTM(
             $K,
             $units=4,
-            input_shape:[5,3],
+            //input_shape:[5,3],
             );
 
-        $inputs = [$g->Variable($K->zeros([1,5,3]))];
+        $inputs = $g->Variable($K->zeros([1,5,3]));
         $layer->build($inputs);
         $params = $layer->getParams();
         $this->assertCount(3,$params);
@@ -88,9 +88,10 @@ class LSTMTest extends TestCase
         $layer = new LSTM(
             $K,
             $units=4,
-            );
-        $inputs = [$g->Variable($K->zeros([1,5,3]))];
-        $layer->build($inputs);
+            input_shape:[5,3],
+        );
+        //$inputs = $g->Variable($K->zeros([1,5,3]));
+        //$layer->build($inputs);
 
         //$this->assertEquals([3],$layer->inputShape());
         $this->assertEquals([4],$layer->outputShape());
@@ -108,10 +109,10 @@ class LSTMTest extends TestCase
             input_shape:[5,3],
             );
 
-        $inputs = [$g->Variable($K->zeros([1,5,4]))];
+        $inputs = $g->Variable($K->zeros([1,5,4]));
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Input shape is inconsistent: defined as (5,3) but (5,4) given in LSTM');
-        $layer->build($inputs);
+        $this->expectExceptionMessage('unmatch input shape: (5,4), must be (5,3) in lstm');
+        $layer->forward($inputs);
     }
 
     public function testSetInputShapeForSequential()
@@ -123,9 +124,10 @@ class LSTMTest extends TestCase
         $layer = new LSTM(
             $K,
             $units=4,
+            input_shape:[5,3],
             );
-        $inputs = $g->Variable($K->zeros([1,5,3]));
-        $layer->build($inputs);
+        //$inputs = $g->Variable($K->zeros([1,5,3]));
+        //$layer->build($inputs);
 
         //$this->assertEquals([3],$layer->inputShape());
         $this->assertEquals([4],$layer->outputShape());
@@ -140,11 +142,11 @@ class LSTMTest extends TestCase
         $layer = new LSTM(
             $K,
             $units=4,
-            input_shape:[5,3],
+            //input_shape:[5,3],
             return_sequences:true,
             return_state:true,
             );
-        $inputs = [$g->Variable($K->zeros([1,5,3]))];
+        $inputs = $g->Variable($K->zeros([1,5,3]));
         $layer->build($inputs);
 
         //$this->assertEquals([3],$layer->inputShape());
@@ -162,7 +164,7 @@ class LSTMTest extends TestCase
         $layer = new LSTM(
             $K,
             $units=4,
-            input_shape:[5,3],
+            //input_shape:[5,3],
             );
 
         //$layer->build();
@@ -236,7 +238,7 @@ class LSTMTest extends TestCase
         $layer = new LSTM(
             $K,
             $units=4,
-            input_shape:[5,3],
+            //input_shape:[5,3],
             return_sequences:true,
             return_state:true,
             );
@@ -409,7 +411,7 @@ class LSTMTest extends TestCase
         $layer = new LSTM(
             $K,
             $units=4,
-            input_shape:[3,5],
+            //input_shape:[3,5],
             return_sequences:true,
             return_state:true,
             activation:'linear',
@@ -426,7 +428,7 @@ class LSTMTest extends TestCase
         $recurrent = $K->ones([4,4*4]);
         $bias = $K->ones([4*4]);
         $layer->build(
-            array_merge([$g->Variable($inputs)],array_map(fn($x)=>$g->Variable($x),$initialStates)),
+            $g->Variable($inputs),
             sampleWeights:[$kernel,$recurrent,$bias]
         );
 
@@ -500,13 +502,13 @@ class LSTMTest extends TestCase
         $layer = new LSTM(
             $K,
             $units=3,
-            input_shape:[4,10],
+            //input_shape:[4,10],
             return_sequences:true,
             #return_state:true,
             #activation:'linear',
             );
-        $layer->build();
-        $weights = $layer->getParams();
+        //$layer->build();
+        //$weights = $layer->getParams();
 
         $x = $K->array([
             [0,1,2,9],
@@ -518,7 +520,41 @@ class LSTMTest extends TestCase
             $this->verifyGradient($mo,$nn,$K,$g,$layer,$x));
     }
 
-    public function testClone()
+    public function testCloneNormal()
+    {
+        $mo = $this->newMatrixOperator();
+        $nn = $this->newNeuralNetworks($mo);
+        $K = $nn->backend();
+        $g = $nn->gradient();
+        $fn = $K;
+        $origLayer = new LSTM(
+            $K,
+            $units=4,
+            //input_shape:[5,3],
+            );
+
+        $inputs = $K->ones([2,5,3]);
+        $origLayer->forward($inputs);
+        $layer = clone $origLayer;
+        //$layer->build();
+
+        $origParams = $origLayer->getParams();
+        $params = $layer->getParams();
+        $this->assertCount(3,$params);
+        foreach (array_map(null,$origParams,$params) as $data) {
+            [$orig,$dest] = $data;
+            $this->assertNotEquals(spl_object_id($orig),spl_object_id($dest));
+        }
+        $origParams = $origLayer->getGrads();
+        $params = $layer->getGrads();
+        $this->assertCount(3,$params);
+        foreach (array_map(null,$origParams,$params) as $data) {
+            [$orig,$dest] = $data;
+            $this->assertNotEquals(spl_object_id($orig),spl_object_id($dest));
+        }
+    }
+
+    public function testCloneWithInputShape()
     {
         $mo = $this->newMatrixOperator();
         $nn = $this->newNeuralNetworks($mo);
@@ -531,9 +567,9 @@ class LSTMTest extends TestCase
             input_shape:[5,3],
             );
 
-        $origLayer->build();
+        //$origLayer->build();
         $layer = clone $origLayer;
-        $layer->build();
+        //$layer->build();
 
         $origParams = $origLayer->getParams();
         $params = $layer->getParams();
@@ -562,7 +598,7 @@ class LSTMTest extends TestCase
         $layer = new LSTM(
             $K,
             $units=4,
-            input_shape:[5,3],
+            //input_shape:[5,3],
             return_sequences:true,
             return_state:true,
             );

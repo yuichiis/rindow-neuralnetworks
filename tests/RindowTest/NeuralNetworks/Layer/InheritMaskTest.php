@@ -34,8 +34,9 @@ class InheritMaskTest extends TestCase
         $nn = $this->newNeuralNetworks($mo);
         $K = $nn->backend();
         $g = $nn->gradient();
-        $layer = new InheritMask($K,
-                input_shapes:[[4,3],[4,2]],
+        $layer = new InheritMask(
+            $K,
+            //input_shapes:[[4,3],[4,2]],
         );
         $inputs = [
             $g->Variable($K->zeros([1,4,3])),
@@ -65,8 +66,8 @@ class InheritMaskTest extends TestCase
         ];
     
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Input shape is inconsistent: defined as ((4,3),(4,2)) but ((4,5),(4,2)) given in InheritMask');
-        $layer->build($inputs);
+        $this->expectExceptionMessage('unmatch shape of input 0: [4,5], must be [4,3] in inheritmask');
+        $layer->forward($inputs);
     }
 
     public function testSetInputShape()
@@ -75,14 +76,17 @@ class InheritMaskTest extends TestCase
         $nn = $this->newNeuralNetworks($mo);
         $K = $nn->backend();
         $g = $nn->gradient();
-        $layer = new InheritMask($K);
+        $layer = new InheritMask(
+            $K,
+            input_shapes:[[2,4],[3,4]],
+        );
         // [batch,2,4],[batch,3,4]
-        $inputs = [
-            $g->Variable($K->zeros([1,2,4])),
-            $g->Variable($this->maskedValue($K->zeros([1,3,4]),$K->ones([1,3]))),
-        ];
-        $layer->build($inputs);
-        // [batch,5,4]
+        //$inputs = [
+        //    $g->Variable($K->zeros([1,2,4])),
+        //    $g->Variable($this->maskedValue($K->zeros([1,3,4]),$K->ones([1,3]))),
+        //];
+        //$layer->build($inputs);
+        // [batch,2,4]
         $this->assertEquals([2,4],$layer->outputShape());
     }
 
@@ -105,7 +109,7 @@ class InheritMaskTest extends TestCase
         );
         $inputs = [$i1,$i2];
 
-        $layer->build([$g->Variable($i1),$g->Variable($i2)]);
+        //$layer->build([$g->Variable($i1),$g->Variable($i2)]);
 
         //
         // forward
@@ -166,7 +170,7 @@ class InheritMaskTest extends TestCase
         );
         $inputs = [$i1,$i2];
 
-        $layer->build([$g->Variable($i1),$g->Variable($i2)]);
+        //$layer->build([$g->Variable($i1),$g->Variable($i2)]);
 
         //
         // forward

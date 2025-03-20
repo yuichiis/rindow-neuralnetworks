@@ -27,10 +27,14 @@ class RepeatVector extends AbstractLayer
         $this->repeats = $repeats;
         $this->inputShape = $input_shape;
         $this->initName($name,'repeatvector');
+        $this->postConstruct();
     }
 
     public function build(mixed $variable=null, ?array $sampleWeights=null) : void
     {
+        if($this->checkAlreadyBuilt()) {
+            return;
+        }
         $K = $this->backend;
         $inputShape = $this->normalizeInputShape($variable);
         if(count($inputShape)!=1) {
