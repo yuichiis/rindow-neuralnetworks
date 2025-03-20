@@ -66,7 +66,6 @@ class EinsumDense extends AbstractLayer
         $this->initName($name,'einsumdense');
         $this->allocateWeights($this->useBias?['kernel','bias']:['kernel']);
         $this->setActivation($activation);
-        $this->postConstruct();
     }
 
     public function getEquation() : string
@@ -76,9 +75,6 @@ class EinsumDense extends AbstractLayer
     
     public function build(mixed $variable=null, ?array $sampleWeights=null) : void
     {
-        if($this->checkAlreadyBuilt()) {
-            return;
-        }
         $K = $this->backend;
         $kernelInitializer = $this->kernelInitializer;
         $biasInitializer = $this->biasInitializer;
@@ -127,6 +123,8 @@ class EinsumDense extends AbstractLayer
         array_shift($output_shape);
         $this->outputShape = $output_shape;
         $this->syncWeightVariables();
+        $this->built = true;
+
     }
 
     public function getParams() : array

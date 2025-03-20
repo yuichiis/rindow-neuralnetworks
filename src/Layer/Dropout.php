@@ -21,7 +21,6 @@ class Dropout extends AbstractLayer
         $this->rate = min(1.0,max(0.0,$rate));
         $this->initName($name,'dropout');
         $this->callOptions['training'] = true;
-        $this->postConstruct();
     }
 
     public function getConfig() : array

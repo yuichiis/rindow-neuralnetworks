@@ -24,14 +24,10 @@ class Flatten extends AbstractLayer
         parent::__construct($backend);
         $this->inputShape = $input_shape;
         $this->initName($name,'flatten');
-        $this->postConstruct();
     }
 
     public function build(mixed $variable=null, ?array $sampleWeights=null) : void
     {
-        if($this->checkAlreadyBuilt()) {
-            return;
-        }
         $K = $this->backend;
 
         $inputShape = $this->normalizeInputShape($variable);

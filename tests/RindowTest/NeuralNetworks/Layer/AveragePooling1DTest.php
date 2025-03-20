@@ -26,7 +26,7 @@ class AveragePooling1DTest extends TestCase
         $nn = $this->newNeuralNetworks($mo);
         $K = $nn->backend();
         $g = $nn->gradient();
-        $layer = new AveragePooling1D($K);
+        $layer = new AveragePooling1D($K,input_shape:[4,3]);
         $inputs = $g->Variable($K->zeros([1,4,3]));
 
         $layer->build($inputs);
@@ -45,9 +45,9 @@ class AveragePooling1DTest extends TestCase
         $nn = $this->newNeuralNetworks($mo);
         $K = $nn->backend();
         $g = $nn->gradient();
-        $layer = new AveragePooling1D($K,input_shape:[4,3]);
-        //$inputs = $g->Variable($K->zeros([1,4,3]));
-        //$layer->build($inputs);
+        $layer = new AveragePooling1D($K,);
+        $inputs = $g->Variable($K->zeros([1,4,3]));
+        $layer->build($inputs);
 
         $this->assertEquals([2,3],$layer->outputShape());
     }
@@ -62,8 +62,8 @@ class AveragePooling1DTest extends TestCase
         $inputs = $g->Variable($K->zeros([1,4,5]));
     
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('unmatch input shape: (4,5), must be (4,3) in averagepooling1d');
-        $layer->forward($inputs);
+        $this->expectExceptionMessage('Input shape is inconsistent: defined as (4,3) but (4,5) given in AveragePooling1D');
+        $layer->build($inputs);
     }
 
     public function testNormalForwardAndBackward()
@@ -73,10 +73,12 @@ class AveragePooling1DTest extends TestCase
         $K = $nn->backend();
         $g = $nn->gradient();
 
-        $layer = new AveragePooling1D($K);
+        $layer = new AveragePooling1D(
+            $K,
+            input_shape:[4,3]);
 
-        //$inputs =  $g->Variable($K->ones([2,4,3]));
-        //$layer->build($inputs);
+        $inputs =  $g->Variable($K->ones([2,4,3]));
+        $layer->build($inputs);
 
         //
         // forward

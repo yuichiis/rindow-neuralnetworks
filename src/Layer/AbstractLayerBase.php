@@ -17,8 +17,6 @@ use Rindow\NeuralNetworks\Gradient\Core\MaskedNDArray as MaskedNDArrayImpl;
  */
 abstract class AbstractLayerBase implements Layer
 {
-    static public $throwDuplicateBuild = false;
-
     protected object $backend;
     /** @var array<int|array<int>> $inputShape */
     protected ?array $inputShape=null;
@@ -49,33 +47,6 @@ abstract class AbstractLayerBase implements Layer
     {
         $this->backend = $backend;
     }
-
-    protected function postConstruct() : void
-    {
-        if(!$this->built) {
-            if($this->inputShape!==null) {
-                $this->build($this->inputShape);
-                $this->built = true;
-            }
-        }
-    }
-
-    protected function checkAlreadyBuilt() : bool
-    {
-        if(!$this->built) {
-            return false;
-        }
-        $name = $this->name;
-        if($name==null) {
-            $name = get_class($this);
-        }
-        echo "Warning: '$name' has already been built.\n";
-        if(self::$throwDuplicateBuild) {
-            throw new LogicException("'$name' has already been built.");
-        }
-        return true;
-    }
-
 
     public function isBuilt() : bool
     {
@@ -110,9 +81,6 @@ abstract class AbstractLayerBase implements Layer
 
     public function build(mixed $variable=null, ?array $sampleWeights=null) : void
     {
-        if($this->checkAlreadyBuilt()) {
-            return;
-        }
         $inputShape = $this->normalizeInputShape($variable);
         if($inputShape!==null)
             $this->inputShape = $inputShape;
@@ -187,27 +155,19 @@ abstract class AbstractLayerBase implements Layer
      * @param array<Variable> $variables
      * @return array<array<int>>
      */
-    protected function normalizeInputShapes(?array $shapes=null) : array
+    protected function normalizeInputShapes(?array $variables=null) : array
     {
-        if($shapes===null) {
+        if($variables===null) {
             $inputShapes = $this->inputShape;
         } else {
             $inputShapes = [];
-            foreach($shapes as $idx => $v) {
-                if($v instanceof Variable) {
-                    $shape = $v->valueShape();
-                    if(!is_array($shape)) {
-                        throw new InvalidArgumentException('Variable list include unspecified shape value.'.' in #'.$idx.'.');
-                    }
-                } elseif(is_array($v)) {
-                    foreach($v as $axis => $dim) {
-                        if(!is_int($dim)) {
-                            throw new InvalidArgumentException('shape must contain int type: "'.$this->typename($dim).'" included in #'.$idx.'.');
-                        }
-                    }
-                    $shape = $v;
-                } else {
-                    throw new InvalidArgumentException('shape list must contain shape type: "'.$this->typename($v).'" included in #'.$idx.'.');
+            foreach($variables as $idx => $v) {
+                if(!($v instanceof Variable)) {
+                    throw new InvalidArgumentException('variable list must contain Variables: "'.$this->typename($v).'" included in #'.$idx.'.');
+                }
+                $shape = $v->valueShape();
+                if(!is_array($shape)) {
+                    throw new InvalidArgumentException('Variable list include unspecified shape value.'.' in #'.$idx.'.');
                 }
                 $inputShapes[] = $shape;
             }

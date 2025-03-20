@@ -28,7 +28,7 @@ class MaxPooling2DTest extends TestCase
         $g = $nn->gradient();
         $layer = new MaxPooling2D(
             $K,
-            //input_shape:[4,4,3]
+            input_shape:[4,4,3]
             );
 
         $inputs = $g->Variable($K->zeros([1,4,4,3]));
@@ -50,10 +50,9 @@ class MaxPooling2DTest extends TestCase
         $g = $nn->gradient();
         $layer = new MaxPooling2D(
             $K,
-            input_shape:[4,4,3]
-        );
-        //$inputs = $g->Variable($K->zeros([1,4,4,3]));
-        //$layer->build($inputs);
+            );
+        $inputs = $g->Variable($K->zeros([1,4,4,3]));
+        $layer->build($inputs);
 
         $this->assertEquals([2,2,3],$layer->outputShape());
     }
@@ -71,8 +70,8 @@ class MaxPooling2DTest extends TestCase
 
         $inputs = $g->Variable($K->zeros([1,4,4,5]));
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('unmatch input shape: (4,4,5), must be (4,4,3) in maxpooling2d');
-        $layer->forward($inputs);
+        $this->expectExceptionMessage('Input shape is inconsistent: defined as (4,4,3) but (4,4,5) given in MaxPooling2D');
+        $layer->build($inputs);
     }
 
     public function testNormalForwardAndBackward()
@@ -85,8 +84,7 @@ class MaxPooling2DTest extends TestCase
 
         $layer = new MaxPooling2D(
             $K,
-            //input_shape:[4,4,3]
-        );
+            input_shape:[4,4,3]);
 
         //$layer->build();
 

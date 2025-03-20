@@ -31,7 +31,8 @@ class DropoutTest extends TestCase
         $x = $K->array([-1.0,-0.5,0.1,0.5,1.0]);
 
         $inputs = $g->Variable($x);
-        //$layer->build($inputs);
+        $layer->build($inputs);
+        $this->assertEquals([],$layer->outputShape());
 
         $outputsVariable = $nn->with($tape=$g->GradientTape(),
             function() use ($layer,$x) {
@@ -40,7 +41,6 @@ class DropoutTest extends TestCase
             }
         );
         $y = $K->ndarray($outputsVariable);
-        $this->assertEquals([],$layer->outputShape());
         $fn = $K;
         $this->assertTrue($fn->equalTest($y[0],-1.0)||
                           $fn->equalTest($y[0],0.0));

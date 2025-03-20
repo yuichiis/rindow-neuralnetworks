@@ -74,14 +74,10 @@ abstract class AbstractNormalization extends AbstractLayer
         $this->gammaInitializerName = $this->toStringName($gamma_initializer);
         $this->betaInitializer  = $K->getInitializer($beta_initializer);
         $this->gammaInitializer = $K->getInitializer($gamma_initializer);
-        $this->postConstruct();
     }
 
     public function build(mixed $variable=null, ?array $sampleWeights=null) : void
     {
-        if($this->checkAlreadyBuilt()) {
-            return;
-        }
         $K = $this->backend;
         $betaInitializer = $this->betaInitializer;
         $gammaInitializer = $this->gammaInitializer;

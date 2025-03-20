@@ -46,11 +46,9 @@ class DenseTest extends TestCase
         $mo = $this->newMatrixOperator();
         $nn = $this->newNeuralNetworks($mo);
         $K = $nn->backend();
-        $g = $nn->gradient();
-        $layer = new Dense($K,$units=3);
+        $layer = new Dense($K,$units=3,input_shape:[2]);
 
-        $inputs = $g->Variable($K->zeros([1,2]));
-        $layer->build($inputs);
+        $layer->build();
         $params = $layer->getParams();
         $this->assertCount(2,$params);
         $this->assertEquals([2,3],$params[0]->shape());
@@ -75,9 +73,9 @@ class DenseTest extends TestCase
         $nn = $this->newNeuralNetworks($mo);
         $K = $nn->backend();
         $g = $nn->gradient();
-        $layer = new Dense($K,$units=3,input_shape:[2]);
-        //$inputs = $g->Variable($K->zeros([1,2]));
-        //$layer->build($inputs);
+        $layer = new Dense($K,$units=3);
+        $inputs = $g->Variable($K->zeros([1,2]));
+        $layer->build($inputs);
         $params = $layer->getParams();
         $this->assertCount(2,$params);
         $this->assertEquals([2,3],$params[0]->shape());
@@ -95,8 +93,8 @@ class DenseTest extends TestCase
     
         $inputs = $g->Variable($K->zeros([1,3]));
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('unmatch input shape: (3), must be (2) in dense');
-        $layer->forward($inputs);
+        $this->expectExceptionMessage('Input shape is inconsistent: defined as (2) but (3) given in Dense');
+        $layer->build($inputs);
     }
 
     public function testNormalForwardAndBackward()
@@ -107,7 +105,7 @@ class DenseTest extends TestCase
         $g = $nn->gradient();
         $fn = $mo->la();
 
-        $layer = new Dense($K,$units=2);
+        $layer = new Dense($K,$units=2,input_shape:[3]);
 
         // 3 input x 4 minibatch
         $inputs = $K->array([
@@ -182,6 +180,7 @@ class DenseTest extends TestCase
         $K = $nn->backend();
         $layer = new Dense($K,$units=4,input_shape:[2,3]);
 
+        $layer->build();
         $params = $layer->getParams();
         $this->assertCount(2,$params);
         $this->assertEquals([3,4],$params[0]->shape());
@@ -213,12 +212,12 @@ class DenseTest extends TestCase
         $g = $nn->gradient();
         $fn = $mo->la();
 
-        $layer = new Dense($K,$units=2,activation:'tanh');
+        $layer = new Dense($K,$units=2,input_shape:[3],activation:'tanh');
 
         // 3 input x 4 minibatch
         $inputs = $K->ones([4,3]);
 
-        //$layer->build($g->Variable($inputs));
+        $layer->build($g->Variable($inputs));
 
         //
         // forward

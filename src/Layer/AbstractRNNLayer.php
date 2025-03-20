@@ -307,7 +307,7 @@ abstract class AbstractRNNLayer extends AbstractLayerBase implements RNNLayer
         }
 
         if(!$this->built) {
-            $this->build($inputs[0]);
+            $this->build($inputs);
             $this->built = true;
         }
 

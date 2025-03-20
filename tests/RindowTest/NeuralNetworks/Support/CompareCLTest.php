@@ -396,10 +396,10 @@ class CompareCLTest extends TestCase
 
         $dense = $nn->layers()->Dense($units=32,input_shape:[2],
             activation:'sigmoid');
-        //$dense->build();
+        $dense->build();
         $densecl = $nncl->layers()->Dense($units=32,input_shape:[2],
             activation:'sigmoid');
-        //$densecl->build();
+        $densecl->build();
 
         $weights = $dense->getParams();
         $weightsCL = $densecl->getParams();

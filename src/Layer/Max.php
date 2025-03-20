@@ -30,14 +30,10 @@ class Max extends AbstractLayer
         $this->axis = $axis;
         $this->inputShape = $input_shape;
         $this->initName($name,'max');
-        $this->postConstruct();
     }
 
     public function build(mixed $variable=null, ?array $sampleWeights=null) : void
     {
-        if($this->checkAlreadyBuilt()) {
-            return;
-        }
         $K = $this->backend;
 
         $inputShape = $this->normalizeInputShape($variable);

@@ -87,10 +87,10 @@ class MultiHeadAttentionTest extends TestCase
             $key_dim,   // key_dim
             value_dim:$value_dim,
             use_bias:$use_bias,
-            //input_shapes:[
-            //    $query_shape, // query_shape
-            //    $value_shape, // value_shape
-            //],
+            input_shapes:[
+                $query_shape, // query_shape
+                $value_shape, // value_shape
+            ],
         );
         $inputs = [
             $g->Variable($K->zeros(array_merge([$batch_size],$query_shape))),
@@ -125,16 +125,12 @@ class MultiHeadAttentionTest extends TestCase
             $key_dim,   // key_dim
             value_dim:$value_dim,
             use_bias:$use_bias,
-            input_shapes:[
-                $query_shape, // query_shape
-                $value_shape, // value_shape
-            ],
         );
-        //$inputs = [
-        //    $g->Variable($K->zeros(array_merge([$batch_size],$query_shape))),
-        //    $g->Variable($K->zeros(array_merge([$batch_size],$value_shape))),
-        //];
-        //$layer->build($inputs);
+        $inputs = [
+            $g->Variable($K->zeros(array_merge([$batch_size],$query_shape))),
+            $g->Variable($K->zeros(array_merge([$batch_size],$value_shape))),
+        ];
+        $layer->build($inputs);
         array_shift($expected_output_shape);
         $this->assertEquals($expected_output_shape,$layer->outputShape());
     }
@@ -167,8 +163,8 @@ class MultiHeadAttentionTest extends TestCase
         ];
     
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Unmatch query shape  [b,8,32] NDArray. [2,8,16] given in multiheadattention');
-        $layer->forward($inputs);
+        $this->expectExceptionMessage('Input shape is inconsistent: defined as ((8,32),(8,16)) but ((8,16),(4,16)) given in MultiHeadAttention');
+        $layer->build($inputs);
     }
 
     public function testNormalForwardAndBackward()
@@ -218,8 +214,8 @@ class MultiHeadAttentionTest extends TestCase
             $value,
         ];
 
-        //$layer->build($inputs,
-        //);
+        $layer->build($inputs,
+        );
 
         //
         // forward
@@ -418,8 +414,8 @@ class MultiHeadAttentionTest extends TestCase
             $key,
         ];
 
-        //$layer->build($inputs,
-        //);
+        $layer->build($inputs,
+        );
 
         //
         // forward
@@ -647,18 +643,18 @@ class MultiHeadAttentionTest extends TestCase
             $value,
         ];
 
-        //$layer->build($inputs,
-        //    //sampleWeights:[
-        //    //    $K->ones([$num_heads,  $key_dim, $dim]),    // query_dense/kernel
-        //    //    $K->zeros([$num_heads, $key_dim]),          // query_dense/bias
-        //    //    $K->ones([$num_heads,  $key_dim, $dim]),    // key_dense/kernel
-        //    //    $K->zeros([$num_heads, $key_dim]),          // key_dense/bias
-        //    //    $K->ones([$num_heads,  $key_dim, $dim]),    // value_dense/kernel
-        //    //    $K->zeros([$num_heads, $key_dim]),          // value_dense/bias
-        //    //    $K->ones([$num_heads,  $key_dim, $dim]),    // output_dense/kernel
-        //    //    $K->zeros([$dim]),                          // output_dense/bias
-        //    //]
-        //);
+        $layer->build($inputs,
+            //sampleWeights:[
+            //    $K->ones([$num_heads,  $key_dim, $dim]),    // query_dense/kernel
+            //    $K->zeros([$num_heads, $key_dim]),          // query_dense/bias
+            //    $K->ones([$num_heads,  $key_dim, $dim]),    // key_dense/kernel
+            //    $K->zeros([$num_heads, $key_dim]),          // key_dense/bias
+            //    $K->ones([$num_heads,  $key_dim, $dim]),    // value_dense/kernel
+            //    $K->zeros([$num_heads, $key_dim]),          // value_dense/bias
+            //    $K->ones([$num_heads,  $key_dim, $dim]),    // output_dense/kernel
+            //    $K->zeros([$dim]),                          // output_dense/bias
+            //]
+        );
 
         //
         // forward
@@ -998,18 +994,18 @@ class MultiHeadAttentionTest extends TestCase
             $value,
         ];
 
-        //$layer->build($inputs,
-        //    //sampleWeights:[
-        //    //    $K->ones([$num_heads,  $key_dim, $dim]),    // query_dense/kernel
-        //    //    $K->zeros([$num_heads, $key_dim]),          // query_dense/bias
-        //    //    $K->ones([$num_heads,  $key_dim, $dim]),    // key_dense/kernel
-        //    //    $K->zeros([$num_heads, $key_dim]),          // key_dense/bias
-        //    //    $K->ones([$num_heads,  $key_dim, $dim]),    // value_dense/kernel
-        //    //    $K->zeros([$num_heads, $key_dim]),          // value_dense/bias
-        //    //    $K->ones([$num_heads,  $key_dim, $dim]),    // output_dense/kernel
-        //    //    $K->zeros([$dim]),                          // output_dense/bias
-        //    //]
-        //);
+        $layer->build($inputs,
+            //sampleWeights:[
+            //    $K->ones([$num_heads,  $key_dim, $dim]),    // query_dense/kernel
+            //    $K->zeros([$num_heads, $key_dim]),          // query_dense/bias
+            //    $K->ones([$num_heads,  $key_dim, $dim]),    // key_dense/kernel
+            //    $K->zeros([$num_heads, $key_dim]),          // key_dense/bias
+            //    $K->ones([$num_heads,  $key_dim, $dim]),    // value_dense/kernel
+            //    $K->zeros([$num_heads, $key_dim]),          // value_dense/bias
+            //    $K->ones([$num_heads,  $key_dim, $dim]),    // output_dense/kernel
+            //    $K->zeros([$dim]),                          // output_dense/bias
+            //]
+        );
 
         //
         // forward
@@ -1240,8 +1236,8 @@ class MultiHeadAttentionTest extends TestCase
             $value,
         ];
 
-        //$layer->build($inputs,
-        //);
+        $layer->build($inputs,
+        );
 
         //
         // forward
@@ -1498,8 +1494,8 @@ class MultiHeadAttentionTest extends TestCase
             $value,
         ];
 
-        //$layer->build($inputs,
-        //);
+        $layer->build($inputs,
+        );
 
         //
         // forward
@@ -1739,8 +1735,8 @@ class MultiHeadAttentionTest extends TestCase
             $value,
         ];
 
-        //$layer->build($inputs,
-        //);
+        $layer->build($inputs,
+        );
 
         //
         // forward
@@ -1997,8 +1993,8 @@ class MultiHeadAttentionTest extends TestCase
             $value,
         ];
 
-        //$layer->build($inputs,
-        //);
+        $layer->build($inputs,
+        );
 
         //
         // forward
@@ -2298,8 +2294,8 @@ class MultiHeadAttentionTest extends TestCase
             $key,
         ];
 
-        //$layer->build($inputs,
-        //);
+        $layer->build($inputs,
+        );
 
         //
         // forward
@@ -2601,8 +2597,8 @@ class MultiHeadAttentionTest extends TestCase
             $value,
         ];
 
-        //$layer->build($inputs,
-        //);
+        $layer->build($inputs,
+        );
 
         //
         // forward

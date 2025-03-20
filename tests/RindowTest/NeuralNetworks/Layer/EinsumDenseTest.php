@@ -277,15 +277,13 @@ class EinsumDenseTest extends TestCase
         $mo = $this->newMatrixOperator();
         $nn = $this->newNeuralNetworks($mo);
         $K = $nn->backend();
-        $g = $nn->gradient();
         $layer = new EinsumDense(
             $K, $equation, $output_shape,
             input_shape: $input_shape,
             bias_axes: $bias_axes,
         );
 
-        //$inputs = $g->Variable($K->zeros(array_merge([1],$input_shape)));
-        //$layer->build($inputs);
+        $layer->build();
         $params = $layer->getParams();
         if($bias_axes===null) {
             $this->assertCount(1,$params);
@@ -322,18 +320,16 @@ class EinsumDenseTest extends TestCase
     public function testSetInputShape($params)
     {
         extract($params);
-        $batch_size = array_shift($input_shape);
         $mo = $this->newMatrixOperator();
         $nn = $this->newNeuralNetworks($mo);
         $K = $nn->backend();
         $g = $nn->gradient();
         $layer = new EinsumDense(
             $K, $equation, $output_shape,
-            input_shape: $input_shape,
             bias_axes: $bias_axes,
         );
-        //$inputs = $g->Variable($K->zeros(array_merge([1],$input_shape)));
-        //$layer->build($inputs);
+        $inputs = $g->Variable($K->zeros($input_shape));
+        $layer->build($inputs);
         $params = $layer->getParams();
         if($bias_axes===null) {
             $this->assertCount(1,$params);
@@ -360,7 +356,7 @@ class EinsumDenseTest extends TestCase
         $testcase_name = "3d_1_3_bias";
         $equation = "abc,cde->abde";
         $bias_axes = "be";
-        $input_shape = [7, 2];
+        $input_shape = [2, 7, 2];
         $output_shape = [7, 3, 4];
         $expected_kernel_shape = [2, 3, 4];
         $expected_bias_shape = [7, 1, 4];
@@ -372,10 +368,10 @@ class EinsumDenseTest extends TestCase
             bias_axes: $bias_axes,
         );
 
-        $inputs = $g->Variable($K->zeros([2, 7, 5]));
+        $inputs = $g->Variable($K->zeros(array_merge([1],[2, 7, 5])));
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('unmatch input shape: (7,5), must be (7,2) in einsumdense');
-        $layer->forward($inputs);
+        $this->expectExceptionMessage('Input shape is inconsistent: defined as (2,7,2) but (2,7,5) given in EinsumDense');
+        $layer->build($inputs);
     }
 
     public function testNormalForwardAndBackward()
@@ -393,7 +389,7 @@ class EinsumDenseTest extends TestCase
 
         $layer = new EinsumDense(
             $K, $equation, $output_shape,
-            //input_shape: $input_shape,
+            input_shape: $input_shape,
             bias_axes: $bias_axes,
             kernel_initializer:'ones',
             bias_initializer:'zeros',
@@ -409,12 +405,18 @@ class EinsumDenseTest extends TestCase
         ]);
         $full_output_shape = array_merge([4],$output_shape);
 
-        //$layer->build($g->Variable($inputs),
-        //    //sampleWeights:[
-        //    //    $K->array([[0.1, 0.2], [0.1, 0.1], [0.2, 0.2]]), // kernel
-        //    //    $K->array([0.5, 0.1]),                           // bias
-        //    //]
-        //);
+        $layer->build($g->Variable($inputs),
+            //sampleWeights:[
+            //    $K->array([[0.1, 0.2], [0.1, 0.1], [0.2, 0.2]]), // kernel
+            //    $K->array([0.5, 0.1]),                           // bias
+            //]
+        );
+        $params = $layer->getParams();
+        $this->assertEquals(2,count($params));
+        $this->assertEquals([3,2],$params[0]->shape());
+        $this->assertEquals([2],$params[1]->shape());
+        //$K->copy($K->array([[0.1, 0.2], [0.1, 0.1], [0.2, 0.2]]),$params[0]); // kernel
+        //$K->copy($K->array([0.5, 0.1]),$params[1]); // bias
 
         //
         // forward
@@ -435,12 +437,6 @@ class EinsumDenseTest extends TestCase
         $inputs = $K->ndarray($inputs);
         #echo "inputs: ".$mo->toString($inputs,indent:true)."\n";
         #echo "outputs: ".$mo->toString($outputs,indent:true)."\n";
-        $params = $layer->getParams();
-        $this->assertEquals(2,count($params));
-        $this->assertEquals([3,2],$params[0]->shape());
-        $this->assertEquals([2],$params[1]->shape());
-        //$K->copy($K->array([[0.1, 0.2], [0.1, 0.1], [0.2, 0.2]]),$params[0]); // kernel
-        //$K->copy($K->array([0.5, 0.1]),$params[1]); // bias
 
         // 2 output x 4 batch
         $this->assertEquals([4,2],$outputs->shape());
@@ -501,7 +497,7 @@ class EinsumDenseTest extends TestCase
             bias_axes: $bias_axes,
         );
 
-        //$layer->build();
+        $layer->build();
         $params = $layer->getParams();
         $this->assertCount(2,$params);
         $this->assertEquals([3,4],$params[0]->shape());
@@ -548,7 +544,7 @@ class EinsumDenseTest extends TestCase
         // 3 input x 4 minibatch
         $inputs = $K->ones([4,3]);
 
-        //$layer->build($g->Variable($inputs));
+        $layer->build($g->Variable($inputs));
 
         //
         // forward

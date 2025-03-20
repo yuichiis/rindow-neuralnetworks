@@ -28,7 +28,7 @@ class MaxTest extends TestCase
         $g = $nn->gradient();
         $layer = new Max(
             $K,
-            //input_shape:[3]
+            input_shape:[3]
             );
 
         $inputs = $g->Variable($K->zeros([1,3]));
@@ -50,10 +50,9 @@ class MaxTest extends TestCase
         $g = $nn->gradient();
         $layer = new Max(
             $K,
-            input_shape:[3]
             );
-        //$inputs = $g->Variable($K->zeros([1,3]));
-        //$layer->build($inputs);
+        $inputs = $g->Variable($K->zeros([1,3]));
+        $layer->build($inputs);
 
         $this->assertEquals([],$layer->outputShape());
     }
@@ -71,8 +70,8 @@ class MaxTest extends TestCase
 
         $inputs = $g->Variable($K->zeros([1,5]));
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('unmatch input shape: (5), must be (3) in max');
-        $layer->forward($inputs);
+        $this->expectExceptionMessage('Input shape is inconsistent: defined as (3) but (5) given in Max');
+        $layer->build($inputs);
     }
 
     public function test1DNormalForwardAndBackward()
@@ -85,8 +84,7 @@ class MaxTest extends TestCase
 
         $layer = new Max(
             $K,
-            //input_shape:[3]
-        );
+            input_shape:[3]);
 
         //$layer->build();
 
@@ -147,9 +145,7 @@ class MaxTest extends TestCase
 
         $layer = new Max(
             $K,
-            axis:0,
-            //input_shape:[3,2]
-        );
+            axis:0,input_shape:[3,2]);
 
         //$layer->build();
 
@@ -210,9 +206,7 @@ class MaxTest extends TestCase
 
         $layer = new Max(
             $K,
-            axis:1,
-            //input_shape:[3,2]
-        );
+            axis:1,input_shape:[3,2]);
 
         //$layer->build();
 

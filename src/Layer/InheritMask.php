@@ -21,14 +21,10 @@ class InheritMask extends AbstractMultiInputLayer
         parent::__construct($backend);
         $this->inputShape = $input_shapes;
         $this->initName($name,'inheritmask');
-        $this->postConstruct();
     }
 
     public function build(mixed $variables=null, ?array $sampleWeights=null) : void
     {
-        if($this->checkAlreadyBuilt()) {
-            return;
-        }
         $K = $this->backend;
         if(!is_array($variables) && $variables!==null) {
             throw new InvalidArgumentException('inputs must be list of variable');

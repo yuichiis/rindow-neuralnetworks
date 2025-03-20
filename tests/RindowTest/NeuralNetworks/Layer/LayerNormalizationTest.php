@@ -39,11 +39,17 @@ class LayerNormalizationTest extends TestCase
         ]);
 
         $inputs = $g->Variable($x);
-        //$layer->build($inputs);
+        $layer->build($inputs);
+        [$beta,$gamma] = $layer->getParams();
+        $this->assertEquals([3],$beta->shape());
+        $this->assertEquals([3],$gamma->shape());
+        [$dbeta,$dgamma] = $layer->getGrads();
+        $this->assertEquals([3],$dbeta->shape());
+        $this->assertEquals([3],$dgamma->shape());
 
-        //$gamma = $K->array([1.0, 1.0, 1.0]);
-        //$beta = $K->array([0.0, 0.0, 0.0]);
-        //$layer->build($inputs, sampleWeights:[$gamma,$beta]);
+        $gamma = $K->array([1.0, 1.0, 1.0]);
+        $beta = $K->array([0.0, 0.0, 0.0]);
+        $layer->build($inputs, sampleWeights:[$gamma,$beta]);
 
         $outputsVariable = $nn->with($tape=$g->GradientTape(),
             function() use ($layer,$x) {
@@ -52,14 +58,6 @@ class LayerNormalizationTest extends TestCase
             }
         );
         $out = $K->ndarray($outputsVariable);
-
-        [$beta,$gamma] = $layer->getParams();
-        $this->assertEquals([3],$beta->shape());
-        $this->assertEquals([3],$gamma->shape());
-        [$dbeta,$dgamma] = $layer->getGrads();
-        $this->assertEquals([3],$dbeta->shape());
-        $this->assertEquals([3],$dgamma->shape());
-
         // 3 output x 4 batch
         $this->assertEquals([4,3],$out->shape());
         $this->assertTrue($mo->la()->isclose($mo->la()->array(
@@ -127,7 +125,13 @@ class LayerNormalizationTest extends TestCase
         ]);
 
         $inputs = $g->Variable($x);
-        //$layer->build($inputs);
+        $layer->build($inputs);
+        [$beta,$gamma] = $layer->getParams();
+        $this->assertEquals([3],$beta->shape());
+        $this->assertEquals([3],$gamma->shape());
+        [$dbeta,$dgamma] = $layer->getGrads();
+        $this->assertEquals([3],$dbeta->shape());
+        $this->assertEquals([3],$dgamma->shape());
 
         $outputsVariable = $nn->with($tape=$g->GradientTape(),
             function() use ($layer,$x) {
@@ -136,14 +140,6 @@ class LayerNormalizationTest extends TestCase
             }
         );
         $out = $K->ndarray($outputsVariable);
-
-        [$beta,$gamma] = $layer->getParams();
-        $this->assertEquals([3],$beta->shape());
-        $this->assertEquals([3],$gamma->shape());
-        [$dbeta,$dgamma] = $layer->getGrads();
-        $this->assertEquals([3],$dbeta->shape());
-        $this->assertEquals([3],$dgamma->shape());
-
         // 4 batch x 2x2 image x 3 channels
         $this->assertEquals([4,2,2,3],$out->shape());
         // 2 output x 4 batch
@@ -179,10 +175,16 @@ class LayerNormalizationTest extends TestCase
         ]);
 
         $inputs = $g->Variable($x);
-        //$layer->build($inputs);
+        $layer->build($inputs);
+        [$beta,$gamma] = $layer->getParams();
+        $this->assertEquals([3],$beta->shape());
+        $this->assertEquals([3],$gamma->shape());
+        [$dbeta,$dgamma] = $layer->getGrads();
+        $this->assertEquals([3],$dbeta->shape());
+        $this->assertEquals([3],$dgamma->shape());
 
-        //$gamma = $K->array([1.0, 1.0, 1.0]);
-        //$beta = $K->array([0.0, 0.0, 0.0]);
+        $gamma = $K->array([1.0, 1.0, 1.0]);
+        $beta = $K->array([0.0, 0.0, 0.0]);
 
         $outputsVariable = $nn->with($tape=$g->GradientTape(),
             function() use ($layer,$x) {
@@ -191,14 +193,6 @@ class LayerNormalizationTest extends TestCase
             }
         );
         $out = $K->ndarray($outputsVariable);
-
-        [$beta,$gamma] = $layer->getParams();
-        $this->assertEquals([3],$beta->shape());
-        $this->assertEquals([3],$gamma->shape());
-        [$dbeta,$dgamma] = $layer->getGrads();
-        $this->assertEquals([3],$dbeta->shape());
-        $this->assertEquals([3],$dgamma->shape());
-
         // 4 batch x 2x2 image x 3 channels
         $this->assertEquals([4,3,2,2],$out->shape());
         // 2 output x 4 batch
