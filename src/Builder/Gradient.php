@@ -44,6 +44,7 @@ use Rindow\NeuralNetworks\Gradient\Func\Greater;
 use Rindow\NeuralNetworks\Gradient\Func\Less;
 use Rindow\NeuralNetworks\Gradient\Func\Repeat;
 use Rindow\NeuralNetworks\Gradient\Func\Split;
+use Rindow\NeuralNetworks\Gradient\Func\Concat;
 use Rindow\NeuralNetworks\Gradient\Func\Nop;
 
 class Gradient
@@ -430,6 +431,21 @@ class Gradient
         return $func($x);
     }
     
+    /**
+     * @param array<NDArray|VariableIF> $values
+     * @return NDArray|VariableIF
+     */
+    public function concat(
+        array $values,
+        ?int $axis=null,
+        ?string $name=null,
+    ) : NDArray
+    {
+        $numOfInputs = count($values);
+        $func = new Concat($this->backend,$numOfInputs,axis:$axis, name:$name);
+        return $func(...$values);
+    }
+
     public function nop(
         NDArray $x,
         mixed ...$options,
