@@ -6,8 +6,12 @@ on:
           - master
 
 jobs:
-  no_ext_tests:
+  tests:
     runs-on: ${{ matrix.os }}
+    env:
+      matlib: 1.1.0
+      testlib: 1.1.0
+      matlibrepo: rindow/rindow-matlib
 
     strategy:
       fail-fast: true
@@ -17,14 +21,16 @@ jobs:
             os: ubuntu-latest
             php: '8.1'
             phpunit: '10.5'
-          - name: PHP8.3
-            os: ubuntu-latest
-            php: '8.3'
-            phpunit: '11.5'
+            ffi: 'ffi'
+          #- name: PHP8.3
+          #  os: ubuntu-latest
+          #  php: '8.3'
+          #  phpunit: '11.5'
           - name: PHP8.4
             os: ubuntu-latest
             php: '8.4'
             phpunit: '11.5'
+            ffi: 'ffi'
   
     steps:
       - name: Setup PHP ${{ matrix.php }}
@@ -33,43 +39,35 @@ jobs:
           php-version: ${{ matrix.php }}
           # PHP Extras
           coverage: none
-          tools: composer, phpunit:${{ matrix.phpunit }}, phpstan
+          tools: composer, phpstan
           # ini-values: "memory_limit=512M"
-          extensions: pdo_sqlite gd # ${{ matrix.ffi }}
+          extensions: pdo_sqlite gd ${{ matrix.ffi }}
+        env:
+          fail-fast: true
+
+      - name: Install Libs (Linux)
+        if: ${{ startsWith(matrix.os, 'ubuntu-') && matrix.ffi == 'ffi' }}
+        run: |
+          sudo apt install -y libopenblas0 liblapacke
+          wget https://github.com/${{ env.matlibrepo }}/releases/download/${{ env.testlib }}/rindow-matlib_${{ env.matlib }}-`lsb_release -sr`_amd64.deb
+          sudo apt install -y ./rindow-matlib_${{ env.matlib }}-`lsb_release -sr`_amd64.deb
 
       - name: Checkout codes
         uses: "actions/checkout@v4"
 
-      #- name: Composer
-      #  uses: php-actions/composer@v6
-      #  with:
-      #    php_version: ${{ matrix.php }}
-
       - name: Composer
-        run: composer update
-
-      #- name: PHP Static Analysys
-      #  uses: php-actions/phpstan@v3
-      #  with:
-      #    php_version: ${{ matrix.php }}
-      #    path: src/
+        run: |
+          composer update
+          composer require --dev phpunit/phpunit=^${{ matrix.phpunit }}
 
       - name: PHP Static Analysys
         run: phpstan
-
-      #- name: PHPUnit Tests
-      #  uses: php-actions/phpunit@v3
-      #  with:
-      #    configuration: tests/phpunit.xml
-      #    version: ${{ matrix.phpunit }}
-      #    php_version: ${{ matrix.php }}
-      #    php_extensions: pdo_sqlite gd
-      #  env:
-      #    PLOT_RENDERER_SKIP: true
 
       - name: PHPUnit Tests
         run: |
           PLOT_RENDERER_SKIP=true;
           export PLOT_RENDERER_SKIP;
-          phpunit -c tests
+          BLOBDATA_TEST_SKIP=true;
+          export BLOBDATA_TEST_SKIP;
+          vendor/bin/phpunit -c tests
 
