@@ -14,7 +14,7 @@ jobs:
       matlibrepo: rindow/rindow-matlib
 
     strategy:
-      fail-fast: true
+      fail-fast: false
       matrix:
         include:
           - name: PHP8.1
@@ -28,6 +28,16 @@ jobs:
           #  phpunit: '11.5'
           - name: PHP8.4
             os: ubuntu-latest
+            php: '8.4'
+            phpunit: '11.5'
+            ffi: 'ffi'
+          - name: Windows
+            os: windows-latest
+            php: '8.4'
+            phpunit: '11.5'
+            ffi: 'ffi'
+          - name: macOS
+            os: macos-latest
             php: '8.4'
             phpunit: '11.5'
             ffi: 'ffi'
@@ -64,6 +74,7 @@ jobs:
         run: phpstan
 
       - name: PHPUnit Tests
+        if: ${{ startsWith(matrix.os, 'ubuntu-') }}
         run: |
           PLOT_RENDERER_SKIP=true;
           export PLOT_RENDERER_SKIP;
@@ -71,3 +82,35 @@ jobs:
           export BLOBDATA_TEST_SKIP;
           vendor/bin/phpunit -c tests
 
+      - name: PHPUnit Tests
+        if: ${{ startsWith(matrix.os, 'windows-') }}
+        run: |
+          Invoke-WebRequest -Uri https://github.com/OpenMathLib/OpenBLAS/releases/download/v0.3.27/OpenBLAS-0.3.27-x64.zip -OutFile openblas.zip
+          Expand-Archive -Path openblas.zip
+          $currentDir = (Get-Location).Path
+          $OpenBLAS_DIR = Join-Path -Path $currentDir -ChildPath 'openblas'
+          $env:PATH = "$OpenBLAS_DIR/bin;$env:PATH"
+          dir $OpenBLAS_DIR/bin
+          Invoke-WebRequest -Uri https://github.com/${{ env.matlibrepo }}/releases/download/${{ env.testlib }}/rindow-matlib-${{ env.matlib }}-win64.zip -OutFile matlib.zip
+          Expand-Archive -Path matlib.zip
+          $currentDir = (Get-Location).Path
+          $matlibDir = Join-Path -Path $currentDir -ChildPath 'matlib'
+          $env:PATH = "$matlibDir/bin;$env:PATH"
+          $env:PLOT_RENDERER_SKIP = "true";
+          $env:BLOBDATA_TEST_SKIP = "true";
+          vendor/bin/phpunit -c tests
+  
+      - name: PHPUnit Tests (macOS)
+        if: ${{ startsWith(matrix.os, 'macos-') }}
+        run: |
+          # brew install libomp
+          curl https://github.com/${{ env.matlibrepo }}/releases/download/${{ env.testlib }}/rindow-matlib-${{ env.matlib }}-Darwin-arm64.tar.gz -O -L
+          tar -xzf rindow-matlib-${{ env.matlib }}-Darwin-arm64.tar.gz
+          sudo cp -r usr/include /usr/local/
+          sudo cp -r usr/lib /usr/local/
+          PLOT_RENDERER_SKIP=true;
+          export PLOT_RENDERER_SKIP;
+          BLOBDATA_TEST_SKIP=true;
+          export BLOBDATA_TEST_SKIP;
+          vendor/bin/phpunit -c tests
+  
