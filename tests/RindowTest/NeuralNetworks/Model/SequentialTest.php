@@ -833,12 +833,12 @@ class SequentialTest extends TestCase
     public function testFitConv1DandMaxPooling1D()
     {
         $mo = $this->newMatrixOperator();
-        if($mo->isAdvanced()) {
-            $num_of_filters=128;
-            $epoch = 300;
-        } else {
+        if(!$mo->isAdvanced() || getenv('BLOBDATA_TEST_SKIP')) {
             $num_of_filters=16;
             $epoch = 50;
+        } else {
+            $num_of_filters=128;
+            $epoch = 300;
         }
         $nn = $this->newNeuralNetworks($mo);
         $K = $nn->backend();
@@ -902,12 +902,12 @@ class SequentialTest extends TestCase
     public function testFitConv2DandMaxPooling2D()
     {
         $mo = $this->newMatrixOperator();
-        if($mo->isAdvanced()) {
-            $num_of_filters=128;
-            $epoch = 300;
-        } else {
+        if(!$mo->isAdvanced() || getenv('BLOBDATA_TEST_SKIP')) {
             $num_of_filters=8;
             $epoch = 30;
+        } else {
+            $num_of_filters=128;
+            $epoch = 300;
         }
         $nn = $this->newNeuralNetworks($mo);
         $K = $nn->backend();
@@ -971,12 +971,12 @@ class SequentialTest extends TestCase
     public function testFitConv3DandMaxPooling3D()
     {
         $mo = $this->newMatrixOperator();
-        if($mo->isAdvanced()) {
-            $num_of_filters=128;
-            $epoch = 300;
-        } else {
+        if(!$mo->isAdvanced() || getenv('BLOBDATA_TEST_SKIP')) {
             $num_of_filters=8;
             $epoch = 20;
+        } else {
+            $num_of_filters=128;
+            $epoch = 300;
         }
         $nn = $this->newNeuralNetworks($mo);
         $K = $nn->backend();
@@ -1035,12 +1035,12 @@ class SequentialTest extends TestCase
     public function testFitConv1DandAveragePooling1D()
     {
         $mo = $this->newMatrixOperator();
-        if($mo->isAdvanced()) {
-            $num_of_filters=128;
-            $epoch = 300;
-        } else {
+        if(!$mo->isAdvanced() || getenv('BLOBDATA_TEST_SKIP')) {
             $num_of_filters=16;
             $epoch = 50;
+        } else {
+            $num_of_filters=128;
+            $epoch = 300;
         }
         $nn = $this->newNeuralNetworks($mo);
         $K = $nn->backend();
@@ -1104,12 +1104,12 @@ class SequentialTest extends TestCase
     public function testFitConv2DandAveragePooling2D()
     {
         $mo = $this->newMatrixOperator();
-        if($mo->isAdvanced()) {
-            $num_of_filters=128;
-            $epoch = 300;
-        } else {
+        if(!$mo->isAdvanced() || getenv('BLOBDATA_TEST_SKIP')) {
             $num_of_filters=8;
             $epoch = 30;
+        } else {
+            $num_of_filters=128;
+            $epoch = 300;
         }
         $nn = $this->newNeuralNetworks($mo);
         $K = $nn->backend();
@@ -1173,12 +1173,12 @@ class SequentialTest extends TestCase
     public function testFitConv3DandAveragePooling3D()
     {
         $mo = $this->newMatrixOperator();
-        if($mo->isAdvanced()) {
-            $num_of_filters=128;
-            $epoch = 300;
-        } else {
+        if(!$mo->isAdvanced() || getenv('BLOBDATA_TEST_SKIP')) {
             $num_of_filters=8;
             $epoch = 20;
+        } else {
+            $num_of_filters=128;
+            $epoch = 300;
         }
         $nn = $this->newNeuralNetworks($mo);
         $K = $nn->backend();
@@ -1237,10 +1237,10 @@ class SequentialTest extends TestCase
     public function testFitEmbedding()
     {
         $mo = $this->newMatrixOperator();
-        if($mo->isAdvanced()) {
-            $epoch = 300;
-        } else {
+        if(!$mo->isAdvanced() || getenv('BLOBDATA_TEST_SKIP')) {
             $epoch = 50;
+        } else {
+            $epoch = 300;
         }
         $nn = $this->newNeuralNetworks($mo);
         $K = $nn->backend();
@@ -1305,10 +1305,10 @@ class SequentialTest extends TestCase
     public function testFitSimpleRNN()
     {
         $mo = $this->newMatrixOperator();
-        if($mo->isAdvanced()) {
-            $epoch = 300;
-        } else {
+        if(!$mo->isAdvanced() || getenv('BLOBDATA_TEST_SKIP')) {
             $epoch = 100;
+        } else {
+            $epoch = 300;
         }
         $nn = $this->newNeuralNetworks($mo);
         $K = $nn->backend();
@@ -1373,10 +1373,10 @@ class SequentialTest extends TestCase
     public function testFitSimpleRNNRetSeq()
     {
         $mo = $this->newMatrixOperator();
-        if($mo->isAdvanced()) {
-            $epoch = 300;
-        } else {
+        if(!$mo->isAdvanced() || getenv('BLOBDATA_TEST_SKIP')) {
             $epoch = 100;
+        } else {
+            $epoch = 300;
         }
         $nn = $this->newNeuralNetworks($mo);
         $K = $nn->backend();
@@ -1454,10 +1454,10 @@ class SequentialTest extends TestCase
     public function testFitSimSimpleRNN()
     {
         $mo = $this->newMatrixOperator();
-        if($mo->isAdvanced()) {
-            $epoch = 300;
-        } else {
+        if(!$mo->isAdvanced() || getenv('BLOBDATA_TEST_SKIP')) {
             $epoch = 100;
+        } else {
+            $epoch = 300;
         }
         $nn = $this->newNeuralNetworks($mo);
         $K = $nn->backend();
@@ -1523,10 +1523,10 @@ class SequentialTest extends TestCase
     public function testFitLSTM()
     {
         $mo = $this->newMatrixOperator();
-        if($mo->isAdvanced()) {
-            $epoch = 300;
-        } else {
+        if(!$mo->isAdvanced() || getenv('BLOBDATA_TEST_SKIP')) {
             $epoch = 100;
+        } else {
+            $epoch = 300;
         }
         $nn = $this->newNeuralNetworks($mo);
         $K = $nn->backend();
@@ -1586,10 +1586,10 @@ class SequentialTest extends TestCase
     public function testFitLSTMRetSeq()
     {
         $mo = $this->newMatrixOperator();
-        if($mo->isAdvanced()) {
-            $epoch = 300;
-        } else {
+        if(!$mo->isAdvanced() || getenv('BLOBDATA_TEST_SKIP')) {
             $epoch = 100;
+        } else {
+            $epoch = 300;
         }
         $nn = $this->newNeuralNetworks($mo);
         $K = $nn->backend();
@@ -1656,10 +1656,10 @@ class SequentialTest extends TestCase
     public function testFitGRUDefault()
     {
         $mo = $this->newMatrixOperator();
-        if($mo->isAdvanced()) {
-            $epoch = 300;
-        } else {
+        if(!$mo->isAdvanced() || getenv('BLOBDATA_TEST_SKIP')) {
             $epoch = 100;
+        } else {
+            $epoch = 300;
         }
         $nn = $this->newNeuralNetworks($mo);
         $K = $nn->backend();
@@ -1719,10 +1719,10 @@ class SequentialTest extends TestCase
     public function testFitGRUWithoutResetAfter()
     {
         $mo = $this->newMatrixOperator();
-        if($mo->isAdvanced()) {
-            $epoch = 300;
-        } else {
+        if(!$mo->isAdvanced() || getenv('BLOBDATA_TEST_SKIP')) {
             $epoch = 100;
+        } else {
+            $epoch = 300;
         }
         $nn = $this->newNeuralNetworks($mo);
         $K = $nn->backend();
@@ -1783,10 +1783,10 @@ class SequentialTest extends TestCase
     public function testFitGRURetSeq()
     {
         $mo = $this->newMatrixOperator();
-        if($mo->isAdvanced()) {
-            $epoch = 300;
-        } else {
+        if(!$mo->isAdvanced() || getenv('BLOBDATA_TEST_SKIP')) {
             $epoch = 100;
+        } else {
+            $epoch = 300;
         }
         $nn = $this->newNeuralNetworks($mo);
         $K = $nn->backend();
@@ -1864,10 +1864,10 @@ class SequentialTest extends TestCase
     public function testFitRepeatVector()
     {
         $mo = $this->newMatrixOperator();
-        if($mo->isAdvanced()) {
-            $epoch = 300;
-        } else {
+        if(!$mo->isAdvanced() || getenv('BLOBDATA_TEST_SKIP')) {
             $epoch = 50;
+        } else {
+            $epoch = 300;
         }
         $nn = $this->newNeuralNetworks($mo);
         $K = $nn->backend();
@@ -1953,10 +1953,10 @@ class SequentialTest extends TestCase
     public function testSaveAndLoadWeightsNormal()
     {
         $mo = $this->newMatrixOperator();
-        if($mo->isAdvanced()) {
-            $epoch = 300;
-        } else {
+        if(!$mo->isAdvanced() || getenv('BLOBDATA_TEST_SKIP')) {
             $epoch = 50;
+        } else {
+            $epoch = 300;
         }
         $nn = $this->newNeuralNetworks($mo);
         $K = $nn->backend();
