@@ -40,8 +40,10 @@ class VariableTest extends TestCase
         $this->assertEquals(1,$a->ndim());
         $this->assertEquals(0,$a->offset());
         if($mo->isAdvanced()) {
+            echo "Advanced mode.\n";
             $this->assertInstanceof(Buffer::class,$a->buffer());
         } else {
+            echo "NOT Advanced mode.\n";
             $this->assertInstanceof(\SplFixedArray::class,$a->buffer());
         }
  
