@@ -68,5 +68,8 @@ jobs:
       #    PLOT_RENDERER_SKIP: true
 
       - name: PHPUnit Tests
-        run: PLOT_RENDERER_SKIP=true; export PLOT_RENDERER_SKIP; phpunit -c tests
+        run: |
+          PLOT_RENDERER_SKIP=true;
+          export PLOT_RENDERER_SKIP;
+          phpunit -c tests
 

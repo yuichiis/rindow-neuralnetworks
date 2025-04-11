@@ -8,36 +8,26 @@ use Rindow\NeuralNetworks\Gradient\Core\AbstractFunction;
 use Rindow\NeuralNetworks\Gradient\Core\Scalar;
 use Interop\Polite\Math\Matrix\NDArray;
 
-class Split extends AbstractFunction
+class Concat extends AbstractFunction
 {
     protected int $numOfInputs = 1;
-    protected int $numOfOutputs = 1;
 
-    /** @var array<int> $sizeSplits */
-    protected array $sizeSplits;
     protected ?int $axis;
 
-    /**
-     * @param array<int> $sizeSplits
-     */
     public function __construct(
         object $backend,
-        array $sizeSplits,
+        int $numOfInputs,
         ?int $axis=null,
         ?string $name=null,
     )
     {
         parent::__construct($backend,name:$name);
-        foreach($sizeSplits as $size) {
-            if(!is_int($size)) {
-                throw new InvalidArgumentException('sizeSplits must be array of integer.');
-            }
+
+        if($numOfInputs <= 0) {
+            throw new InvalidArgumentException('inputs must not be empty.');
         }
-        if(count($sizeSplits) == 0) {
-            throw new InvalidArgumentException('sizeSplits must not be empty.');
-        }
-        $this->numOfOutputs = count($sizeSplits);
-        $this->sizeSplits = $sizeSplits;
+        $this->numOfInputs = $numOfInputs;
+        $axis ??= -1;
         $this->axis = $axis;
     }
 
@@ -51,9 +41,14 @@ class Split extends AbstractFunction
     {
         $K = $this->backend;
         $container = $this->container();
-
-        $outputs = $K->split($inputs[0],$this->sizeSplits,axis:$this->axis);
-        return $outputs;
+        $shapes = array_reduce($inputs,function($shapes,$input) {
+            $shapes[] = $input->shape();
+            return $shapes;
+        },[]);
+        $container->shapes = $shapes;
+        $container->axis = $this->axis;
+        $outputs = $K->concat($inputs,axis:$this->axis);
+        return [$outputs];
     }
 
     /**
@@ -65,9 +60,19 @@ class Split extends AbstractFunction
     protected function differentiate(array $dOutputs) : array
     {
         $K = $this->backend;
+        $container = $this->container();
 
-        $dInputs = $K->concat($dOutputs,axis:$this->axis);
+        $axis = $container->axis;
+        if($axis<0) {
+            $axis = count($container->shapes[0])+$axis;
+        }
+        $sizeSplits = [];
+        foreach($container->shapes as $shape) {
+            $sizeSplits[] = $shape[$axis];
+        }
 
-        return [$dInputs];
+        $dInputs = $K->split($dOutputs[0],$sizeSplits,axis:$axis);
+
+        return $dInputs;
     }
 }

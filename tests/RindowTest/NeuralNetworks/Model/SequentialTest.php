@@ -256,7 +256,7 @@ class SequentialTest extends TestCase
         //$this->assertEquals($mo->zeros([3])->toArray(),      $grads[3]->toArray());
     }
 
-    public function testSummary()
+    public function testSummaryNormal()
     {
         Dense::$nameNumbering = 0;
         $mo = $this->newMatrixOperator();
