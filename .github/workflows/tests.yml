@@ -9,8 +9,8 @@ jobs:
   tests:
     runs-on: ${{ matrix.os }}
     env:
-      matlib: 1.1.0
-      testlib: 1.1.0
+      matlib: 1.1.1
+      testlib: 1.1.1
       matlibrepo: rindow/rindow-matlib
 
     strategy:
@@ -19,25 +19,30 @@ jobs:
         include:
           - name: PHP8.1
             os: ubuntu-latest
+            arch: 'amd64'
             php: '8.1'
             phpunit: '10.5'
             ffi: 'ffi'
           #- name: PHP8.3
+          # arch: 'amd64'
           #  os: ubuntu-latest
           #  php: '8.3'
           #  phpunit: '11.5'
           - name: PHP8.4
             os: ubuntu-latest
+            arch: 'amd64'
             php: '8.4'
             phpunit: '11.5'
             ffi: 'ffi'
           - name: Windows
             os: windows-latest
+            arch: 'x64'
             php: '8.4'
             phpunit: '11.5'
             ffi: 'ffi'
           - name: macOS
             os: macos-latest
+            arch: 'arm64'
             php: '8.4'
             phpunit: '11.5'
             ffi: 'ffi'
@@ -62,6 +67,15 @@ jobs:
           wget https://github.com/${{ env.matlibrepo }}/releases/download/${{ env.testlib }}/rindow-matlib_${{ env.matlib }}-`lsb_release -sr`_amd64.deb
           sudo apt install -y ./rindow-matlib_${{ env.matlib }}-`lsb_release -sr`_amd64.deb
 
+      - name: Install Libs (macOS)
+        if: ${{ startsWith(matrix.os, 'macos-') && matrix.ffi == 'ffi' }}
+        run: |
+          # brew install libomp
+          curl https://github.com/${{ env.matlibrepo }}/releases/download/${{ env.testlib }}/rindow-matlib-${{ env.matlib }}-Darwin-${{ matrix.arch }}.tar.gz -O -L
+          tar -xzf rindow-matlib-${{ env.matlib }}-Darwin-${{ matrix.arch }}.tar.gz
+          sudo cp -r usr/include /usr/local/
+          sudo cp -r usr/lib /usr/local/
+
       - name: Checkout codes
         uses: "actions/checkout@v4"
 
@@ -75,12 +89,13 @@ jobs:
         run: phpstan
 
       - name: PHPUnit Tests
-        if: ${{ startsWith(matrix.os, 'ubuntu-') }}
+        if: ${{ !startsWith(matrix.os, 'windows-') }}
         run: |
           PLOT_RENDERER_SKIP=true;
           export PLOT_RENDERER_SKIP;
           BLOBDATA_TEST_SKIP=true;
           export BLOBDATA_TEST_SKIP;
+          vendor/bin/rindow-math-matrix -v
           vendor/bin/phpunit -c tests
 
       - name: PHPUnit Tests
@@ -99,19 +114,6 @@ jobs:
           $env:PATH = "$matlibDir/bin;$env:PATH"
           $env:PLOT_RENDERER_SKIP = "true";
           $env:BLOBDATA_TEST_SKIP = "true";
-          vendor/bin/phpunit -c tests
-  
-      - name: PHPUnit Tests (macOS)
-        if: ${{ startsWith(matrix.os, 'macos-') }}
-        run: |
-          # brew install libomp
-          curl https://github.com/${{ env.matlibrepo }}/releases/download/${{ env.testlib }}/rindow-matlib-${{ env.matlib }}-Darwin-arm64.tar.gz -O -L
-          tar -xzf rindow-matlib-${{ env.matlib }}-Darwin-arm64.tar.gz
-          sudo cp -r usr/include /usr/local/
-          sudo cp -r usr/lib /usr/local/
-          PLOT_RENDERER_SKIP=true;
-          export PLOT_RENDERER_SKIP;
-          BLOBDATA_TEST_SKIP=true;
-          export BLOBDATA_TEST_SKIP;
+          vendor/bin/rindow-math-matrix -v
           vendor/bin/phpunit -c tests
   
