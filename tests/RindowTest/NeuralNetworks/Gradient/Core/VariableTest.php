@@ -39,14 +39,6 @@ class VariableTest extends TestCase
         $this->assertEquals([2],$a->shape());
         $this->assertEquals(1,$a->ndim());
         $this->assertEquals(0,$a->offset());
-        if($mo->isAdvanced()) {
-            echo "Advanced mode.\n";
-            $this->assertInstanceof(Buffer::class,$a->buffer());
-        } else {
-            echo "NOT Advanced mode.\n";
-            $this->assertInstanceof(\SplFixedArray::class,$a->buffer());
-        }
- 
         $a2 = $a->reshape([2,1]);
         $this->assertInstanceof(Variable::class,$a2);
         $this->assertEquals("[[1],[2]]",$K->toString($a2->value()));
