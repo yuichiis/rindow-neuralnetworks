@@ -45,6 +45,7 @@ use Rindow\NeuralNetworks\Gradient\Func\Less;
 use Rindow\NeuralNetworks\Gradient\Func\Repeat;
 use Rindow\NeuralNetworks\Gradient\Func\Split;
 use Rindow\NeuralNetworks\Gradient\Func\Concat;
+use Rindow\NeuralNetworks\Gradient\Func\Softmax;
 use Rindow\NeuralNetworks\Gradient\Func\Nop;
 
 class Gradient
@@ -444,6 +445,14 @@ class Gradient
         $numOfInputs = count($values);
         $func = new Concat($this->backend,$numOfInputs,axis:$axis, name:$name);
         return $func(...$values);
+    }
+
+    public function softmax(
+        NDArray $x,
+    ) : NDArray
+    {
+        $func = new Softmax($this->backend);
+        return $func($x);
     }
 
     public function nop(
