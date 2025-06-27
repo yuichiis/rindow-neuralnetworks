@@ -554,21 +554,21 @@ class Backend
 
     public function masking(
         NDArray $mask,
-        NDArray $a,
-        ?float $fill=null,
-        ?int $mode=null,
+        NDArray $data,
         ?int $batchDims=null,
         ?int $axis=null,
+        ?float $fill=null,
+        ?int $mode=null,
         ) : NDArray
     {
         $la = $this->la;
         return $la->masking(
             $mask,
-            $la->copy($a),
-            fill:$fill,
-            mode:$mode,
+            $la->copy($data),
             batchDims:$batchDims,
             axis:$axis,
+            fill:$fill,
+            mode:$mode,
         );
     }
 

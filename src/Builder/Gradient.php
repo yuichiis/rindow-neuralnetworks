@@ -47,6 +47,7 @@ use Rindow\NeuralNetworks\Gradient\Func\Split;
 use Rindow\NeuralNetworks\Gradient\Func\Concat;
 use Rindow\NeuralNetworks\Gradient\Func\Softmax;
 use Rindow\NeuralNetworks\Gradient\Func\Nop;
+use Rindow\NeuralNetworks\Gradient\Func\Masking;
 
 class Gradient
 {
@@ -463,4 +464,24 @@ class Gradient
         $func = new Nop($this->backend,...$options);
         return $func($x);
     }
+
+    public function masking(
+        NDArray $mask,
+        NDArray $data,
+        ?int $batchDims=null,
+        ?int $axis=null,
+        ?float $fill=null,
+        ?int $mode=null,
+    ) : NDArray
+    {
+        $func = new Masking(
+            $this->backend,
+            batchDims:$batchDims,
+            axis:$axis,
+            fill:$fill,
+            mode:$mode,
+        );
+        return $func($mask,$data);
+    }
+
 }
