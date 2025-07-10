@@ -48,6 +48,8 @@ use Rindow\NeuralNetworks\Gradient\Func\Concat;
 use Rindow\NeuralNetworks\Gradient\Func\Softmax;
 use Rindow\NeuralNetworks\Gradient\Func\Nop;
 use Rindow\NeuralNetworks\Gradient\Func\Masking;
+use Rindow\NeuralNetworks\Gradient\Func\Gather;
+use Rindow\NeuralNetworks\Gradient\Func\ExpandDims;
 
 class Gradient
 {
@@ -482,6 +484,41 @@ class Gradient
             mode:$mode,
         );
         return $func($mask,$data);
+    }
+
+    public function gather(
+        NDArray $params,
+        NDArray $indices,
+        ?int $axis=null,
+        ?int $batchDims=null,
+        ?int $detailDepth=null,
+        ?int $indexDepth=null,
+        ?string $name=null,
+    ) : NDArray
+    {
+        $func = new Gather(
+            $this->backend,
+            axis:$axis,
+            batchDims:$batchDims,
+            detailDepth:$detailDepth,
+            indexDepth:$indexDepth,
+            name:$name,
+        );
+        return $func($params,$indices);
+    }
+
+    public function expandDims(
+        NDArray $inputs,
+        int $axis,
+        ?string $name=null,
+    ) : NDArray
+    {
+        $func = new ExpandDims(
+            $this->backend,
+            $axis,
+            name:$name,
+        );
+        return $func($inputs);
     }
 
 }
