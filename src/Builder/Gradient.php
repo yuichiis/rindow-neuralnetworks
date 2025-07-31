@@ -50,6 +50,7 @@ use Rindow\NeuralNetworks\Gradient\Func\Nop;
 use Rindow\NeuralNetworks\Gradient\Func\Masking;
 use Rindow\NeuralNetworks\Gradient\Func\Gather;
 use Rindow\NeuralNetworks\Gradient\Func\ExpandDims;
+use Rindow\NeuralNetworks\Gradient\Func\Squeeze;
 
 class Gradient
 {
@@ -514,6 +515,20 @@ class Gradient
     ) : NDArray
     {
         $func = new ExpandDims(
+            $this->backend,
+            $axis,
+            name:$name,
+        );
+        return $func($inputs);
+    }
+
+    public function squeeze(
+        NDArray $inputs,
+        int $axis,
+        ?string $name=null,
+    ) : NDArray
+    {
+        $func = new Squeeze(
             $this->backend,
             $axis,
             name:$name,
