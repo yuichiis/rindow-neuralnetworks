@@ -51,6 +51,8 @@ use Rindow\NeuralNetworks\Gradient\Func\Masking;
 use Rindow\NeuralNetworks\Gradient\Func\Gather;
 use Rindow\NeuralNetworks\Gradient\Func\ExpandDims;
 use Rindow\NeuralNetworks\Gradient\Func\Squeeze;
+use Rindow\NeuralNetworks\Gradient\Func\Minimum;
+use Rindow\NeuralNetworks\Gradient\Func\Maximum;
 
 class Gradient
 {
@@ -534,6 +536,32 @@ class Gradient
             name:$name,
         );
         return $func($inputs);
+    }
+
+    public function minimum(
+        NDArray $a,
+        NDArray $x,
+        ?string $name=null,
+    ) : NDArray
+    {
+        $func = new Minimum(
+            $this->backend,
+            name:$name,
+        );
+        return $func($a,$x);
+    }
+
+    public function maximum(
+        NDArray $a,
+        NDArray $x,
+        ?string $name=null,
+    ) : NDArray
+    {
+        $func = new Maximum(
+            $this->backend,
+            name:$name,
+        );
+        return $func($a,$x);
     }
 
 }
