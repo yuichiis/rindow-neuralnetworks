@@ -2008,17 +2008,17 @@ class Backend
         // dx = 2/N * (Yk-Tk)
         if($reduction!=='none') {
             $n = $predicts->size();
-            $loss = $la->scal(2/$n,
+            $dPredicts = $la->scal(2/$n,
                 $la->axpy($trues,$la->copy($predicts),-1.0));
-            $la->multiply($dLoss,$loss);
+            $la->multiply($dLoss,$dPredicts);
         } else {
             $shape = $predicts->shape();
             $n = array_pop($shape);
-            $loss = $la->scal(2/$n,
+            $dPredicts = $la->scal(2/$n,
                 $la->axpy($trues,$la->copy($predicts),-1.0));
-            $la->multiply($dLoss,$loss,trans:true);
+            $la->multiply($dLoss,$dPredicts,trans:true);
         }
-        return $loss;
+        return $dPredicts;
     }
 
     public function sparseCategoricalCrossEntropy(
