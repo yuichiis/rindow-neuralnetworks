@@ -25,6 +25,7 @@ use Rindow\NeuralNetworks\Gradient\Func\Div;
 use Rindow\NeuralNetworks\Gradient\Func\Matmul;
 use Rindow\NeuralNetworks\Gradient\Func\ReduceMean;
 use Rindow\NeuralNetworks\Gradient\Func\ReduceSum;
+use Rindow\NeuralNetworks\Gradient\Func\ReduceMax;
 use Rindow\NeuralNetworks\Gradient\Func\ClipByValue;
 use Rindow\NeuralNetworks\Gradient\Func\Equal;
 use Rindow\NeuralNetworks\Gradient\Func\NotEqual;
@@ -53,6 +54,7 @@ use Rindow\NeuralNetworks\Gradient\Func\ExpandDims;
 use Rindow\NeuralNetworks\Gradient\Func\Squeeze;
 use Rindow\NeuralNetworks\Gradient\Func\Minimum;
 use Rindow\NeuralNetworks\Gradient\Func\Maximum;
+use Rindow\NeuralNetworks\Gradient\Func\LogSoftmax;
 
 class Gradient
 {
@@ -238,6 +240,22 @@ class Gradient
     ) : NDArray
     {
         $func = new ReduceSum(
+            $this->backend,
+            axis:$axis,
+            keepdims:$keepdims,
+            name:$name,
+        );
+        return $func($x);
+    }
+
+    public function reduceMax(
+        NDArray $x,
+        ?int $axis=null,
+        ?bool $keepdims=null,
+        ?string $name=null,
+    ) : NDArray
+    {
+        $func = new ReduceMax(
             $this->backend,
             axis:$axis,
             keepdims:$keepdims,
@@ -564,4 +582,16 @@ class Gradient
         return $func($a,$x);
     }
 
+    public function logSoftmax(
+        NDArray $x,
+        ?string $name=null,
+    ) : NDArray
+    {
+        $func = new LogSoftmax(
+            $this->backend,
+            name:$name,
+        );
+        return $func($x);
+    }
+   
 }

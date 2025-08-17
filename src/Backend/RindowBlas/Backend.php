@@ -497,15 +497,15 @@ class Backend
             $ndimY = $y->ndim();
             if($ndimX == $ndimY) {
                 $x = $la->copy($x,$la->alloc($y->shape(),$x->dtype()));
-                $la->axpy($y,$x,-1.0);
+                $la->axpy($y,$x,alpha:-1.0);
                 return $x;
             } elseif($ndimX < $ndimY) {
                 $x = $la->duplicate($x,null,null,$la->alloc($y->shape(),$x->dtype()));
-                $la->axpy($y,$x,-1.0);
+                $la->axpy($y,$x,alpha:-1.0);
                 return $x;
             } else {
                 $y = $la->duplicate($y,null,null,$la->alloc($x->shape(),$y->dtype()));
-                $la->increment($y,0,-1);
+                $la->increment($y,beta:0,alpha:-1); // scale
                 $la->axpy($x,$y);
                 return $y;
             }
