@@ -475,15 +475,18 @@ class Backend
                 $la->axpy($y,$x);
                 return $x;
             } elseif($ndimX < $ndimY) {
+                //  broadcastable x=>y
                 $x = $la->duplicate($x,null,null,$la->alloc($y->shape(),$x->dtype()));
                 $la->axpy($y,$x);
                 return $x;
             } else {
+                //  broadcastable y=>x
                 $y = $la->duplicate($y,null,null,$la->alloc($x->shape(),$y->dtype()));
                 $la->axpy($x,$y);
                 return $y;
             }
         } else {
+            // z = (y * x^T)^T  broadcastable y=>x
             $x = $la->copy($x);
             return $la->add($y, $x, alpha:1, trans:$trans);
         }
@@ -500,16 +503,19 @@ class Backend
                 $la->axpy($y,$x,alpha:-1.0);
                 return $x;
             } elseif($ndimX < $ndimY) {
+                //  broadcastable x=>y
                 $x = $la->duplicate($x,null,null,$la->alloc($y->shape(),$x->dtype()));
                 $la->axpy($y,$x,alpha:-1.0);
                 return $x;
             } else {
+                //  broadcastable y=>x
                 $y = $la->duplicate($y,null,null,$la->alloc($x->shape(),$y->dtype()));
                 $la->increment($y,beta:0,alpha:-1); // scale
                 $la->axpy($x,$y);
                 return $y;
             }
         } else {
+            // z = (y * x^T)^T  broadcastable y=>x
             $x = $la->copy($x);
             return $la->add($y, $x, alpha:-1, trans:$trans);
         }
@@ -520,13 +526,16 @@ class Backend
         $la = $this->la;
         if(!$trans) {
             if($x->ndim() < $y->ndim()) {
+                //  broadcastable x=>y
                 $y = $la->copy($y);
                 return $la->multiply($x,$y);
             } else {
+                //  broadcastable y=>x
                 $x = $la->copy($x);
                 return $la->multiply($y,$x);
             }
         } else {
+            // z = (y * x^T)^T  broadcastable y=>x
             $x = $la->copy($x);
             return $la->multiply($y,$x,trans:$trans);
         }
@@ -539,12 +548,15 @@ class Backend
             $y = $la->copy($y);
             $la->reciprocal($y);
             if($x->ndim() < $y->ndim()) {
+                //  broadcastable x=>y
                 return $la->multiply($x,$y);
             } else {
+                //  broadcastable y=>x
                 $x = $la->copy($x);
                 return $la->multiply($y,$x);
             }
         } else {
+            // z = (y * x^T)^T  broadcastable y=>x
             $x = $la->copy($x);
             $y = $la->copy($y);
             $la->reciprocal($y);
@@ -572,6 +584,9 @@ class Backend
         );
     }
 
+    /**
+    *    X := 1 / (a*X + b)
+    */
     public function reciprocal(
         NDArray $x,
         ?float $beta=null,
@@ -640,32 +655,32 @@ class Backend
         );
     }
 
-    public function scale(float $a, NDArray $x) : NDArray
+    public function scale(float $alpha, NDArray $x) : NDArray
     {
         $x = $this->la->copy($x);
-        return $this->la->scal($a, $x);
+        return $this->la->scal($alpha, $x);
     }
 
-    public function update_scale(NDArray $x,float $a) : NDArray
+    public function update_scale(NDArray $x,float $alpha) : NDArray
     {
-        return $this->la->scal($a, $x);
+        return $this->la->scal($alpha, $x);
     }
 
     /**
     *    Y := a*X + b
     */
-    public function increment(NDArray $x, float $b, ?float $a=null) : NDArray
+    public function increment(NDArray $x, float $beta, ?float $alpha=null) : NDArray
     {
         $x = $this->la->copy($x);
-        return $this->la->increment($x, $b, $a);
+        return $this->la->increment($x, beta:$beta, alpha:$alpha);
     }
 
     /**
     *    X := a*X + b
     */
-    public function update_increment(NDArray $x, float $b, ?float $a=null) : NDArray
+    public function update_increment(NDArray $x, float $beta, ?float $alpha=null) : NDArray
     {
-        return $this->la->increment($x, $b, $a);
+        return $this->la->increment($x, beta:$beta, alpha:$alpha);
     }
 
     public function pow(NDArray $x, float|NDArray $y, ?bool $trans=null) : NDArray

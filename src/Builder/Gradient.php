@@ -55,6 +55,8 @@ use Rindow\NeuralNetworks\Gradient\Func\Squeeze;
 use Rindow\NeuralNetworks\Gradient\Func\Minimum;
 use Rindow\NeuralNetworks\Gradient\Func\Maximum;
 use Rindow\NeuralNetworks\Gradient\Func\LogSoftmax;
+use Rindow\NeuralNetworks\Gradient\Func\RandomNormLike;
+use Rindow\NeuralNetworks\Gradient\Func\Tanh;
 
 class Gradient
 {
@@ -176,25 +178,25 @@ class Gradient
         return $func($x);
     }
 
-    public function add(NDArray $x, NDArray $y, ?string $name=null) : NDArray
+    public function add(NDArray|float $x, NDArray|float $y, ?bool $trans=null, ?string $name=null) : NDArray
     {
-        $func = new Add($this->backend, name:$name);
+        $func = new Add($this->backend, trans:$trans, name:$name);
         return $func($x,$y);
     }
 
-    public function sub(NDArray $x, NDArray $y, ?string $name=null) : NDArray
+    public function sub(NDArray|float $x, NDArray|float $y, ?string $name=null) : NDArray
     {
         $func = new Sub($this->backend, name:$name);
         return $func($x,$y);
     }
 
-    public function mul(NDArray $x, NDArray $y, ?string $name=null) : NDArray
+    public function mul(NDArray|float $x, NDArray|float $y, ?string $name=null) : NDArray
     {
         $func = new Mul($this->backend, name:$name);
         return $func($x,$y);
     }
 
-    public function div(NDArray $x, NDArray $y, ?string $name=null) : NDArray
+    public function div(NDArray|float $x, NDArray|float $y, ?string $name=null) : NDArray
     {
         $func = new Div($this->backend, name:$name);
         return $func($x,$y);
@@ -594,4 +596,16 @@ class Gradient
         return $func($x);
     }
    
+    public function tanh(
+        NDArray $x,
+        ?string $name=null,
+    ) : NDArray
+    {
+        $func = new Tanh(
+            $this->backend,
+            name:$name,
+        );
+        return $func($x);
+    }
+
 }
