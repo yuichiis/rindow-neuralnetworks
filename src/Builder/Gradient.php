@@ -596,6 +596,24 @@ class Gradient
         return $func($x);
     }
    
+    public function randomNormLike(
+        NDArray $x,
+        ?float $mean=null,
+        ?float $scale=null,
+        ?int $seed=null,
+        ?string $name=null,
+    ) : NDArray
+    {
+        $func = new RandomNormLike(
+            $this->backend,
+            mean:$mean,
+            scale:$scale,
+            seed:$seed,
+            name:$name,
+        );
+        return $func($x);
+    }
+
     public function tanh(
         NDArray $x,
         ?string $name=null,
