@@ -1216,6 +1216,24 @@ class Backend
         return $this->la->randomNormal($shape,$mean,$scale,$dtype,$seed,$x);
     }
 
+    /**
+     * $probs : (batches,numSamples) without numSamples
+     *          or (numSamples) with numSamples
+     *          dtype:float32.
+     * $randints: (batches) dtype:int32
+     * 
+     * sum of probs must be 1.0 each row.
+     */
+    public function randomCategorical(
+        NDArray $probs,
+        ?int $numSamples=null,
+        ?int $dtype=null,
+        ?int $seed=null
+        ) : NDArray
+    {
+        return $this->la->randomCategorical($probs,numSamples:$numSamples,dtype:$dtype,seed:$seed);
+    }
+
     public function relu(NDArray $x) : NDArray
     {
         return $this->maximum($x,0.0);

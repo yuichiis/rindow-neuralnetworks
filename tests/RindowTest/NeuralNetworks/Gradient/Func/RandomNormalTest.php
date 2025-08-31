@@ -1,12 +1,12 @@
 <?php
-namespace RindowTest\NeuralNetworks\Gradient\Func\RandomNormLikeTest;
+namespace RindowTest\NeuralNetworks\Gradient\Func\RandomNormalTest;
 
 use PHPUnit\Framework\TestCase;
 use Rindow\Math\Matrix\MatrixOperator;
 use Rindow\NeuralNetworks\Builder\NeuralNetworks;
 use Interop\Polite\Math\Matrix\NDArray;
 
-class RandomNormLikeTest extends TestCase
+class RandomNormalTest extends TestCase
 {
     public function newMatrixOperator()
     {
@@ -33,7 +33,7 @@ class RandomNormLikeTest extends TestCase
         $x = $g->Variable($K->array(1));
         $z = $nn->with($tape=$g->GradientTape(),
             function() use ($g,$x){
-                $z = $g->randomNormLike($x);
+                $z = $g->randomNormal($x);
                 return $z;
             }
         );
@@ -59,7 +59,7 @@ class RandomNormLikeTest extends TestCase
         $x = $g->Variable($K->array([3.0, 4.0]));
         $z = $nn->with($tape=$g->GradientTape(),
             function() use ($g,$x) {
-                $y = $g->randomNormLike($x);
+                $y = $g->randomNormal($x);
                 return $y;
             }
         );
@@ -86,7 +86,7 @@ class RandomNormLikeTest extends TestCase
         $x = $g->Variable($K->array([3.0, 4.0]));
         $z = $nn->with($tape=$g->GradientTape(),
             function() use ($g,$x) {
-                $y = $g->randomNormLike($x,mean:2.0,scale:0.5,seed:120);
+                $y = $g->randomNormal($x,mean:2.0,scale:0.5,seed:120);
                 return $y;
             }
         );

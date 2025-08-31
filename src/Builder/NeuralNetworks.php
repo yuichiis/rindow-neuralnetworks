@@ -27,6 +27,7 @@ class NeuralNetworks implements Builder
     protected ?object $data=null;
     protected ?object $utils=null;
     protected ?object $gradient=null;
+    protected ?object $distributions=null;
 
     public function __construct(?object $matrixOperator=null, ?object $backend=null)
     {
@@ -150,4 +151,13 @@ class NeuralNetworks implements Builder
     {
         return Execute::with(...$args);
     }
+
+    public function distributions() : object
+    {
+        if($this->distributions==null) {
+            $this->distributions = new Distributions($this);
+        }
+        return $this->distributions;
+    }
+
 }

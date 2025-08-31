@@ -19,14 +19,14 @@ use function Rindow\Math\Matrix\R;
 # Download the file
 class EngFraDataset
 {
-    protected $baseUrl = 'http://www.manythings.org/anki/';
-    protected $downloadFile = 'fra-eng.zip';
-    protected $mo;
-    protected $datasetDir;
-    protected $saveFile;
-    protected $preprocessor;
+    protected string $baseUrl = 'http://www.manythings.org/anki/';
+    protected string $downloadFile = 'fra-eng.zip';
+    protected object $mo;
+    protected string $datasetDir;
+    protected string $saveFile;
+    protected Preprocessor $preprocessor;
 
-    public function __construct($mo,$inputTokenizer=null,$targetTokenizer=null)
+    public function __construct(object $mo)
     {
         $this->mo = $mo;
         $this->datasetDir = $this->getDatasetDir();
@@ -52,7 +52,7 @@ class EngFraDataset
     }
 
 
-    protected function download($filename)
+    protected function download(string $filename) : string
     {
         $filePath = $this->datasetDir . "/" . $filename;
 
@@ -81,13 +81,13 @@ class EngFraDataset
         return $path;
     }
 
-    public function preprocessSentence($w)
+    public function preprocessSentence(string $w) : string
     {
         $w = '<start> '.$w.' <end>';
         return $w;
     }
 
-    public function createDataset($path, $numExamples)
+    public function createDataset(string $path, ?int $numExamples) : array
     {
         $contents = file_get_contents($path);
         if($contents==false) {

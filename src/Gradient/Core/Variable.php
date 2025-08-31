@@ -16,12 +16,12 @@ use Rindow\NeuralNetworks\Gradient\MaskedNDArray as MaskedNDArrayInterface;
 class Variable implements VariableInterface
 {
     protected object $backend;
-    protected bool $trainable;
-    protected bool $undetermined;
     protected ?string $name=null;
     protected mixed $value;
     protected ?object $creator=null;
     protected int $generation=0;
+    protected bool $trainable;
+    protected bool $undetermined;
     protected bool $unbackpropagatable;
     protected ?NDArray $mask;
 

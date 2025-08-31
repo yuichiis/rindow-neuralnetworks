@@ -6,7 +6,7 @@ use Interop\Polite\Math\Matrix\NDArray;
 use Rindow\NeuralNetworks\Gradient\Core\AbstractFunction;
 use Rindow\NeuralNetworks\Gradient\Core\NullValue;
 
-class RandomNormLike extends AbstractFunction
+class RandomNormal extends AbstractFunction
 {
     protected float $mean;
     protected float $scale;
@@ -34,7 +34,7 @@ class RandomNormLike extends AbstractFunction
         $container = $this->container();
         $shape = $inputs[0]->shape();
         $dtype = $inputs[0]->dtype();
-        $outputs = $K->randomNormalVariables($shape,$this->mean,$this->scale,$dtype,$this->seed);
+        $outputs = $K->randomNormalVariables($shape,$this->mean,$this->scale,dtype:$dtype,seed:$this->seed);
         $container->shape = $shape;
         $container->dtype = $dtype;
         $this->unbackpropagatables = [true];

@@ -55,7 +55,8 @@ use Rindow\NeuralNetworks\Gradient\Func\Squeeze;
 use Rindow\NeuralNetworks\Gradient\Func\Minimum;
 use Rindow\NeuralNetworks\Gradient\Func\Maximum;
 use Rindow\NeuralNetworks\Gradient\Func\LogSoftmax;
-use Rindow\NeuralNetworks\Gradient\Func\RandomNormLike;
+use Rindow\NeuralNetworks\Gradient\Func\RandomNormal;
+use Rindow\NeuralNetworks\Gradient\Func\RandomCategorical;
 use Rindow\NeuralNetworks\Gradient\Func\Tanh;
 
 class Gradient
@@ -69,7 +70,8 @@ class Gradient
 
     public function constant(mixed $value, ?int $dtype=null) : NDArray
     {
-        return $this->backend->array($value, dtype:$dtype);
+        $value = $this->backend->array($value, dtype:$dtype);
+        return $this->Variable($value,trainable:false,unbackpropagatable:true);
     }
 
     public function Variable(mixed $variable, mixed ...$options) : VariableIF
@@ -596,7 +598,7 @@ class Gradient
         return $func($x);
     }
    
-    public function randomNormLike(
+    public function randomNormal(
         NDArray $x,
         ?float $mean=null,
         ?float $scale=null,
@@ -604,7 +606,7 @@ class Gradient
         ?string $name=null,
     ) : NDArray
     {
-        $func = new RandomNormLike(
+        $func = new RandomNormal(
             $this->backend,
             mean:$mean,
             scale:$scale,
@@ -612,6 +614,26 @@ class Gradient
             name:$name,
         );
         return $func($x);
+    }
+
+    public function randomCategorical(
+        NDArray $logits,
+        ?int $numSamples=null,
+        ?bool $softmax=null,
+        ?int $dtype=null,
+        ?int $seed=null,
+        ?string $name=null,
+    ) : NDArray
+    {
+        $func = new RandomCategorical(
+            $this->backend,
+            numSamples:$numSamples,
+            softmax:$softmax,
+            dtype:$dtype,
+            seed:$seed,
+            name:$name,
+        );
+        return $func($logits);
     }
 
     public function tanh(
