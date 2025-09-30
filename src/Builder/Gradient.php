@@ -58,6 +58,8 @@ use Rindow\NeuralNetworks\Gradient\Func\LogSoftmax;
 use Rindow\NeuralNetworks\Gradient\Func\RandomNormal;
 use Rindow\NeuralNetworks\Gradient\Func\RandomCategorical;
 use Rindow\NeuralNetworks\Gradient\Func\Tanh;
+use Rindow\NeuralNetworks\Gradient\Func\Log1p;
+use Rindow\NeuralNetworks\Gradient\Func\L2Norm;
 
 class Gradient
 {
@@ -602,6 +604,7 @@ class Gradient
         NDArray $x,
         ?float $mean=null,
         ?float $scale=null,
+        ?array $batchShape=null,
         ?int $seed=null,
         ?string $name=null,
     ) : NDArray
@@ -610,6 +613,7 @@ class Gradient
             $this->backend,
             mean:$mean,
             scale:$scale,
+            batchShape:$batchShape,
             seed:$seed,
             name:$name,
         );
@@ -618,7 +622,7 @@ class Gradient
 
     public function randomCategorical(
         NDArray $logits,
-        ?int $numSamples=null,
+        ?array $batchShape=null,
         ?bool $softmax=null,
         ?int $dtype=null,
         ?int $seed=null,
@@ -627,7 +631,7 @@ class Gradient
     {
         $func = new RandomCategorical(
             $this->backend,
-            numSamples:$numSamples,
+            batchShape:$batchShape,
             softmax:$softmax,
             dtype:$dtype,
             seed:$seed,
@@ -643,6 +647,32 @@ class Gradient
     {
         $func = new Tanh(
             $this->backend,
+            name:$name,
+        );
+        return $func($x);
+    }
+
+    public function log1p(
+        NDArray $x,
+        ?string $name=null,
+    ) : NDArray
+    {
+        $func = new Log1p(
+            $this->backend,
+            name:$name,
+        );
+        return $func($x);
+    }
+
+    public function l2norm(
+        NDArray $x,
+        ?int $axis=null,
+        ?string $name=null,
+    ) : NDArray
+    {
+        $func = new L2Norm(
+            $this->backend,
+            axis:$axis,
             name:$name,
         );
         return $func($x);

@@ -51,6 +51,15 @@ class CategoricalTest extends TestCase
         $this->assertEquals(NDArray::int32,$action->dtype());
         $this->assertInstanceof(Variable::class,$action);
 
+        // batchSize : BatchShape(3)
+        // action space : Discrete(2)
+        $probs = $g->Variable($la->array([0.5,0.5]));   // (numActions)
+        $dist = $nn->distributions()->Categorical(probs:$probs);
+        $action = $dist->sample(batchShape:[3]);
+        $this->assertEquals([3],$action->shape());       // ()
+        $this->assertEquals(NDArray::int32,$action->dtype());
+        $this->assertInstanceof(Variable::class,$action);
+
     }
 
     public function testLogProbShape()

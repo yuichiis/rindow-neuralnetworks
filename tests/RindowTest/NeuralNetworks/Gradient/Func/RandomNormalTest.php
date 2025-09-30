@@ -76,6 +76,33 @@ class RandomNormalTest extends TestCase
         $this->assertStringStartsWith("No applicable gradient found for source",$error);
     }
 
+    public function testMuiltSamples()
+    {
+        $mo = $this->newMatrixOperator();
+        $nn = $this->newNeuralNetworks($mo);
+        $K = $this->newBackend($nn);
+        $g = $nn->gradient();
+
+        $x = $g->Variable($K->array([3.0, 4.0]));
+        $z = $nn->with($tape=$g->GradientTape(),
+            function() use ($g,$x) {
+                $y = $g->randomNormal($x,batchShape:[3]);
+                return $y;
+            }
+        );
+
+        $this->assertEquals([3,2],$z->shape());
+        $this->assertEquals($x->dtype(),$z->dtype());
+        $this->assertTrue($x->isbackpropagatable());
+        $this->assertFalse($z->isbackpropagatable());
+        try {
+            $tape->gradient($z,$x);
+        } catch(\Throwable $e) {
+            $error = $e->getMessage();
+        }
+        $this->assertStringStartsWith("No applicable gradient found for source",$error);
+    }
+
     public function testWithOptionValues()
     {
         $mo = $this->newMatrixOperator();

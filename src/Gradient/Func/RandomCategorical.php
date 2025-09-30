@@ -8,14 +8,14 @@ use Rindow\NeuralNetworks\Gradient\Core\NullValue;
 
 class RandomCategorical extends AbstractFunction
 {
-    protected ?int $numSamples;
+    protected array $batchShape;
     protected bool $softmax;
     protected int $dtype;
     protected ?int $seed;
 
     public function __construct(
         object $backend,
-        ?int $numSamples=null,
+        ?array $batchShape=null,
         ?bool $softmax=null,
         ?int $dtype=null,
         ?int $seed=null,
@@ -24,8 +24,9 @@ class RandomCategorical extends AbstractFunction
     {
         $softmax ??= true;
         $dtype ??= NDArray::int32;
+        $batchShape ??= [];
         parent::__construct($backend,name:$name);
-        $this->numSamples = $numSamples;
+        $this->batchShape = $batchShape;
         $this->softmax = $softmax;
         $this->dtype = $dtype;
         $this->seed = $seed;
@@ -39,7 +40,7 @@ class RandomCategorical extends AbstractFunction
         $logits = $inputs[0];
         $batchShape = $logits->shape();
         if(count($batchShape)==0) {
-            throw new Exception("More than one dimension is required.");
+            throw new InvalidArgumentException("More than one dimension is required.");
         }
         $singleLogits = (count($batchShape)==1);
         $numActions = array_pop($batchShape);
@@ -51,18 +52,22 @@ class RandomCategorical extends AbstractFunction
         } else {
             $probs = $K->exp($logits);
         }
-        if($this->numSamples!==null && $singleLogits) {
+        $numSamples = null;
+        if(count($this->batchShape)>0) {
+            if(!$singleLogits) {
+                throw new InvalidArgumentException("If batchShape is specified, the input must be one-dimensional.");
+            }
             $probs = $probs->reshape([$probs->size()]);
+            $numSamples = array_product($this->batchShape);
+            $batchShape = $this->batchShape;
         }
         $outputs = $K->randomCategorical(
             $probs,
-            numSamples:$this->numSamples,
+            numSamples:$numSamples,
             dtype:$this->dtype,
             seed:$this->seed
         );
-        if($this->numSamples===null) {
-            $outputs = $outputs->reshape($batchShape);
-        }
+        $outputs = $outputs->reshape($batchShape);
         $this->unbackpropagatables = [true];
         return [$outputs];
     }

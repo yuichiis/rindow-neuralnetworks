@@ -10,21 +10,25 @@ class RandomNormal extends AbstractFunction
 {
     protected float $mean;
     protected float $scale;
+    protected array $batchShape;
     protected ?int $seed;
 
     public function __construct(
         object $backend,
         ?float $mean=null,
         ?float $scale=null,
+        ?array $batchShape=null,
         ?int $seed=null,
         ?string $name=null,
     )
     {
         $mean ??= 0.0;
         $scale ??= 1.0;
+        $batchShape ??= [];
         parent::__construct($backend,name:$name);
         $this->mean = $mean;
         $this->scale = $scale;
+        $this->batchShape = $batchShape;
         $this->seed = $seed;
     }
 
@@ -34,6 +38,7 @@ class RandomNormal extends AbstractFunction
         $container = $this->container();
         $shape = $inputs[0]->shape();
         $dtype = $inputs[0]->dtype();
+        $shape = array_merge($this->batchShape,$shape);
         $outputs = $K->randomNormalVariables($shape,$this->mean,$this->scale,dtype:$dtype,seed:$this->seed);
         $container->shape = $shape;
         $container->dtype = $dtype;

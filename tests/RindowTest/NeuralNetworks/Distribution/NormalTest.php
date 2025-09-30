@@ -81,6 +81,23 @@ class NormalTest extends TestCase
             $g->ndarray($action),
             $g->ndarray($action2)
         ));
+
+        // batchSize : bactchShape(3)
+        // action space : Box(2)
+        $mean = $g->Variable($la->array([4,3]));    // (numActions)
+        $std  = $g->Variable($la->array([2,1]));    // (numActions)
+        $dist = $nn->distributions()->Normal($mean,$std);
+        $action = $dist->sample(batchShape:[3]);
+        $this->assertEquals([3,2],$action->shape());
+        $this->assertEquals(NDArray::float32,$action->dtype());
+        $this->assertInstanceof(Variable::class,$action);
+        $action2 = $dist->sample(batchShape:[3]);
+        //var_dump($action);
+        $this->assertFalse($la->isclose(
+            $g->ndarray($action),
+            $g->ndarray($action2)
+        ));
+
     }
 
     public function testLogProbShape()

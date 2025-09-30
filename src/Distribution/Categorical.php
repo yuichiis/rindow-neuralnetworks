@@ -76,10 +76,10 @@ class Categorical implements Distribution
         return $entropy;
     }
 
-    public function sample() : Variable
+    public function sample(?array $batchShape=null) : Variable
     {
         $g = $this->g;
-        $sample = $g->randomCategorical($this->logits);
+        $sample = $g->randomCategorical($this->logits, batchShape:$batchShape);
         return $sample;
     }
 }

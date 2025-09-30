@@ -2560,4 +2560,127 @@ class BackendTest extends TestCase
         ],$A->toArray());
     }
 
+    public function testlog1p()
+    {
+        $mo = $this->newMatrixOperator();
+        $K = $this->newBackend($mo);
+
+        $x = $K->array(1.5e-8);
+        $z = $K->log1p($x);
+        $trues = $mo->array(1e-8);
+        $z = $K->ndarray($z);
+        $this->assertTrue($mo->la()->isclose(
+            $z,
+            $trues,
+        ));
+
+        $x = $K->array(1.5e-6);
+        $z = $K->log1p($x);
+        $trues = $mo->array(1.4999989e-06);
+        $z = $K->ndarray($z);
+        $this->assertTrue($mo->la()->isclose(
+            $z,
+            $trues,
+        ));
+
+        $x = $K->array(1.5e-4);
+        $z = $K->log1p($x);
+        $trues = $mo->array(0.00014999);
+        $z = $K->ndarray($z);
+        $this->assertTrue($mo->la()->isclose(
+            $z,
+            $trues,
+        ));
+
+        $x = $K->array(1.5e-2);
+        $z = $K->log1p($x);
+        $trues = $mo->array(0.01488861);
+        $z = $K->ndarray($z);
+        $this->assertTrue($mo->la()->isclose(
+            $z,
+            $trues,
+        ));
+
+        $x = $K->array(1.5e-1);
+        $z = $K->log1p($x);
+        $trues = $mo->array(0.13976195);
+        $z = $K->ndarray($z);
+        $this->assertTrue($mo->la()->isclose(
+            $z,
+            $trues,
+        ));
+
+        $x = $K->array(1.5e-0);
+        $z = $K->log1p($x);
+        $trues = $mo->array(0.91629076);
+        $z = $K->ndarray($z);
+        $this->assertTrue($mo->la()->isclose(
+            $z,
+            $trues,
+        ));
+
+    }
+
+    public function testdlog1p()
+    {
+        $mo = $this->newMatrixOperator();
+        $K = $this->newBackend($mo);
+
+        $x = $K->array(1.5e-8);
+        $z = $K->log1p($x);
+        $dOutputs = $K->onesLike($z);
+        $dx = $K->dLog1p($dOutputs,$x);
+        $dx = $K->ndarray($dx);
+        $trues = $mo->array(1.0);
+        $this->assertTrue($mo->la()->isclose(
+            $dx,
+            $trues,
+        ));
+
+        $x = $K->array(1.5e-4);
+        $z = $K->log1p($x);
+        $dOutputs = $K->onesLike($z);
+        $dx = $K->dLog1p($dOutputs,$x);
+        $dx = $K->ndarray($dx);
+        $trues = $mo->array(0.99985003);
+        $this->assertTrue($mo->la()->isclose(
+            $dx,
+            $trues,
+        ));
+
+        $x = $K->array(1.5e-3);
+        $z = $K->log1p($x);
+        $dOutputs = $K->onesLike($z);
+        $dx = $K->dLog1p($dOutputs,$x);
+        $dx = $K->ndarray($dx);
+        $trues = $mo->array(0.99850225);
+        $this->assertTrue($mo->la()->isclose(
+            $dx,
+            $trues,
+        ));
+
+        $x = $K->array(1.5e-2);
+        $z = $K->log1p($x);
+        $dOutputs = $K->onesLike($z);
+        $dx = $K->dLog1p($dOutputs,$x);
+        $dx = $K->ndarray($dx);
+        $trues = $mo->array(0.9852217);
+        $this->assertTrue($mo->la()->isclose(
+            $dx,
+            $trues,
+        ));
+ 
+        $x = $K->array(1.5e-0);
+        $z = $K->log1p($x);
+        $dOutputs = $K->onesLike($z);
+        $dx = $K->dLog1p($dOutputs,$x);
+        $dx = $K->ndarray($dx);
+        $trues = $mo->array(0.4);
+        $this->assertTrue($mo->la()->isclose(
+            $dx,
+            $trues,
+        ));
+ 
+    }
+
 }

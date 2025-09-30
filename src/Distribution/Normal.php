@@ -54,14 +54,19 @@ class Normal implements Distribution
         return $this->loc;
     }
 
-    public function sample() : Variable
+    public function scale() : Variable
+    {
+        return $this->stableScale;
+    }
+
+    public function sample(?array $batchShape=null) : Variable
     {
         $g = $this->g;
         $sample = $g->add(   // (batchSize,numActions)
             $this->loc,
             $g->mul(
                 $this->stableScale,
-                $g->randomNormal($this->loc),
+                $g->randomNormal($this->loc,batchShape:$batchShape),
             )
         );
         return $sample;

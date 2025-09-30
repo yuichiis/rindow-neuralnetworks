@@ -11,5 +11,8 @@ interface Distribution
 
     public function entropy() : Variable;
 
-    public function sample() : Variable;
+    /**
+     * @param array<int> $batchShape
+     */
+    public function sample(?array $batchShape=null) : Variable;
 }

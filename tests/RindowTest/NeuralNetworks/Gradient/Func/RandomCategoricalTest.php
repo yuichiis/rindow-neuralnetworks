@@ -91,7 +91,7 @@ class RandomCategoricalTest extends TestCase
         $logits = $g->Variable($K->array([3.0, 4.0]));
         $action = $nn->with($tape=$g->GradientTape(),
             function() use ($g,$logits) {
-                $action = $g->randomCategorical($logits,numSamples:3);
+                $action = $g->randomCategorical($logits,batchShape:[3]);
                 return $action;
             }
         );
@@ -116,12 +116,12 @@ class RandomCategoricalTest extends TestCase
         $g = $nn->gradient();
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('probs must be 1D NDArray with numSamples.');
+        $this->expectExceptionMessage('If batchShape is specified, the input must be one-dimensional.');
         
         $logits = $g->Variable($K->array([[3.0, 4.0]]));
         $action = $nn->with($tape=$g->GradientTape(),
             function() use ($g,$logits) {
-                $action = $g->randomCategorical($logits,numSamples:3);
+                $action = $g->randomCategorical($logits,batchShape:[3]);
                 return $action;
             }
         );
@@ -139,7 +139,7 @@ class RandomCategoricalTest extends TestCase
             function() use ($g,$logits) {
                 $action = $g->randomCategorical(
                     $logits,
-                    numSamples:3,
+                    batchShape:[3],
                     softmax:false,
                     dtype:NDArray::int32,
                     seed:123,

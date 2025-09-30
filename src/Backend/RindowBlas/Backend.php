@@ -819,11 +819,17 @@ class Backend
         NDArray $x,
         ?int $axis=null,
         ?bool $keepdims=null,
+        ?bool $ndarray=null,
         ?NDArray $output=null
         ) : int|float|NDArray
     {
+        $ndarray ??= false;
         if($axis===null) {
-            return $this->la->sum($x);
+            $output = $this->la->sum($x);
+            if(is_scalar($output) && $ndarray) {
+                $output = $this->array($output,$x->dtype());
+            }
+            return $output;
         } else {
             return $this->la->reduceSum($x,axis:$axis,keepdims:$keepdims,output:$output);
         }
@@ -2622,6 +2628,151 @@ class Backend
     ) : NDArray
     {
         return $this->la->einsum4p1($equation, $a, $b);
+    }
+
+    /**
+     * A custom function that calculates log(1 + x) in a numerically stable manner.
+     */
+    public function log1p(
+        NDArray $x,
+    ) : NDArray
+    {
+        $la = $this->la;
+
+        // Threshold for switching calculation methods
+        // If the absolute value is smaller than this value, use the Taylor expansion.
+        // Generally, the square root of machine epsilon is used as a guideline.
+        // Since the machine epsilon for float32 is approximately 1.19e-7, its square root is approximately 3.45e-4.
+        $threshold = 3.45e-4;
+
+        // Approximate calculation using Taylor expansion (up to 5th order)
+        // x - x^2/2 + x^3/3 - x^4/4 + x^5/5
+        //$taylor_approx = $x * (1 - $x/2 + $x**2/3 - $x**3/4 + $x**4/5);
+        $taylor_approx = $la->multiply(
+            $x,
+            $la->axpy(
+                $la->scal(1/5,$la->pow($la->copy($x),4)),
+                $la->axpy(
+                    $la->scal(1/4,$la->pow($la->copy($x),3)),
+                    $la->axpy(
+                        $la->scal(1/3,$la->square($la->copy($x))),
+                        $la->increment($la->copy($x),beta:1,alpha:-1/2)
+                    ),
+                    alpha:-1
+                )
+            )
+        );
+
+        // Conditional branching using where
+        // If |x| < threshold, use the Taylor expansion result; otherwise, use the normal calculation result.
+        $result = $la->where(
+            $la->less($la->square($la->copy($x)),$threshold*$threshold),
+            $taylor_approx,
+            $la->log($la->increment($la->copy($x),beta:1)),
+            normalize:false,
+        );
+    
+        return $result;
+    }
+
+    public function  dLog1p(
+        NDarray $dOutputs,
+        NDArray $x
+        ) : NDArray
+    {
+        $la = $this->la;
+        $threshold = 3.45e-4;
+
+        // Case 2: Local gradient (Taylor derivative) when |x| < threshold
+        // $local_grad_taylor = 1 - $x + $x**2 - $x**3 + $x**4;
+        $local_grad_taylor = $la->axpy(
+            $la->pow($la->copy($x),4),
+            $la->axpy(
+                $la->pow($la->copy($x),3),
+                $la->axpy(
+                    $la->square($la->copy($x)),
+                    $la->increment($la->copy($x),beta:1,alpha:-1)
+                ),
+                alpha:-1
+            ),
+        );
+
+        // Case 1: Local gradient (true derivative) when |x| >= threshold
+        // $local_grad_direct = 1.0 / (1.0 + $x);
+        $local_grad_direct = $la->reciprocal($la->copy($x),beta:1.0);
+
+        // Determine local gradients under the same conditions as the forward pass
+        $local_grad = $la->where(
+            $la->less($la->square($la->copy($x)),$threshold*$threshold),
+            $local_grad_taylor,
+            $local_grad_direct,
+            normalize:false,
+        );
+
+        // Multiply the upstream gradient by the local gradient, based on the chain rule
+        return $la->multiply($dOutputs,$local_grad);
+    }
+
+    /**
+     * A custom function that calculates L2Norm(x) in a numerically stable manner.
+     */
+    public function l2norm(
+        NDArray $input,
+        ?int $axis=null,
+    ) : NDArray
+    {
+        $la = $this->la;
+        if($axis===null) {
+            $output = $la->nrm2($input);
+            if(is_scalar($output)) {
+                $output = $this->array($output,$x->dtype());
+            }
+            return $output;
+        }
+        $output = $la->sqrt($la->reduceSum($la->square($la->copy($x)),axis:$this->axis));
+        return $output;
+    }
+
+    public function dL2norm(
+        NDArray $dOutput,
+        NDArray $input,
+        NDArray $output,
+        ?int $axis=null,
+    ) : NDArray
+    {
+        $la = $this->la;
+        if($axis===null || $axis === 0) {
+            $dInput = $la->multiply(
+                $dOutputs,
+                $la->multiply(
+                    $la->reciprocal($la->copy($output)),
+                    $la->copy($input)
+                )
+            );
+            return $dInput;
+        } elseif($axis === -1 || $axis === $input->ndim()-1) {
+            $shape = $input->shape();
+            $origShape = $shape;
+            $feature = array_pop($shape);
+            $input = $input->reshape([array_product($shape),$feature]);
+            $output = $output->reshape([$output->size()]);
+            $dOutput = $dOutput->reshape([$dOutputs[0]->size()]);
+            $dInput = $la->multiply(
+                $dOutputs,
+                $la->multiply(
+                    $la->reciprocal($la->copy($output)),
+                    $la->copy($input),
+                    trans:true
+                ),
+                trans:true
+            );
+            $dInput = $dInput->reshape($origShape);
+            return $dInput;
+        } else {
+            throw new InvalidArgumentException("Unsupported axis: {$axis}");
+        }
+
+        return $output;
     }
 
     public function equalTest(mixed $a, mixed $b) : bool
