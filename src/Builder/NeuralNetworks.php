@@ -152,12 +152,4 @@ class NeuralNetworks implements Builder
         return Execute::with(...$args);
     }
 
-    public function distributions() : object
-    {
-        if($this->distributions==null) {
-            $this->distributions = new Distributions($this);
-        }
-        return $this->distributions;
-    }
-
 }

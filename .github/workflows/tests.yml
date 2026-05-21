@@ -17,36 +17,34 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: PHP8.1
-            os: ubuntu-latest
+          - os: ubuntu-latest
             arch: 'amd64'
             php: '8.1'
             phpunit: '10.5'
             ffi: 'ffi'
-          #- name: PHP8.3
-          # arch: 'amd64'
-          #  os: ubuntu-latest
-          #  php: '8.3'
-          #  phpunit: '11.5'
-          - name: PHP8.4
-            os: ubuntu-latest
+          - os: ubuntu-latest
             arch: 'amd64'
             php: '8.4'
             phpunit: '11.5'
             ffi: 'ffi'
-          - name: Windows
-            os: windows-latest
-            arch: 'x64'
-            php: '8.4'
+          - os: ubuntu-latest
+            arch: 'amd64'
+            php: '8.5'
             phpunit: '11.5'
             ffi: 'ffi'
-          - name: macOS
-            os: macos-latest
+          - os: windows-latest
+            arch: 'x64'
+            php: '8.5'
+            phpunit: '11.5'
+            ffi: 'ffi'
+          - os: macos-latest
             arch: 'arm64'
-            php: '8.4'
+            php: '8.5'
             phpunit: '11.5'
             ffi: 'ffi'
   
+    name: PHP ${{ matrix.php }} on ${{ matrix.os }}
+
     steps:
       - name: Setup PHP ${{ matrix.php }}
         uses: shivammathur/setup-php@v2
