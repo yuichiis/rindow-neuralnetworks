@@ -23,7 +23,7 @@ if(isset($argv[1])&&$argv[1]) {
     $dsname=$argv[1];
 }
 if(isset($argv[2])&&$argv[2]) {
-    $epochs = $argv[3];
+    $epochs = $argv[2];
 }
 if(isset($argv[3])&&$argv[3]) {
     $shrink = true;

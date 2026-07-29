@@ -3,6 +3,7 @@ namespace Rindow\NeuralNetworks\Gradient\Func;
 
 use Interop\Polite\Math\Matrix\NDArray;
 use Rindow\NeuralNetworks\Gradient\Core\AbstractFunction;
+use InvalidArgumentException;
 
 class Maximum extends AbstractFunction
 {
@@ -19,7 +20,9 @@ class Maximum extends AbstractFunction
         [$a,$x] = $inputs;
 
         if($a->ndim() < $x->ndim()) {
-            throw new InvalidArgumentException('Number of dimension variable #1 must be greater than variable #2 or equals.');
+            $aNdim = $a->ndim();
+            $xNdim = $x->ndim();
+            throw new InvalidArgumentException("Number of dimension variable #1 must be greater than variable #2 or equals. ndim #1 is $aNdim, ndim #2 is $xNdim)");
         }
         $output = $this->backend->maximum($inputs[0],$inputs[1]);
         return [$output];
