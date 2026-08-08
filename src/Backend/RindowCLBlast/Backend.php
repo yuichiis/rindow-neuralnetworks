@@ -640,15 +640,15 @@ class Backend
         return $this->la->scal($a, $x);
     }
 
-    public function increment(NDArray $x, float $b, ?float $a=null) : NDArray
+    public function increment(NDArray $x, float $beta, ?float $alpha=null) : NDArray
     {
         $x = $this->la->copy($x);
-        return $this->la->increment($x, $b, $a);
+        return $this->la->increment($x, $beta, $alpha);
     }
 
-    public function update_increment(NDArray $x, float $b, ?float $a=null) : NDArray
+    public function update_increment(NDArray $x, float $beta, ?float $alpha=null) : NDArray
     {
-        return $this->la->increment($x, $b, $a);
+        return $this->la->increment($x, $beta, $alpha);
     }
 
     public function pow(NDArray $x, float|NDArray $y, ?bool $trans=null) : NDArray
