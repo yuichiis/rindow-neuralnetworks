@@ -692,37 +692,37 @@ class Backend
         return $y;
     }
 
-    public function maximum(NDArray $x, float $a) : NDArray
+    public function maximum(NDArray $x, float|NDArray $a) : NDArray
     {
         $x = $this->la->copy($x);
         return $this->la->maximum($x,$a);
     }
 
-    public function minimum(NDArray $x, float $a) : NDArray
+    public function minimum(NDArray $x, float|NDArray $a) : NDArray
     {
         $x = $this->la->copy($x);
         return $this->la->minimum($x,$a);
     }
 
-    public function greater(NDArray $x, float $a) : NDArray
+    public function greater(NDArray $x, float|NDArray $a) : NDArray
     {
         $x = $this->la->copy($x);
         return $this->la->greater($x,$a);
     }
 
-    public function greaterEqual(NDArray $x, float $a) : NDArray
+    public function greaterEqual(NDArray $x, float|NDArray $a) : NDArray
     {
         $x = $this->la->copy($x);
         return $this->la->greaterEqual($x,$a);
     }
 
-    public function less(NDArray $x, float $a) : NDArray
+    public function less(NDArray $x, float|NDArray $a) : NDArray
     {
         $x = $this->la->copy($x);
         return $this->la->less($x,$a);
     }
 
-    public function lessEqual(NDArray $x, float $a) : NDArray
+    public function lessEqual(NDArray $x, float|NDArray $a) : NDArray
     {
         $x = $this->la->copy($x);
         return $this->la->lessEqual($x,$a);
