@@ -219,8 +219,9 @@ $images = $images[R(0,8)];
 $labels = $labels[R(0,8)];
 $predicts = $model->predict($images);
 // for from_logits
-$K = $nn->backend();
-$predicts = $K->ndarray($nn->backend->softmax($K->array($predicts)));
+$predicts = $nn->deviceArray($predicts);
+$predicts = $nn->la()->softmax($predicts);
+$predicts = $nn->hostArray($predicts);
 
 if($inputShape[2]==1) {
     array_pop($inputShape);

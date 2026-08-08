@@ -1,6 +1,7 @@
 <?php
 namespace Rindow\NeuralNetworks\Builder;
 
+use Interop\Polite\Math\Matrix\NDArray;
 use Rindow\Math\Matrix\MatrixOperator;
 use Rindow\NeuralNetworks\Backend\RindowBlas\Backend as RindowBlasBackend;
 use Rindow\NeuralNetworks\Backend\RindowCLBlast\Backend as RindowCLBlastBackend;
@@ -68,6 +69,11 @@ class NeuralNetworks implements Builder
     public function backend() : object
     {
         return $this->backend;
+    }
+
+    public function la() : object
+    {
+        return $this->backend->primaryLA();
     }
 
     public function deviceType() : string
@@ -150,6 +156,16 @@ class NeuralNetworks implements Builder
     public function with(mixed ...$args) : mixed
     {
         return Execute::with(...$args);
+    }
+
+    public function deviceArray(NDArray $value, ?int $dtype=null) : NDArray
+    {
+        return $this->backend->array($value,$dtype);
+    }
+
+    public function hostArray(NDArray $ndarray) : NDArray
+    {
+        return $this->backend->ndarray($ndarray);
     }
 
 }
