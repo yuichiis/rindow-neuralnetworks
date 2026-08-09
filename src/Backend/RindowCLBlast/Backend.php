@@ -50,7 +50,7 @@ class Backend
             }
         }
         $this->la = $matrixOperator->laAccelerated('clblast',$options);
-        $this->la->blocking(true);
+        //$this->la->blocking(true);
     }
 
     public function localMatrixOperator() : object
