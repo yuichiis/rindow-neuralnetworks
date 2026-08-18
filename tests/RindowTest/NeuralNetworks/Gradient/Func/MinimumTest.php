@@ -59,9 +59,9 @@ class MinimumTest extends TestCase
             }
         );
         [$da,$dx] = $tape->gradient($y,[$a,$x]);
-        $this->assertEquals("[2,3,3,3]",$mo->toString($y->value()));
-        $this->assertEquals("[1,1,0,0]",$mo->toString($da));
-        $this->assertEquals("2",$mo->toString($dx));
+        $this->assertEquals("2",$mo->toString($y->value()));
+        $this->assertEquals("1",$mo->toString($da));
+        $this->assertEquals("0",$mo->toString($dx));
     }
 
     public function testMatrixValue()
