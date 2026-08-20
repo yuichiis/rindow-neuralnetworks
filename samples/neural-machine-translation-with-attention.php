@@ -530,9 +530,9 @@ class CustomAccuracy
 }
 
 
-$numExamples=20000;#30000#50000;
+$numExamples=20000; # 4000; # 30000; # 50000;
 $numWords=1024;#null;
-$epochs = 10;
+$epochs = 10; # 5;
 $batchSize = 64;
 $wordVectSize=256;
 $units=1024;
@@ -541,8 +541,11 @@ $units=1024;
 $mo = new MatrixOperator();
 $nn = new NeuralNetworks($mo);
 $g = $nn->gradient();
-$pltConfig = [];
+$pltConfig = [
+    //'renderer.skipRunViewer'=>true
+];
 $plt = new Plot($pltConfig,$mo);
+//$nn->backend()->primaryLA()->setProfiling(true);
 
 $dataset = new EngFraDataset($mo);
 
@@ -575,6 +578,12 @@ echo "Input length: $inputLength\n";
 echo "Output length: $outputLength\n";
 
 echo "device type: ".$nn->deviceType()."\n";
+if($nn->deviceType()==='CPU') {
+    echo "number of threads: ".$nn->backend()->primaryLA()->getMath()->getNumThreads()."\n";
+    //$nn->backend()->primaryLA()->getMath()->setProfiling(true);
+}
+echo "math library: ".$nn->backend()->primaryLA()->getMath()->getConfig()."\n";
+
 $seq2seq = new Seq2seq(
     $mo,
     $nn->backend(),
@@ -663,3 +672,5 @@ foreach($choice as $idx)
     $seq2seq->plotAttention($attentionPlot,  $q, $p);
 }
 $plt->show();
+//$nn->backend()->primaryLA()->profilingReport();
+//$nn->backend()->primaryLA()->getMath()->profilingReport();

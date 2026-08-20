@@ -10,7 +10,10 @@ use function Rindow\Math\Matrix\R;
 
 $mo = new MatrixOperator();
 $nn = new NeuralNetworks($mo);
-$plt = new Plot(null,$mo);
+$config = [
+    //'renderer.skipRunViewer'=>true,    
+];
+$plt = new Plot($config,$mo);
 //$nn->backend()->primaryLA()->setProfiling(true);
 
 
@@ -159,6 +162,11 @@ switch($dsname) {
 
 
 echo "device type: ".$nn->deviceType()."\n";
+if($nn->deviceType()==='CPU') {
+    echo "number of threads: ".$nn->backend()->primaryLA()->getMath()->getNumThreads()."\n";
+    //$nn->backend()->primaryLA()->getMath()->setProfiling(true);
+}
+echo "math library: ".$nn->backend()->primaryLA()->getMath()->getConfig()."\n";
 $modelFilePath = __DIR__."/cnn-image-classification-{$dsname}.model";
 
 if(file_exists($modelFilePath)) {
@@ -241,3 +249,4 @@ foreach ($predicts as $i => $predict) {
 $plt->show();
 
 //$nn->backend()->primaryLA()->profilingReport();
+//$nn->backend()->primaryLA()->getMath()->profilingReport();

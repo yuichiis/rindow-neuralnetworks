@@ -1001,27 +1001,16 @@ abstract class AbstractModel implements Model
     {
         $K = $this->backend;
         $mo = $K->localMatrixOperator();
-        $initialized = false;
         foreach($this->variables() as $idx => $weights) {
             $data = $mo->unserializeArray($modelWeights['weights'][$idx]);
             $data = $K->array($data);
-            if($weights->isUndetermined()) {
-                // An unbuilt model has no destination buffer yet. This is
-                // initialization, so no compiled function can reference it.
-                $weights->assign($K->copy($data));
-                $initialized = true;
-            } else {
-                // Preserve the buffer captured by compiled graph functions.
-                $K->copy($data,$weights->value());
-            }
+            $weights->update($data);
         }
-        if($initialized) {
-            $stack = [$this];
-            while($module=array_pop($stack)) {
-                $module->reverseSyncWeightVariables();
-                foreach($module->submodules() as $m) {
-                    array_push($stack,$m);
-                }
+        $stack = [$this];
+        while($module=array_pop($stack)) {
+            $module->reverseSyncWeightVariables();
+            foreach($module->submodules() as $m) {
+                array_push($stack,$m);
             }
         }
         $optimizer = $this->optimizer();
