@@ -46,18 +46,6 @@ parameters:
 			message: '#^Instanceof between Rindow\\NeuralNetworks\\Gradient\\Variable and Rindow\\NeuralNetworks\\Gradient\\Variable will always evaluate to true\.$#'
 			identifier: instanceof.alwaysTrue
 			count: 1
-			path: src/Gradient/Core/GradientTape.php
-
-		-
-			message: '#^Strict comparison using \!\=\= between Rindow\\NeuralNetworks\\Gradient\\Variable and null will always evaluate to true\.$#'
-			identifier: notIdentical.alwaysTrue
-			count: 1
-			path: src/Gradient/Core/GradientTape.php
-
-		-
-			message: '#^Instanceof between Rindow\\NeuralNetworks\\Gradient\\Variable and Rindow\\NeuralNetworks\\Gradient\\Variable will always evaluate to true\.$#'
-			identifier: instanceof.alwaysTrue
-			count: 1
 			path: src/Gradient/Core/GraphFunction.php
 
 		-
@@ -161,15 +149,3 @@ parameters:
 			identifier: greaterOrEqual.alwaysTrue
 			count: 1
 			path: src/Support/HDA/HDASqlite.php
-
-		-
-			message: '#^Loose comparison using \=\= between \(PDOStatement\|false\) and false will always evaluate to true\.$#'
-			identifier: equal.alwaysTrue
-			count: 1
-			path: src/Support/HDA/HDASqliteIterator.php
-
-		-
-			message: '#^Unreachable statement \- code above always terminates\.$#'
-			identifier: deadCode.unreachable
-			count: 1
-			path: src/Support/HDA/HDASqliteIterator.php

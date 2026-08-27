@@ -600,6 +600,9 @@ class Gradient
         return $func($x);
     }
    
+    /**
+     * @param array<int>|null $batchShape
+     */
     public function randomNormal(
         NDArray $x,
         ?float $mean=null,
@@ -620,6 +623,9 @@ class Gradient
         return $func($x);
     }
 
+    /**
+     * @param array<int>|null $batchShape
+     */
     public function randomCategorical(
         NDArray $logits,
         ?array $batchShape=null,

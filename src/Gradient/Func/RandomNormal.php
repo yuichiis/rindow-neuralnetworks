@@ -10,9 +10,13 @@ class RandomNormal extends AbstractFunction
 {
     protected float $mean;
     protected float $scale;
+    /** @var array<int> $batchShape */
     protected array $batchShape;
     protected ?int $seed;
 
+    /**
+     * @param array<int>|null $batchShape
+     */
     public function __construct(
         object $backend,
         ?float $mean=null,

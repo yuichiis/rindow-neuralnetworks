@@ -1014,7 +1014,7 @@ class Backend
 
     public function gatherb(
         NDArray $params,
-        NDarray $indices,
+        NDArray $indices,
         ?int $axis=null,
         ?int $batchDims=null,
         ?int $detailDepth=null,
@@ -1037,7 +1037,7 @@ class Backend
      * @param array<int> $shape
      */
     public function scatterb(
-        NDarray $indices,
+        NDArray $indices,
         NDArray $updates,
         array $shape,
         ?int $axis=null,
@@ -1063,7 +1063,7 @@ class Backend
      * @param array<int> $shape
      */
     public function scatterbAdd(
-        NDarray $indices,
+        NDArray $indices,
         NDArray $updates,
         array $shape,
         ?int $axis=null,
@@ -1991,7 +1991,7 @@ class Backend
     public function dMeanSquaredError(
         NDArray $dLoss, NDArray $trues, NDArray $predicts,
         ?string $reduction=null,
-        ) : NDarray
+        ) : NDArray
     {
         $la = $this->la;
         // dx = 2/N * (Yk-Tk)
@@ -2619,7 +2619,7 @@ class Backend
     }
 
     public function  dLog1p(
-        NDarray $dOutputs,
+        NDArray $dOutputs,
         NDArray $x
         ) : NDArray
     {

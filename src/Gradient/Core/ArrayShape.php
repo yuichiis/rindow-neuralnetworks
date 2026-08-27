@@ -28,7 +28,7 @@ class ArrayShape implements ArrayShapeInterface
     {
         $shape = $value->toArray();
         if(count($this->shape)!=count($shape)) {
-            throw new InvalidArgumentException('The dimensions do not match: original:'.count($this->shape).' new:'.count($shapes));
+            throw new InvalidArgumentException('The dimensions do not match: original:'.count($this->shape).' new:'.count($shape));
         }
         $this->shape = $shape;
     }

@@ -82,7 +82,7 @@ class Variable implements VariableInterface
     {
         $K = $this->backend;
         if($this->undetermined) {
-            throw new LogicException("Undetermined variable:".$this->name??'');
+            throw new LogicException("Undetermined variable:".($this->name??''));
         }
         if($value instanceof VariableInterface) {
             $value = $value->value();
@@ -135,7 +135,7 @@ class Variable implements VariableInterface
     public function value() : mixed
     {
         if($this->undetermined) {
-            throw new LogicException("Undetermined variable:".$this->name??'');
+            throw new LogicException("Undetermined variable:".($this->name??''));
         }
         return $this->value;
     }

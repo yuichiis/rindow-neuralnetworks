@@ -8,11 +8,15 @@ use Rindow\NeuralNetworks\Gradient\Core\NullValue;
 
 class RandomCategorical extends AbstractFunction
 {
+    /** @var array<int> $batchShape */
     protected array $batchShape;
     protected bool $softmax;
     protected int $dtype;
     protected ?int $seed;
 
+    /**
+     * @param array<int>|null $batchShape
+     */
     public function __construct(
         object $backend,
         ?array $batchShape=null,

@@ -10,10 +10,10 @@ class Masking extends AbstractFunction
 {
     protected int $numOfInputs = 2;
 
-    protected ?bool $batchDims;
+    protected ?int $batchDims;
     protected ?int $axis;
     protected ?float $fill;
-    protected ?float $mode;
+    protected ?int $mode;
     
     public function __construct(
         object $backend,
@@ -58,7 +58,7 @@ class Masking extends AbstractFunction
 
     /**
     *  @param array<NDArray>  $dOutputs
-    *  @return array<NDArray>
+    *  @return array<NDArray|NullValue>
     */
     protected function differentiate(array $dOutputs) : array
     {
