@@ -2725,11 +2725,11 @@ class Backend
         if($axis===null) {
             $output = $la->nrm2($input);
             if(is_scalar($output)) {
-                $output = $this->array($output,$x->dtype());
+                $output = $this->array($output,$input->dtype());
             }
             return $output;
         }
-        $output = $la->sqrt($la->reduceSum($la->square($la->copy($x)),axis:$this->axis));
+        $output = $la->sqrt($la->reduceSum($la->square($la->copy($input)),axis:$axis));
         return $output;
     }
 
@@ -2743,22 +2743,23 @@ class Backend
         $la = $this->la;
         if($axis===null || $axis === 0) {
             $dInput = $la->multiply(
-                $dOutputs,
+                $dOutput,
                 $la->multiply(
                     $la->reciprocal($la->copy($output)),
                     $la->copy($input)
                 )
             );
             return $dInput;
-        } elseif($axis === -1 || $axis === $input->ndim()-1) {
+        }
+        if($axis === -1 || $axis === $input->ndim()-1) {
             $shape = $input->shape();
             $origShape = $shape;
             $feature = array_pop($shape);
             $input = $input->reshape([array_product($shape),$feature]);
             $output = $output->reshape([$output->size()]);
-            $dOutput = $dOutput->reshape([$dOutputs[0]->size()]);
+            $dOutput = $dOutput->reshape([$dOutput->size()]);
             $dInput = $la->multiply(
-                $dOutputs,
+                $dOutput,
                 $la->multiply(
                     $la->reciprocal($la->copy($output)),
                     $la->copy($input),
@@ -2768,11 +2769,8 @@ class Backend
             );
             $dInput = $dInput->reshape($origShape);
             return $dInput;
-        } else {
-            throw new InvalidArgumentException("Unsupported axis: {$axis}");
         }
-
-        return $output;
+        throw new InvalidArgumentException("Unsupported axis: {$axis}");
     }
 
     public function equalTest(mixed $a, mixed $b) : bool

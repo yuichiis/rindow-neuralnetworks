@@ -2655,6 +2655,67 @@ class Backend
         return $la->multiply($dOutputs,$local_grad);
     }
 
+    /**
+     * A custom function that calculates L2Norm(x) in a numerically stable manner.
+     */
+    public function l2norm(
+        NDArray $input,
+        ?int $axis=null,
+    ) : NDArray
+    {
+        $la = $this->la;
+        if($axis===null) {
+            $output = $la->nrm2($input);
+            if(is_scalar($output)) {
+                $output = $this->array($output,$input->dtype());
+            }
+            return $output;
+        }
+        $output = $la->sqrt($la->reduceSum($la->square($la->copy($input)),axis:$axis));
+        return $output;
+    }
+
+    public function dL2norm(
+        NDArray $dOutput,
+        NDArray $input,
+        NDArray $output,
+        ?int $axis=null,
+    ) : NDArray
+    {
+        $la = $this->la;
+        if($axis===null || $axis === 0) {
+            $dInput = $la->multiply(
+                $dOutput,
+                $la->multiply(
+                    $la->reciprocal($la->copy($output)),
+                    $la->copy($input)
+                )
+            );
+            return $dInput;
+        }
+        if($axis === -1 || $axis === $input->ndim()-1) {
+            $shape = $input->shape();
+            $origShape = $shape;
+            $feature = array_pop($shape);
+            $input = $input->reshape([array_product($shape),$feature]);
+            $output = $output->reshape([$output->size()]);
+            $dOutput = $dOutput->reshape([$dOutput->size()]);
+            $dInput = $la->multiply(
+                $dOutput,
+                $la->multiply(
+                    $la->reciprocal($la->copy($output)),
+                    $la->copy($input),
+                    trans:true
+                ),
+                trans:true
+            );
+            $dInput = $dInput->reshape($origShape);
+            return $dInput;
+        }
+        throw new InvalidArgumentException("Unsupported axis: {$axis}");
+    }
+
+
     public function equalTest(mixed $a, mixed $b) : bool
     {
         $mo = $this->matrixOperator;

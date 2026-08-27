@@ -1008,11 +1008,11 @@ abstract class AbstractModel implements Model
             if($weights->isUndetermined()) {
                 // An unbuilt model has no destination buffer yet. This is
                 // initialization, so no compiled function can reference it.
-                $weights->assign($K->copy($data));
+                $weights->_assign($K->copy($data));
                 $initialized = true;
             } else {
                 // Preserve the buffer captured by compiled graph functions.
-                $K->copy($data,$weights->value());
+                $weights->update($data);
             }
         }
         if($initialized) {

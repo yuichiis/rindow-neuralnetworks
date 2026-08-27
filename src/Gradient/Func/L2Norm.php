@@ -24,8 +24,9 @@ class L2Norm extends AbstractFunction
         $K = $this->backend;
         $container = $this->container();
         $container->input = $inputs[0];
-        $var = $K->sum($K->square($inputs[0]),axis:$this->axis,ndarray:true);
-        $output = $K->sqrt($var);
+        //$var = $K->sum($K->square($inputs[0]),axis:$this->axis,ndarray:true);
+        //$output = $K->sqrt($var);
+        $output = $K->l2norm($inputs[0],axis:$this->axis);
         $container->output = $output;
         return [$output];
     }
@@ -45,22 +46,23 @@ class L2Norm extends AbstractFunction
         $output = $container->output;
         $axis = $this->axis;
 
-        if($axis === null || $axis === 0) {
-            // broardcast on axis 0
-            $dInput = $K->mul($dOutputs[0],$K->div($input,$output));
-        } elseif($axis === -1 || $axis === $input->ndim()-1) {
-            // broardcast on last axis
-            $input = $this->reshapeFlatArray($input);
-            $output = $output->reshape([$output->size()]);
-            $dOutput = $dOutputs[0]->reshape([$dOutputs[0]->size()]);
-            $dInput = $K->mul($K->div($input,$output,trans:true),$dOutput,trans:true);
-            $dInput = $dInput->reshape($container->input->shape());
-        } else {
-            throw new InvalidArgumentException("Unsupported axis: {$axis}");
-        }
-        if($axis===null) {
-            $dInput = $dInput->reshape($input->shape());
-        }
+        $dInput = $K->dL2norm($dOutputs[0],$input,$output,axis:$axis);
+        //if($axis === null || $axis === 0) {
+        //    // broardcast on axis 0
+        //    $dInput = $K->mul($dOutputs[0],$K->div($input,$output));
+        //} elseif($axis === -1 || $axis === $input->ndim()-1) {
+        //    // broardcast on last axis
+        //    $input = $this->reshapeFlatArray($input);
+        //    $output = $output->reshape([$output->size()]);
+        //    $dOutput = $dOutputs[0]->reshape([$dOutputs[0]->size()]);
+        //    $dInput = $K->mul($K->div($input,$output,trans:true),$dOutput,trans:true);
+        //    $dInput = $dInput->reshape($container->input->shape());
+        //} else {
+        //    throw new InvalidArgumentException("Unsupported axis: {$axis}");
+        //}
+        //if($axis===null) {
+        //    $dInput = $dInput->reshape($input->shape());
+        //}
         return [$dInput];
     }
 }

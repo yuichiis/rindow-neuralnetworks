@@ -2683,4 +2683,70 @@ class BackendTest extends TestCase
  
     }
 
+    public function testL2norm()
+    {
+        $mo = $this->newMatrixOperator();
+        $K = $this->newBackend($mo);
+
+        $x = $K->array([1,2,3,4]);
+        $y = $K->l2norm($x);
+        $this->assertTrue($mo->la()->isclose(
+            $mo->array(5.47722578),
+            $K->ndarray($y),
+        ));
+
+        $x = $K->array([[1,2],[3,4]]);
+        $y = $K->l2norm($x, axis:0);
+        $this->assertTrue($mo->la()->isclose(
+            $mo->array([3.1622777, 4.472136]),
+            $K->ndarray($y),
+        ));
+
+        $x = $K->array([[1,2],[3,4]]);
+        $y = $K->l2norm($x, axis:-1);
+        $this->assertTrue($mo->la()->isclose(
+            $mo->array([2.236068, 5.0]),
+            $K->ndarray($y),
+        ));
+    }
+
+    public function testdL2norm()
+    {
+        $mo = $this->newMatrixOperator();
+        $K = $this->newBackend($mo);
+
+        $dOutput = $K->array(2);
+        $x = $K->array([1,2,3,4]);
+        $y = $K->array(5.47722578);
+        $dInputs = $K->dl2norm($dOutput,$x,$y);
+        $this->assertTrue($mo->la()->isclose(
+            $mo->array([0.36514836,0.73029673,1.09544515,1.46059346]),
+            $K->ndarray($dInputs),
+        ));
+
+        $dOutput = $K->array([2,4]);
+        $x = $K->array([[1,2],[3,4]]);
+        $y = $K->array([3.1622777, 4.472136]);
+        $dInputs = $K->dl2norm($dOutput, $x, $y, axis:0);
+        $this->assertTrue($mo->la()->isclose(
+            $mo->array([
+                [0.6324555, 1.7888544],
+                [1.8973665, 3.5777087],
+            ]),
+            $K->ndarray($dInputs),
+        ));
+
+        $dOutput = $K->array([2,4]);
+        $x = $K->array([[1,2],[3,4]]);
+        $y = $K->array([2.236068, 5.0]);
+        $dInputs = $K->dl2norm($dOutput, $x, $y, axis:-1);
+        $this->assertTrue($mo->la()->isclose(
+            $mo->array([
+                [0.8944272, 1.7888544],
+                [2.4      , 3.2      ],
+            ]),
+            $K->ndarray($dInputs),
+        ));
+    }
+
 }
