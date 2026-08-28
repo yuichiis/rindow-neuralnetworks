@@ -1236,6 +1236,29 @@ class BackendTest extends TestCase
         $this->assertEquals([0.0,0.0,0.0,0.5,1.0],$y->toArray());
     }
 
+
+    public function testRandomCategorical()
+    {
+        $mo = $this->newMatrixOperator();
+        $K = $this->newBackend($mo);
+
+        //
+        // multiple samples
+        //
+        $probs = $K->softmax($K->log($K->array([[3.0,  2.0,  1.0 ]])));
+        $probs = $probs->reshape([$probs->size()]); // (actions)
+        $sumProbs = $K->sum($probs,axis:-1);
+        //echo $la->toString($sumProbs,indent:true)."\n";
+        $ones = $K->ones($sumProbs->shape());
+        $this->assertTrue($mo->la()->isclose($K->ndarray($ones),$K->ndarray($sumProbs)));
+
+        $actions = $K->randomCategorical($probs,numSamples:4);
+
+        $this->assertEquals([4],$actions->shape());
+        $this->assertEquals(NDArray::int32,$actions->dtype());
+        $this->assertLessThan(3,$K->scalar($K->max($actions)));
+    }
+
     public function testSigmoid()
     {
         $mo = $this->newMatrixOperator();
