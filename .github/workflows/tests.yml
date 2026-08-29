@@ -2,8 +2,7 @@ name: tests
 
 on: 
   push:
-      branches:
-          - master
+      branches: [  "main", "master" ]
 
 jobs:
   tests:
@@ -14,7 +13,7 @@ jobs:
       matlibrepo: rindow/rindow-matlib
 
     strategy:
-      fail-fast: false
+      fail-fast: true
       matrix:
         include:
           - os: ubuntu-latest
@@ -52,7 +51,7 @@ jobs:
           php-version: ${{ matrix.php }}
           # PHP Extras
           coverage: none
-          tools: composer, phpstan:2.0.x
+          tools: composer, phpstan:2.1.x
           # ini-values: "memory_limit=512M"
           extensions: pdo_sqlite, gd, ${{ matrix.ffi }}
         env:
