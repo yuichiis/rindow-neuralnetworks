@@ -52,7 +52,7 @@ jobs:
           php-version: ${{ matrix.php }}
           # PHP Extras
           coverage: none
-          tools: composer, phpstan
+          tools: composer, phpstan:2.0.x
           # ini-values: "memory_limit=512M"
           extensions: pdo_sqlite, gd, ${{ matrix.ffi }}
         env:
