@@ -6,6 +6,7 @@ use OutOfBoundsException;
 use RuntimeException;
 use PDO;
 use PDOException;
+use Pdo\Sqlite as PdoSqlite;
 use IteratorAggregate;
 use Traversable;
 
@@ -39,7 +40,7 @@ class HDASqlite implements HDA
     {
         $options = [];
         if ($mode=='r' && version_compare(PHP_VERSION,'7.3')>=0) {
-            $options[PDO::SQLITE_ATTR_OPEN_FLAGS] = PDO::SQLITE_OPEN_READONLY;
+            $options[PdoSqlite::ATTR_OPEN_FLAGS] = PdoSqlite::OPEN_READONLY;
         }
         $this->pdo = new PDO('sqlite:'.$filename,null,null,$options);
         $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
