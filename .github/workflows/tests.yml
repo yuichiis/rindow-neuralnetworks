@@ -81,7 +81,7 @@ jobs:
         run: |
           composer update
           composer require rindow/rindow-math-matrix-matlibffi
-          composer require --dev phpunit/phpunit=^${{ matrix.phpunit }}
+          composer require --dev "phpunit/phpunit=${{ matrix.phpunit }}.*"
 
       - name: PHP Static Analysys
         run: phpstan
