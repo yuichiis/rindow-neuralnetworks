@@ -167,7 +167,7 @@ jobs:
         if: ${{ startsWith(matrix.os, 'windows-') }}
         run: |
           Invoke-WebRequest -Uri https://github.com/${{ env.owner }}/polite-math/archive/refs/heads/main.zip  -OutFile main1.zip
-          Expand-Archive -Path main1.zip -DestinationPath main
+          Expand-Archive -Path main1.zip -DestinationPath ${{ env.workspace }}
           Invoke-WebRequest -Uri https://github.com/${{ env.owner }}/rindow-math-matrix/archive/refs/heads/${{ env.workspace }}.zip  -OutFile ${{ env.workspace }}2.zip
           Expand-Archive -Path ${{ env.workspace }}2.zip -DestinationPath ${{ env.workspace }}
           Invoke-WebRequest -Uri https://github.com/${{ env.owner }}/rindow-math-matrix-matlibffi/archive/refs/heads/${{ env.workspace }}.zip  -OutFile ${{ env.workspace }}3.zip
@@ -197,7 +197,7 @@ jobs:
         run: |
           $env:WORKING_BRANCH = "${{ env.workspace }}"
           $currentDir = (Get-Location).Path
-          $env:ADD_PACK = "$currentDir"
+          $env:ADD_PACK = "$currentDir/${{ env.workspace }}"
           echo $env:WORKING_BRANCH
           echo $env:ADD_PACK
           ls
