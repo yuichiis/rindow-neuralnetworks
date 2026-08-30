@@ -193,7 +193,8 @@ jobs:
         if: ${{ startsWith(matrix.os, 'windows-') }}
         run: |
           $env:WORKING_BRANCH = "${{ env.workspace }}"
-          $env:ADD_PACK = (Get-Location).Path
+          $currentDir = (Get-Location).Path
+          $env:ADD_PACK = "$currentDir"
           phpstan -V
           phpstan analyse -c phpstan-develop.neon
 
