@@ -39,7 +39,7 @@ class NeuralNetworksTest extends TestCase
             $deviceType = implode(',',$nn->backend()->primaryLA()->deviceTypes());
         } else {
             $serviceLevel = $mo->la()->service()->serviceLevel();
-            if($serviceLevel>1) {
+            if($serviceLevel>Service::LV_ADVANCED) {
                 $deviceType = 'CPU';
             } else {
                 $deviceType = 'PHP';
@@ -65,6 +65,10 @@ class NeuralNetworksTest extends TestCase
         $mo = $this->newMatrixOperator();
         $nn = new NeuralNetworks($mo);
         $serviceLevel = $mo->la()->service()->serviceLevel();
+        if($serviceLevel<Service::LV_ADVANCED) {
+            $this->markTestSkipped("The service is not Accelerated.");
+            return;
+        }
 
         $a = $nn->deviceArray($mo->array([1,2,3])); // host array to device array
         $buffer = $a->buffer();
@@ -88,6 +92,10 @@ class NeuralNetworksTest extends TestCase
         $mo = $this->newMatrixOperator();
         $nn = new NeuralNetworks($mo);
         $serviceLevel = $mo->la()->service()->serviceLevel();
+        if($serviceLevel<Service::LV_ADVANCED) {
+            $this->markTestSkipped("The service is not Accelerated.");
+            return;
+        }
 
         $a = $nn->deviceArray($mo->array([1,2,3])); // host array to device array
         $a = $nn->hostArray($a);  // device array to host array
