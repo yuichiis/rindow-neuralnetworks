@@ -195,6 +195,8 @@ jobs:
           $env:WORKING_BRANCH = "${{ env.workspace }}"
           $currentDir = (Get-Location).Path
           $env:ADD_PACK = "$currentDir"
+          echo $env:WORKING_BRANCH
+          echo $env:ADD_PACK
           phpstan -V
           phpstan analyse -c phpstan-develop.neon
 
