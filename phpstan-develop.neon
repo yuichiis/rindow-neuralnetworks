@@ -1,4 +1,6 @@
 includes:
 	- phpstan.neon.dist
-bootstrapFiles:
+
+parameters:
+    bootstrapFiles:
         - tests/Bootstrap.php
