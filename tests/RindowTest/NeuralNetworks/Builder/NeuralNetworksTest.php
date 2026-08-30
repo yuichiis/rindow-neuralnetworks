@@ -39,7 +39,7 @@ class NeuralNetworksTest extends TestCase
             $deviceType = implode(',',$nn->backend()->primaryLA()->deviceTypes());
         } else {
             $serviceLevel = $mo->la()->service()->serviceLevel();
-            if($serviceLevel>Service::LV_ADVANCED) {
+            if($serviceLevel>=Service::LV_ADVANCED) {
                 $deviceType = 'CPU';
             } else {
                 $deviceType = 'PHP';
