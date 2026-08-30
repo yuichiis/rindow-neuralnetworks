@@ -173,7 +173,7 @@ jobs:
           export PLOT_RENDERER_SKIP;
           BLOBDATA_TEST_SKIP=true;
           export BLOBDATA_TEST_SKIP;
-          php rindow-math-matrix/bin/rindow-math-matrix -v
+          php rindow-math-matrix-${{ env.workspace }}/bin/rindow-math-matrix -v
           vendor/bin/phpunit -c tests
 
       - name: PHPUnit Tests (Windows)
@@ -194,6 +194,6 @@ jobs:
           dir $matlibDir/bin
           $env:PLOT_RENDERER_SKIP = "true"
           $env:BLOBDATA_TEST_SKIP = "true"
-          php rindow-math-matrix/bin/rindow-math-matrix -v
+          php rindow-math-matrix-${{ env.workspace }}/bin/rindow-math-matrix -v
           vendor/bin/phpunit -c tests
 
