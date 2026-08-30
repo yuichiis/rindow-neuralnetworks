@@ -114,6 +114,9 @@ jobs:
       - name: Download Add-packs (Linux)
         if: ${{ startsWith(matrix.os, 'ubuntu-') }}
         run: |
+          wget https://github.com/${{ env.owner }}/polite-math/archive/refs/heads/${{ env.workspace }}.zip
+          unzip ${{ env.workspace }}.zip
+          rm ${{ env.workspace }}.zip
           wget https://github.com/${{ env.owner }}/rindow-math-matrix/archive/refs/heads/${{ env.workspace }}.zip
           unzip ${{ env.workspace }}.zip
           rm ${{ env.workspace }}.zip
@@ -129,10 +132,16 @@ jobs:
           wget https://github.com/${{ env.owner }}/rindow-openblas-ffi/archive/refs/heads/${{ env.workspace }}.zip
           unzip ${{ env.workspace }}.zip
           rm ${{ env.workspace }}.zip
+          wget https://github.com/${{ env.owner }}/rindow-math-plot/archive/refs/heads/${{ env.workspace }}.zip
+          unzip ${{ env.workspace }}.zip
+          rm ${{ env.workspace }}.zip
 
       - name: Download Add-packs (macOS)
         if: ${{ startsWith(matrix.os, 'macos-') }}
         run: |
+          curl https://github.com/${{ env.owner }}/polite-math/archive/refs/heads/${{ env.workspace }}.zip -O -L
+          unzip ${{ env.workspace }}.zip
+          rm ${{ env.workspace }}.zip
           curl https://github.com/${{ env.owner }}/rindow-math-matrix/archive/refs/heads/${{ env.workspace }}.zip -O -L
           unzip ${{ env.workspace }}.zip
           rm ${{ env.workspace }}.zip
@@ -148,20 +157,27 @@ jobs:
           curl https://github.com/${{ env.owner }}/rindow-openblas-ffi/archive/refs/heads/${{ env.workspace }}.zip -O -L
           unzip ${{ env.workspace }}.zip
           rm ${{ env.workspace }}.zip
+          curl https://github.com/${{ env.owner }}/rindow-math-plot/archive/refs/heads/${{ env.workspace }}.zip -O -L
+          unzip ${{ env.workspace }}.zip
+          rm ${{ env.workspace }}.zip
   
       - name: Download Add-packs (Windows)
         if: ${{ startsWith(matrix.os, 'windows-') }}
         run: |
-          Invoke-WebRequest -Uri https://github.com/${{ env.owner }}/rindow-math-matrix/archive/refs/heads/${{ env.workspace }}.zip  -OutFile ${{ env.workspace }}1.zip
+          Invoke-WebRequest -Uri https://github.com/${{ env.owner }}/polite-math/archive/refs/heads/${{ env.workspace }}.zip  -OutFile ${{ env.workspace }}1.zip
           Expand-Archive -Path ${{ env.workspace }}1.zip -DestinationPath ${{ env.workspace }}
-          Invoke-WebRequest -Uri https://github.com/${{ env.owner }}/rindow-math-matrix-matlibffi/archive/refs/heads/${{ env.workspace }}.zip  -OutFile ${{ env.workspace }}2.zip
+          Invoke-WebRequest -Uri https://github.com/${{ env.owner }}/rindow-math-matrix/archive/refs/heads/${{ env.workspace }}.zip  -OutFile ${{ env.workspace }}2.zip
           Expand-Archive -Path ${{ env.workspace }}2.zip -DestinationPath ${{ env.workspace }}
-          Invoke-WebRequest -Uri https://github.com/${{ env.owner }}/rindow-math-buffer-ffi/archive/refs/heads/${{ env.workspace }}.zip  -OutFile ${{ env.workspace }}3.zip
+          Invoke-WebRequest -Uri https://github.com/${{ env.owner }}/rindow-math-matrix-matlibffi/archive/refs/heads/${{ env.workspace }}.zip  -OutFile ${{ env.workspace }}3.zip
           Expand-Archive -Path ${{ env.workspace }}3.zip -DestinationPath ${{ env.workspace }}
-          Invoke-WebRequest -Uri https://github.com/${{ env.owner }}/rindow-matlib-ffi/archive/refs/heads/${{ env.workspace }}.zip  -OutFile ${{ env.workspace }}4.zip
+          Invoke-WebRequest -Uri https://github.com/${{ env.owner }}/rindow-math-buffer-ffi/archive/refs/heads/${{ env.workspace }}.zip  -OutFile ${{ env.workspace }}4.zip
           Expand-Archive -Path ${{ env.workspace }}4.zip -DestinationPath ${{ env.workspace }}
-          Invoke-WebRequest -Uri https://github.com/${{ env.owner }}/rindow-openblas-ffi/archive/refs/heads/${{ env.workspace }}.zip  -OutFile ${{ env.workspace }}5.zip
+          Invoke-WebRequest -Uri https://github.com/${{ env.owner }}/rindow-matlib-ffi/archive/refs/heads/${{ env.workspace }}.zip  -OutFile ${{ env.workspace }}5.zip
           Expand-Archive -Path ${{ env.workspace }}5.zip -DestinationPath ${{ env.workspace }}
+          Invoke-WebRequest -Uri https://github.com/${{ env.owner }}/rindow-openblas-ffi/archive/refs/heads/${{ env.workspace }}.zip  -OutFile ${{ env.workspace }}6.zip
+          Expand-Archive -Path ${{ env.workspace }}6.zip -DestinationPath ${{ env.workspace }}
+          Invoke-WebRequest -Uri https://github.com/${{ env.owner }}/rindow-math-plot/archive/refs/heads/${{ env.workspace }}.zip  -OutFile ${{ env.workspace }}7.zip
+          Expand-Archive -Path ${{ env.workspace }}7.zip -DestinationPath ${{ env.workspace }}
   
       - name: PHP Static Analysys 
         run: phpstan
