@@ -188,6 +188,7 @@ jobs:
           ADD_PACK=`pwd`; export ADD_PACK
           echo $WORKING_BRANCH
           echo $ADD_PACK
+          ls -l
           phpstan -V
           phpstan analyse -c phpstan-develop.neon
 
@@ -199,6 +200,7 @@ jobs:
           $env:ADD_PACK = "$currentDir"
           echo $env:WORKING_BRANCH
           echo $env:ADD_PACK
+          ls
           phpstan -V
           phpstan analyse -c phpstan-develop.neon
 
