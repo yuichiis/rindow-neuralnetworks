@@ -180,7 +180,7 @@ jobs:
           Expand-Archive -Path ${{ env.workspace }}7.zip -DestinationPath ${{ env.workspace }}
   
       - name: PHP Static Analysys 
-        run: phpstan
+        run: analyse -c phpstan-develop.neon
 
       - name: PHPUnit Tests (${{ matrix.name }}).
         if: ${{ !startsWith(matrix.os, 'windows-') }}
