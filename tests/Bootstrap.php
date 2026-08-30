@@ -15,8 +15,6 @@ if(!file_exists(RINDOWTEST_TEMP_DIR)) {
 }
 $addpack = getenv('ADD_PACK');
 $workingbranch = getenv('WORKING_BRANCH');
-echo "addpack=$addpack\n";
-echo "workingbranch=$workingbranch\n";
 if(file_exists("$addpack/rindow-math-matrix-matlibffi-$workingbranch/composer.json")) {
     echo "add rindows\n";
     $loader->addPsr4('Interop\\Polite\\Math\\', "$addpack/polite-math-main/src");
