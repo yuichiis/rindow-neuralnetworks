@@ -116,6 +116,7 @@ jobs:
         run: |
           wget https://github.com/${{ env.owner }}/rindow-math-matrix/archive/refs/heads/${{ env.workspace }}.zip
           unzip ${{ env.workspace }}.zip
+          rm ${{ env.workspace }}.zip
           wget https://github.com/${{ env.owner }}/rindow-math-matrix-matlibffi/archive/refs/heads/${{ env.workspace }}.zip
           unzip ${{ env.workspace }}.zip
           rm ${{ env.workspace }}.zip
