@@ -67,7 +67,7 @@ jobs:
           coverage: none
           tools: composer, phpstan:2.1.x
           ini-values: "memory_limit=512M"
-          extensions: pdo_sqlite, ${{ matrix.ffi }}
+          extensions: pdo_sqlite, gd, ${{ matrix.ffi }}
         env:
           fail-fast: true
 
