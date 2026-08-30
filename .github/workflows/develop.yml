@@ -189,6 +189,8 @@ jobs:
           export PLOT_RENDERER_SKIP;
           BLOBDATA_TEST_SKIP=true;
           export BLOBDATA_TEST_SKIP;
+          WORKING_BRANCH=${{ env.workspace }}; export WORKING_BRANCH
+          ADD_PACK=`pwd`; export ADD_PACK
           vendor/bin/phpunit -c tests
 
       - name: PHPUnit Tests (Windows)
@@ -209,5 +211,7 @@ jobs:
           dir $matlibDir/bin
           $env:PLOT_RENDERER_SKIP = "true"
           $env:BLOBDATA_TEST_SKIP = "true"
+          $env:WORKING_BRANCH = "${{ env.workspace }}"
+          $env:ADD_PACK = "$currentDir/${{ env.workspace }}"
           vendor/bin/phpunit -c tests
 
