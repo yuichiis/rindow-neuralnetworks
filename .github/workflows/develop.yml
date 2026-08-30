@@ -67,7 +67,7 @@ jobs:
           coverage: none
           tools: composer, phpstan:2.1.x
           ini-values: "memory_limit=512M"
-          extensions: ${{ matrix.ffi }}
+          extensions: pdo_sqlite, ${{ matrix.ffi }}
         env:
           fail-fast: true
 
@@ -108,7 +108,7 @@ jobs:
 
       - name: Run Composer Update
         run: |
-          composer update
+          mv composer.json composer.json.back
           composer require --dev "phpunit/phpunit=${{ matrix.phpunit }}.*"
 
       - name: Download Add-packs (Linux)
