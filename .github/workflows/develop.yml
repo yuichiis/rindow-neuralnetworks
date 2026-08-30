@@ -181,10 +181,19 @@ jobs:
           Invoke-WebRequest -Uri https://github.com/${{ env.owner }}/rindow-math-plot/archive/refs/heads/${{ env.workspace }}.zip  -OutFile ${{ env.workspace }}7.zip
           Expand-Archive -Path ${{ env.workspace }}7.zip -DestinationPath ${{ env.workspace }}
   
-      - name: PHP Static Analysys 
+      - name: PHP Static Analysys (${{ matrix.name }}).
+        if: ${{ !startsWith(matrix.os, 'windows-') }}
         run: |
           WORKING_BRANCH=${{ env.workspace }}; export WORKING_BRANCH
           ADD_PACK=`pwd`; export ADD_PACK
+          phpstan -V
+          phpstan analyse -c phpstan-develop.neon
+
+      - name: PHP Static Analysys (${{ matrix.name }}).
+        if: ${{ startsWith(matrix.os, 'windows-') }}
+        run: |
+          $env:WORKING_BRANCH = "${{ env.workspace }}"
+          $env:ADD_PACK = (Get-Location).Path
           phpstan -V
           phpstan analyse -c phpstan-develop.neon
 
