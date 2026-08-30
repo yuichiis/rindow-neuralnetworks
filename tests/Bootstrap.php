@@ -17,6 +17,7 @@ $addpack = getenv('ADD_PACK');
 $workingbranch = getenv('WORKING_BRANCH');
 if(file_exists("$addpack/rindow-math-matrix-matlibffi-$workingbranch/composer.json")) {
     echo "add rindows\n";
+    $loader->addPsr4('Rindow\\NeuralNetworks\\',   __DIR__."/../src");
     $loader->addPsr4('Interop\\Polite\\Math\\', "$addpack/polite-math-main/src");
     $loader->addPsr4('Rindow\\Math\\Matrix\\',   "$addpack/rindow-math-matrix-$workingbranch/src");
     $loader->addPsr4('Rindow\\Math\\Matrix\\Drivers\\MatlibFFI\\', "$addpack/rindow-math-matrix-matlibffi-$workingbranch/src");
