@@ -186,6 +186,8 @@ jobs:
         run: |
           WORKING_BRANCH=${{ env.workspace }}; export WORKING_BRANCH
           ADD_PACK=`pwd`; export ADD_PACK
+          echo $WORKING_BRANCH
+          echo $ADD_PACK
           phpstan -V
           phpstan analyse -c phpstan-develop.neon
 
