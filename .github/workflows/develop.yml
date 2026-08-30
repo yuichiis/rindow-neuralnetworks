@@ -114,9 +114,9 @@ jobs:
       - name: Download Add-packs (Linux)
         if: ${{ startsWith(matrix.os, 'ubuntu-') }}
         run: |
-          wget https://github.com/${{ env.owner }}/polite-math/archive/refs/heads/${{ env.workspace }}.zip
-          unzip ${{ env.workspace }}.zip
-          rm ${{ env.workspace }}.zip
+          wget https://github.com/${{ env.owner }}/polite-math/archive/refs/heads/main.zip
+          unzip main.zip
+          rm main.zip
           wget https://github.com/${{ env.owner }}/rindow-math-matrix/archive/refs/heads/${{ env.workspace }}.zip
           unzip ${{ env.workspace }}.zip
           rm ${{ env.workspace }}.zip
@@ -139,9 +139,9 @@ jobs:
       - name: Download Add-packs (macOS)
         if: ${{ startsWith(matrix.os, 'macos-') }}
         run: |
-          curl https://github.com/${{ env.owner }}/polite-math/archive/refs/heads/${{ env.workspace }}.zip -O -L
-          unzip ${{ env.workspace }}.zip
-          rm ${{ env.workspace }}.zip
+          curl https://github.com/${{ env.owner }}/polite-math/archive/refs/heads/main.zip -O -L
+          unzip main.zip
+          rm main.zip
           curl https://github.com/${{ env.owner }}/rindow-math-matrix/archive/refs/heads/${{ env.workspace }}.zip -O -L
           unzip ${{ env.workspace }}.zip
           rm ${{ env.workspace }}.zip
@@ -164,8 +164,8 @@ jobs:
       - name: Download Add-packs (Windows)
         if: ${{ startsWith(matrix.os, 'windows-') }}
         run: |
-          Invoke-WebRequest -Uri https://github.com/${{ env.owner }}/polite-math/archive/refs/heads/${{ env.workspace }}.zip  -OutFile ${{ env.workspace }}1.zip
-          Expand-Archive -Path ${{ env.workspace }}1.zip -DestinationPath ${{ env.workspace }}
+          Invoke-WebRequest -Uri https://github.com/${{ env.owner }}/polite-math/archive/refs/heads/main.zip  -OutFile main1.zip
+          Expand-Archive -Path main1.zip -DestinationPath main
           Invoke-WebRequest -Uri https://github.com/${{ env.owner }}/rindow-math-matrix/archive/refs/heads/${{ env.workspace }}.zip  -OutFile ${{ env.workspace }}2.zip
           Expand-Archive -Path ${{ env.workspace }}2.zip -DestinationPath ${{ env.workspace }}
           Invoke-WebRequest -Uri https://github.com/${{ env.owner }}/rindow-math-matrix-matlibffi/archive/refs/heads/${{ env.workspace }}.zip  -OutFile ${{ env.workspace }}3.zip
