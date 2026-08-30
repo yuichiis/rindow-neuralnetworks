@@ -110,6 +110,8 @@ jobs:
         run: |
           mv composer.json composer.json.back
           composer require --dev "phpunit/phpunit=${{ matrix.phpunit }}.*"
+          mv composer.json composer.local.json
+          mv composer.json.back composer.json
 
       - name: Download Add-packs (Linux)
         if: ${{ startsWith(matrix.os, 'ubuntu-') }}
