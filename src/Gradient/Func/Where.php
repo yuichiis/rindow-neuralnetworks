@@ -4,6 +4,7 @@ namespace Rindow\NeuralNetworks\Gradient\Func;
 use Interop\Polite\Math\Matrix\NDArray;
 use Rindow\NeuralNetworks\Gradient\Core\AbstractFunction;
 use Rindow\NeuralNetworks\Gradient\Core\NullValue;
+use InvalidArgumentException;
 
 class Where extends AbstractFunction
 {
