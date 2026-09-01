@@ -22,8 +22,8 @@ class Where extends AbstractFunction
     }
 
     /**
-     * @param array<NDArray> $inputs
-     * @return array<NDArray>
+     * param array<NDArray> $inputs
+     * return array<NDArray>
      */
     protected function call(array $inputs): array
     {
@@ -52,8 +52,8 @@ class Where extends AbstractFunction
     }
 
     /**
-     * @param array<NDArray> $dOutputs
-     * @return array<NDArray>
+     * param array<NDArray> $dOutputs
+     * return array<NDArray>
      */
     protected function differentiate(array $dOutputs): array
     {
