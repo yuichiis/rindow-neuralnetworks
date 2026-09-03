@@ -42,10 +42,9 @@ class DenseTest extends TestCase
         if(!$isclose) {
             echo "verify gradient fail in " . __CLASS__ . "::" . __FUNCTION__ . ":\n";
             echo "grads[0]:\n";
-            echo $mo->toString($grads[0]);
+            echo $mo->toString($grads[0])."\n";
             echo "dInputs[0]:\n";
-            echo $mo->toString($K->ndarray($dInputs[0]));
-            echo "\n";
+            echo $mo->toString($K->ndarray($dInputs[0]))."\n";
         }
         return $isclose;
     }
