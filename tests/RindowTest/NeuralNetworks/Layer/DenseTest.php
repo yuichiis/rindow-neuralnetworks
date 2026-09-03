@@ -38,7 +38,16 @@ class DenseTest extends TestCase
         $dOutputs = $K->ones($outputsVariable->shape(),$outputsVariable->dtype());
         $dInputs = $outputsVariable->creator()->backward([$dOutputs]);
 
-        return $mo->la()->isclose($grads[0],$K->ndarray($dInputs[0]),1e-3);
+        $isclose = $mo->la()->isclose($grads[0],$K->ndarray($dInputs[0]),1e-3);
+        if(!$isclose) {
+            echo "verify gradient fail in " . __CLASS__ . "::" . __FUNCTION__ . ":\n";
+            echo "grads[0]:\n";
+            echo $mo->toString($grads[0]);
+            echo "dInputs[0]:\n";
+            echo $mo->toString($K->ndarray($dInputs[0]));
+            echo "\n";
+        }
+        return $isclose;
     }
 
     public function testDefaultInitialize()
