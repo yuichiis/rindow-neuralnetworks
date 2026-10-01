@@ -83,10 +83,10 @@ if(!file_exists($savefilename)) {
     ] = $mo->unserializeArray($tensors);
 }
 
-echo implode(',',$train_inputs->shape())."\n";
-echo implode(',',$train_labels->shape())."\n";
-echo implode(',',$test_inputs->shape())."\n";
-echo implode(',',$test_labels->shape())."\n";
+echo "train_inputs: ".$mo->shapeToString($train_inputs->shape())."\n";
+echo "train_labels: ".$mo->shapeToString($train_labels->shape())."\n";
+echo "test_inputs: ".$mo->shapeToString($test_inputs->shape())."\n";
+echo "test_labels: ".$mo->shapeToString($test_labels->shape())."\n";
 $total_size = count($train_inputs);
 $train_size = (int)floor($total_size*0.9);
 $val_inputs = $train_inputs[R($train_size,$total_size)];
@@ -99,7 +99,7 @@ if($nn->deviceType()==='CPU') {
     echo "number of threads: ".$nn->backend()->primaryLA()->getMath()->getNumThreads()."\n";
     //$nn->backend()->primaryLA()->getMath()->setProfiling(true);
 }
-echo "math library: ".$nn->backend()->primaryLA()->getMath()->getConfig()."\n";
+echo "math library: ".$nn->backend()->getConfig()."\n";
 $modelFilePath = __DIR__."/basic-text-classification.model";
 
 if(file_exists($modelFilePath)) {

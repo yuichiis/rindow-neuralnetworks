@@ -18,7 +18,7 @@ $plt = new Plot($config,$mo);
 
 
 $dsname='cifar10';
-$epochs = 5; #10;
+$epochs = 10;
 $batch_size = 64;
 $shrink = false;
 
@@ -134,8 +134,8 @@ switch($dsname) {
         break;
     }
     case 'cifar10': {
-        $trainSize = 5000; # 50000;
-        $testSize = 500; # 10000;
+        $trainSize = 50000;
+        $testSize = 10000;
         if($shrink||!$mo->isAdvanced()) {
             // Shrink data
             $trainSize = 2000;
@@ -183,7 +183,7 @@ if($nn->deviceType()==='CPU') {
     echo "number of threads: ".$nn->backend()->primaryLA()->getMath()->getNumThreads()."\n";
     //$nn->backend()->primaryLA()->getMath()->setProfiling(true);
 }
-echo "math library: ".$nn->backend()->primaryLA()->getMath()->getConfig()."\n";
+echo "math library: ".$nn->backend()->getConfig()."\n";
 $modelFilePath = __DIR__."/image-classification-with-cnn-{$dsname}.model";
 
 if(file_exists($modelFilePath)) {

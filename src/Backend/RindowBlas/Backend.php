@@ -47,6 +47,11 @@ class Backend
         return $this->la;
     }
 
+    public function getConfig() : string
+    {
+        return $this->primaryLA()->getMath()->getConfig();
+    }
+
     public function finish() : void
     {
     }
@@ -1222,7 +1227,7 @@ class Backend
     }
 
     /**
-     * $probs : (batches,numSamples) without numSamples
+     * $probs : (batches,numClasses) without numSamples
      *          or (numSamples) with numSamples
      *          dtype:float32.
      * $randints: (batches) dtype:int32

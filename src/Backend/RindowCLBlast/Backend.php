@@ -68,6 +68,11 @@ class Backend
         return $this->matrixOperator->laRawMode();
     }
 
+    public function getConfig() : string
+    {
+        return 'CLBlast';
+    }
+
     public function context() : object
     {
         return $this->la->getContext();

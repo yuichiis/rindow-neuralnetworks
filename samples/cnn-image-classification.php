@@ -166,7 +166,7 @@ if($nn->deviceType()==='CPU') {
     echo "number of threads: ".$nn->backend()->primaryLA()->getMath()->getNumThreads()."\n";
     //$nn->backend()->primaryLA()->getMath()->setProfiling(true);
 }
-echo "math library: ".$nn->backend()->primaryLA()->getMath()->getConfig()."\n";
+echo "math library: ".$nn->backend()->getConfig()."\n";
 $modelFilePath = __DIR__."/cnn-image-classification-{$dsname}.model";
 
 if(file_exists($modelFilePath)) {

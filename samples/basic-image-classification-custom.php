@@ -91,6 +91,7 @@ class ImageClassification extends AbstractModel
 }
 
 echo "device type: ".$nn->deviceType()."\n";
+echo "math library: ".$nn->backend()->getConfig()."\n";
 $model = new ImageClassification($nn);
 echo "creating model ...\n";
 $model->compile(
