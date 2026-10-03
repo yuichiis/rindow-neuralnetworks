@@ -18,6 +18,6 @@ if(defined('USE_MATLIBEXT') && USE_MATLIBEXT) {
     $loader->addPsr4('Rindow\\CLBlast\\FFI\\', __DIR__.'/../../rindow-clblast-ffi/src');
 }
 $loader->addPsr4('Rindow\\Math\\Plot\\', __DIR__.'/../../rindow-math-plot/src');
-$loader->addPsr4('Interop\\Polite\\Math\\', __DIR__.'/../../../interop-phpobjects/polite-math/src');
+$loader->addPsr4('Interop\\Polite\\Math\\', __DIR__.'/../../polite-math/src');
 
 return $loader;
