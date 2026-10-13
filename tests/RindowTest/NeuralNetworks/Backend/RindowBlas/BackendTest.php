@@ -2795,4 +2795,49 @@ class BackendTest extends TestCase
         ));
     }
 
+    public function testRange()
+    {
+        $mo = $this->newMatrixOperator();
+        $K = $this->newBackend($mo);
+
+        $result = $K->range(10);
+        $expected = $mo->array([
+            0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
+        ]);
+        $this->assertTrue($mo->la()->isclose(
+            $expected,
+            $K->ndarray($result)
+        ));
+    }
+
+    public function testWhere()
+    {
+        $mo = $this->newMatrixOperator();
+        $K = $this->newBackend($mo);
+
+        $cond = $K->array([
+            [true, false],
+            [false, true],
+        ],dtype:NDArray::bool);
+        $x = $K->array([
+            [1, 2],
+            [3, 4],
+        ]);
+        $y = $K->array([
+            [10, 20],
+            [30, 40],
+        ]);
+        $result = $K->where($cond, $x, $y);
+        $expected = $mo->array([
+            [1, 20],
+            [30, 4],
+        ]);
+        $this->assertTrue($mo->la()->isclose(
+            $expected,
+            $K->ndarray($result)
+        ));
+    }
+
+    
+
 }
