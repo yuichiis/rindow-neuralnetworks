@@ -570,11 +570,11 @@ class Backend
         NDArray $condition,
         NDArray $x,
         NDArray $y,
-        ?bool $normalize=null,
+        ?bool $trans=null,
         ) : NDArray
     {
         $la = $this->la;
-        return $la->where($condition, $x, $y, normalize:$normalize);
+        return $la->where($condition, $x, $y, trans:$trans);
     }
 
     public function reciprocal(
@@ -2625,7 +2625,7 @@ class Backend
         // Conditional branching using where
         // If |x| < threshold, use the Taylor expansion result; otherwise, use the normal calculation result.
         $result = $la->where(
-            $la->less($la->square($la->copy($x)),$threshold*$threshold),
+            $la->astype($la->less($la->square($la->copy($x)),$threshold*$threshold),NDArray::bool),
             $taylor_approx,
             $la->log($la->increment($la->copy($x),beta:1))
         );
@@ -2661,7 +2661,7 @@ class Backend
 
         // Determine local gradients under the same conditions as the forward pass
         $local_grad = $la->where(
-            $la->less($la->square($la->copy($x)),$threshold*$threshold),
+            $la->astype($la->less($la->square($la->copy($x)),$threshold*$threshold),NDArray::bool),
             $local_grad_taylor,
             $local_grad_direct
         );

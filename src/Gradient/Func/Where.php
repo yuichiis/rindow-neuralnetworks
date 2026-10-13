@@ -35,6 +35,9 @@ class Where extends AbstractFunction
         $y = $inputs[2];        // Select when condition is false.
         $K = $this->backend;
 
+        if($condition->dtype()!=NDArray::bool) {
+            throw new InvalidArgumentException('condition must be boolean dtype');
+        }
         if($x->shape()!=$y->shape()) {
             throw new InvalidArgumentException('unmatch shape of x and y');
         }
@@ -44,7 +47,6 @@ class Where extends AbstractFunction
 
         $output = $K->where(
             $condition,$x,$y,
-            normalize:$this->normalize
         );
 
         $container->condition = $condition;
@@ -62,9 +64,6 @@ class Where extends AbstractFunction
         $condition = $container->condition;
         $dOutput = $dOutputs[0];
 
-        if($condition->dtype()!=NDArray::bool) {
-            $condition = $K->cast($condition,NDArray::bool);
-        }
         $dX = $K->masking($condition, $dOutput);
         $dY = $K->masking($K->not($condition), $dOutput);
 

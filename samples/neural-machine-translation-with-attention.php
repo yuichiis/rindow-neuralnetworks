@@ -482,11 +482,11 @@ class CustomLossFunction
         $mask = $g->cast($g->cast($label,dtype:NDArray::bool),dtype:NDArray::float32);
         //echo "mask=".$mo->shapeToString($loss->shape())."\n";
         //echo "".$mo->toString($mask,indent:true)."\n";
-        
         $loss = $g->mul($loss,$mask);
         $n = $g->reduceSum($mask);      // scalar in NDArray
         $loss = $g->reduceSum($loss);   // scalar in NDArray
         $loss = $g->div($loss,$n);
+
         return $loss;
     }
 }

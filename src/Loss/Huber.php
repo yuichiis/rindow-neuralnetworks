@@ -40,17 +40,22 @@ class Huber extends AbstractLoss
         #       = d*(|x| - 0.5*d)
         $x = $K->sub($trues,$predicts);
         $absx = $K->abs($x);
-        $lessThenDelta = $K->lessEqual($absx, $this->delta);
-        $greaterThenDelta = $K->increment($K->copy($lessThenDelta),1.0,-1.0);
-        $squaredLoss = $K->scale(0.5, $K->square($x));
-        $linearLoss = $K->scale($this->delta, $K->increment($absx, -0.5*$this->delta));
-        $loss = $K->add(
-            $K->mul($lessThenDelta,   $squaredLoss),
-            $K->mul($greaterThenDelta,$linearLoss),
+        //$lessThenDelta = $K->lessEqual($absx, $this->delta);
+        //$greaterThenDelta = $K->increment($K->copy($lessThenDelta),1.0,-1.0);
+        //$squaredLoss = $K->scale(0.5, $K->square($x));
+        //$linearLoss = $K->scale($this->delta, $K->increment($absx, -0.5*$this->delta));
+        //$loss = $K->add(
+        //    $K->mul($lessThenDelta,   $squaredLoss),
+        //    $K->mul($greaterThenDelta,$linearLoss),
+        //);
+        $lessEqual = $K->cast($K->lessEqual($absx, $this->delta),dtype:NDArray::bool);
+        $loss = $K->where(
+            $lessEqual,
+            $K->scale(0.5, $K->square($x)),
+            $K->scale($this->delta, $K->increment($absx, -0.5*$this->delta))
         );
         $container->diffx = $x;
-        $container->lessThenDelta = $lessThenDelta;
-        $container->greaterThenDelta = $greaterThenDelta;
+        $container->lessEqual = $lessEqual;
         if($this->reduction!='none') {
             $n = $loss->size();
             $loss = $K->sum($loss);
@@ -73,14 +78,19 @@ class Huber extends AbstractLoss
         $K = $this->backend;
         $dLoss = $this->flattenLoss($dOutputs[0]);
         $container = $this->container();
+        // dL/dx = -dL/dLoss * dLoss/dx
+        //       = -dL/dLoss * d/dx (0.5 * x^2)  if |x| <= d
+        //       = -dL/dLoss * d/dx (0.5 * d^2 + d * (|x| - d))  if |x| > d
+        //       = -dL/dLoss * d/dx (d*|x| - 0.5*d^2)  if |x| > d
         $x = $K->copy($container->diffx);
         $dSquaredLoss = $x;
         $dLinearLoss = $K->sign($x);
         $K->update_scale($dLinearLoss,$this->delta);
-        $dInputs = $K->add(
-            $K->mul($container->lessThenDelta,   $dSquaredLoss),
-            $K->mul($container->greaterThenDelta,$dLinearLoss),
-        );
+        //$dInputs = $K->add(
+        //    $K->mul($container->lessThenDelta,   $dSquaredLoss),
+        //    $K->mul($container->greaterThenDelta,$dLinearLoss),
+        //);
+        $dInputs = $K->where($container->lessEqual,$dSquaredLoss,$dLinearLoss);
         if($this->reduction!='none') {
             $n = $x->size();
             $K->update_scale($dInputs,-1/$n);

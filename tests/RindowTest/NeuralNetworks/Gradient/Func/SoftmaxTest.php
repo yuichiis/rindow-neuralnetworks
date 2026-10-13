@@ -74,7 +74,7 @@ class SoftmaxTest extends TestCase
             [1.0, 2.0, 3.0],
             [0.5, 1.5, 2.5]
         ],dtype:NDArray::float32));
-        $salt = $mo->la()->range(start:1,limit:1+array_product($x->shape()),dtype:NDArray::float32)
+        $salt = $mo->la()->range(start:1,limit:1+$x->size(),dtype:NDArray::float32)
                 ->reshape($x->shape());
         $salt = $g->Variable($salt);
 

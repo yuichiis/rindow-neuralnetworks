@@ -1368,7 +1368,7 @@ class BackendTest extends TestCase
              [1., 2., 3., 4.],
              [1., 2., 3., 4.]]],
         ]);
-        $salt = $mo->la()->range(array_product($x->shape()),dtype:NDArray::float32)
+        $salt = $mo->la()->range($x->size(),dtype:NDArray::float32)
                 ->reshape($x->shape());
         $salt = $K->array($salt);
 
